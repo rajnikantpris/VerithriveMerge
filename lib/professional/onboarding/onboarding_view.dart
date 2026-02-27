@@ -54,11 +54,11 @@ class OnboardingView extends BaseView<OnboardingController> {
                             height: constraints.maxHeight,
                             fit: BoxFit.contain,
                           ),
-                          AppImages.sliderImage4(
+                      /*    AppImages.sliderImage4(
                             width: constraints.maxWidth,
                             height: constraints.maxHeight,
                             fit: BoxFit.contain,
-                          ),
+                          ),*/
                         ];
                         return Container(
                           width: double.infinity,

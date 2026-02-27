@@ -7,9 +7,9 @@ class AppImages {
 
   // Raster assets
   static const String appLogoSplash = 'assets/images/app_logo_splash.png';
-  static const String slider1 = 'assets/images/slider1.png';
-  static const String slider2 = 'assets/images/slider2.png';
-  static const String slider3 = 'assets/images/slider3.png';
+  static const String slider1 = 'assets/images/slider1.jpg';
+  static const String slider2 = 'assets/images/slider2.jpg';
+  static const String slider3 = 'assets/images/slider3.jpg';
   static const String slider4 = 'assets/images/slider4.png';
   static const String google = 'assets/images/google.png';
   static const String iphone = 'assets/images/logoApple.png';

@@ -6,7 +6,7 @@ import '../../common/base_controller.dart';
 import '../../routes/app_routes.dart';
 
 class OnboardingController extends BaseController {
-  final totalSteps = 4;
+  final totalSteps = 3;
   final currentStep = 1.obs;
   late final PageController pageController;
   Timer? _autoScrollTimer;
@@ -16,7 +16,7 @@ class OnboardingController extends BaseController {
   void onInit() {
     super.onInit();
     pageController = PageController(initialPage: 0);
-    _startAutoScroll();
+   // _startAutoScroll();
   }
 
   @override
