@@ -1,0 +1,41 @@
+abstract class Routes {
+  Routes._();
+
+  static const splash = '/';
+  static const onboarding = '/onboarding';
+  static const login = '/login';
+  static const selectUser = '/select-user';
+  static const signup = '/signup';
+  static const forgotPassword = '/forgot-password';
+  static const verifyEmail = '/verify-email';
+  static const createNewPassword = '/create-new-password';
+  static const signupPersonDetails = '/signup-person-details';
+  static const signupTermsConditions = '/signup-terms-conditions';
+  static const signupProfileWizard = '/signup-profile-wizard';
+  static const subscription = '/subscription';
+  static const paymentMethod = '/payment-method';
+  static const processingPayment = '/processing-payment';
+  static const verification = '/verification';
+  static const home = '/home';
+  static const notifications = '/notifications';
+  static const chat = '/chat';
+  static const yourProfile = '/your-profile';
+  static const personalDetails = '/personal-details';
+  static const address = '/address';
+  static const yourServices = '/your-services';
+  static const personalIdentification = '/personal-identification';
+  static const aboutYou = '/about-you';
+  static const qualificationCertification = '/qualification-certification';
+  static const bankAccount = '/bank-account';
+  static const notificationSettings = '/notification-settings';
+  static const account = '/account';
+  static const changePassword = '/change-password';
+  static const profileSubscription = '/profile-subscription';
+  static const rescheduleSession = '/reschedule-session';
+  static const serviceFormat = '/service-format';
+  static const addServiceFormat = '/add-service-format';
+  static const editServiceFormat = '/edit-service-format';
+  static const createAvailability = '/create-availability';
+  static const editAvailability = '/edit-availability';
+  static const selectAddressMap = '/select-address-map';
+}

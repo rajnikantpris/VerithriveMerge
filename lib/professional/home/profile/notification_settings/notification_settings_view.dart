@@ -1,0 +1,138 @@
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+
+import '../../../../common/base_view.dart';
+import '../../../../theme/colors.dart';
+import '../../../../theme/fonts.dart';
+import '../../../../theme/font_sizes.dart';
+import '../../../../theme/hight_width_sizes.dart';
+import 'notification_settings_controller.dart';
+
+class NotificationSettingsView
+    extends BaseView<NotificationSettingsController> {
+  const NotificationSettingsView({super.key});
+
+  @override
+  PreferredSizeWidget? appBar(BuildContext context) {
+    return PreferredSize(
+      preferredSize: const Size.fromHeight(kToolbarHeight + 1),
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppColor.white,
+          boxShadow: [
+            BoxShadow(
+              color: Color(0x1A000000), // #0000001A
+              blurRadius: HightWidthSizes.setValue_10,
+              offset: Offset(0, 4),
+            ),
+          ],
+        ),
+        child: AppBar(
+          backgroundColor: AppColor.white,
+          elevation: 0,
+          leading: IconButton(
+            icon: Icon(
+              Icons.arrow_back,
+              color: AppColor.color_2D3648,
+            ),
+            onPressed: () => Get.back(),
+          ),
+          centerTitle: true,
+          title: Text(
+            'Notifications',
+            style: TextStyle(
+              fontFamily: AppFonts.rubikMedium,
+              fontWeight: FontWeight.w500,
+              fontSize: FontSizes.setFontValue_18,
+              color: AppColor.color_2D3648,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget buildView(BuildContext context) {
+    return Container(
+      color: AppColor.white,
+      child: ListView.separated(
+        padding: EdgeInsets.symmetric(
+          horizontal: HightWidthSizes.setValue_16,
+          vertical: HightWidthSizes.setValue_12,
+        ),
+        itemCount: 1,
+        separatorBuilder: (_, __) => Divider(
+          height: HightWidthSizes.setValue_1,
+          color: AppColor.color_ECECEC,
+        ),
+        itemBuilder: (context, index) {
+          return Obx(
+            () => Padding(
+              padding: EdgeInsets.symmetric(
+                vertical: HightWidthSizes.setValue_14,
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Notifications',
+                      style: TextStyle(
+                        fontFamily: AppFonts.rubikRegular,
+                        fontWeight: FontWeight.w400,
+                        fontSize: FontSizes.setFontValue_16,
+                        color: AppColor.color_2D2D2D,
+                      ),
+                    ),
+                  ),
+                  Transform.scale(
+                    scale: 0.75,
+                    child: Theme(
+                      data: Theme.of(context).copyWith(
+                        switchTheme: SwitchThemeData(
+                          thumbColor: MaterialStateProperty.resolveWith<Color>(
+                            (Set<MaterialState> states) {
+                              return AppColor.white;
+                            },
+                          ),
+                          trackColor: MaterialStateProperty.resolveWith<Color>(
+                            (Set<MaterialState> states) {
+                              if (states.contains(MaterialState.selected)) {
+                                return AppColor.color_2FC4B2; // Teal when ON
+                              }
+                              return AppColor
+                                  .color_B5B6CA; // Light grey when OFF
+                            },
+                          ),
+                          trackOutlineColor:
+                              MaterialStateProperty.resolveWith<Color>(
+                            (Set<MaterialState> states) {
+                              return AppColor
+                                  .borderColor; // Border for both states
+                            },
+                          ),
+                          trackOutlineWidth:
+                              MaterialStateProperty.resolveWith<double>(
+                            (Set<MaterialState> states) {
+                              return 1.0; // Border width
+                            },
+                          ),
+                        ),
+                      ),
+                      child: Switch(
+                        value: controller.notificationsEnabled.value,
+                        onChanged: controller.toggleNotifications,
+                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}

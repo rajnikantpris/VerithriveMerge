@@ -1,0 +1,496 @@
+import 'dart:async';
+import 'dart:io';
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:intl/intl.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:image_cropper/image_cropper.dart';
+import 'package:geocoding/geocoding.dart';
+import 'package:geolocator/geolocator.dart';
+
+import '../../api/dio_client.dart';
+import '../../common/base_controller.dart';
+import '../../routes/app_routes.dart';
+import '../../services/location_permission_service.dart';
+import '../../services/camera_storage_permission_service.dart';
+import '../../theme/colors.dart';
+import '../../theme/font_sizes.dart';
+import '../../theme/fonts.dart';
+import '../../theme/hight_width_sizes.dart';
+import '../../services/storage_service.dart';
+
+class SignupPersonDetailsController extends BaseController {
+  SignupPersonDetailsController(this._api);
+
+  // ignore: unused_field
+  final DioClient _api;
+
+  late final GlobalKey<FormState> formKey;
+
+  final fullNameController = TextEditingController();
+  final dobController = TextEditingController();
+  final genderController = TextEditingController();
+  final postcodeController = TextEditingController();
+  final addressController = TextEditingController();
+
+  // Selected address data
+  final selectedLatitude = Rxn<double>();
+  final selectedLongitude = Rxn<double>();
+
+  final selectedDob = Rxn<DateTime>();
+  final genders = ['Male', 'Female', 'Prefer not to say'];
+  final selectedGender = ''.obs;
+  final isManualPostcode = false.obs;
+  final selectedImage = Rxn<File>();
+  final socialProfileImageUrl = ''.obs;
+  final hasValidated = false.obs;
+  final ImagePicker _imagePicker = ImagePicker();
+  final LocationPermissionService _locationPermissionService =
+      LocationPermissionService();
+  final CameraStoragePermissionService _cameraStoragePermissionService =
+      CameraStoragePermissionService();
+  StorageService? _storageService;
+
+  @override
+  void onInit() {
+    super.onInit();
+    // Initialize formKey to ensure a new key is created each time
+    formKey = GlobalKey<FormState>();
+    _storageService =
+        Get.isRegistered<StorageService>() ? Get.find<StorageService>() : null;
+    _populateSocialDefaults();
+    // Get current location and auto-fill address and postcode
+    _getCurrentLocationAndFillAddress();
+  }
+
+  @override
+  void onClose() {
+    fullNameController.dispose();
+    dobController.dispose();
+    genderController.dispose();
+    postcodeController.dispose();
+    addressController.dispose();
+    super.onClose();
+  }
+
+  void setGender(String? value) {
+    if (value == null) return;
+    selectedGender.value = value;
+    genderController.text = value;
+  }
+
+  Future<void> pickGender(BuildContext context) async {
+    final selected = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (BuildContext context) {
+        return Container(
+          decoration: BoxDecoration(
+            color: AppColor.white,
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(HightWidthSizes.setValue_20),
+              topRight: Radius.circular(HightWidthSizes.setValue_20),
+            ),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                margin: EdgeInsets.only(
+                  top: HightWidthSizes.setValue_12,
+                  bottom: HightWidthSizes.setValue_8,
+                ),
+                width: HightWidthSizes.setValue_40,
+                height: HightWidthSizes.setValue_4,
+                decoration: BoxDecoration(
+                  color: AppColor.color_9D9D9D,
+                  borderRadius:
+                      BorderRadius.circular(HightWidthSizes.setValue_2),
+                ),
+              ),
+              Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: HightWidthSizes.setValue_16,
+                  vertical: HightWidthSizes.setValue_8,
+                ),
+                child: Text(
+                  'Select Gender',
+                  style: TextStyle(
+                    fontFamily: AppFonts.rubikMedium,
+                    fontWeight: FontWeight.w500,
+                    fontSize: FontSizes.setFontValue_20,
+                    color: AppColor.color_2D2D2D,
+                  ),
+                ),
+              ),
+              ...genders.map((gender) {
+                return ListTile(
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: HightWidthSizes.setValue_10,
+                    vertical: HightWidthSizes.setValue_1,
+                  ),
+                  title: Text(
+                    gender,
+                    style: TextStyle(
+                      fontFamily: AppFonts.rubikRegular,
+                      fontWeight: FontWeight.w400,
+                      fontSize: FontSizes.setFontValue_16,
+                      color: AppColor.color_0E1027,
+                    ),
+                  ),
+                  onTap: () => Navigator.pop(context, gender),
+                  trailing: selectedGender.value == gender
+                      ? Icon(
+                          Icons.check,
+                          color: AppColor.color_2FC4B2,
+                          size: HightWidthSizes.setValue_20,
+                        )
+                      : null,
+                );
+              }),
+              SizedBox(height: HightWidthSizes.setValue_2),
+            ],
+          ),
+        );
+      },
+    );
+
+    if (selected != null) {
+      setGender(selected);
+    }
+  }
+
+  Future<void> pickDate(BuildContext context) async {
+    final now = DateTime.now();
+    // Strip time so user can never pick a date after "today"
+    final today = DateTime(now.year, now.month, now.day);
+    final initial =
+        selectedDob.value ?? DateTime(today.year, today.month, today.day);
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: initial.isAfter(today) ? today : initial,
+      firstDate: DateTime(1900),
+      // Allow navigating to future months, but disable selection of future days
+      lastDate: DateTime(2100),
+      selectableDayPredicate: (day) => !day.isAfter(today),
+    );
+
+    if (picked != null) {
+      selectedDob.value = picked;
+      dobController.text = DateFormat('dd/MM/yyyy').format(picked);
+    }
+  }
+
+  void enableManualPostcode() {
+    isManualPostcode.value = true;
+  }
+
+  String? validateNotEmpty(String? value, String label) {
+    if (value == null || value.trim().isEmpty) {
+      return 'Please enter $label';
+    }
+    return null;
+  }
+
+  void onNext() {
+    hasValidated.value = true;
+    final isValid = formKey.currentState?.validate() ?? false;
+    if (!isValid) return;
+    Get.toNamed(
+      Routes.signupTermsConditions,
+      arguments: {
+        'fullName': fullNameController.text.trim(),
+        'dob': dobController.text.trim(),
+        'gender': selectedGender.value,
+        'postcode': postcodeController.text.trim(),
+        'address': addressController.text.trim(),
+        'latitude': selectedLatitude.value,
+        'longitude': selectedLongitude.value,
+        'profileImagePath': selectedImage.value?.path,
+        'socialProfileImageUrl': socialProfileImageUrl.value,
+      },
+    );
+  }
+
+  Future<void> pickProfileImage(BuildContext context) async {
+    try {
+      // Show options to pick from camera or gallery
+      final source = await _showImageSourceDialog(context);
+      if (source == null) return;
+
+      // Double-check permission for the selected source
+      if (source == ImageSource.camera) {
+        final hasCameraPermission =
+            await _cameraStoragePermissionService.requestCameraPermission();
+        if (!hasCameraPermission) {
+          return;
+        }
+      } else {
+        // For gallery, check storage/photos permission
+        final hasStoragePermission =
+            await _cameraStoragePermissionService.requestStoragePermission();
+        if (!hasStoragePermission) {
+          return;
+        }
+      }
+
+      final XFile? pickedFile = await _imagePicker.pickImage(
+        source: source,
+        maxWidth: 1024,
+        maxHeight: 1024,
+        imageQuality: 85,
+      );
+
+      if (pickedFile != null) {
+        // Crop the selected image
+        final croppedFile = await _cropImage(File(pickedFile.path));
+        if (croppedFile != null) {
+          selectedImage.value = croppedFile;
+          socialProfileImageUrl.value = '';
+        }
+      }
+    } catch (e) {
+      Get.snackbar(
+        'Error',
+        'Failed to pick image: ${e.toString()}',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    }
+  }
+
+  Future<File?> _cropImage(File imageFile) async {
+    try {
+      final croppedFile = await ImageCropper().cropImage(
+        sourcePath: imageFile.path,
+        aspectRatio: const CropAspectRatio(ratioX: 1, ratioY: 1),
+        uiSettings: [
+          AndroidUiSettings(
+            toolbarTitle: 'Crop Image',
+            toolbarColor: Colors.blue,
+            toolbarWidgetColor: Colors.white,
+            initAspectRatio: CropAspectRatioPreset.square,
+            lockAspectRatio: true,
+            aspectRatioPresets: [
+              CropAspectRatioPreset.square,
+            ],
+          ),
+          IOSUiSettings(
+            title: 'Crop Image',
+            aspectRatioPresets: [
+              CropAspectRatioPreset.square,
+            ],
+            aspectRatioLockEnabled: true,
+          ),
+        ],
+        compressFormat: ImageCompressFormat.jpg,
+        compressQuality: 85,
+      );
+
+      if (croppedFile != null) {
+        return File(croppedFile.path);
+      }
+      return null;
+    } catch (e) {
+      debugPrint('Error cropping image: $e');
+      Get.snackbar(
+        'Error',
+        'Failed to crop image: ${e.toString()}',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return null;
+    }
+  }
+
+  Future<ImageSource?> _showImageSourceDialog(BuildContext context) async {
+    return await showModalBottomSheet<ImageSource>(
+      context: context,
+      builder: (BuildContext context) {
+        return SafeArea(
+          child: Wrap(
+            children: [
+              ListTile(
+                leading: const Icon(Icons.photo_library),
+                title: const Text('Choose from Gallery'),
+                onTap: () => Navigator.of(context).pop(ImageSource.gallery),
+              ),
+              ListTile(
+                leading: const Icon(Icons.photo_camera),
+                title: const Text('Take a Photo'),
+                onTap: () => Navigator.of(context).pop(ImageSource.camera),
+              ),
+              ListTile(
+                leading: const Icon(Icons.cancel),
+                title: const Text('Cancel'),
+                onTap: () => Navigator.of(context).pop(),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  /// Request location permission using the common service
+  /// Returns true if permission is granted, false otherwise
+  Future<bool> requestLocationPermission() async {
+    return await _locationPermissionService.requestLocationPermission();
+  }
+
+  /// Check location permission status using the common service
+  /// Returns true if permission is granted, false otherwise
+  Future<bool> checkLocationPermissionStatus() async {
+    return await _locationPermissionService.checkLocationPermissionStatus();
+  }
+
+  /// Public method to get current location and auto-fill address and postcode
+  /// Can be called manually to refresh location
+  Future<void> getCurrentLocationAndFillAddress() async {
+    await _getCurrentLocationAndFillAddress();
+  }
+
+  /// Get current location and auto-fill address and postcode
+  Future<void> _getCurrentLocationAndFillAddress() async {
+    try {
+      // First check if permission is already granted
+      bool hasPermission =
+          await _locationPermissionService.checkLocationPermissionStatus();
+
+      // If not granted, request permission
+      if (!hasPermission) {
+        hasPermission =
+            await _locationPermissionService.requestLocationPermission();
+      }
+
+      if (!hasPermission) {
+        debugPrint('Location permission not granted');
+        return;
+      }
+
+      // Check if location services are enabled
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        debugPrint('Location services are disabled');
+        Get.snackbar(
+          'Location Services',
+          'Please enable location services to get your address automatically',
+          snackPosition: SnackPosition.BOTTOM,
+        );
+        return;
+      }
+
+      // Get current position with timeout
+      final position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      ).timeout(
+        const Duration(seconds: 15),
+        onTimeout: () {
+          throw TimeoutException('Location request timed out');
+        },
+      );
+
+      // Store coordinates
+      selectedLatitude.value = position.latitude;
+      selectedLongitude.value = position.longitude;
+
+      // Reverse geocode to get address and postcode
+      await _reverseGeocodeAndFillFields(
+        position.latitude,
+        position.longitude,
+      );
+    } on TimeoutException catch (e) {
+      debugPrint('Timeout getting current location: $e');
+      Get.snackbar(
+        'Location Timeout',
+        'Getting location took too long. Please try selecting address manually.',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    } catch (e) {
+      debugPrint('Error getting current location: $e');
+      // Silently fail - user can manually select address
+    }
+  }
+
+  void _populateSocialDefaults() {
+    final storage = _storageService;
+    if (storage == null) return;
+
+    final storedName = storage.readString('user_full_name');
+    if (storedName != null && storedName.isNotEmpty) {
+      fullNameController.text = storedName;
+    }
+
+    final storedImage = storage.readString('user_profile_picture');
+    if (storedImage != null && storedImage.isNotEmpty) {
+      socialProfileImageUrl.value = storedImage;
+    }
+  }
+
+  ImageProvider? get avatarImageProvider {
+    final file = selectedImage.value;
+    if (file != null) {
+      return FileImage(file);
+    }
+
+    final url = socialProfileImageUrl.value;
+    if (url.isNotEmpty) {
+      return NetworkImage(url);
+    }
+
+    return null;
+  }
+
+  /// Reverse geocode coordinates and fill address and postcode fields
+  Future<void> _reverseGeocodeAndFillFields(
+    double latitude,
+    double longitude,
+  ) async {
+    try {
+      final placemarks = await placemarkFromCoordinates(latitude, longitude);
+
+      if (placemarks.isNotEmpty) {
+        final placemark = placemarks.first;
+        final addressParts = <String>[];
+
+        if (placemark.street != null && placemark.street!.isNotEmpty) {
+          addressParts.add(placemark.street!);
+        }
+        if (placemark.subThoroughfare != null &&
+            placemark.subThoroughfare!.isNotEmpty) {
+          addressParts.insert(0, placemark.subThoroughfare!);
+        }
+        if (placemark.locality != null && placemark.locality!.isNotEmpty) {
+          addressParts.add(placemark.locality!);
+        }
+        if (placemark.postalCode != null && placemark.postalCode!.isNotEmpty) {
+          // Auto-fill postcode
+          postcodeController.text = placemark.postalCode!;
+          addressParts.add(placemark.postalCode!);
+        }
+        if (placemark.country != null && placemark.country!.isNotEmpty) {
+          addressParts.add(placemark.country!);
+        }
+
+        // Auto-fill address
+        addressController.text = addressParts.join(', ');
+      }
+    } catch (e) {
+      debugPrint('Error reverse geocoding: $e');
+    }
+  }
+
+  /// Navigate to map screen to select address
+  Future<void> navigateToMapScreen() async {
+    final result = await Get.toNamed(Routes.selectAddressMap);
+    if (result != null && result is Map<String, dynamic>) {
+      selectedLatitude.value = result['latitude'] as double?;
+      selectedLongitude.value = result['longitude'] as double?;
+      addressController.text = result['address'] as String? ?? '';
+
+      // Auto-fill postcode if available
+      if (result['postcode'] != null &&
+          result['postcode'].toString().isNotEmpty) {
+        postcodeController.text = result['postcode'] as String;
+      }
+    }
+  }
+}

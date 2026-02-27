@@ -1,0 +1,1393 @@
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:intl/intl.dart';
+import 'package:verithrive_dev/enduser/routes/app_routes.dart';
+import 'package:verithrive_dev/enduser/screens/cart/CartBinding.dart';
+import 'package:verithrive_dev/enduser/screens/cart/CartScreen.dart';
+import '../../core/base/base_controller.dart';
+import '../../data/repository/project_repository.dart';
+import '../../network/exceptions/not_found_exception.dart';
+import '../../utils/api_services.dart';
+
+class ConsultationBookingController extends BaseController {
+  final ProjectRepository _repository = Get.find(tag: (ProjectRepository).toString());
+
+  // Received parameters
+  String? professionalId;
+  int? durationMinutes; // Duration from previous screen
+  String? serviceName;
+  double? servicePrice;
+  String? serviceLocation;
+  String? serviceFormatId; // service_format_id for summary screen
+  String? professionalServiceFormatId; // _id for create-booking API
+  String? bookingId; // booking_id for edit mode
+  bool isEditMode = false; // Flag to indicate edit modee
+
+  // Observable variables
+  var selectedMonth = DateTime.now().obs;
+  var selectedDate = DateTime.now().obs; // Full date including year, month, day
+  var selectedTimeSlot = Rxn<String>();
+  var isLoadingAvailability = false.obs;
+
+  // Dynamic time slots list from API
+  var timeSlots = <String>[].obs;
+
+  // Availability data - true means available, false means unavailable
+  final RxMap<String, bool> slotAvailability = <String, bool>{}.obs;
+  
+  // Past time slots (disabled) - only for today's date
+  final RxMap<String, bool> pastTimeSlots = <String, bool>{}.obs;
+
+  // API response data
+  String? availableFrom;
+  String? availableUntil;
+  List<Map<String, dynamic>> unavailableTimes = [];
+  List<Map<String, dynamic>> professionalServiceFormats = [];
+  
+  // API message for display
+  var apiMessage = ''.obs;
+
+  @override
+  void onInit() {
+    try {
+      super.onInit();
+      _receiveArguments();
+      
+      // Only set current date if not in edit mode with a selected date
+      if (!isEditMode || selectedDate.value == null) {
+        final now = DateTime.now();
+        selectedDate.value = DateTime(now.year, now.month, now.day);
+        selectedMonth.value = DateTime(now.year, now.month, 1);
+      } else {
+        // Ensure selectedMonth matches the selectedDate month
+        selectedMonth.value = DateTime(selectedDate.value.year, selectedDate.value.month, 1);
+      }
+      
+      // Clear previous selection
+      selectedTimeSlot.value = null;
+      // Load availability for current date
+      loadAvailability();
+    } catch (e, stackTrace) {
+      print('CRASH PREVENTED in onInit: $e');
+      print('Stack trace: $stackTrace');
+      // Set safe defaults
+      final now = DateTime.now();
+      selectedDate.value = DateTime(now.year, now.month, now.day);
+      selectedMonth.value = DateTime(now.year, now.month, 1);
+    }
+  }
+
+  void _receiveArguments() {
+    try {
+      final arguments = Get.arguments;
+      print('========================================');
+      print('ConsultationBookingController - Received Arguments:');
+      print('========================================');
+      
+      if (arguments != null && arguments is Map<String, dynamic>) {
+        try {
+          professionalId = arguments['professional_id']?.toString();
+        } catch (e) {
+          print('Error parsing professional_id: $e');
+        }
+        
+        try {
+          if (arguments['duration_minutes'] != null) {
+            if (arguments['duration_minutes'] is int) {
+              durationMinutes = arguments['duration_minutes'] as int;
+            } else if (arguments['duration_minutes'] is num) {
+              durationMinutes = (arguments['duration_minutes'] as num).toInt();
+            }
+          }
+        } catch (e) {
+          print('Error parsing duration_minutes: $e');
+        }
+        
+        try {
+          serviceName = arguments['service_name']?.toString();
+        } catch (e) {
+          print('Error parsing service_name: $e');
+        }
+        
+        try {
+          if (arguments['price'] != null) {
+            if (arguments['price'] is double) {
+              servicePrice = arguments['price'] as double;
+            } else if (arguments['price'] is num) {
+              servicePrice = (arguments['price'] as num).toDouble();
+            }
+          }
+        } catch (e) {
+          print('Error parsing price: $e');
+        }
+        
+        try {
+          serviceLocation = arguments['location']?.toString();
+        } catch (e) {
+          print('Error parsing location: $e');
+        }
+        
+        try {
+          serviceFormatId = arguments['service_format_id']?.toString();
+        } catch (e) {
+          print('Error parsing service_format_id: $e');
+        }
+        
+        try {
+          professionalServiceFormatId = arguments['professional_service_format_id']?.toString();
+        } catch (e) {
+          print('Error parsing professional_service_format_id: $e');
+        }
+        
+        try {
+          bookingId = arguments['booking_id']?.toString();
+        } catch (e) {
+          print('Error parsing booking_id: $e');
+        }
+        
+        try {
+          isEditMode = arguments['is_edit_mode'] == true;
+        } catch (e) {
+          print('Error parsing is_edit_mode: $e');
+          isEditMode = false;
+        }
+        
+        // If edit mode and selected_date is provided, use it
+        if (isEditMode && arguments['selected_date'] != null) {
+          try {
+            DateTime? selectedDateArg;
+            if (arguments['selected_date'] is DateTime) {
+              selectedDateArg = arguments['selected_date'] as DateTime;
+            } else if (arguments['selected_date'] is String) {
+              // Try to parse string date
+              selectedDateArg = DateTime.tryParse(arguments['selected_date'] as String);
+            }
+            
+            if (selectedDateArg != null) {
+              selectedDate.value = DateTime(selectedDateArg.year, selectedDateArg.month, selectedDateArg.day);
+              selectedMonth.value = DateTime(selectedDateArg.year, selectedDateArg.month, 1);
+            }
+          } catch (e) {
+            print('Error parsing selected_date: $e');
+          }
+        }
+      
+        print('Professional ID: ${professionalId ?? "null"}');
+        print('Duration Minutes: ${durationMinutes ?? "null"}');
+        print('Service Name: ${serviceName ?? "null"}');
+        print('Service Price: ${servicePrice ?? "null"}');
+        print('Service Location: ${serviceLocation ?? "null"}');
+        print('Service Format ID (for summary): ${serviceFormatId ?? "null"}');
+        print('Professional Service Format ID (_id for create-booking): ${professionalServiceFormatId ?? "null"}');
+        print('Booking ID (for edit): ${bookingId ?? "null"}');
+        print('Is Edit Mode: $isEditMode');
+      } else {
+        print('No arguments received or arguments is not a Map');
+        print('Arguments type: ${arguments?.runtimeType ?? "null"}');
+        print('Arguments value: $arguments');
+      }
+      print('========================================');
+    } catch (e, stackTrace) {
+      print('CRASH PREVENTED in _receiveArguments: $e');
+      print('Stack trace: $stackTrace');
+      // Set defaults to prevent further crashes
+      isEditMode = false;
+    }
+  }
+
+  // Navigate to previous month (only if not current month)
+  void previousMonth() {
+    final now = DateTime.now();
+    final currentMonth = DateTime(now.year, now.month, 1);
+    final newMonth = DateTime(
+      selectedMonth.value.year,
+      selectedMonth.value.month - 1,
+    );
+    
+    // Only allow navigation if not going before current month
+    if (newMonth.isAfter(currentMonth) || newMonth.isAtSameMomentAs(currentMonth)) {
+      selectedMonth.value = newMonth;
+      // Update selected date to first available day in new month
+      final availableDays = getAvailableDays();
+      if (availableDays.isNotEmpty) {
+        selectedDate.value = availableDays.first;
+        loadAvailability();
+      }
+    }
+  }
+
+  // Navigate to next month
+  void nextMonth() {
+    selectedMonth.value = DateTime(
+      selectedMonth.value.year,
+      selectedMonth.value.month + 1,
+    );
+    // Update selected date to first day of new month
+    final availableDays = getAvailableDays();
+    if (availableDays.isNotEmpty) {
+      selectedDate.value = availableDays.first;
+      loadAvailability();
+    }
+  }
+
+  // Select a specific day
+  void selectDay(DateTime day) {
+    // Only allow selection of today or future dates
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final selectedDayDate = DateTime(day.year, day.month, day.day);
+    
+    if (selectedDayDate.isBefore(today)) {
+      return; // Don't allow selection of past dates
+    }
+    
+    selectedDate.value = selectedDayDate;
+    selectedTimeSlot.value = null; // Reset time slot selection
+    // Reload availability for the selected day
+    loadAvailability();
+  }
+
+  // Select a time slot
+  void selectTimeSlot(String time) {
+    try {
+      if (time.isEmpty) {
+        print('Error: Time slot is empty');
+        return;
+      }
+      
+      if (slotAvailability[time] != true) {
+        print('Time slot is not available: $time');
+        return;
+      }
+      
+      selectedTimeSlot.value = time;
+      
+      // Parse the selected time slot to get from time
+      TimeOfDay? fromTime = _parseTimeSlotString(time);
+      if (fromTime == null) {
+        print('Error: Could not parse time slot: $time');
+        selectedTimeSlot.value = null;
+        return;
+      }
+      
+      // Calculate until time based on duration
+      int slotDuration = durationMinutes ?? 30;
+      TimeOfDay untilTime = _addMinutes(fromTime, slotDuration);
+      
+      // Get service format details - use from arguments first, then from API response
+      String finalServiceName = serviceName ?? 'Consultation - in person';
+      double finalServicePrice = servicePrice ?? 0.0;
+      String finalLocation = serviceLocation ?? '';
+      // service_format_id for summary screen
+      String finalServiceFormatId = serviceFormatId ?? '';
+      // professional_service_format_id (_id) for create-booking/update-booking API
+      String finalProfessionalServiceFormatId = professionalServiceFormatId ?? '';
+      
+      // Always try to extract from API response if available (especially important for edit mode)
+      if (professionalServiceFormats.isNotEmpty) {
+        Map<String, dynamic>? matchedServiceFormat;
+        
+        // Try to match by service_format_name and duration_minutes
+        if (serviceName != null && durationMinutes != null) {
+          try {
+            matchedServiceFormat = professionalServiceFormats.firstWhere(
+              (format) {
+                String? formatName = format['service_format_name']?.toString();
+                int? formatDuration = format['duration_minutes'] is num 
+                    ? (format['duration_minutes'] as num).toInt()
+                    : null;
+                return formatName == serviceName && formatDuration == durationMinutes;
+              },
+            );
+          } catch (e) {
+            // No exact match found, try name only
+            matchedServiceFormat = null;
+          }
+        }
+        
+        // If no match found, try to match by service_format_name only
+        if (matchedServiceFormat == null && serviceName != null) {
+          try {
+            matchedServiceFormat = professionalServiceFormats.firstWhere(
+              (format) => format['service_format_name']?.toString() == serviceName,
+            );
+          } catch (e) {
+            // No match found
+            matchedServiceFormat = null;
+          }
+        }
+        
+        // If still no match, use first available service format
+        if (matchedServiceFormat == null && professionalServiceFormats.isNotEmpty) {
+          matchedServiceFormat = professionalServiceFormats.first;
+        }
+        
+        // Use API response if not provided in arguments
+        if (matchedServiceFormat != null) {
+          try {
+            if (serviceName == null) {
+              finalServiceName = matchedServiceFormat['service_format_name']?.toString() ?? finalServiceName;
+            }
+          } catch (e) {
+            print('Error extracting service_name from matched format: $e');
+          }
+          
+          try {
+            if (servicePrice == null) {
+              // Check if it's a bundle (has bundle_price) or regular (has price)
+              bool isBundle = matchedServiceFormat['is_bundle'] == true;
+              
+              if (isBundle) {
+                // For bundles, use bundle_price
+                if (matchedServiceFormat['bundle_price'] != null) {
+                  if (matchedServiceFormat['bundle_price'] is num) {
+                    finalServicePrice = (matchedServiceFormat['bundle_price'] as num).toDouble();
+                  }
+                }
+              } else {
+                // For non-bundles, use price
+                if (matchedServiceFormat['price'] != null) {
+                  if (matchedServiceFormat['price'] is num) {
+                    finalServicePrice = (matchedServiceFormat['price'] as num).toDouble();
+                  }
+                }
+              }
+            }
+          } catch (e) {
+            print('Error extracting price from matched format: $e');
+          }
+          
+          // Extract service_format_id and _id from API response
+          // Always update from matched format if available (overrides arguments)
+          try {
+            // Note: API response doesn't have service_format_id, only _id
+            // Use _id as service_format_id if not provided in arguments
+            // Update service_format_id (use _id if service_format_id doesn't exist in response)
+            String? extractedServiceFormatId = matchedServiceFormat['service_format_id']?.toString();
+            if (extractedServiceFormatId == null || extractedServiceFormatId.isEmpty) {
+              // Fallback to _id if service_format_id is not available
+              extractedServiceFormatId = matchedServiceFormat['_id']?.toString() ?? 
+                                         matchedServiceFormat['id']?.toString();
+            }
+            if (extractedServiceFormatId != null && extractedServiceFormatId.isNotEmpty) {
+              //finalServiceFormatId = extractedServiceFormatId;
+            }
+            
+            // Update professional_service_format_id (_id) - CRITICAL for update-booking API
+            String? extractedProfessionalServiceFormatId = matchedServiceFormat['_id']?.toString() ?? 
+                                                           matchedServiceFormat['id']?.toString();
+            if (extractedProfessionalServiceFormatId != null && extractedProfessionalServiceFormatId.isNotEmpty) {
+              finalProfessionalServiceFormatId = extractedProfessionalServiceFormatId;
+            }
+          } catch (e) {
+            print('Error extracting IDs from matched format: $e');
+          }
+        }
+        
+        // Debug logging for edit mode
+        if (isEditMode) {
+          print('========================================');
+          print('Edit Mode - Service Format Matching:');
+          print('serviceName: $serviceName');
+          print('durationMinutes: $durationMinutes');
+          print('professionalServiceFormats count: ${professionalServiceFormats.length}');
+          if (professionalServiceFormats.isNotEmpty) {
+            print('Available formats:');
+            for (var format in professionalServiceFormats) {
+                try {
+                String formatName = format['service_format_name']?.toString() ?? 'Unknown';
+                int? duration = format['duration_minutes'] is num 
+                    ? (format['duration_minutes'] as num).toInt()
+                    : null;
+                String? id = format['_id']?.toString() ?? format['id']?.toString();
+                String? serviceFormatId = format['service_format_id']?.toString();
+                bool isBundle = format['is_bundle'] == true;
+                String priceInfo = isBundle 
+                    ? 'bundle_price: ${format['bundle_price']}'
+                    : 'price: ${format['price']}';
+                print('  - $formatName (duration: $duration, _id: $id, service_format_id: $serviceFormatId, $priceInfo)');
+              } catch (e) {
+                print('  - Error printing format: $e');
+              }
+            }
+          }
+          print('matchedServiceFormat: $matchedServiceFormat');
+          print('finalServiceFormatId: $finalServiceFormatId');
+          print('finalProfessionalServiceFormatId: $finalProfessionalServiceFormatId');
+          print('========================================');
+        }
+      } else {
+        // If professionalServiceFormats is empty, log warning
+        if (isEditMode) {
+          print('WARNING: professionalServiceFormats is empty! Cannot extract service format IDs.');
+          print('This may cause issues when updating the booking.');
+        }
+      }
+      
+      // Final validation for edit mode - ensure professional_service_format_id is present
+      if (isEditMode && finalProfessionalServiceFormatId.isEmpty) {
+        print('ERROR: professional_service_format_id is still empty after extraction!');
+        print('This will cause update-booking API to fail.');
+      }
+      
+      print('========================================');
+      print('ConsultationBookingController - Passing to Cart:');
+      print('service_format_id (for summary): $finalServiceFormatId');
+      print('professional_service_format_id (_id for create-booking/update-booking): $finalProfessionalServiceFormatId');
+      print('booking_id (for edit mode): $bookingId');
+      print('is_edit_mode: $isEditMode');
+      if (isEditMode && finalProfessionalServiceFormatId.isEmpty) {
+        print('WARNING: professional_service_format_id is EMPTY - update-booking API will fail!');
+      }
+      print('========================================');
+      
+      // Automatically navigate to cart screen when time slot is selected
+      Future.delayed(Duration(milliseconds: 300), () async {
+        try {
+          // Get available time slots (only AVAILABLE, not PAST or UNAVAILABLE)
+          List<TimeOfDay> availableTimeSlots = [];
+          for (String slotString in timeSlots) {
+            if (slotAvailability[slotString] == true) {
+              TimeOfDay? slotTime = _parseTimeSlotString(slotString);
+              if (slotTime != null) {
+                availableTimeSlots.add(slotTime);
+              }
+            }
+          }
+          
+          // Navigate to cart with pre-filled times and service details
+          final result = await Get.to(
+            () => CartScreen(),
+            binding: CartBinding(),
+            arguments: {
+              'selected_date': selectedDate.value,
+              'from_time': fromTime,
+              'until_time': untilTime,
+              'service_name': finalServiceName,
+              'price': finalServicePrice,
+              'location': finalLocation,
+              'professional_id': professionalId ?? '',
+              'service_format_id': finalServiceFormatId,
+              'professional_service_format_id': finalProfessionalServiceFormatId,
+              'booking_id': bookingId,
+              'is_edit_mode': isEditMode,
+              'available_time_slots': availableTimeSlots,
+              'slot_duration_minutes': slotDuration,
+            },
+          );
+          // Clear selection when returning from cart
+          if (result == true || result == null) {
+            selectedTimeSlot.value = null;
+          }
+        } catch (e) {
+          print('CRASH PREVENTED in selectTimeSlot navigation: $e');
+          selectedTimeSlot.value = null;
+        }
+      });
+    } catch (e, stackTrace) {
+      print('CRASH PREVENTED in selectTimeSlot: $e');
+      print('Stack trace: $stackTrace');
+      selectedTimeSlot.value = null;
+    }
+  }
+
+  // Parse time slot string like "2:30 PM" to TimeOfDay
+  TimeOfDay? _parseTimeSlotString(String timeSlot) {
+    try {
+      if (timeSlot.isEmpty) return null;
+      
+      // Remove spaces and split by space to get time and period
+      String cleaned = timeSlot.trim();
+      List<String> parts = cleaned.split(' ');
+      
+      if (parts.length < 2) return null;
+      
+      String timePart = parts[0]; // "2:30" or "2"
+      String period = parts[1].toUpperCase(); // "AM" or "PM"
+      
+      if (period != 'AM' && period != 'PM') return null;
+      
+      // Split time part by colon
+      List<String> timeComponents = timePart.split(':');
+      if (timeComponents.isEmpty) return null;
+      
+      int? hour = int.tryParse(timeComponents[0].trim());
+      int minute = 0;
+      
+      if (hour == null) return null;
+      
+      if (timeComponents.length > 1) {
+        minute = int.tryParse(timeComponents[1].trim()) ?? 0;
+      }
+      
+      // Validate hour and minute
+      if (hour < 1 || hour > 12 || minute < 0 || minute >= 60) {
+        return null;
+      }
+      
+      // Convert to 24-hour format
+      if (period == 'PM' && hour != 12) {
+        hour += 12;
+      } else if (period == 'AM' && hour == 12) {
+        hour = 0;
+      }
+      
+      return TimeOfDay(hour: hour, minute: minute);
+    } catch (e) {
+      print('Error parsing time slot: $timeSlot, error: $e');
+      return null;
+    }
+  }
+
+  // Check if a time slot is available
+  bool isSlotAvailable(String time) {
+    return slotAvailability[time] ?? false;
+  }
+  
+  // Check if a time slot is disabled (past time for today)
+  bool isSlotDisabled(String time) {
+    return pastTimeSlots[time] ?? false;
+  }
+  
+  // Check if a time slot is unavailable (from API)
+  bool isSlotUnavailable(String time) {
+    // Unavailable if not available AND not disabled (disabled is separate)
+    return !(slotAvailability[time] ?? false) && !(pastTimeSlots[time] ?? false);
+  }
+
+  // Check if a time slot is selected
+  bool isSlotSelected(String time) {
+    return selectedTimeSlot.value == time;
+  }
+
+  // Format month and year
+  String getFormattedMonth() {
+    try {
+      return DateFormat('MMMM yyyy').format(selectedMonth.value);
+    } catch (e) {
+      print('Error formatting month: $e');
+      return DateFormat('MMMM yyyy').format(DateTime.now());
+    }
+  }
+
+  // Get all days from current date onwards in the selected month
+  List<DateTime> getAvailableDays() {
+    DateTime now = DateTime.now();
+    DateTime today = DateTime(now.year, now.month, now.day);
+    
+    // Get the first and last day of the selected month
+    DateTime firstDayOfMonth = DateTime(selectedMonth.value.year, selectedMonth.value.month, 1);
+    DateTime lastDayOfMonth = DateTime(selectedMonth.value.year, selectedMonth.value.month + 1, 0);
+    
+    // Determine the start date (today if in current month, otherwise first day of selected month)
+    DateTime startDate;
+    if (selectedMonth.value.year == now.year && selectedMonth.value.month == now.month) {
+      startDate = today; // Start from today if viewing current month
+    } else {
+      startDate = firstDayOfMonth; // Start from first day if viewing future month
+    }
+    
+    // Generate all days from startDate to lastDayOfMonth
+    List<DateTime> availableDays = [];
+    DateTime currentDate = startDate;
+    
+    while (currentDate.isBefore(lastDayOfMonth) || currentDate.isAtSameMomentAs(lastDayOfMonth)) {
+      availableDays.add(DateTime(currentDate.year, currentDate.month, currentDate.day));
+      currentDate = currentDate.add(Duration(days: 1));
+    }
+    
+    return availableDays;
+  }
+
+  // Check if a day is selected
+  bool isDaySelected(DateTime day) {
+    DateTime dayDate = DateTime(day.year, day.month, day.day);
+    DateTime selectedDayDate = DateTime(selectedDate.value.year, selectedDate.value.month, selectedDate.value.day);
+    return dayDate.isAtSameMomentAs(selectedDayDate);
+  }
+
+
+  // Load availability data from API
+  Future<void> loadAvailability() async {
+    try {
+      if (professionalId == null || professionalId!.isEmpty) {
+        print('Error: Professional ID is null or empty');
+        isLoadingAvailability.value = false;
+        apiMessage.value = 'Professional ID is required';
+        return;
+      }
+
+      isLoadingAvailability.value = true;
+      
+      // Format date as DD/MM/YYYY
+      String formattedDate;
+      try {
+        formattedDate = DateFormat('dd/MM/yyyy').format(selectedDate.value);
+      } catch (e) {
+        print('Error formatting date: $e');
+        formattedDate = DateFormat('dd/MM/yyyy').format(DateTime.now());
+      }
+      
+      callAvailabilityAPI(formattedDate);
+    } catch (e, stackTrace) {
+      print('CRASH PREVENTED in loadAvailability: $e');
+      print('Stack trace: $stackTrace');
+      isLoadingAvailability.value = false;
+      apiMessage.value = 'Error loading availability';
+    }
+  }
+
+  void callAvailabilityAPI(String date) {
+    Map<String, dynamic> toJson() {
+      final Map<String, dynamic> data = <String, dynamic>{};
+      data['date'] = date;
+      data['professional_id'] = professionalId;
+      data['professional_service_format_id'] = serviceFormatId;
+
+      print('========================================');
+      print('Availability API Request (GET):');
+      print(data);
+      print('========================================');
+      
+      return data;
+    }
+    
+    var service = _repository.sendGetApiWithParamRequest(toJson, timeslot_availability, true);
+    callDataService(
+      service,
+      onSuccess: _handleAvailabilitySuccess,
+      onError: _handleAvailabilityError,
+      isShowLoading: true,
+    );
+  }
+
+  Future<void> _handleAvailabilitySuccess(dynamic baseResponse) async {
+    try {
+      Map<String, dynamic> responseData;
+      if (baseResponse != null && baseResponse.data != null) {
+        responseData = baseResponse.data is Map<String, dynamic>
+            ? baseResponse.data
+            : baseResponse.data as Map<String, dynamic>;
+      } else if (baseResponse is Map<String, dynamic>) {
+        responseData = baseResponse;
+      } else {
+        throw Exception('Invalid response format');
+      }
+
+      bool success = responseData['success'] ?? false;
+      String message = responseData['message'] ?? '';
+      
+      if (success == true && responseData['data'] != null) {
+        Map<String, dynamic>? dataMap;
+        try {
+          if (responseData['data'] is Map<String, dynamic>) {
+            dataMap = responseData['data'] as Map<String, dynamic>;
+          } else {
+            print('Error: data is not a Map');
+            throw Exception('Invalid data format');
+          }
+        } catch (e) {
+          print('Error parsing data map: $e');
+          throw Exception('Invalid data format');
+        }
+        
+        if (dataMap == null) {
+          throw Exception('Data map is null');
+        }
+        
+        try {
+          availableFrom = dataMap['available_from']?.toString();
+        } catch (e) {
+          print('Error parsing available_from: $e');
+        }
+        
+        try {
+          availableUntil = dataMap['available_until']?.toString();
+        } catch (e) {
+          print('Error parsing available_until: $e');
+        }
+        
+        // Parse unavailable times
+        unavailableTimes = [];
+        try {
+          if (dataMap['unavailable_times'] != null) {
+            if (dataMap['unavailable_times'] is List) {
+              unavailableTimes = List<Map<String, dynamic>>.from(
+                (dataMap['unavailable_times'] as List).map((item) {
+                  if (item is Map<String, dynamic>) {
+                    return item;
+                  }
+                  return <String, dynamic>{};
+                }),
+              );
+            }
+          }
+        } catch (e) {
+          print('Error parsing unavailable_times: $e');
+          unavailableTimes = [];
+        }
+        
+        // Parse professional service formats
+        professionalServiceFormats = [];
+        try {
+          if (dataMap['professional_service_formats'] != null) {
+            if (dataMap['professional_service_formats'] is List) {
+              professionalServiceFormats = List<Map<String, dynamic>>.from(
+                (dataMap['professional_service_formats'] as List).map((item) {
+                  try {
+                    if (item is Map<String, dynamic>) {
+                      // Create a safe copy of the item to prevent crashes
+                      Map<String, dynamic> safeItem = {};
+                      
+                      // Copy all fields safely using containsKey to avoid crashes
+                      if (item.containsKey('_id')) safeItem['_id'] = item['_id'];
+                      if (item.containsKey('id')) safeItem['id'] = item['id'];
+                      if (item.containsKey('service_format_name')) safeItem['service_format_name'] = item['service_format_name'];
+                      if (item.containsKey('is_bundle')) safeItem['is_bundle'] = item['is_bundle'];
+                      if (item.containsKey('duration_minutes')) safeItem['duration_minutes'] = item['duration_minutes'];
+                      
+                      // Handle bundle-specific fields
+                      if (item['is_bundle'] == true) {
+                        if (item.containsKey('bundle_of')) safeItem['bundle_of'] = item['bundle_of'];
+                        if (item.containsKey('bundle_price')) safeItem['bundle_price'] = item['bundle_price'];
+                        if (item.containsKey('offer_text')) safeItem['offer_text'] = item['offer_text'];
+                      } else {
+                        // Handle non-bundle fields
+                        if (item.containsKey('price')) safeItem['price'] = item['price'];
+                        if (item.containsKey('offer_text')) safeItem['offer_text'] = item['offer_text'];
+                      }
+                      
+                      // Optional fields (may not exist in API response)
+                      if (item.containsKey('service_format_id')) safeItem['service_format_id'] = item['service_format_id'];
+                      if (item.containsKey('service_format_date')) safeItem['service_format_date'] = item['service_format_date'];
+                      if (item.containsKey('timezone')) safeItem['timezone'] = item['timezone'];
+                      
+                      return safeItem;
+                    }
+                    return <String, dynamic>{};
+                  } catch (e) {
+                    print('Error processing service format item: $e');
+                    return <String, dynamic>{};
+                  }
+                }).where((item) => item.isNotEmpty), // Filter out empty maps
+              );
+            }
+          }
+        } catch (e) {
+          print('Error parsing professional_service_formats: $e');
+          professionalServiceFormats = [];
+        }
+        
+        print('========================================');
+        print('Availability API Success:');
+        print('Available From: $availableFrom');
+        print('Available Until: $availableUntil');
+        print('Unavailable Times: $unavailableTimes');
+        print('========================================');
+        
+        // Generate time slots from API response
+        _generateTimeSlotsFromAPI();
+        
+        // Clear API message on success
+        apiMessage.value = '';
+      } else {
+        // Show error message when success is false
+        print('Availability API Error: $message');
+        timeSlots.value = [];
+        slotAvailability.value = {};
+        pastTimeSlots.value = {};
+        
+        // Store API message for display in UI
+        apiMessage.value = message.isNotEmpty ? message : 'No availability found';
+        
+        // Don't show dialog, just display message in UI
+      }
+    } catch (e) {
+      print('Error parsing availability response: $e');
+      timeSlots.value = [];
+      slotAvailability.value = {};
+      pastTimeSlots.value = {};
+    } finally {
+      isLoadingAvailability.value = false;
+    }
+  }
+
+  void _handleAvailabilityError(dynamic e) {
+    try {
+      print('Availability API Error: $e');
+
+      if (e is NotFoundException) {
+        timeSlots.value = [];
+        slotAvailability.value = {};
+        pastTimeSlots.value = {};
+        apiMessage.value = e.message?.toString() ?? 'No availability found';
+        isLoadingAvailability.value = false;
+      } else {
+        // Handle other errors
+        timeSlots.value = [];
+        slotAvailability.value = {};
+        pastTimeSlots.value = {};
+        apiMessage.value = 'Error loading availability';
+        isLoadingAvailability.value = false;
+      }
+    } catch (error) {
+      print('CRASH PREVENTED in _handleAvailabilityError: $error');
+      isLoadingAvailability.value = false;
+    }
+  }
+
+  void _generateTimeSlotsFromAPIOld() {
+    try {
+      if (availableFrom == null || availableUntil == null || 
+          availableFrom!.isEmpty || availableUntil!.isEmpty) {
+        print('Error: available_from or available_until is null or empty');
+        timeSlots.value = [];
+        slotAvailability.value = {};
+        pastTimeSlots.value = {};
+        return;
+      }
+
+      // Parse available_from and available_until (format: "HH:mm")
+      TimeOfDay? fromTime = _parseTimeString(availableFrom!);
+      TimeOfDay? untilTime = _parseTimeString(availableUntil!);
+      
+      if (fromTime == null || untilTime == null) {
+        print('Error: Could not parse time strings - from: $availableFrom, until: $availableUntil');
+        timeSlots.value = [];
+        slotAvailability.value = {};
+        pastTimeSlots.value = {};
+        return;
+      }
+
+    // Use duration from previous screen, default to 30 minutes if not provided
+    int slotDuration = durationMinutes ?? 30;
+    
+    // Check if selected date is today
+    bool isToday = _isToday();
+    
+    // Get current time for comparison (only needed if today is selected)
+    TimeOfDay? currentTimeOfDay;
+    if (isToday) {
+      final now = DateTime.now();
+      currentTimeOfDay = TimeOfDay(hour: now.hour, minute: now.minute);
+    }
+    
+    // Generate time slots
+    List<String> slots = [];
+    Map<String, bool> availability = {};
+    Map<String, bool> pastSlots = {};
+    
+    TimeOfDay currentTime = fromTime;
+    
+    while (_isTimeBeforeOrEqual(currentTime, untilTime)) {
+      String timeSlot = _formatTimeSlot(currentTime);
+      slots.add(timeSlot);
+      
+      // Check if this time slot overlaps with unavailable_times (from API)
+      // Pass slot duration to check if entire slot overlaps with unavailable range
+      bool isUnavailable = _isTimeSlotUnavailable(currentTime, slotDuration);
+      
+      // Check if time slot is in the past (only for today)
+      bool isPast = false;
+      if (isToday && currentTimeOfDay != null) {
+        isPast = _isTimeSlotInPast(currentTime, currentTimeOfDay);
+        pastSlots[timeSlot] = isPast;
+      } else {
+        pastSlots[timeSlot] = false;
+      }
+      
+      // Past slots should not be available, but keep unavailable logic separate
+      // Availability is false if either unavailable OR past
+      availability[timeSlot] = !isUnavailable && !isPast;
+      
+      // Move to next slot
+      currentTime = _addMinutes(currentTime, slotDuration);
+    }
+    
+    timeSlots.value = slots;
+    slotAvailability.value = availability;
+    pastTimeSlots.value = pastSlots;
+    
+      print('Generated ${slots.length} time slots');
+      print('Availability map: $availability');
+      if (isToday) {
+        print('Today is selected - past time slots are disabled');
+      }
+    } catch (e, stackTrace) {
+      print('CRASH PREVENTED in _generateTimeSlotsFromAPI: $e');
+      print('Stack trace: $stackTrace');
+      timeSlots.value = [];
+      slotAvailability.value = {};
+      pastTimeSlots.value = {};
+    }
+  }
+
+  void _generateTimeSlotsFromAPI() {
+    try {
+      // Validate input data
+      if (availableFrom == null || availableUntil == null ||
+          availableFrom!.isEmpty || availableUntil!.isEmpty) {
+        print('Error: available_from or available_until is null or empty');
+        timeSlots.value = [];
+        slotAvailability.value = {};
+        pastTimeSlots.value = {};
+        return;
+      }
+
+      // Parse available_from and available_until (format: "HH:mm")
+      TimeOfDay? fromTime = _parseTimeString(availableFrom!);
+      TimeOfDay? untilTime = _parseTimeString(availableUntil!);
+
+      if (fromTime == null || untilTime == null) {
+        print('Error: Could not parse time strings - from: $availableFrom, until: $availableUntil');
+        timeSlots.value = [];
+        slotAvailability.value = {};
+        pastTimeSlots.value = {};
+        return;
+      }
+
+      // Use duration from previous screen, default to 30 minutes if not provided
+      int slotDuration = durationMinutes ?? 30;
+
+      // CRITICAL FIX: Validate slot duration to prevent infinite loops
+      if (slotDuration <= 0) {
+        print('Error: Invalid slot duration: $slotDuration. Using default 30 minutes.');
+        slotDuration = 30;
+      }
+
+      // Additional safety check: limit maximum duration to prevent crashes
+      if (slotDuration > 480) { // 8 hours max
+        print('Warning: Slot duration too large: $slotDuration. Capping at 480 minutes.');
+        slotDuration = 480;
+      }
+
+      // Log slot generation parameters
+      print('========================================');
+      print('Generating Time Slots:');
+      print('Available From: $availableFrom');
+      print('Available Until: $availableUntil');
+      print('Slot Duration: $slotDuration minutes');
+      print('Unavailable Times: $unavailableTimes');
+      print('========================================');
+
+      // Check if selected date is today
+      bool isToday = _isToday();
+
+      // Get current time for comparison (only needed if today is selected)
+      TimeOfDay? currentTimeOfDay;
+      if (isToday) {
+        try {
+          final now = DateTime.now();
+          currentTimeOfDay = TimeOfDay(hour: now.hour, minute: now.minute);
+        } catch (e) {
+          print('Error getting current time: $e');
+          currentTimeOfDay = null;
+        }
+      }
+
+      // Generate time slots
+      List<String> slots = [];
+      Map<String, bool> availability = {};
+      Map<String, bool> pastSlots = {};
+      Set<int> slotStartMinutesSet = {}; // Track slot start times to avoid duplicates
+
+      TimeOfDay currentTime = fromTime;
+
+      // CRITICAL FIX: Add safety counter to prevent infinite loops
+      int maxIterations = 1000; // Safety limit (e.g., 15-minute slots over 24 hours = ~96 slots)
+      int iterationCount = 0;
+
+      // Convert times to minutes for easier comparison
+      int fromMinutes = fromTime.hour * 60 + fromTime.minute;
+      int untilMinutes = untilTime.hour * 60 + untilTime.minute;
+
+      // Handle cases where until time is on next day (e.g., from 22:00 to 02:00)
+      if (untilMinutes <= fromMinutes) {
+        untilMinutes += 24 * 60; // Add 24 hours
+      }
+
+      // Collect boundary times from unavailable periods
+      // Only include boundaries that align with slot duration OR are at major unavailable period boundaries
+      List<int> boundaryTimes = [];
+      Set<int> majorBoundaries = {}; // Start of first unavailable period, end of last
+      
+      // Find major boundaries (start of first unavailable, end of last unavailable in sequence)
+      if (unavailableTimes.isNotEmpty) {
+        List<int> allBoundaries = [];
+        for (var unavailable in unavailableTimes) {
+          try {
+            if (unavailable is! Map<String, dynamic>) continue;
+            
+            String? fromStr = unavailable['from']?.toString();
+            String? toStr = unavailable['to']?.toString();
+            
+            if (fromStr != null && toStr != null && 
+                fromStr.isNotEmpty && toStr.isNotEmpty) {
+              TimeOfDay? unavailableFromTime = _parseTimeString(fromStr);
+              TimeOfDay? unavailableToTime = _parseTimeString(toStr);
+              
+              if (unavailableFromTime != null && unavailableToTime != null) {
+                int unavailableFromMinutes = unavailableFromTime.hour * 60 + unavailableFromTime.minute;
+                int unavailableToMinutes = unavailableToTime.hour * 60 + unavailableToTime.minute;
+                
+                allBoundaries.add(unavailableFromMinutes);
+                allBoundaries.add(unavailableToMinutes);
+              }
+            }
+          } catch (e) {
+            continue;
+          }
+        }
+        allBoundaries.sort();
+        if (allBoundaries.isNotEmpty) {
+          majorBoundaries.add(allBoundaries.first); // First unavailable start
+          majorBoundaries.add(allBoundaries.last);  // Last unavailable end
+        }
+      }
+      
+      // Collect boundaries, prioritizing major ones and those that align with slot duration
+      for (var unavailable in unavailableTimes) {
+        try {
+          if (unavailable is! Map<String, dynamic>) continue;
+          
+          String? fromStr = unavailable['from']?.toString();
+          String? toStr = unavailable['to']?.toString();
+          
+          if (fromStr != null && toStr != null && 
+              fromStr.isNotEmpty && toStr.isNotEmpty) {
+            TimeOfDay? unavailableFromTime = _parseTimeString(fromStr);
+            TimeOfDay? unavailableToTime = _parseTimeString(toStr);
+            
+            if (unavailableFromTime != null && unavailableToTime != null) {
+              int unavailableFromMinutes = unavailableFromTime.hour * 60 + unavailableFromTime.minute;
+              int unavailableToMinutes = unavailableToTime.hour * 60 + unavailableToTime.minute;
+              
+              // Check if boundary aligns with slot duration (is a multiple of slotDuration from fromMinutes)
+              bool fromAligns = (unavailableFromMinutes - fromMinutes) % slotDuration == 0;
+              bool toAligns = (unavailableToMinutes - fromMinutes) % slotDuration == 0;
+              bool fromIsMajor = majorBoundaries.contains(unavailableFromMinutes);
+              bool toIsMajor = majorBoundaries.contains(unavailableToMinutes);
+              
+              // Add boundary if it aligns with slot duration OR is a major boundary
+              if (unavailableFromMinutes >= fromMinutes && unavailableFromMinutes <= untilMinutes) {
+                if (fromAligns || fromIsMajor) {
+                  boundaryTimes.add(unavailableFromMinutes);
+                }
+              }
+              if (unavailableToMinutes >= fromMinutes && unavailableToMinutes <= untilMinutes) {
+                if (toAligns || toIsMajor) {
+                  boundaryTimes.add(unavailableToMinutes);
+                }
+              }
+            }
+          }
+        } catch (e) {
+          print('Error processing unavailable time boundaries: $e');
+          continue;
+        }
+      }
+      boundaryTimes.sort();
+      
+      // Generate slots sequentially, inserting boundaries and continuing intervals from boundaries
+      List<int> sortedSlotTimes = [];
+      int currentMinutes = fromMinutes;
+      int boundaryIndex = 0;
+      
+      while (currentMinutes <= untilMinutes && iterationCount < maxIterations) {
+        iterationCount++;
+        
+        // Check if slot starting at currentMinutes would fit (start + duration <= until)
+        if (currentMinutes + slotDuration > untilMinutes) {
+          // Slot would extend beyond available time, skip it
+          break;
+        }
+        
+        // Check if there's a boundary before next regular slot
+        int nextRegularSlot = currentMinutes + slotDuration;
+        bool foundBoundary = false;
+        
+        // Look for boundaries between current and next regular slot
+        while (boundaryIndex < boundaryTimes.length) {
+          int boundary = boundaryTimes[boundaryIndex];
+          
+          // Skip boundaries that are before current position
+          if (boundary < currentMinutes) {
+            boundaryIndex++;
+            continue;
+          }
+          
+          // If boundary is after next regular slot, process regular slot first
+          if (boundary >= nextRegularSlot) {
+            break;
+          }
+          
+          // Found a boundary between current and next regular slot
+          // Check if slot starting at boundary would fit
+          if (boundary + slotDuration <= untilMinutes) {
+            if (!sortedSlotTimes.contains(boundary)) {
+              sortedSlotTimes.add(boundary);
+            }
+            // Continue from boundary instead of current position
+            currentMinutes = boundary;
+            foundBoundary = true;
+            boundaryIndex++;
+            break;
+          } else {
+            // Boundary slot would extend beyond available time, skip this boundary
+            boundaryIndex++;
+          }
+        }
+        
+        // If no boundary found, add regular slot and move to next
+        if (!foundBoundary) {
+          if (!sortedSlotTimes.contains(currentMinutes)) {
+            sortedSlotTimes.add(currentMinutes);
+          }
+          currentMinutes = nextRegularSlot;
+        } else {
+          // Already updated currentMinutes to boundary, continue loop
+          continue;
+        }
+      }
+      
+      // Sort final list
+      sortedSlotTimes.sort();
+      
+      // Generate slots from sorted times
+      iterationCount = 0;
+      for (int slotStartMinutes in sortedSlotTimes) {
+        if (iterationCount >= maxIterations) break;
+        iterationCount++;
+        
+        try {
+          // Calculate current hour and minute
+          int hour = (slotStartMinutes ~/ 60) % 24;
+          int minute = slotStartMinutes % 60;
+          currentTime = TimeOfDay(hour: hour, minute: minute);
+
+          String timeSlot = _formatTimeSlot(currentTime);
+
+          // Skip duplicate slots (by time string)
+          if (slots.contains(timeSlot)) {
+            continue;
+          }
+
+          // Add slot regardless of availability - we'll mark it as unavailable later
+          slots.add(timeSlot);
+          slotStartMinutesSet.add(slotStartMinutes);
+
+          // Check if this time slot overlaps with unavailable_times (from API)
+          // Pass slot duration to check if entire slot overlaps with unavailable range
+          bool isUnavailable = _isTimeSlotUnavailable(currentTime, slotDuration);
+
+          // Check if time slot is in the past (only for today)
+          bool isPast = false;
+          if (isToday && currentTimeOfDay != null) {
+            try {
+              isPast = _isTimeSlotInPast(currentTime, currentTimeOfDay);
+              pastSlots[timeSlot] = isPast;
+            } catch (e) {
+              print('Error checking if slot is in past: $e');
+              pastSlots[timeSlot] = false;
+            }
+          } else {
+            pastSlots[timeSlot] = false;
+          }
+
+          // Availability is false if either unavailable OR past
+          // Note: Slots that overlap unavailable times are still generated, just marked unavailable
+          availability[timeSlot] = !isUnavailable && !isPast;
+          
+          // Debug logging for ALL slots
+          TimeOfDay slotEndTime = _addMinutes(currentTime, slotDuration);
+          String slotEndStr = _formatTimeSlot(slotEndTime);
+          String status = isUnavailable ? "UNAVAILABLE" : isPast ? "PAST" : "AVAILABLE";
+          print('Slot ${slots.length}: $timeSlot - $slotEndStr ($status)');
+
+        } catch (e) {
+          print('Error processing time slot at $slotStartMinutes: $e');
+          continue;
+        }
+      }
+
+      // Check if we hit the iteration limit (potential infinite loop)
+      if (iterationCount >= maxIterations) {
+        print('WARNING: Hit maximum iteration limit. Possible infinite loop prevented.');
+      }
+
+      // Final validation
+      if (slots.isEmpty) {
+        print('Warning: No time slots generated. Check availability times.');
+      }
+
+      timeSlots.value = slots;
+      slotAvailability.value = availability;
+      pastTimeSlots.value = pastSlots;
+
+      print('========================================');
+      print('Slot Generation Complete:');
+      print('Total slots generated: ${slots.length}');
+      print('Slot duration: $slotDuration minutes');
+      print('Available from: $availableFrom, until: $availableUntil');
+      print('Available slots: ${availability.values.where((v) => v == true).length}');
+      print('Unavailable slots: ${availability.values.where((v) => v == false).length}');
+      if (isToday) {
+        print('Today is selected - past time slots are disabled');
+      }
+      print('----------------------------------------');
+      print('All Generated Slots:');
+      for (int i = 0; i < slots.length; i++) {
+        String slot = slots[i];
+        bool isAvail = availability[slot] ?? false;
+        bool isUnavail = !isAvail && !(pastSlots[slot] ?? false);
+        bool isPast = pastSlots[slot] ?? false;
+        String status = isUnavail ? "UNAVAILABLE" : isPast ? "PAST" : "AVAILABLE";
+        print('  ${i + 1}. $slot ($status)');
+      }
+      print('========================================');
+
+    } catch (e, stackTrace) {
+      print('CRASH PREVENTED in _generateTimeSlotsFromAPI: $e');
+      print('Stack trace: $stackTrace');
+      timeSlots.value = [];
+      slotAvailability.value = {};
+      pastTimeSlots.value = {};
+    }
+  }
+
+  TimeOfDay? _parseTimeString(String timeStr) {
+    try {
+      if (timeStr.isEmpty) return null;
+      
+      List<String> parts = timeStr.split(':');
+      if (parts.length >= 2) {
+        int? hour = int.tryParse(parts[0].trim());
+        int? minute = int.tryParse(parts[1].trim());
+        
+        if (hour != null && minute != null && 
+            hour >= 0 && hour < 24 && minute >= 0 && minute < 60) {
+          return TimeOfDay(hour: hour, minute: minute);
+        }
+      }
+    } catch (e) {
+      print('Error parsing time string: $timeStr, error: $e');
+    }
+    return null;
+  }
+
+  String _formatTimeSlot(TimeOfDay time) {
+    int hour = time.hour;
+    int minute = time.minute;
+    String period = hour >= 12 ? 'PM' : 'AM';
+    
+    if (hour > 12) {
+      hour = hour - 12;
+    } else if (hour == 0) {
+      hour = 12;
+    }
+    
+    String minuteStr = minute == 0 ? '' : ':${minute.toString().padLeft(2, '0')}';
+    return '$hour$minuteStr $period';
+  }
+
+  bool _isTimeBeforeOrEqualOld(TimeOfDay time1, TimeOfDay time2) {
+    int minutes1 = time1.hour * 60 + time1.minute;
+    int minutes2 = time2.hour * 60 + time2.minute;
+    return minutes1 <= minutes2;
+  }
+
+  bool _isTimeBeforeOrEqual(TimeOfDay time1, TimeOfDay time2) {
+    try {
+      int minutes1 = time1.hour * 60 + time1.minute;
+      int minutes2 = time2.hour * 60 + time2.minute;
+      return minutes1 <= minutes2;
+    } catch (e) {
+      print('Error in _isTimeBeforeOrEqual: $e');
+      return false; // Safe default
+    }
+  }
+
+  TimeOfDay _addMinutes(TimeOfDay time, int minutes) {
+    int totalMinutes = time.hour * 60 + time.minute + minutes;
+    int newHour = (totalMinutes ~/ 60) % 24;
+    int newMinute = totalMinutes % 60;
+    return TimeOfDay(hour: newHour, minute: newMinute);
+  }
+
+  bool _isTimeSlotUnavailable(TimeOfDay slotTime, int slotDuration) {
+    try {
+      int slotStartMinutes = slotTime.hour * 60 + slotTime.minute;
+      int slotEndMinutes = slotStartMinutes + slotDuration;
+      
+      if (unavailableTimes.isEmpty) return false;
+      
+      for (var unavailable in unavailableTimes) {
+        try {
+          if (unavailable is! Map<String, dynamic>) continue;
+          
+          String? fromStr = unavailable['from']?.toString();
+          String? toStr = unavailable['to']?.toString();
+          
+          if (fromStr != null && toStr != null && 
+              fromStr.isNotEmpty && toStr.isNotEmpty) {
+            TimeOfDay? fromTime = _parseTimeString(fromStr);
+            TimeOfDay? toTime = _parseTimeString(toStr);
+            
+            if (fromTime != null && toTime != null) {
+              int unavailableStartMinutes = fromTime.hour * 60 + fromTime.minute;
+              int unavailableEndMinutes = toTime.hour * 60 + toTime.minute;
+              
+              // Handle case where unavailable time spans midnight
+              if (unavailableEndMinutes <= unavailableStartMinutes) {
+                unavailableEndMinutes += 24 * 60;
+              }
+              
+              // Check if slot is unavailable
+              // A slot is unavailable ONLY if the slot START time is within an unavailable range
+              // If slot starts before unavailable time but ends during it, it's still available
+              // (because you can book it starting from the available time)
+              bool slotStartsInRange = slotStartMinutes >= unavailableStartMinutes && 
+                                      slotStartMinutes < unavailableEndMinutes;
+              
+              if (slotStartsInRange) {
+                return true;
+              }
+            }
+          }
+        } catch (e) {
+          print('Error checking unavailable time slot: $e');
+          continue;
+        }
+      }
+    } catch (e) {
+      print('Error in _isTimeSlotUnavailable: $e');
+    }
+    
+    return false;
+  }
+  
+  // Check if selected date is today
+  bool _isToday() {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final selectedDayDate = DateTime(selectedDate.value.year, selectedDate.value.month, selectedDate.value.day);
+    return selectedDayDate.isAtSameMomentAs(today);
+  }
+  
+  // Check if a time slot is in the past (for today's date)
+  bool _isTimeSlotInPast(TimeOfDay slotTime, TimeOfDay currentTime) {
+    int slotMinutes = slotTime.hour * 60 + slotTime.minute;
+    int currentMinutes = currentTime.hour * 60 + currentTime.minute;
+    
+    // Time slot is in the past if it's before current time
+    return slotMinutes < currentMinutes;
+  }
+
+  // Confirm booking (kept for backward compatibility, but now handled in selectTimeSlot)
+  void confirmBooking() {
+    Get.to(
+      () => CartScreen(),
+      binding: CartBinding(),
+    );
+  }
+}
