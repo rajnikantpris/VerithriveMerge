@@ -1,9 +1,7 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:get/get.dart';
-
 import '../../api/api_response.dart';
 import '../../api/user_api_service.dart';
 import '../../common/base_controller.dart';
@@ -27,6 +25,7 @@ class VerifyEmailController extends BaseController {
   late final String email;
   late final String phone;
   late final String password;
+  String promo_code = "";
   late final String userType;
   late final String nextRoute;
   late final Map<String, dynamic> navigationArgs;
@@ -53,6 +52,7 @@ class VerifyEmailController extends BaseController {
     email = (args['email'] as String?) ?? '';
     phone = (args['phone'] as String?) ?? '';
     password = (args['password'] as String?) ?? '';
+    promo_code = (args['promo_code'] as String?) ?? '';
     userType = (args['user_type'] as String?) ?? 'professional';
     nextRoute = (args['nextRoute'] as String?) ?? Routes.verification;
 
@@ -242,6 +242,7 @@ class VerifyEmailController extends BaseController {
         userType: userType,
         mobileNumber: phone,
         password: password,
+        promo_code: promo_code
       ),
       mapErrorMessage: (error) {
         if (error is ApiResponse) {

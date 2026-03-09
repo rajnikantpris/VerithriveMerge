@@ -317,6 +317,7 @@ class TherapistDetailController extends BaseController
               duration: json['duration_minutes']?.toString() ?? '',
               price: (json['price'] as num?)?.toDouble() ?? 0.0,
               discount: json['discount']?.toString(),
+              service_format_date: json['service_format_date']?.toString(),
               serviceFormatId: serviceFormatIdValue, // service_format_id for summary screen
               professionalServiceFormatId: professionalServiceFormatIdValue, // _id for create-booking API
             );

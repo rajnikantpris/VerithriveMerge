@@ -397,6 +397,7 @@ class TherapistDetailScreen extends StatelessWidget {
                                 // Default to 30 if parsing fails
                                 'service_name': package.title,
                                 'price': package.price,
+                                'selected_date': package.service_format_date,
                                 'location': fullAddress,
                                 'service_format_id': package.serviceFormatId ??
                                     '',

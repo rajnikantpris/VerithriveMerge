@@ -220,7 +220,9 @@ class ConsultationBookingScreen extends StatelessWidget {
                   width: 8,
                   height: 8,
                   decoration: BoxDecoration(
-                    color: AppColors.orangeDotColor,
+                    color: controller.hasServiceFormatAvailable(day) 
+                        ? AppColors.greenDotColor 
+                        : AppColors.redDotColor,
                     shape: BoxShape.circle,
                   ),
                 ),

@@ -25,12 +25,16 @@ class ConsultationBookingController extends BaseController {
 
   // Observable variables
   var selectedMonth = DateTime.now().obs;
-  var selectedDate = DateTime.now().obs; // Full date including year, month, day
+  var selectedDate = Rxn<DateTime>(); // Will be set by service format date
   var selectedTimeSlot = Rxn<String>();
   var isLoadingAvailability = false.obs;
+  var isInitializingAvailability = false.obs; // Flag to prevent multiple initial calls
 
   // Dynamic time slots list from API
   var timeSlots = <String>[].obs;
+
+  // Service format dates from API
+  var serviceFormatDates = <String>[].obs;
 
   // Availability data - true means available, false means unavailable
   final RxMap<String, bool> slotAvailability = <String, bool>{}.obs;
@@ -53,27 +57,27 @@ class ConsultationBookingController extends BaseController {
       super.onInit();
       _receiveArguments();
       
-      // Only set current date if not in edit mode with a selected date
-      if (!isEditMode || selectedDate.value == null) {
+      // Don't set current date here - let the service format date selection handle it
+      // Only set current month if no date is selected yet
+      if (selectedDate.value == null) {
         final now = DateTime.now();
-        selectedDate.value = DateTime(now.year, now.month, now.day);
         selectedMonth.value = DateTime(now.year, now.month, 1);
       } else {
         // Ensure selectedMonth matches the selectedDate month
-        selectedMonth.value = DateTime(selectedDate.value.year, selectedDate.value.month, 1);
+        selectedMonth.value = DateTime(selectedDate.value!.year, selectedDate.value!.month, 1);
       }
       
       // Clear previous selection
       selectedTimeSlot.value = null;
-      // Load availability for current date
+      // Load availability - this will trigger service format date selection
       loadAvailability();
     } catch (e, stackTrace) {
       print('CRASH PREVENTED in onInit: $e');
       print('Stack trace: $stackTrace');
-      // Set safe defaults
+      // Set safe defaults - only set month, not date
       final now = DateTime.now();
-      selectedDate.value = DateTime(now.year, now.month, now.day);
       selectedMonth.value = DateTime(now.year, now.month, 1);
+      // Don't set selectedDate here - let API response handle it
     }
   }
 
@@ -151,9 +155,12 @@ class ConsultationBookingController extends BaseController {
           print('Error parsing is_edit_mode: $e');
           isEditMode = false;
         }
-        
+
+
+
         // If edit mode and selected_date is provided, use it
-        if (isEditMode && arguments['selected_date'] != null) {
+        if (arguments['selected_date'] != null) {
+          print("RAJNIKANT --->"+arguments['selected_date'].toString());
           try {
             DateTime? selectedDateArg;
             if (arguments['selected_date'] is DateTime) {
@@ -207,12 +214,7 @@ class ConsultationBookingController extends BaseController {
     // Only allow navigation if not going before current month
     if (newMonth.isAfter(currentMonth) || newMonth.isAtSameMomentAs(currentMonth)) {
       selectedMonth.value = newMonth;
-      // Update selected date to first available day in new month
-      final availableDays = getAvailableDays();
-      if (availableDays.isNotEmpty) {
-        selectedDate.value = availableDays.first;
-        loadAvailability();
-      }
+      // Don't change the selected date - keep it the same
     }
   }
 
@@ -222,12 +224,7 @@ class ConsultationBookingController extends BaseController {
       selectedMonth.value.year,
       selectedMonth.value.month + 1,
     );
-    // Update selected date to first day of new month
-    final availableDays = getAvailableDays();
-    if (availableDays.isNotEmpty) {
-      selectedDate.value = availableDays.first;
-      loadAvailability();
-    }
+    // Don't change the selected date - keep it the same
   }
 
   // Select a specific day
@@ -241,10 +238,13 @@ class ConsultationBookingController extends BaseController {
       return; // Don't allow selection of past dates
     }
     
-    selectedDate.value = selectedDayDate;
-    selectedTimeSlot.value = null; // Reset time slot selection
-    // Reload availability for the selected day
-    loadAvailability();
+    // Only call loadAvailability if date actually changed
+    if (selectedDate.value == null || !selectedDayDate.isAtSameMomentAs(selectedDate.value!)) {
+      selectedDate.value = selectedDayDate;
+      selectedTimeSlot.value = null; // Reset time slot selection
+      // Reload availability for selected day
+      loadAvailability();
+    }
   }
 
   // Select a time slot
@@ -601,15 +601,71 @@ class ConsultationBookingController extends BaseController {
 
   // Check if a day is selected
   bool isDaySelected(DateTime day) {
+    if (selectedDate.value == null) return false;
     DateTime dayDate = DateTime(day.year, day.month, day.day);
-    DateTime selectedDayDate = DateTime(selectedDate.value.year, selectedDate.value.month, selectedDate.value.day);
+    DateTime selectedDayDate = DateTime(selectedDate.value!.year, selectedDate.value!.month, selectedDate.value!.day);
     return dayDate.isAtSameMomentAs(selectedDayDate);
+  }
+
+  // Check if a date has service format available (only service format dates get green dot)
+  bool hasServiceFormatAvailable(DateTime day) {
+    // Format date as YYYY-MM-DD to match API format
+    String formattedDate = DateFormat('yyyy-MM-dd').format(day);
+    // Only dates in serviceFormatDates list get green dot
+    return serviceFormatDates.contains(formattedDate);
+  }
+
+  // Auto-select specific service format date for the current service
+  void _autoSelectServiceFormatDate(String? targetServiceFormatDate) {
+    try {
+      if (targetServiceFormatDate != null && targetServiceFormatDate.isNotEmpty) {
+        // Select the specific service format date for the current service
+        DateTime targetDate = DateTime.parse(targetServiceFormatDate);
+        DateTime selectedDateOnly = DateTime(targetDate.year, targetDate.month, targetDate.day);
+        
+        selectedDate.value = selectedDateOnly;
+        selectedMonth.value = DateTime(selectedDateOnly.year, selectedDateOnly.month, 1);
+        print('Auto-selected service format date for current service: ${DateFormat('yyyy-MM-dd').format(selectedDateOnly)}');
+        
+        // Load availability for the selected service format date
+        loadAvailability();
+      } else if (serviceFormatDates.isNotEmpty) {
+        // Fallback: select the first available service format date
+        List<String> sortedDates = List.from(serviceFormatDates);
+        sortedDates.sort();
+        
+        DateTime firstDate = DateTime.parse(sortedDates.first);
+        DateTime selectedDateOnly = DateTime(firstDate.year, firstDate.month, firstDate.day);
+        
+        selectedDate.value = selectedDateOnly;
+        selectedMonth.value = DateTime(selectedDateOnly.year, selectedDateOnly.month, 1);
+        print('Fallback: Auto-selected first service format date: ${DateFormat('yyyy-MM-dd').format(selectedDateOnly)}');
+        
+        // Load availability for the selected service format date
+        loadAvailability();
+      } else {
+        print('No service format dates available, using default selection');
+      }
+    } catch (e) {
+      print('Error in _autoSelectServiceFormatDate: $e');
+    }
+  }
+
+  // Auto-select first available service format date (legacy method)
+  void _autoSelectFirstServiceFormatDate() {
+    _autoSelectServiceFormatDate(null);
   }
 
 
   // Load availability data from API
   Future<void> loadAvailability() async {
     try {
+      // Prevent multiple simultaneous calls
+      if (isLoadingAvailability.value) {
+        print('API call already in progress, skipping...');
+        return;
+      }
+      
       if (professionalId == null || professionalId!.isEmpty) {
         print('Error: Professional ID is null or empty');
         isLoadingAvailability.value = false;
@@ -617,15 +673,24 @@ class ConsultationBookingController extends BaseController {
         return;
       }
 
+      // Only proceed if we have a selected date
+      if (selectedDate.value == null) {
+        print('No selected date available - skipping API call (waiting for service format date selection)');
+        isLoadingAvailability.value = false;
+        return;
+      }
+
       isLoadingAvailability.value = true;
       
-      // Format date as DD/MM/YYYY
+      // Format date as DD/MM/YYYY - only use selected date, no fallback to current date
       String formattedDate;
       try {
-        formattedDate = DateFormat('dd/MM/yyyy').format(selectedDate.value);
+        formattedDate = DateFormat('dd/MM/yyyy').format(selectedDate.value!);
+        print('Using selected date for API: $formattedDate');
       } catch (e) {
-        print('Error formatting date: $e');
-        formattedDate = DateFormat('dd/MM/yyyy').format(DateTime.now());
+        print('Error formatting selected date: $e');
+        isLoadingAvailability.value = false;
+        return;
       }
       
       callAvailabilityAPI(formattedDate);
@@ -776,6 +841,75 @@ class ConsultationBookingController extends BaseController {
         } catch (e) {
           print('Error parsing professional_service_formats: $e');
           professionalServiceFormats = [];
+        }
+
+        // Parse service format dates for calendar
+        try {
+          List<String> dates = [];
+          String? selectedServiceFormatDate;
+          
+          for (var format in professionalServiceFormats) {
+            if (format.containsKey('service_format_date')) {
+              String? serviceFormatDate = format['service_format_date']?.toString();
+              if (serviceFormatDate != null && serviceFormatDate.isNotEmpty) {
+                // Parse ISO date and convert to YYYY-MM-DD format
+                try {
+                  DateTime parsedDate = DateTime.parse(serviceFormatDate);
+                  String formattedDate = DateFormat('yyyy-MM-dd').format(parsedDate);
+                  if (!dates.contains(formattedDate)) {
+                    dates.add(formattedDate);
+                  }
+                  
+                  // Check if this format matches the current service being booked
+                  // Use multiple criteria for better matching
+                  bool isMatchingService = false;
+                  
+                  // Check by professional service format ID
+                  String? formatId = format['_id']?.toString();
+                  if (professionalServiceFormatId != null && formatId == professionalServiceFormatId) {
+                    isMatchingService = true;
+                    print('Matched by professionalServiceFormatId: $professionalServiceFormatId');
+                  }
+                  
+                  // Check by service format ID
+                  String? serviceFormatIdFromFormat = format['service_format_id']?.toString();
+                  if (serviceFormatId != null && serviceFormatIdFromFormat == serviceFormatId) {
+                    isMatchingService = true;
+                    print('Matched by serviceFormatId: $serviceFormatId');
+                  }
+                  
+                  // Check by service name and duration (for additional matching)
+                  String? serviceName = format['service_format_name']?.toString();
+                  int? duration = format['duration_minutes'] as int?;
+                  if (serviceName != null && duration != null) {
+                    // Match by service name and duration if IDs don't match
+                    if ((serviceName.toLowerCase().contains('consultation') && duration == 30) ||
+                        (serviceName.toLowerCase().contains('bundle') && duration == 45) ||
+                        (serviceName.toLowerCase().contains('session') && duration == 15)) {
+                      isMatchingService = true;
+                      print('Matched by service name and duration: $serviceName, $duration');
+                    }
+                  }
+                  
+                  if (isMatchingService) {
+                    selectedServiceFormatDate = formattedDate;
+                    print('Found matching service format date: $formattedDate');
+                  }
+                } catch (e) {
+                  print('Error parsing service_format_date: $serviceFormatDate, error: $e');
+                }
+              }
+            }
+          }
+          
+          serviceFormatDates.value = dates;
+          print('Service format dates extracted: ${serviceFormatDates.value}');
+          
+          // Auto-select the matching service format date, or fallback to first available
+          _autoSelectServiceFormatDate(selectedServiceFormatDate);
+        } catch (e) {
+          print('Error extracting service format dates: $e');
+          serviceFormatDates.value = [];
         }
         
         print('========================================');
@@ -1370,7 +1504,7 @@ class ConsultationBookingController extends BaseController {
   bool _isToday() {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    final selectedDayDate = DateTime(selectedDate.value.year, selectedDate.value.month, selectedDate.value.day);
+    final selectedDayDate = DateTime(selectedDate.value!.year, selectedDate.value!.month, selectedDate.value!.day);
     return selectedDayDate.isAtSameMomentAs(today);
   }
   

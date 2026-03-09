@@ -12,6 +12,7 @@ as enduser_env;
 import 'package:verithrive_dev/enduser/flavors/environment.dart'
 as enduser_environment;
 import 'enduser/FirebaseTokenService.dart';
+import 'enduser/screens/DevHttpOverrides.dart';
 import 'routes/app_pages.dart';
 import 'theme/app_theme.dart';
 import 'theme/colors.dart';
@@ -35,6 +36,8 @@ Future<void> _firebaseBackgroundMessageHandler(RemoteMessage message) async {
 }
 
 Future<void> main() async {
+
+  HttpOverrides.global = DevHttpOverrides();
   final enduser_env.EnvConfig enduserConfig = enduser_env.EnvConfig(
     appName: "VERITHRIVE",
     baseUrl: "",

@@ -19,9 +19,9 @@ class UserApiService extends GetxService {
   final SocialAuthService _socialAuthService = SocialAuthService();
 
   // Base URL for the API
-  // static const String baseUrl = 'http://192.168.0.36:4142/api/v1/professional/';
-  static const String baseUrl =
-  'http://18.135.255.93:4142/api/v1/professional/';
+   static const String baseUrl = 'http://192.168.0.33:4142/api/v2/professional/';
+/*  static const String baseUrl =
+  'http://18.135.255.33:4142/api/v2/professional/';*/
   // static const String baseUrl = 'http://27.54.168.101:4142/api/v1/professional/';
 
   /// Get the socket base URL (same server, different port/path)
@@ -91,6 +91,8 @@ class UserApiService extends GetxService {
   static const String _chatInboxPath = 'chat/inbox';
   static const String _chatRoomPath = 'chat/room';
   static const String _chatMessagesPath = 'chat/messages';
+
+  static const String check_promo_code = 'check-promo-code';
 
   /// Get subscriptions list
   ///
@@ -375,6 +377,7 @@ class UserApiService extends GetxService {
     required String userType,
     required String mobileNumber,
     required String password,
+    required String promo_code,
   }) async {
     try {
       final fullUrl = '$baseUrl$_registerPath';
@@ -387,6 +390,7 @@ class UserApiService extends GetxService {
           'user_type': userType,
           'mobile_number': mobileNumber,
           'password': password,
+          'promo_code': promo_code,
         },
       );
 
@@ -2145,6 +2149,39 @@ class UserApiService extends GetxService {
         fullUrl,
         withAuth: true,
         body: body,
+      );
+
+      return ApiResponse.fromDioResponse(response);
+    } on dio.DioException catch (e) {
+      return ApiResponse.fromDioException(e);
+    } catch (e) {
+      return ApiResponse.failure(
+        error: e.toString(),
+        message: 'An unexpected error occurred',
+      );
+    }
+  }
+
+  /// Check promo code validity
+  ///
+  /// [promoCode] - The promo code to validate
+  /// [email] - User's email address
+  ///
+  /// Returns the API response wrapped in ApiResponse
+  Future<ApiResponse<dynamic>> checkPromoCode({
+    required String promoCode,
+    required String email,
+  }) async {
+    try {
+      final fullUrl = '$baseUrl$check_promo_code';
+
+      final response = await _dioClient.postRequest<dynamic>(
+        fullUrl,
+        withAuth: false,
+        body: {
+          'promo_code': promoCode,
+          'email': email,
+        },
       );
 
       return ApiResponse.fromDioResponse(response);

@@ -34,6 +34,9 @@ class SignupController extends BaseController {
 
   final isPasswordVisible = false.obs;
   final isConfirmPasswordVisible = false.obs;
+  final isPromoCodeApplied = false.obs;
+  final isPromoCodeValid = false.obs;
+  final promoCodeMessage = ''.obs;
 
   late final GlobalKey<FormState> formKey;
 
@@ -70,6 +73,81 @@ class SignupController extends BaseController {
 
   void toggleConfirmPasswordVisibility() {
     isConfirmPasswordVisible.value = !isConfirmPasswordVisible.value;
+  }
+
+  Future<void> checkPromoCode() async {
+    final promoCode = promoCodeController.text.trim();
+    final email = emailController.text.trim();
+
+    if (promoCode.isEmpty) {
+      promoCodeMessage.value = 'Please enter a promo code';
+      isPromoCodeValid.value = false;
+      return;
+    }
+
+    if (email.isEmpty) {
+      promoCodeMessage.value = 'Please enter your email first';
+      isPromoCodeValid.value = false;
+      return;
+    }
+
+    await callDataService<ApiResponse<dynamic>>(
+      _userApiService.checkPromoCode(
+        promoCode: promoCode,
+        email: email,
+      ),
+      showLoader: true,
+      onComplete: () {
+        resetState();
+      },
+      mapErrorMessage: (error) {
+        if (error is ApiResponse) {
+          return error.errorMessage;
+        }
+        return mapErrorToMessage(error);
+      },
+      onError: (error, stack) {
+        final errorMsg = errorMessage.value.isNotEmpty
+            ? errorMessage.value
+            : 'Failed to validate promo code';
+        promoCodeMessage.value = errorMsg;
+        isPromoCodeValid.value = false;
+      },
+      onSuccess: (response) async {
+        if (response.success) {
+          // Check if the promo code is actually valid from the response data
+          if (response.data is Map<String, dynamic>) {
+            final data = response.data as Map<String, dynamic>;
+            final isValid = data['is_valid'] as bool? ?? false;
+            
+            if (isValid) {
+              promoCodeMessage.value = response.message ?? 'Promo code applied successfully!';
+              isPromoCodeValid.value = true;
+              isPromoCodeApplied.value = true;
+            } else {
+              // Promo code is invalid (not found, expired, etc.)
+              promoCodeMessage.value = response.message ?? 'Invalid promo code';
+              isPromoCodeValid.value = false;
+            }
+          } else {
+            // Fallback for unexpected response format
+            promoCodeMessage.value = response.message ?? 'Promo code applied successfully!';
+            isPromoCodeValid.value = true;
+            isPromoCodeApplied.value = true;
+          }
+        } else {
+          promoCodeMessage.value = response.errorMessage ?? 'Invalid promo code';
+          isPromoCodeValid.value = false;
+        }
+      },
+    );
+  }
+
+  void removePromoCode() {
+    promoCodeController.clear();
+    isPromoCodeApplied.value = false;
+    isPromoCodeValid.value = false;
+    promoCodeMessage.value = '';
   }
 
   String? validateEmail(String? value) {

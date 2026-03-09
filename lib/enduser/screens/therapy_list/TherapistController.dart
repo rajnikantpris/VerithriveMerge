@@ -435,6 +435,7 @@ class TherapistController extends BaseController {
                   duration: pkg['duration']?.toString() ?? '',
                   price: _parseDouble(pkg['price']) ?? 0.0,
                   discount: pkg['discount']?.toString(),
+                  service_format_date: pkg['service_format_date']?.toString(),
                 );
               }).toList() ?? [],
             );

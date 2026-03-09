@@ -52,6 +52,10 @@ class AppColors {
 
   static const Color orangeDotColor = Color(0xFFFF8800);
   static const Color redDark = Color(0xFFB53232);
+  
+  // Calendar dot colors
+  static const Color greenDotColor = Color(0xFF00A123);
+  static const Color redDotColor = Color(0xFFE74C3C);
 
   static const Color color2D2D2D = Color(0xFF2D2D2D);
   static const Color color9D9D9D = Color(0xFF9D9D9D);

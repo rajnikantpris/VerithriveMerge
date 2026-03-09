@@ -39,6 +39,7 @@ class ServicePackage {
   final String duration;
   final double price;
   final String? discount;
+  final String? service_format_date;
   final String? serviceFormatId; // service_format_id for summary screen
   final String? professionalServiceFormatId; // _id for create-booking API
 
@@ -49,5 +50,6 @@ class ServicePackage {
     this.discount,
     this.serviceFormatId,
     this.professionalServiceFormatId,
+    this.service_format_date,
   });
 }
