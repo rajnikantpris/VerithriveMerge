@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -418,16 +419,19 @@ class SignupView extends BaseView<SignupController> {
                         label: 'Google',
                         onPressed: controller.onGoogleSignIn,
                         isGoogle: true,
+                        isFullWidth: !Platform.isIOS,
                       ),
                     ),
                     SizedBox(width: HightWidthSizes.setValue_5),
-                    Expanded(
-                      child: _buildSocialButton(
-                        label: 'Apple',
-                        onPressed: controller.onAppleSignIn,
-                        isGoogle: false,
+                    if (Platform.isIOS) ...[
+                      Expanded(
+                        child: _buildSocialButton(
+                          label: 'Apple',
+                          onPressed: controller.onAppleSignIn,
+                          isGoogle: false,
+                        ),
                       ),
-                    ),
+                    ],
                   ],
                 ),
                 SizedBox(height: HightWidthSizes.setValue_30),
@@ -475,6 +479,7 @@ class SignupView extends BaseView<SignupController> {
     required String label,
     required VoidCallback onPressed,
     required bool isGoogle,
+    bool isFullWidth = false,
   }) {
     return SizedBox(
       height: HightWidthSizes.setValue_45,
@@ -482,13 +487,15 @@ class SignupView extends BaseView<SignupController> {
         style: OutlinedButton.styleFrom(
           side: BorderSide(color: AppColor.progressTrack, width: 1),
           shape: RoundedRectangleBorder(
-            borderRadius: label == "Apple"
+            borderRadius: isFullWidth
+                ? BorderRadius.circular(HightWidthSizes.setValue_10)
+                : (label == "Apple"
                 ? BorderRadius.only(
                 topRight: Radius.circular(HightWidthSizes.setValue_10),
                 bottomRight: Radius.circular(HightWidthSizes.setValue_10))
                 : BorderRadius.only(
                 topLeft: Radius.circular(HightWidthSizes.setValue_10),
-                bottomLeft: Radius.circular(HightWidthSizes.setValue_10)),
+                bottomLeft: Radius.circular(HightWidthSizes.setValue_10))),
           ),
           backgroundColor: AppColor.color_D7F1EB,
         ),

@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -154,16 +155,19 @@ class LoginView extends GetView<LoginController> {
                           label: 'Google',
                           onPressed: controller.onGoogleSignIn,
                           asset: AppImages.google,
+                          isFullWidth: !Platform.isIOS,
                         ),
                       ),
                       SizedBox(width: HightWidthSizes.setValue_5),
-                      Expanded(
-                        child: _SocialButton(
-                          label: 'Apple',
-                          onPressed: controller.onAppleSignIn,
-                          asset: AppImages.iphone,
+                      if (Platform.isIOS) ...[
+                        Expanded(
+                          child: _SocialButton(
+                            label: 'Apple',
+                            onPressed: controller.onAppleSignIn,
+                            asset: AppImages.iphone,
+                          ),
                         ),
-                      ),
+                      ],
                     ],
                   ),
                   SizedBox(height: HightWidthSizes.setValue_22),
@@ -214,11 +218,13 @@ class _SocialButton extends StatelessWidget {
     required this.label,
     required this.onPressed,
     required this.asset,
+    this.isFullWidth = false,
   });
 
   final String label;
   final VoidCallback onPressed;
   final String asset;
+  final bool isFullWidth;
 
   @override
   Widget build(BuildContext context) {
@@ -228,13 +234,15 @@ class _SocialButton extends StatelessWidget {
         style: OutlinedButton.styleFrom(
           side: BorderSide(color: AppColor.progressTrack, width: 1),
           shape: RoundedRectangleBorder(
-            borderRadius: label == "Apple"
+            borderRadius: isFullWidth
+                ? BorderRadius.circular(HightWidthSizes.setValue_10)
+                : (label == "Apple"
                 ? BorderRadius.only(
                 topRight: Radius.circular(HightWidthSizes.setValue_10),
                 bottomRight: Radius.circular(HightWidthSizes.setValue_10))
                 : BorderRadius.only(
                 topLeft: Radius.circular(HightWidthSizes.setValue_10),
-                bottomLeft: Radius.circular(HightWidthSizes.setValue_10)),
+                bottomLeft: Radius.circular(HightWidthSizes.setValue_10))),
           ),
           backgroundColor: AppColor.color_D7F1EB,
         ),

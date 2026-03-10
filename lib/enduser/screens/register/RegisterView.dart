@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -254,7 +255,9 @@ class RegisterView extends GetView<RegisterController> {
                         height: 50,
                         decoration: BoxDecoration(
                           color: AppColors.lightGreen,
-                          borderRadius: BorderRadius.only(topLeft: Radius.circular(8),bottomLeft: Radius.circular(8)),
+                          borderRadius: Platform.isIOS 
+                              ? BorderRadius.only(topLeft: Radius.circular(8),bottomLeft: Radius.circular(8))
+                              : BorderRadius.circular(8),
                         ),
                         child: Material(
                           color: Colors.transparent,
@@ -273,25 +276,27 @@ class RegisterView extends GetView<RegisterController> {
                       ),
                     ),
                     SizedBox(width: 5),
-                    Expanded(
-                      child: Container(
-                        height: 50,
-                        decoration: BoxDecoration(
-                          color:  AppColors.lightGreen,
-                          borderRadius: BorderRadius.only(topRight: Radius.circular(8),bottomRight: Radius.circular(8)),
-                        ),
-                        child: Material(
-                          color: Colors.transparent,
-                          child: InkWell(
-                            onTap: controller.continueWithApple,
-                            borderRadius: BorderRadius.circular(8),
-                            child: Center(
-                              child: SvgPicture.asset(AppAssets.apple,width: 20,height: 20,),
+                    if (Platform.isIOS) ...[
+                      Expanded(
+                        child: Container(
+                          height: 50,
+                          decoration: BoxDecoration(
+                            color:  AppColors.lightGreen,
+                            borderRadius: BorderRadius.only(topRight: Radius.circular(8),bottomRight: Radius.circular(8)),
+                          ),
+                          child: Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              onTap: controller.continueWithApple,
+                              borderRadius: BorderRadius.circular(8),
+                              child: Center(
+                                child: SvgPicture.asset(AppAssets.apple,width: 20,height: 20,),
+                              ),
                             ),
                           ),
                         ),
                       ),
-                    ),
+                    ],
                   ],
                 ),
                 

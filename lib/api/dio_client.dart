@@ -103,6 +103,14 @@ class DioClient extends GetxService {
       '/api/v1/professional/forgot-password',
       '/api/v1/professional/forgot-password/send-otp',
       '/api/v1/professional/forgot-password/reset',
+      // Add v2 paths
+      '/api/v2/professional/login',
+      '/api/v2/professional/register',
+      '/api/v2/professional/send-otp',
+      '/api/v2/professional/verify-otp',
+      '/api/v2/professional/forgot-password',
+      '/api/v2/professional/forgot-password/send-otp',
+      '/api/v2/professional/forgot-password/reset',
     ];
     return publicPaths.any((publicPath) => path.contains(publicPath));
   }

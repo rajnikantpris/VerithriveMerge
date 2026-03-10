@@ -184,14 +184,18 @@ class ProfessionalLoginController extends BaseController {
         final errorMsg = errorMessage.value.isNotEmpty
             ? errorMessage.value
             : 'Something went wrong. Please try again.';
-        showResponseDialog(
-          message: errorMsg,
-          title: 'Error',
-          isError: true,
-          showButton: true,
-          onOkPressed: () {
-            // Get.back();
-          },
+        Get.dialog(
+          AlertDialog(
+            title: Text('Error'),
+            content: Text(errorMsg),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(Get.context!).pop(),
+                child: Text('OK'),
+              ),
+            ],
+          ),
+          barrierDismissible: false,
         );
         // Don't reset state here - let finally block handle it
       },
@@ -425,14 +429,18 @@ class ProfessionalLoginController extends BaseController {
         final errorMsg = errorMessage.value.isNotEmpty
             ? errorMessage.value
             : 'Something went wrong. Please try again.';
-        showResponseDialog(
-          message: errorMsg,
-          title: 'Error',
-          isError: true,
-          showButton: true,
-          onOkPressed: () {
-            // Get.back();
-          },
+        Get.dialog(
+          AlertDialog(
+            title: Text('Error'),
+            content: Text(errorMsg),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(Get.context!).pop(),
+                child: Text('OK'),
+              ),
+            ],
+          ),
+          barrierDismissible: false,
         );
       },
       onSuccess: (response) async {
@@ -516,14 +524,18 @@ class ProfessionalLoginController extends BaseController {
         final errorMsg = errorMessage.value.isNotEmpty
             ? errorMessage.value
             : 'Something went wrong. Please try again.';
-        showResponseDialog(
-          message: errorMsg,
-          title: 'Error',
-          isError: true,
-          showButton: true,
-          onOkPressed: () {
-            // Get.back();
-          },
+        Get.dialog(
+          AlertDialog(
+            title: Text('Error'),
+            content: Text(errorMsg),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(Get.context!).pop(),
+                child: Text('OK'),
+              ),
+            ],
+          ),
+          barrierDismissible: false,
         );
       },
       onSuccess: (response) async {

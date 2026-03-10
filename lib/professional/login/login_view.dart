@@ -1,6 +1,6 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
 import '../../common/base_view.dart';
 import '../../theme/colors.dart';
 import '../../theme/font_sizes.dart';
@@ -170,16 +170,19 @@ class LoginView extends BaseView<ProfessionalLoginController> {
                           label: 'Google',
                           onPressed: controller.onGoogleSignIn,
                           asset: AppImages.google,
+                          isFullWidth: !Platform.isIOS,
                         ),
                       ),
                       SizedBox(width: HightWidthSizes.setValue_5),
-                      Expanded(
-                        child: _SocialButton(
-                          label: 'Apple',
-                          onPressed: controller.onAppleSignIn,
-                          asset: AppImages.iphone,
+                      if (Platform.isIOS) ...[
+                        Expanded(
+                          child: _SocialButton(
+                            label: 'Apple',
+                            onPressed: controller.onAppleSignIn,
+                            asset: AppImages.iphone,
+                          ),
                         ),
-                      ),
+                      ],
                     ],
                   ),
                   SizedBox(height: HightWidthSizes.setValue_22),
@@ -230,11 +233,13 @@ class _SocialButton extends StatelessWidget {
     required this.label,
     required this.onPressed,
     required this.asset,
+    this.isFullWidth = false,
   });
 
   final String label;
   final VoidCallback onPressed;
   final String asset;
+  final bool isFullWidth;
 
   @override
   Widget build(BuildContext context) {
@@ -244,13 +249,15 @@ class _SocialButton extends StatelessWidget {
         style: OutlinedButton.styleFrom(
           side: BorderSide(color: AppColor.progressTrack, width: 1),
           shape: RoundedRectangleBorder(
-            borderRadius: label == "Apple"
-                ? BorderRadius.only(
-                    topRight: Radius.circular(HightWidthSizes.setValue_10),
-                    bottomRight: Radius.circular(HightWidthSizes.setValue_10))
-                : BorderRadius.only(
-                    topLeft: Radius.circular(HightWidthSizes.setValue_10),
-                    bottomLeft: Radius.circular(HightWidthSizes.setValue_10)),
+            borderRadius: isFullWidth
+                ? BorderRadius.circular(HightWidthSizes.setValue_10)
+                : (label == "Apple"
+                    ? BorderRadius.only(
+                        topRight: Radius.circular(HightWidthSizes.setValue_10),
+                        bottomRight: Radius.circular(HightWidthSizes.setValue_10))
+                    : BorderRadius.only(
+                        topLeft: Radius.circular(HightWidthSizes.setValue_10),
+                        bottomLeft: Radius.circular(HightWidthSizes.setValue_10))),
           ),
           backgroundColor: AppColor.color_D7F1EB,
         ),
@@ -258,7 +265,24 @@ class _SocialButton extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Image.asset(asset, width: 20, height: 20, fit: BoxFit.contain),
+            Image.asset(
+              label == "Google"
+                  ? AppImages.google
+                  : AppImages.iphone,
+              width: 24,
+              height: 24,
+              fit: BoxFit.contain,
+            ),
+            SizedBox(width: HightWidthSizes.setValue_8),
+            Text(
+              label,
+              style: TextStyle(
+                fontFamily: AppFonts.rubikMedium,
+                fontWeight: FontWeight.w500,
+                fontSize: FontSizes.setFontValue_14,
+                color: AppColor.color_2D2D2D,
+              ),
+            ),
           ],
         ),
       ),
