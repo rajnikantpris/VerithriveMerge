@@ -6,9 +6,6 @@ class SharePreferenceConst {
   static const String isOrdering="isOrdering";
   static const String isTakeAway="isTakeAway";
   static const String isDelivery="isDelivery";
-
-
-
   static const String id="id";
   static const String customer_name="customer_name";
   static const String country_code="country_code";

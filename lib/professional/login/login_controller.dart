@@ -250,6 +250,9 @@ class ProfessionalLoginController extends BaseController {
             await _storageService?.writeString('user_email', userEmail);
           }
 
+          // Always save userType as 'professional' for professional social login
+          await _storageService?.writeString('userType', 'professional');
+
           // Extract user flags from user model
           final userFlags = _extractUserFlagsFromModel(loginData.user);
 
@@ -587,8 +590,12 @@ class ProfessionalLoginController extends BaseController {
           }
 
           final userType = loginData.user?.userType;
- if (userType != null && userType.isNotEmpty) {
-            await _storageService?.writeString('userType', userType);
+          // Always save userType as 'professional' for professional login
+          await _storageService?.writeString('userType', 'professional');
+          
+          // Also save the userType from API if available (for debugging/backup)
+          if (userType != null && userType.isNotEmpty) {
+            debugPrint('API userType: $userType');
           }
           // Extract user flags from user model
           final userFlags = _extractUserFlagsFromModel(loginData.user);

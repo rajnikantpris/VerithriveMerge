@@ -1,19 +1,14 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:verithrive_dev/enduser/core/values/sharePrefrenceConst.dart'
     as enduser_prefs;
 import 'package:verithrive_dev/enduser/screens/main/MainScreen.dart'
     as enduser_main;
-import 'package:verithrive_dev/enduser/screens/onboarding/onboarding_binding.dart'
-    as enduser_onboarding;
-import 'package:verithrive_dev/enduser/screens/onboarding/onboarding_screen.dart'
-    as enduser_onboarding_screen;
 import 'package:verithrive_dev/enduser/screens/profile/ProfileBinding.dart'
     as enduser_profile_binding;
 import 'package:verithrive_dev/enduser/screens/profile/ProfileView.dart'
     as enduser_profile_view;
-import 'package:verithrive_dev/select_user/select_user_binding.dart';
-import 'package:verithrive_dev/select_user/select_user_view.dart';
 
 import '../../common/base_controller.dart';
 import '../../routes/app_routes.dart';
@@ -38,36 +33,71 @@ class SplashController extends BaseController {
     }
 
     final userType = prefs.getString('userType') ?? '';
+    final userId = prefs.getString('user_id') ?? '';
+    
+    // Additional check: if we have professional-specific data, treat as professional
+    final hasProfessionalFlags = prefs.containsKey('is_profile_created') || 
+                                prefs.containsKey('is_work_full') ||
+                                prefs.containsKey('is_professional_services');
 
-    if (userType == 'professional') {
+    debugPrint('Splash: userType=$userType, userId=$userId, hasProfessionalFlags=$hasProfessionalFlags');
+
+    // Determine user type with multiple fallback checks
+    final isProfessional = userType == 'professional' || 
+                          (userType.isEmpty && hasProfessionalFlags) ||
+                          (userType.isEmpty && userId.isNotEmpty && _checkIfProfessionalUserId(prefs));
+
+    if (isProfessional) {
+      debugPrint('Splash: Navigating to professional flow');
       _navigateBasedOnUserFlags(prefs);
       return;
-    }
-
-    final isLogin =
-        prefs.getBool(enduser_prefs.SharePreferenceConst.isLogin) ?? false;
-
-    if (!isLogin) {
-      Get.offAll(
-        () => const enduser_onboarding_screen.OnboardingScreen(),
-        binding: enduser_onboarding.OnboardingBinding(),
-      );
-      return;
-    }
-
-    final isPersonalDetailsCompleted = prefs.getBool(
-          enduser_prefs.SharePreferenceConst.isPersonalDetails,
-        ) ??
-        false;
-
-    if (isPersonalDetailsCompleted) {
-      Get.offAll(() => enduser_main.MainScreen());
     } else {
-      Get.offAll(
-        () => const enduser_profile_view.ProfileView(),
-        binding: enduser_profile_binding.ProfileBinding(),
-      );
+      debugPrint('Splash: Navigating to end user flow');
+      final isPersonalDetailsCompleted = prefs.getBool(
+        enduser_prefs.SharePreferenceConst.isPersonalDetails,
+      ) ??
+          false;
+
+      if (isPersonalDetailsCompleted) {
+        Get.offAll(() => enduser_main.MainScreen());
+      } else {
+        Get.offAll(
+              () => const enduser_profile_view.ProfileView(),
+          binding: enduser_profile_binding.ProfileBinding(),
+        );
+      }
     }
+
+    // final isLogin =
+    //     prefs.getBool(enduser_prefs.SharePreferenceConst.isLogin) ?? false;
+    //
+    // if (!isLogin) {
+    //   Get.offAll(
+    //     () => const enduser_onboarding_screen.OnboardingScreen(),
+    //     binding: enduser_onboarding.OnboardingBinding(),
+    //   );
+    //   return;
+    // }
+
+
+  }
+
+  /// Additional check to determine if user is professional based on stored data
+  bool _checkIfProfessionalUserId(SharedPreferences prefs) {
+    // Check for professional-specific keys that wouldn't exist for end users
+    final professionalKeys = [
+      'is_profile_created',
+      'is_work_full', 
+      'is_professional_services',
+      'is_qualification',
+      'is_personal_identification',
+      'is_about_you',
+      'is_payment',
+      'is_personal_details',
+      'is_term_condition'
+    ];
+    
+    return professionalKeys.any((key) => prefs.containsKey(key));
   }
 
   /// Navigate based on user flags in priority order (same as login controller)
