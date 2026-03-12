@@ -43,6 +43,10 @@ class PersonalDetailsController extends BaseController {
   final genders = ['Male', 'Female', 'Prefer not to say'];
   final selectedGender = ''.obs;
 
+  // Marketing preferences
+  final marketingOptions = ['Yes', 'No'];
+  final selectedMarketingPreference = ''.obs;
+
   /// Convert API gender format to display format
   /// Converts "prefer_not_to_say" to "Prefer not to say" and capitalizes other values
   String _convertGenderFromApiFormat(String apiGender) {
@@ -96,6 +100,28 @@ class PersonalDetailsController extends BaseController {
   void setGender(String? value) {
     if (value == null) return;
     selectedGender.value = value;
+  }
+
+  void setMarketingPreference(String? value) {
+    if (value == null) return;
+    selectedMarketingPreference.value = value;
+  }
+
+  void showMarketingInfo() {
+    Get.dialog(
+      AlertDialog(
+        title: const Text('Marketing Preferences'),
+        content: const Text(
+          'Marketing emails from VERITHRIVE to keep you up to date about latest offers and trends.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> pickDate(BuildContext context) async {
@@ -391,6 +417,7 @@ class PersonalDetailsController extends BaseController {
         fullName: fullNameController.text.trim(),
         dob: dobFormatted,
         gender: selectedGender.value,
+        optStatus: selectedMarketingPreference.value == 'Yes' ? 1 : 0,
         profilePicture: selectedImage.value,
       ),
       showLoader: true,
@@ -565,11 +592,17 @@ class PersonalDetailsController extends BaseController {
                           DateFormat('dd/MM/yyyy').format(dobDate);
                     }
                   } catch (e2) {
-                    // If all parsing fails, just set the text
-                    dobController.text = profileDetails.dob!;
-                  }
+                  // If all parsing fails, just set the text
+                  dobController.text = profileDetails.dob!;
                 }
               }
+            }
+
+            // Populate marketing preference
+            if (profileDetails.optStatus != null) {
+              selectedMarketingPreference.value =
+                  profileDetails.optStatus == 1 ? 'Yes' : 'No';
+            }
 
               // Populate gender
               if (profileDetails.gender != null &&

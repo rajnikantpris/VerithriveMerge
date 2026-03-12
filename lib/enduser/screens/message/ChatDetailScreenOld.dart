@@ -33,30 +33,13 @@ class ChatDetailScreen extends StatelessWidget {
             Get.back();
           },
         ),
-        title: Obx(() => Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          mainAxisAlignment: MainAxisAlignment.center,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              conversation.value!.name,
-              style: AppTextStyles.mediumTextStyle(
-                fontSize: 18,
-                color: AppColors.black,
-              ),
-            ),
-            if (conversation.value!.isOnline)
-              Text(
-                'Online',
-                style: TextStyle(
-                  fontFamily: 'Rubik',
-                  fontWeight: FontWeight.w400,
-                  fontSize: 12,
-                  color: AppColors.greenText,
-                ),
-              ),
-          ],
-        ),),
+        title: Text(
+          conversation.value!.name,
+          style: AppTextStyles.mediumTextStyle(
+            fontSize: 18,
+            color: AppColors.black,
+          ),
+        ),
         centerTitle: true,
       ),
       body: Column(
@@ -98,7 +81,7 @@ class ChatDetailScreen extends StatelessWidget {
                   // When reverse:true, index 0 is the last item, so we need to reverse
                   final reversedIndex = controller.messages.length - 1 - index;
                   final message = controller.messages[reversedIndex];
-                  return _buildMessageBubble(message, conversation);
+                 // return _buildMessageBubble(message, conversation);
                 },
               );
             }),
@@ -176,7 +159,7 @@ class ChatDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildMessageBubble(ChatMessage message, Rxn<Conversation> conversation) {
+  Widget _buildMessageBubble(ChatMessage message, Conversation conversation) {
     final isMe = message.isSentByMe;
 
     return Padding(
@@ -190,11 +173,11 @@ class ChatDetailScreen extends StatelessWidget {
           if (!isMe) ...[
             // Avatar for incoming messages
             ClipOval(
-              child: conversation.value!.profileImageUrl != null &&
-                      (conversation.value!.profileImageUrl!.startsWith('http://') ||
-                       conversation.value!.profileImageUrl!.startsWith('https://'))
+              child: conversation.profileImageUrl != null &&
+                      (conversation.profileImageUrl!.startsWith('http://') ||
+                       conversation.profileImageUrl!.startsWith('https://'))
                   ? Image.network(
-                      conversation.value!.profileImageUrl!,
+                      conversation.profileImageUrl!,
                       width: 32,
                       height: 32,
                       fit: BoxFit.cover,
@@ -231,7 +214,7 @@ class ChatDetailScreen extends StatelessWidget {
                       },
                     )
                   : Image.asset(
-                      conversation.value!.profileImageUrl ?? AppAssets.exercise,
+                      conversation.profileImageUrl ?? AppAssets.exercise,
                       width: 32,
                       height: 32,
                       fit: BoxFit.cover,

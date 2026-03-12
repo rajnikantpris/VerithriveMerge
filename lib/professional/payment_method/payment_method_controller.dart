@@ -55,12 +55,12 @@ class PaymentMethodController extends BaseController {
       title: 'Apple Pay',
       assetPath: AppImages.iphonepayPng,
     ),
-    PaymentMethodOption(
+/*    PaymentMethodOption(
       id: 'paypal',
       title: 'PayPal',
       assetPath: AppImages.paypal,
       accentColor: const Color(0xFF003087),
-    ),
+    ),*/
   ];
 
   final selectedMethodId = ''.obs;

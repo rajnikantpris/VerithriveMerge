@@ -114,17 +114,28 @@ class ProfileController extends BaseController {
   }
 
   Future<void> _clearLocalDataAndNavigate() async {
-    // Sign out from Google account first
+    // Sign out from social providers first
     try {
       await _socialAuthService.signOutSocialProviders();
     } catch (e) {
-      debugPrint('Error signing out from Google: $e');
+      debugPrint('Error signing out from social providers: $e');
     }
-    
-    // Clear stored token if available
+
+    // Clear stored data except remember me credentials
     if (Get.isRegistered<StorageService>()) {
       final storage = Get.find<StorageService>();
-      await storage.writeString('access_token', '');
+
+      // Define keys to keep (all remember me data)
+      final keysToKeep = [
+        'professional_remember_me',
+        'professional_saved_email',
+        'professional_saved_password',
+        'rememberMe', // End-user key
+        'savedEmail',   // End-user key
+        'savedPassword',// End-user key
+      ];
+
+      await storage.clearAllExcept(keysToKeep);
     }
 
     // Navigate to select user page

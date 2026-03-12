@@ -1036,7 +1036,7 @@ class ForegroundNotificationService {
       if (!Get.isRegistered<ChatDetailController>()) return false;
       final current =
           Get.find<ChatDetailController>().conversation;
-      return current.userId == senderId || current.id == roomId;
+      return current.value!.userId == senderId || current.value!.id == roomId;
     } catch (e) {
       logError('Error checking end-user chat detail status', error: e);
       return false;

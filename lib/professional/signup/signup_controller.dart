@@ -288,7 +288,7 @@ class SignupController extends BaseController {
                 arguments: {
                   'email': email,
                   // 'phone': phone,
-                  'promo_code': promoCode,
+                  'promo_code': isPromoCodeValid.value ? promoCode : '',
                   'password': password,
                   'user_type': userType,
                   if (otp != null) 'otp': otp,
@@ -734,6 +734,9 @@ class SignupController extends BaseController {
 
     final socialProfilePicture = user?.profilePicture ?? '';
     await storage.writeString('user_profile_picture', socialProfilePicture);
+
+    final isSocial = user?.isSocialLogin ?? false;
+    await storage.writeBool('is_social_login', isSocial);
   }
 
   void onLogin() {

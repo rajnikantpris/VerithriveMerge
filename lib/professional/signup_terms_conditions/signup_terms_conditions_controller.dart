@@ -17,6 +17,7 @@ class SignupTermsConditionsController extends BaseController {
   late final double? longitude;
   late final String? profileImagePath;
   late final String? socialProfileImageUrl;
+  late final String? promoCode;
 
   /// Loaded terms & conditions text
   final termsText = ''.obs;
@@ -41,6 +42,7 @@ class SignupTermsConditionsController extends BaseController {
     final socialUrl = args['socialProfileImageUrl'] as String?;
     socialProfileImageUrl =
         (socialUrl != null && socialUrl.isNotEmpty) ? socialUrl : null;
+    promoCode = args['promoCode'] as String?;
 
     _loadTermsAndConditions();
   }
@@ -106,6 +108,7 @@ class SignupTermsConditionsController extends BaseController {
         longitude: longitude,
         // Prefer manually selected image; fall back to social URL if available
         profileImagePath: profileImagePath ?? socialProfileImageUrl,
+        promoCode: (promoCode != null && promoCode!.isNotEmpty) ? promoCode : null,
       ),
       showLoader: true,
       onSuccess: (response) async {
@@ -151,6 +154,7 @@ class SignupTermsConditionsController extends BaseController {
             'longitude': longitude,
             'profileImagePath': profileImagePath,
             'marketingOptIn': marketingOptIn.value,
+            'promoCode': (promoCode != null && promoCode!.isNotEmpty) ? promoCode : null,
           });
         } else {
           Get.snackbar(

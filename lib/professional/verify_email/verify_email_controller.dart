@@ -307,6 +307,9 @@ class VerifyEmailController extends BaseController {
             await _storageService?.writeString('user_email', email);
           }
 
+          // Ensure is_social_login is false for normal registration
+          await _storageService?.writeBool('is_social_login', false);
+
           Get.offAllNamed(Routes.signupPersonDetails);
         } else {
           showResponseDialog(

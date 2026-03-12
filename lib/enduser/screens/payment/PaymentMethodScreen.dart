@@ -72,7 +72,7 @@ class PaymentMethodScreen extends StatelessWidget {
                           title: AppText.applePay,
                         ),
 
-                        SizedBox(height: 16),
+                   /*     SizedBox(height: 16),
 
                         // PayPal
                         _buildPaymentOption(
@@ -80,7 +80,7 @@ class PaymentMethodScreen extends StatelessWidget {
                           imagePath: AppAssets.paypal,
                           iconColor: Colors.blue.shade700,
                           title: AppText.paypal,
-                        ),
+                        ),*/
                       ],
                     ),
                   ),

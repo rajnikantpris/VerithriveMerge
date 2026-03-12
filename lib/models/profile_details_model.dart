@@ -7,6 +7,7 @@ class ProfileDetailsModel {
   final String? gender;
   final String? profilePicture;
   final bool? isProfileCreated;
+  final int? optStatus;
 
   // Additional fields from get-profile-details API
   final String? timezone;
@@ -56,6 +57,7 @@ class ProfileDetailsModel {
     this.gender,
     this.profilePicture,
     this.isProfileCreated,
+    this.optStatus,
     this.timezone,
     this.email,
     this.emailVerifiedAt,
@@ -107,6 +109,7 @@ class ProfileDetailsModel {
         gender: json['gender'] as String?,
         profilePicture: json['profile_picture'] as String?,
         isProfileCreated: json['is_profile_created'] as bool?,
+        optStatus: _parseOptStatus(json['opt_status']),
         timezone: json['timezone'] as String?,
         email: json['email'] as String?,
         emailVerifiedAt: json['email_verified_at'] as String?,
@@ -145,6 +148,16 @@ class ProfileDetailsModel {
         isEmailHidden: json['is_email_hidden'] as bool?,
         deletedAt: json['deleted_at'] as String?,
       );
+
+  static int? _parseOptStatus(dynamic optStatus) {
+    if (optStatus is int) {
+      return optStatus;
+    }
+    if (optStatus is bool) {
+      return optStatus ? 1 : 0;
+    }
+    return null;
+  }
 
   Map<String, dynamic> toJson() => <String, dynamic>{
         if (professionTypeId != null) 'profession_type_id': professionTypeId,
