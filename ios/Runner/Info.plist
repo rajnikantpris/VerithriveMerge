@@ -8,6 +8,8 @@
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
 	<string>Verithrive</string>
+	<key>GMSApiKey</key>
+    <string>AIzaSyDIHdFq55OMUeaBaKgsAB1Cpi5r5vEFU8k</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
