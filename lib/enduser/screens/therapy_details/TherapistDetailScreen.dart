@@ -1,8 +1,6 @@
-// therapist_detail/TherapistDetailScreen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
-import 'package:verithrive_dev/enduser/routes/app_routes.dart';
 import 'package:verithrive_dev/enduser/screens/consultation/ConsultationBinding.dart';
 import 'package:verithrive_dev/enduser/screens/consultation/ConsultationBookingScreen.dart';
 import 'package:verithrive_dev/enduser/screens/message/ChatDetailBinding.dart';
@@ -15,7 +13,6 @@ import '../../utils/AppText.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/app_text_styles.dart';
 import '../../models/Conversation.dart';
-import '../therapy_list/Therapist.dart';
 import 'TherapistDetailController.dart';
 
 class TherapistDetailScreen extends StatelessWidget {
@@ -164,13 +161,20 @@ class TherapistDetailScreen extends StatelessWidget {
                             ),
                           ),
                         ),
-                        SvgPicture.asset(
+                      /*  SvgPicture.asset(
                           AppAssets.verified,
                           colorFilter: ColorFilter.mode(
                             controller.category == 'wellness'
                                 ? AppColors.colorFFB54D
                                 : AppColors.color00AAD9,
                             BlendMode.srcIn,
+                          ),
+                        ),*/
+
+                        SvgPicture.asset(
+                          AppAssets.verified,
+                          colorFilter: ColorFilter.mode(
+                                AppColors.colorFFB54D,BlendMode.srcIn,
                           ),
                         ),
                       ],

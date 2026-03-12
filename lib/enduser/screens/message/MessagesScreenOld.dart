@@ -98,7 +98,7 @@ class MessagesScreen extends StatelessWidget {
               final filteredConversations = controller.filteredConversations;
               if (filteredConversations.isEmpty) {
                 return RefreshIndicator(
-                  onRefresh: () => controller.checkAndReconnectSocket(), // Use socket refresh
+                  onRefresh: () => controller.silentRefreshInbox(), // Use silent refresh
                   child: SingleChildScrollView(
                     physics: const AlwaysScrollableScrollPhysics(),
                     child: SizedBox(
@@ -117,7 +117,7 @@ class MessagesScreen extends StatelessWidget {
                 );
               }
               return RefreshIndicator(
-                onRefresh: () => controller.checkAndReconnectSocket(), // Use socket refresh for swipe
+                onRefresh: () => controller.fetchChatInbox(), // Use normal refresh for swipe
                 child: ListView.builder(
                   physics: const AlwaysScrollableScrollPhysics(),
                   itemCount: filteredConversations.length,

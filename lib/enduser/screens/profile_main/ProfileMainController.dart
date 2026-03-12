@@ -137,36 +137,26 @@ class ProfileMainController extends BaseController {
     }
   }
 
-  // Current logout code - clears all data except remember me data
+  // Current logout code - clears only end-user data, preserving all remember me credentials
   Future<void> performLogout() async {
     try {
-      // Sign out from Google account first
+      // Sign out from social providers first
       await _socialAuthService.signOutSocialProviders();
-      
-      // Save remember me data before clearing
-      bool rememberMeValue =
-          _storageService.readBool(SharePreferenceConst.rememberMe) ?? false;
-      String savedEmail =
-          _storageService.readString(SharePreferenceConst.savedEmail) ?? '';
-      String savedPassword =
-          _storageService.readString(SharePreferenceConst.savedPassword) ?? '';
 
-      // Clear all preferences
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-      await prefs.clear();
+      // Define keys to keep (all remember me data)
+      final keysToKeep = [
+        // Professional keys
+        'professional_remember_me',
+        'professional_saved_email',
+        'professional_saved_password',
+        // End-user keys
+        SharePreferenceConst.rememberMe,
+        SharePreferenceConst.savedEmail,
+        SharePreferenceConst.savedPassword,
+      ];
 
-      // Restore remember me data if it was saved
-      if (rememberMeValue) {
-        await _storageService.writeBool(SharePreferenceConst.rememberMe, true);
-        if (savedEmail.isNotEmpty) {
-          await _storageService.writeString(
-              SharePreferenceConst.savedEmail, savedEmail);
-        }
-        if (savedPassword.isNotEmpty) {
-          await _storageService.writeString(
-              SharePreferenceConst.savedPassword, savedPassword);
-        }
-      }
+      // Clear all stored data except the specified keys
+      await _storageService.clearAllExcept(keysToKeep);
 
       // Navigate to select user screen
       Get.offAll(

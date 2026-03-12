@@ -8,9 +8,6 @@ import '../../utils/api_services.dart';
 import '../../network/exceptions/base_exception.dart';
 import '../../utils/common_dialog.dart';
 import '../../utils/auth_service.dart';
-import 'socket_service.dart';
-import '../../core/values/sharePrefrenceConst.dart';
-import 'package:verithrive_dev/services/storage_service.dart';
 class MessagesController extends BaseController {
   final ProjectRepository _repository = Get.find(tag: (ProjectRepository).toString());
   
@@ -24,19 +21,11 @@ class MessagesController extends BaseController {
   var isInitialLoading = false.obs; // Track initial loading separately
   bool _isRefreshing = false;
 
-  SocketService? _socketService;
-
   @override
   void onInit() {
     super.onInit();
-    // Initialize socket connection for real-time updates
-    checkAndReconnectSocket();
-  }
-
-  @override
-  void onClose() {
-    _cleanupSocketListeners();
-    super.onClose();
+    // Don't check authentication on init - let user navigate first
+    // Authentication will be checked when data is actually loaded
   }
 
   @override
@@ -457,139 +446,6 @@ class MessagesController extends BaseController {
       return '${difference.inDays} days ago';
     } else {
       return '${dateTime.day}/${dateTime.month}/${dateTime.year}';
-    }
-  }
-
-  /// Check socket connection and reconnect if needed
-  Future<void> checkAndReconnectSocket() async {
-    try {
-      // Get or create SocketService
-      if (Get.isRegistered<SocketService>()) {
-        _socketService = Get.find<SocketService>();
-      } else {
-        _socketService = Get.put(SocketService());
-      }
-
-      // Check if socket is connected
-      if (!_socketService!.connected) {
-        // Socket not connected, reconnect it
-        final currentUserId = await _getCurrentUserId();
-        final token = await _getAccessToken();
-        await _socketService!.connect(userId: currentUserId, token: token);
-      }
-
-      // Setup message listeners
-      _setupSocketListeners();
-
-      // Request inbox data if connected
-      if (_socketService!.connected) {
-        _socketService!.getInbox();
-      }
-    } catch (e) {
-      print('Error checking socket: $e');
-      // Error checking socket, but still setup listeners
-      _setupSocketListeners();
-    }
-  }
-
-  /// Get current user ID from storage
-  Future<String?> _getCurrentUserId() async {
-    final storage = Get.find<StorageService>();
-    return storage.readString('user_id') ??
-        storage.readString('userId') ??
-        storage.readString('_id');
-  }
-
-  /// Get access token from storage
-  Future<String?> _getAccessToken() async {
-    try {
-      final storage = Get.find<StorageService>();
-      final token = storage.readString('access_token') ??
-          storage.readString('accessToken') ??
-          storage.readString('token');
-      return token;
-    } catch (e) {
-      print('Error getting access token from storage: $e');
-      return null;
-    }
-  }
-
-  /// Setup Socket.IO event listeners for inbox_data and user_connection_status
-  void _setupSocketListeners() {
-    if (_socketService == null) return;
-
-    // Listen for inbox data - inbox_data event
-    _socketService!.onInboxData((data) {
-      _handleInboxData(data);
-    });
-
-    // Listen for user connection status updates - user_connection_status event
-    _socketService!.onUserConnectionStatus((data) {
-      _handleUserConnectionStatus(data);
-    });
-  }
-
-  /// Cleanup Socket.IO event listeners
-  void _cleanupSocketListeners() {
-    _socketService?.offInboxData();
-    _socketService?.offUserConnectionStatus();
-  }
-
-  /// Handle inbox data from Socket.IO - inbox_data event
-  void _handleInboxData(Map<String, dynamic> data) {
-    try {
-      print('Received inbox data from socket: $data');
-      // Parse the inbox data and update conversations list
-      _parseApiResponse(data);
-    } catch (e) {
-      print('Error handling inbox data: $e');
-      // Handle parsing errors - keep existing data or clear
-      conversations.value = [];
-    }
-  }
-
-  /// Handle user connection status from Socket.IO - user_connection_status event
-  void _handleUserConnectionStatus(Map<String, dynamic> data) {
-    try {
-      print('Received user connection status from socket: $data');
-      
-      final userId = data['user_id']?.toString();
-      final onlineStatus = data['online_status']?.toString();
-      
-      if (userId == null || onlineStatus == null) {
-        print('Invalid user connection status data, ignoring');
-        return;
-      }
-
-      final isOnline = onlineStatus.toLowerCase() == 'online';
-      print('User $userId status: $onlineStatus (isOnline: $isOnline)');
-      
-      // Find and update the conversation in the list
-      final index = conversations.indexWhere((conv) => conv.userId == userId);
-      
-      if (index != -1) {
-        final conversation = conversations[index];
-        // Only update if online status changed
-        if (conversation.isOnline != isOnline) {
-          conversations[index] = Conversation(
-            id: conversation.id,
-            name: conversation.name,
-            profileImageUrl: conversation.profileImageUrl,
-            lastMessage: conversation.lastMessage,
-            lastMessageTime: conversation.lastMessageTime,
-            unreadCount: conversation.unreadCount,
-            isOnline: isOnline, // Update online status
-            isHighlighted: conversation.isHighlighted,
-            userId: conversation.userId,
-          );
-          
-          // Refresh the list to trigger UI update
-          conversations.refresh();
-          print('Updated online status for user $userId to $isOnline');
-        }
-      }
-    } catch (e) {
-      print('Error handling user connection status: $e');
     }
   }
 }

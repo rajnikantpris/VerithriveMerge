@@ -8,7 +8,9 @@ import 'package:image_cropper/image_cropper.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 
+import '../../api/api_response.dart';
 import '../../api/dio_client.dart';
+import '../../api/user_api_service.dart';
 import '../../common/base_controller.dart';
 import '../../routes/app_routes.dart';
 import '../../services/location_permission_service.dart';
@@ -32,6 +34,7 @@ class SignupPersonDetailsController extends BaseController {
   final genderController = TextEditingController();
   final postcodeController = TextEditingController();
   final addressController = TextEditingController();
+  final promoCodeController = TextEditingController();
 
   // Selected address data
   final selectedLatitude = Rxn<double>();
@@ -43,6 +46,10 @@ class SignupPersonDetailsController extends BaseController {
   final isManualPostcode = false.obs;
   final selectedImage = Rxn<File>();
   final socialProfileImageUrl = ''.obs;
+  final isSocialLogin = false.obs;
+  final isPromoCodeApplied = false.obs;
+  final isPromoCodeValid = false.obs;
+  final promoCodeMessage = ''.obs;
   final hasValidated = false.obs;
   final ImagePicker _imagePicker = ImagePicker();
   final LocationPermissionService _locationPermissionService =
@@ -70,7 +77,96 @@ class SignupPersonDetailsController extends BaseController {
     genderController.dispose();
     postcodeController.dispose();
     addressController.dispose();
+    promoCodeController.dispose();
     super.onClose();
+  }
+
+  Future<void> checkPromoCode() async {
+    final promoCode = promoCodeController.text.trim();
+    final storage = _storageService;
+    if (storage == null) return;
+
+    final email = storage.readString('user_email') ?? '';
+
+    if (promoCode.isEmpty) {
+      promoCodeMessage.value = 'Please enter a promo code';
+      isPromoCodeValid.value = false;
+      return;
+    }
+
+    if (email.isEmpty) {
+      promoCodeMessage.value = 'Email not found. Please log in again.';
+      isPromoCodeValid.value = false;
+      return;
+    }
+
+    final userApiService = Get.isRegistered<UserApiService>()
+        ? Get.find<UserApiService>()
+        : null;
+
+    if (userApiService == null) {
+      promoCodeMessage.value = 'API service not available';
+      isPromoCodeValid.value = false;
+      return;
+    }
+
+    await callDataService<ApiResponse<dynamic>>(
+      userApiService.checkPromoCode(
+        promoCode: promoCode,
+        email: email,
+      ),
+      showLoader: true,
+      onComplete: () {
+        resetState();
+      },
+      mapErrorMessage: (error) {
+        if (error is ApiResponse) {
+          return error.errorMessage;
+        }
+        return mapErrorToMessage(error);
+      },
+      onError: (error, stack) {
+        final errorMsg = errorMessage.value.isNotEmpty
+            ? errorMessage.value
+            : 'Failed to validate promo code';
+        promoCodeMessage.value = errorMsg;
+        isPromoCodeValid.value = false;
+      },
+      onSuccess: (response) async {
+        if (response.success) {
+          if (response.data is Map<String, dynamic>) {
+            final data = response.data as Map<String, dynamic>;
+            final isValid = data['is_valid'] as bool? ?? false;
+
+            if (isValid) {
+              promoCodeMessage.value =
+                  response.message ?? 'Promo code applied successfully!';
+              isPromoCodeValid.value = true;
+              isPromoCodeApplied.value = true;
+            } else {
+              promoCodeMessage.value = response.message ?? 'Invalid promo code';
+              isPromoCodeValid.value = false;
+            }
+          } else {
+            promoCodeMessage.value =
+                response.message ?? 'Promo code applied successfully!';
+            isPromoCodeValid.value = true;
+            isPromoCodeApplied.value = true;
+          }
+        } else {
+          promoCodeMessage.value =
+              response.errorMessage ?? 'Invalid promo code';
+          isPromoCodeValid.value = false;
+        }
+      },
+    );
+  }
+
+  void removePromoCode() {
+    promoCodeController.clear();
+    isPromoCodeApplied.value = false;
+    isPromoCodeValid.value = false;
+    promoCodeMessage.value = '';
   }
 
   void setGender(String? value) {
@@ -208,6 +304,7 @@ class SignupPersonDetailsController extends BaseController {
         'longitude': selectedLongitude.value,
         'profileImagePath': selectedImage.value?.path,
         'socialProfileImageUrl': socialProfileImageUrl.value,
+        'promoCode': isPromoCodeValid.value ? promoCodeController.text.trim() : '',
       },
     );
   }
@@ -423,6 +520,9 @@ class SignupPersonDetailsController extends BaseController {
     if (storedImage != null && storedImage.isNotEmpty) {
       socialProfileImageUrl.value = storedImage;
     }
+
+    final storedIsSocial = storage.readBool('is_social_login') ?? false;
+    isSocialLogin.value = storedIsSocial;
   }
 
   ImageProvider? get avatarImageProvider {

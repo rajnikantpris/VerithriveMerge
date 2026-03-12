@@ -28,10 +28,6 @@ class ChatDetailController extends BaseController {
   String? _receiverUserId;
 
   Conversation? _conversationArg;
-  Worker? _messagesWorker;
-  
-  // Reactive conversation for UI updates
-  final conversation = Rxn<Conversation>();
 
   @override
   void onInit() {
@@ -39,11 +35,6 @@ class ChatDetailController extends BaseController {
     _conversationArg = _resolveConversation();
     _chatId = _conversationArg?.id;
     _receiverUserId = _conversationArg?.userId;
-    
-    // Set initial reactive conversation value
-    if (_conversationArg != null) {
-      conversation.value = _conversationArg!;
-    }
     
     // Debug logging for notification data
     print("=== ChatDetailController Init ===");
@@ -131,18 +122,13 @@ class ChatDetailController extends BaseController {
     }
   }
 
-  /// Setup Socket.IO event listeners - receive_message and user_connection_status
+  /// Setup Socket.IO event listeners - receive_message only
   void _setupSocketListeners() {
     if (_socketService == null) return;
 
     // Listen for incoming messages - receive_message event
     _socketService!.onReceiveMessage((data) {
       _handleReceivedMessage(data);
-    });
-
-    // Listen for user connection status updates - user_connection_status event
-    _socketService!.onUserConnectionStatus((data) {
-      _handleUserConnectionStatus(data);
     });
   }
 
@@ -238,12 +224,12 @@ class ChatDetailController extends BaseController {
 
       final message = ChatMessage(
         id: messageId ?? DateTime.now().millisecondsSinceEpoch.toString(),
-        conversationId: _chatId ?? conversation.value!.id,
+        conversationId: _chatId ?? conversation.id,
         message: messageText,
         timestamp: parsedTimestamp,
         isSentByMe: isMine,
-        senderName: isMine ? null : conversation.value!.name,
-        senderImageUrl: isMine ? null : conversation.value!.profileImageUrl,
+        senderName: isMine ? null : conversation.name,
+        senderImageUrl: isMine ? null : conversation.profileImageUrl,
       );
 
       debugPrint('=== ADDING MESSAGE TO LIST ===');
@@ -274,93 +260,6 @@ class ChatDetailController extends BaseController {
       _refreshMessagesInbox();
     } catch (e) {
       debugPrint('Error handling received message: $e');
-    }
-  }
-
-  /// Handle user connection status from Socket.IO - user_connection_status event
-  void _handleUserConnectionStatus(Map<String, dynamic> data) {
-    try {
-      debugPrint('=== USER CONNECTION STATUS ===');
-      debugPrint('Full data: $data');
-      
-      final userId = data['user_id']?.toString();
-      final onlineStatus = data['online_status']?.toString();
-      
-      if (userId == null || onlineStatus == null) {
-        debugPrint('Invalid user connection status data, ignoring');
-        return;
-      }
-
-      debugPrint('User $userId status: $onlineStatus');
-      
-      // Check if this status update is for the current chat user
-      if (_receiverUserId == userId) {
-        final isOnline = onlineStatus.toLowerCase() == 'online';
-        
-        debugPrint('Updating current user online status to: $isOnline');
-        
-        // Update the conversation argument with new online status
-        if (_conversationArg != null) {
-          _conversationArg = Conversation(
-            id: _conversationArg!.id,
-            name: _conversationArg!.name,
-            profileImageUrl: _conversationArg!.profileImageUrl,
-            lastMessage: _conversationArg!.lastMessage,
-            lastMessageTime: _conversationArg!.lastMessageTime,
-            unreadCount: _conversationArg!.unreadCount,
-            isOnline: isOnline, // Update online status
-            isHighlighted: _conversationArg!.isHighlighted,
-            userId: _conversationArg!.userId,
-          );
-          
-          // Update reactive conversation to trigger UI update
-          conversation.value = _conversationArg!;
-          
-          debugPrint('Conversation online status updated in controller');
-          
-          // Also update conversation in MessagesController if available
-          _updateConversationInMessagesController();
-        }
-      }
-    } catch (e) {
-      debugPrint('Error handling user connection status: $e');
-    }
-  }
-
-  /// Update conversation in MessagesController when status changes
-  void _updateConversationInMessagesController() {
-    try {
-      if (!Get.isRegistered<MessagesController>(tag: 'messages')) return;
-      
-      final messagesController = Get.find<MessagesController>(tag: 'messages');
-      final currentConversation = _conversationArg;
-      
-      if (currentConversation == null) return;
-      
-      // Find and update the conversation in the messages list
-      final index = messagesController.conversations.indexWhere((conv) => 
-          conv.userId == _receiverUserId || conv.id == _chatId);
-      
-      if (index != -1) {
-        final existingConversation = messagesController.conversations[index];
-        final updatedConversation = Conversation(
-          id: existingConversation.id,
-          name: existingConversation.name,
-          profileImageUrl: existingConversation.profileImageUrl,
-          lastMessage: existingConversation.lastMessage,
-          lastMessageTime: existingConversation.lastMessageTime,
-          unreadCount: existingConversation.unreadCount,
-          isOnline: conversation.value!.isOnline, // Use updated online status from reactive value
-          isHighlighted: existingConversation.isHighlighted,
-          userId: existingConversation.userId,
-        );
-        
-        messagesController.conversations[index] = updatedConversation;
-        messagesController.conversations.refresh();
-        debugPrint('Updated conversation online status in MessagesController');
-      }
-    } catch (e) {
-      debugPrint('Error updating conversation in MessagesController: $e');
     }
   }
 
@@ -499,7 +398,6 @@ class ChatDetailController extends BaseController {
   void _cleanupSocket() {
     if (_socketService != null) {
       _socketService!.offReceiveMessage();
-      _socketService!.offUserConnectionStatus(); // Also remove user connection status listener
     }
   }
 
@@ -567,14 +465,14 @@ class ChatDetailController extends BaseController {
   }
 
   /// Get conversation (for external access)
- /* Conversation get conversation {
+  Conversation get conversation {
     return _conversationArg ?? Conversation(
       id: '',
       name: 'Unknown',
       lastMessage: '',
       lastMessageTime: DateTime.now(),
     );
-  }*/
+  }
   
   /// Get notification data if available
   Map<String, dynamic>? get notificationData {
@@ -588,13 +486,13 @@ class ChatDetailController extends BaseController {
   /// Check if chat room API needs to be called and create/get room if needed
   Future<void> _checkAndCreateChatRoom() async {
     debugPrint('=== CHECK AND CREATE CHAT ROOM ===');
-    debugPrint('Conversation ID: ${conversation.value!.id}');
+    debugPrint('Conversation ID: ${conversation.id}');
     debugPrint('Receiver user ID: $_receiverUserId');
     debugPrint('Current chat ID: $_chatId');
     
     // Set chat ID from conversation if available
-    if (conversation.value!.id.isNotEmpty) {
-      _chatId = conversation.value!.id;
+    if (conversation.id.isNotEmpty) {
+      _chatId = conversation.id;
       debugPrint('Using conversation ID as chat ID: $_chatId');
       return;
     }
@@ -675,7 +573,7 @@ class ChatDetailController extends BaseController {
   Future<void> _fetchMessages() async {
     if (_chatId == null || _chatId!.isEmpty) {
       // Use conversation ID as fallback
-      _chatId = conversation.value!.id;
+      _chatId = conversation.id;
       if (_chatId == null || _chatId!.isEmpty) {
         await Future.delayed(const Duration(milliseconds: 300));
         if (_chatId == null || _chatId!.isEmpty) {
@@ -800,12 +698,12 @@ class ChatDetailController extends BaseController {
 
         final message = ChatMessage(
           id: messageId,
-          conversationId: _chatId ?? conversation.value!.id,
+          conversationId: _chatId ?? conversation.id,
           message: messageText,
           timestamp: parsedTimestamp,
           isSentByMe: isMine,
-          senderName: isMine ? null : conversation.value!.name,
-          senderImageUrl: isMine ? null : conversation.value!.profileImageUrl,
+          senderName: isMine ? null : conversation.name,
+          senderImageUrl: isMine ? null : conversation.profileImageUrl,
         );
 
         fetchedMessages.add(message);

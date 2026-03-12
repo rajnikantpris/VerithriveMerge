@@ -95,7 +95,7 @@ class YourServicesView extends BaseView<YourServicesController> {
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Services without sub_services - show as tags/chips
+                    // Services without sub_services - show as tags/chips with show more/less
                     Wrap(
                       spacing: HightWidthSizes.setValue_10,
                       runSpacing: HightWidthSizes.setValue_10,
@@ -103,6 +103,7 @@ class YourServicesView extends BaseView<YourServicesController> {
                           .where((service) =>
                               service.subServices == null ||
                               service.subServices!.isEmpty)
+                          .where((service) => controller.isServiceVisible(service.id ?? ''))
                           .map((service) {
                         final isSelected = controller.selectedServices.contains(
                           service.serviceName ?? '',
@@ -138,6 +139,23 @@ class YourServicesView extends BaseView<YourServicesController> {
                         );
                       }).toList(),
                     ),
+                    // Show more/less button for services
+                    if (controller.shouldShowMoreButton) ...[
+                      SizedBox(height: HightWidthSizes.setValue_12),
+                      GestureDetector(
+                        onTap: () => controller.toggleShowMore(),
+                        child: Text(
+                          controller.isShowingMoreServices ? 'Show less' : 'Show more',
+                          style: TextStyle(
+                            fontFamily: AppFonts.rubikRegular,
+                            fontSize: FontSizes.setFontValue_12,
+                            fontWeight: FontWeight.w400,
+                            color: AppColor.color_2FC4B2,
+                            decoration: TextDecoration.underline,
+                          ),
+                        ),
+                      ),
+                    ],
                     // Services with sub_services - show as expandable categories
                     ...controller.services
                         .where((service) =>
