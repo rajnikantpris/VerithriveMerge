@@ -46,6 +46,10 @@ class UpdateProfileController extends BaseController {
   // Gender options
   final List<String> genderOptions = ['Male', 'Female','Prefer not to say'];
   
+  // Marketing preferences
+  final marketingOptions = ['Yes', 'No'];
+  final selectedMarketingPreference = ''.obs;
+
   // Validation error messages
   final genderError = RxString('');
   final addressError = RxString('');
@@ -129,6 +133,12 @@ class UpdateProfileController extends BaseController {
           } else {
             selectedGender.value = '';
           }
+        }
+
+        // Populate marketing preference
+        if (data['opt_status'] != null) {
+          selectedMarketingPreference.value =
+              (data['opt_status'] == 1 || data['opt_status'] == true) ? 'Yes' : 'No';
         }
         
         if (data['postcode'] != null) {
@@ -282,6 +292,69 @@ class UpdateProfileController extends BaseController {
     selectedGender.value = gender;
     genderError.value = ''; // Clear error when gender is selected
     Get.back();
+  }
+
+  void setMarketingPreference(String preference) {
+    selectedMarketingPreference.value = preference;
+    Get.back();
+  }
+
+  void showMarketingInfo() {
+    Get.dialog(
+      AlertDialog(
+        title: const Text('Marketing Preferences'),
+        content: const Text(
+          'Marketing emails from VERITHRIVE to keep you up to date about latest offers and trends.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void openMarketingBottomSheet() {
+    Get.bottomSheet(
+      Container(
+        padding: EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(20),
+            topRight: Radius.circular(20),
+          ),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Select Marketing Preference',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.black,
+              ),
+            ),
+            SizedBox(height: 20),
+            ...marketingOptions.map((option) {
+              return ListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text(option, style: TextStyle(fontSize: 16)),
+                trailing: Obx(() => selectedMarketingPreference.value == option
+                    ? Icon(Icons.check, color: AppColors.primaryColor)
+                    : SizedBox.shrink()),
+                onTap: () => setMarketingPreference(option),
+              );
+            }).toList(),
+          ],
+        ),
+      ),
+      isScrollControlled: true,
+    );
   }
 
   void openGenderBottomSheet() {
@@ -537,6 +610,7 @@ class UpdateProfileController extends BaseController {
       data['address'] = selectedAddress.value;
       data['latitude'] = latitude.value;
       data['longitude'] = longitude.value;
+      data['opt_status'] = selectedMarketingPreference.value == 'Yes' ? 1 : 0;
       data['is_term_condition'] = true;
       data['is_update'] = true;
 
