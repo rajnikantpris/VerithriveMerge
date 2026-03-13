@@ -231,9 +231,18 @@ class _NotificationIconWithBadge extends StatelessWidget {
     }
 
     final notificationService = Get.find<NotificationService>();
+    final homeController = Get.find<HomeController>();
 
     return GestureDetector(
       onTap: () async {
+        // If guest, redirect to login
+        if (homeController.isGuestUser()) {
+          if (Get.currentRoute != Routes.login) {
+            Get.offAllNamed(Routes.login);
+          }
+          return;
+        }
+
         // Refresh notification count before navigating
         await notificationService.fetchNotificationCount();
         // Navigate to notifications page

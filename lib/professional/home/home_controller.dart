@@ -89,9 +89,9 @@ class HomeController extends BaseController {
     // loadItems();
     // Scroll to selected date after the widget is built
     ever(selectedDate, (_) => _scrollToSelectedDate());
-    // Reload bookings when date changes (only if user has selected a date)
+    // Reload bookings when date changes (only if user has selected a date and not a guest)
     ever(selectedDate, (_) {
-      if (hasUserSelectedDate.value) {
+      if (hasUserSelectedDate.value && !_isGuestUser()) {
         loadBookingsList();
       }
     });
@@ -228,21 +228,18 @@ class HomeController extends BaseController {
   }
 
   void onTabSelected(int index) {
-    // If Profile tab (index 3) is selected, check if user is logged in
-    if (index == 3) {
-      // Check if user is a guest (no access token)
-      final isGuest = _isGuestUser();
-      if (isGuest) {
-        // Guest user: navigate to onboarding
-        if (Get.currentRoute != Routes.onboarding) {
-          Get.offAllNamed(Routes.onboarding);
-        }
-        return;
+    // Check if user is a guest
+    final isGuest = _isGuestUser();
+
+    // If any tab except Home (index 0) is selected, and user is a guest,
+    // redirect to login (except maybe Messages which we might handle differently)
+    if (isGuest && index != 0) {
+      if (Get.currentRoute != Routes.login) {
+        Get.offAllNamed(Routes.login);
       }
-      // Logged-in user: refresh profile details when tab opens
-      // loadProfileDetails();
-      // Logged-in user: show profile normally
+      return;
     }
+
     if (index == 2) {
       // Check and reconnect socket when Messages tab is selected
       if (Get.isRegistered<MessagesController>()) {
@@ -250,12 +247,17 @@ class HomeController extends BaseController {
         messagesController.checkAndReconnectSocket();
       }
     }
+    
     currentIndex(index);
-    loadProfileDetails();
+    
+    // Only load profile details if not a guest
+    if (!isGuest) {
+      loadProfileDetails();
+    }
   }
 
   /// Check if the current user is a guest (no access token)
-  bool _isGuestUser() {
+  bool isGuestUser() {
     if (!Get.isRegistered<StorageService>()) {
       return true; // No storage service means guest
     }
@@ -263,6 +265,9 @@ class HomeController extends BaseController {
     final token = storage.readString('access_token');
     return token == null || token.isEmpty;
   }
+
+  // Backwards compatibility for internal calls
+  bool _isGuestUser() => isGuestUser();
 
   void toggleCalendarView() {
     showMonthView.toggle();
@@ -307,8 +312,10 @@ class HomeController extends BaseController {
   void selectDate(DateTime date) {
     hasUserSelectedDate.value = true;
     selectedDate.value = date;
-    // Fetch bookings for the selected date
-    loadBookingsList();
+    // Fetch bookings for the selected date if not a guest
+    if (!_isGuestUser()) {
+      loadBookingsList();
+    }
   }
 
   /// Check if the selected date is in the past (before today)

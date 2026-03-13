@@ -93,17 +93,21 @@ class CalendarController extends BaseController {
     // Scroll to selected date after the widget is built
     ever(selectedDate, (_) {
       _scrollToSelectedDate();
-      // Fetch service format and availability when date changes
-      _fetchServiceFormatAvailability();
+      // Fetch service format and availability when date changes if not a guest
+      if (_homeController != null && !_homeController!.isGuestUser()) {
+        _fetchServiceFormatAvailability();
+      }
     });
     // Also scroll on initial load
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _scrollToSelectedDate();
     });
-    // Fetch service format and availability for current date on init
-    _fetchServiceFormatAvailability();
-    // Load notification count from shared service
-    _notificationService?.fetchNotificationCount();
+    // Fetch service format and availability for current date on init if not a guest
+    if (_homeController != null && !_homeController!.isGuestUser()) {
+      _fetchServiceFormatAvailability();
+      // Load notification count from shared service
+      _notificationService?.fetchNotificationCount();
+    }
   }
 
   @override

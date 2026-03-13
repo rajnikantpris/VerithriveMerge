@@ -20,11 +20,23 @@ class MessagesController extends BaseController {
 
   SocketService? _socketService;
 
+  /// Check if the current user is a guest (no access token)
+  bool _isGuestUser() {
+    if (!Get.isRegistered<StorageService>()) {
+      return true; // No storage service means guest
+    }
+    final storage = Get.find<StorageService>();
+    final token = storage.readString('access_token');
+    return token == null || token.isEmpty;
+  }
+
   @override
   void onInit() {
     super.onInit();
     // fetchChatInbox();
-    checkAndReconnectSocket();
+    if (!_isGuestUser()) {
+      checkAndReconnectSocket();
+    }
   }
 
   @override

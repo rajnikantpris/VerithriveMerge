@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 
 import '../../common/base_controller.dart';
 import '../../routes/app_routes.dart';
+import '../../services/storage_service.dart';
 
 class OnboardingController extends BaseController {
   final totalSteps = 3;
@@ -11,6 +12,10 @@ class OnboardingController extends BaseController {
   late final PageController pageController;
   Timer? _autoScrollTimer;
   bool _isScrollingForward = true;
+
+  // Get StorageService
+  StorageService? get _storageService =>
+      Get.isRegistered<StorageService>() ? Get.find<StorageService>() : null;
 
   @override
   void onInit() {
@@ -78,7 +83,13 @@ class OnboardingController extends BaseController {
     }
   }
 
-  void continueAsGuest() => _goToHome();
+  Future<void> continueAsGuest() async {
+    // Set userType to professional even for guest so Splash knows which flow to use
+    if (_storageService != null) {
+      await _storageService!.writeString('userType', 'professional');
+    }
+    _goToHome();
+  }
 
   void _goToHome() {
     if (Get.currentRoute != Routes.home) {
