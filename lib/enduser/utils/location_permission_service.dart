@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:device_info_plus/device_info_plus.dart';
+import 'package:geolocator/geolocator.dart';
 
 /// Service class for handling location permissions across the application
 class LocationPermissionService {
@@ -83,36 +84,42 @@ class LocationPermissionService {
           return locationStatus.isGranted;
         }
       } else {
-        // For iOS, request location when in use permission
-        final locationStatus = await Permission.locationWhenInUse.status;
+        // iOS: Use Geolocator for permission check - more reliable than permission_handler
+        // which can wrongly report isPermanentlyDenied when user has actually granted permission
+        final locationPermission = await Geolocator.checkPermission();
 
-        if (locationStatus.isPermanentlyDenied) {
+        if (locationPermission == LocationPermission.whileInUse ||
+            locationPermission == LocationPermission.always) {
+          return true;
+        }
+
+        if (locationPermission == LocationPermission.deniedForever) {
           await _showLocationPermissionSettingsDialog();
           return false;
         }
 
-        if (!locationStatus.isGranted) {
-          final requestedStatus = await Permission.locationWhenInUse.request();
+        // LocationPermission.denied - request permission
+        final requestedPermission = await Geolocator.requestPermission();
 
-          if (requestedStatus.isPermanentlyDenied) {
-            await _showLocationPermissionSettingsDialog();
-            return false;
-          }
-
-          if (requestedStatus.isDenied) {
-            // Show dialog to explain why permission is needed and retry
-            final shouldRetry = await _showLocationPermissionDeniedDialog();
-            if (shouldRetry == true) {
-              // Retry requesting permission
-              return await requestLocationPermission();
-            }
-            return false;
-          }
-
-          return requestedStatus.isGranted;
+        if (requestedPermission == LocationPermission.whileInUse ||
+            requestedPermission == LocationPermission.always) {
+          return true;
         }
 
-        return locationStatus.isGranted;
+        if (requestedPermission == LocationPermission.deniedForever) {
+          await _showLocationPermissionSettingsDialog();
+          return false;
+        }
+
+        if (requestedPermission == LocationPermission.denied) {
+          final shouldRetry = await _showLocationPermissionDeniedDialog();
+          if (shouldRetry == true) {
+            return await requestLocationPermission();
+          }
+          return false;
+        }
+
+        return false;
       }
     } catch (e, stackTrace) {
       debugPrint('Error in requestLocationPermission: $e');
@@ -143,8 +150,10 @@ class LocationPermissionService {
           return locationStatus.isGranted;
         }
       } else {
-        final locationStatus = await Permission.locationWhenInUse.status;
-        return locationStatus.isGranted;
+        // iOS: Use Geolocator for accurate permission status
+        final locationPermission = await Geolocator.checkPermission();
+        return locationPermission == LocationPermission.whileInUse ||
+            locationPermission == LocationPermission.always;
       }
     } catch (e) {
       debugPrint('Error checking location permission: $e');
