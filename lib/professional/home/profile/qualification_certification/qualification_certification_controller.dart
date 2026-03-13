@@ -152,7 +152,7 @@ class QualificationCertificationController extends BaseController {
         false; // Reset flag when starting new load
     await callDataService<ApiResponse<dynamic>>(
       _userApiService.getCollegesUniversities(),
-      showLoader: false,
+      showLoader: true,
       onSuccess: (response) {
         debugPrint('Colleges/Universities API response: ${response.success}');
         if (response.success && response.data != null) {

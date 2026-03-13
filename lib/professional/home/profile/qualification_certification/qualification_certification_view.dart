@@ -103,14 +103,14 @@ class QualificationCertificationView
                 // Qualification blocks
                 Obx(
                   () {
-                    if (controller.isLoadingCollegesUniversities.value) {
-                      return const Center(
-                        child: Padding(
-                          padding: EdgeInsets.all(20.0),
-                          child: CircularProgressIndicator(),
-                        ),
-                      );
-                    }
+                    // if (controller.isLoadingCollegesUniversities.value) {
+                    //   return const Center(
+                    //     child: Padding(
+                    //       padding: EdgeInsets.all(20.0),
+                    //       child: CircularProgressIndicator(),
+                    //     ),
+                    //   );
+                    // }
                     // Only show "No colleges available" if API call has completed and colleges list is empty
                     if (controller.hasLoadedCollegesUniversities.value &&
                         controller.collegesUniversities.isEmpty) {

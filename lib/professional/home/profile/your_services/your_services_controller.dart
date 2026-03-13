@@ -72,7 +72,7 @@ class YourServicesController extends BaseController {
   Future<void> _loadProfileDetails() async {
     await callDataService<ApiResponse<dynamic>>(
       _userApiService.getCreateProfileDetails(),
-      showLoader: false,
+      showLoader: true,
       onSuccess: (response) {
         if (response.success && response.data != null) {
           try {
@@ -189,7 +189,7 @@ class YourServicesController extends BaseController {
     debugPrint('_loadProfessionServices called');
     await callDataService<ApiResponse<dynamic>>(
       _userApiService.getProfessionServices(),
-      showLoader: false,
+      showLoader: true,
       onSuccess: (response) {
         debugPrint('Profession services API response received');
         if (response.success && response.data != null) {

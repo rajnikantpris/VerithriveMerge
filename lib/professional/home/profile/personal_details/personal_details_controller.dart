@@ -85,7 +85,7 @@ class PersonalDetailsController extends BaseController {
     formKey = GlobalKey<FormState>();
     // Load data from API
     _loadProfessionTypes();
-    _loadPersonalDetails();
+
   }
 
   @override
@@ -480,7 +480,7 @@ class PersonalDetailsController extends BaseController {
     isLoadingProfessionTypes.value = true;
     await callDataService<ApiResponse<dynamic>>(
       _userApiService.getProfessionTypes(),
-      showLoader: false,
+      showLoader: true,
       onSuccess: (response) {
         if (response.success && response.data != null) {
           professionTypesMap.clear();
@@ -526,6 +526,7 @@ class PersonalDetailsController extends BaseController {
               professionTypes.value = types;
             }
           }
+          _loadPersonalDetails();
         }
       },
       onComplete: () {
@@ -536,10 +537,10 @@ class PersonalDetailsController extends BaseController {
 
   /// Load personal details from API
   Future<void> _loadPersonalDetails() async {
-    // Wait for profession types to be loaded first
-    while (isLoadingProfessionTypes.value) {
-      await Future.delayed(const Duration(milliseconds: 50));
-    }
+    // // Wait for profession types to be loaded first
+    // while (isLoadingProfessionTypes.value) {
+    //   await Future.delayed(const Duration(milliseconds: 50));
+    // }
 
     await callDataService<ApiResponse<dynamic>>(
       _userApiService.getCreateProfileDetails(),
