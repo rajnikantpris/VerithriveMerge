@@ -238,7 +238,7 @@ class _NotificationIconWithBadge extends StatelessWidget {
         // If guest, redirect to login
         if (homeController.isGuestUser()) {
           if (Get.currentRoute != Routes.login) {
-            Get.offAllNamed(Routes.login);
+            Get.toNamed(Routes.login);
           }
           return;
         }

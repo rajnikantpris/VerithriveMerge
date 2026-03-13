@@ -235,7 +235,7 @@ class HomeController extends BaseController {
     // redirect to login (except maybe Messages which we might handle differently)
     if (isGuest && index != 0) {
       if (Get.currentRoute != Routes.login) {
-        Get.offAllNamed(Routes.login);
+        Get.toNamed(Routes.login);
       }
       return;
     }
