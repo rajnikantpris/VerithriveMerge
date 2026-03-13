@@ -276,26 +276,37 @@ class SignupController extends BaseController {
               otp = otpValue.toString();
             }
           }
-
-          showResponseDialog(
-            message: messageText,
-            title: 'Success',
-            isError: false,
-            showButton: false,
-            onOkPressed: () {
-              Get.toNamed(
-                Routes.verifyEmail,
-                arguments: {
-                  'email': email,
-                  // 'phone': phone,
-                  'promo_code': isPromoCodeValid.value ? promoCode : '',
-                  'password': password,
-                  'user_type': userType,
-                  if (otp != null) 'otp': otp,
-                },
-              );
+          Get.toNamed(
+            Routes.verifyEmail,
+            arguments: {
+              'email': email,
+              // 'phone': phone,
+              'promo_code': isPromoCodeValid.value ? promoCode : '',
+              'password': password,
+              'user_type': userType,
+              if (otp != null) 'otp': otp,
             },
           );
+
+          // showResponseDialog(
+          //   message: messageText,
+          //   title: 'Success',
+          //   isError: false,
+          //   showButton: false,
+          //   onOkPressed: () {
+          //     Get.toNamed(
+          //       Routes.verifyEmail,
+          //       arguments: {
+          //         'email': email,
+          //         // 'phone': phone,
+          //         'promo_code': isPromoCodeValid.value ? promoCode : '',
+          //         'password': password,
+          //         'user_type': userType,
+          //         if (otp != null) 'otp': otp,
+          //       },
+          //     );
+          //   },
+          // );
         } else {
           // Handle failure case
           showResponseDialog(
@@ -607,16 +618,19 @@ class SignupController extends BaseController {
 
           final successMessage =
               response.message ?? 'Account created successfully. Welcome!';
-          showResponseDialog(
-            message: successMessage,
-            title: 'Success',
-            isError: false,
-            showButton: false,
-            onOkPressed: () {
-              // Navigate based on user flags (same as login)
-              _navigateBasedOnUserFlags(userFlags);
-            },
-          );
+
+          _navigateBasedOnUserFlags(userFlags);
+
+          // showResponseDialog(
+          //   message: successMessage,
+          //   title: 'Success',
+          //   isError: false,
+          //   showButton: false,
+          //   onOkPressed: () {
+          //     // Navigate based on user flags (same as login)
+          //     _navigateBasedOnUserFlags(userFlags);
+          //   },
+          // );
         } else {
           showResponseDialog(
             message: response.errorMessage,

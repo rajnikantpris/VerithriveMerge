@@ -206,16 +206,17 @@ class VerifyEmailController extends BaseController {
                 },
               );
             } else {
+              await _registerUser();
               // Registration flow - proceed with registration
-              showResponseDialog(
-                message: messageText,
-                title: 'Success',
-                isError: false,
-                showButton: false,
-                onOkPressed: () async {
-                  await _registerUser();
-                },
-              );
+              // showResponseDialog(
+              //   message: messageText,
+              //   title: 'Success',
+              //   isError: false,
+              //   showButton: false,
+              //   onOkPressed: () async {
+              //
+              //   },
+              // );
             }
           } else {
             showResponseDialog(
