@@ -44,27 +44,34 @@ class YourServicesController extends BaseController {
     _loadProfileAndServices();
   }
 
-  /// Load profile details to get profession_sub_type_id, then load services
+  /// Load profile details and services in parallel where possible
   Future<void> _loadProfileAndServices() async {
-    await _loadProfileDetails();
-    if (professionSubTypeId.value != null &&
-        professionSubTypeId.value!.isNotEmpty) {
-      await _loadServices();
-      // After services are loaded, load selected profession services
-      Future.delayed(const Duration(milliseconds: 400), () {
-        if (services.isNotEmpty) {
-          _loadProfessionServices();
-        } else {
-          Future.delayed(const Duration(milliseconds: 500), () {
-            if (services.isNotEmpty) {
-              _loadProfessionServices();
-            }
-          });
-        }
-      });
-      
-      // Initialize visible counts for all services
-      _initializeVisibleCounts();
+    // Show a single loader for the entire process
+    showLoading();
+    isLoadingServices.value = true;
+    hasLoadedServices.value = false;
+
+    try {
+      // Start loading profile details and already selected services in parallel
+      // They don't depend on each other.
+      await Future.wait([
+        _loadProfileDetails(),
+        _loadProfessionServices(),
+      ]);
+
+      // If we have professionSubTypeId, load all available services
+      if (professionSubTypeId.value != null &&
+          professionSubTypeId.value!.isNotEmpty) {
+        await _loadServices();
+        _initializeVisibleCounts();
+      }
+    } catch (e) {
+      debugPrint('Error in _loadProfileAndServices: $e');
+    } finally {
+      isLoadingServices.value = false;
+      hasLoadedServices.value = true;
+      resetState(); // Dismiss the single loader
+      debugPrint('Initial data loading completed. Services: ${services.length}');
     }
   }
 
@@ -72,7 +79,7 @@ class YourServicesController extends BaseController {
   Future<void> _loadProfileDetails() async {
     await callDataService<ApiResponse<dynamic>>(
       _userApiService.getCreateProfileDetails(),
-      showLoader: true,
+      showLoader: false, // Managed by _loadProfileAndServices
       onSuccess: (response) {
         if (response.success && response.data != null) {
           try {
@@ -103,13 +110,11 @@ class YourServicesController extends BaseController {
     debugPrint(
         'Loading services with profession_sub_type_id: $professionSubTypeIdValue');
 
-    isLoadingServices.value = true;
-    hasLoadedServices.value = false;
     await callDataService<ApiResponse<dynamic>>(
       _userApiService.getAllServices(
         professionSubTypeId: professionSubTypeIdValue,
       ),
-      showLoader: true,
+      showLoader: false, // Managed by _loadProfileAndServices
       onSuccess: (response) {
         // Handle "no services available" as a valid empty list, not an error
         if (!response.success) {
@@ -128,8 +133,17 @@ class YourServicesController extends BaseController {
 
         if (response.data != null) {
           // Extract services from response
+          List<dynamic>? list;
           if (response.data is List) {
-            final list = response.data as List;
+            list = response.data as List;
+          } else if (response.data is Map<String, dynamic>) {
+            final data = response.data as Map<String, dynamic>;
+            if (data['data'] is List) {
+              list = data['data'] as List;
+            }
+          }
+
+          if (list != null) {
             final serviceList = <ServiceModel>[];
             for (final item in list) {
               try {
@@ -147,39 +161,11 @@ class YourServicesController extends BaseController {
             }
             services.clear();
             services.addAll(serviceList);
-          } else if (response.data is Map<String, dynamic>) {
-            final data = response.data as Map<String, dynamic>;
-            if (data['data'] is List) {
-              final list = data['data'] as List;
-              final serviceList = <ServiceModel>[];
-              for (final item in list) {
-                try {
-                  if (item is Map<String, dynamic>) {
-                    final service = ServiceModel.fromJson(item);
-                    if (service.serviceName != null &&
-                        service.serviceName!.isNotEmpty) {
-                      serviceList.add(service);
-                    }
-                  }
-                } catch (e) {
-                  debugPrint('Error parsing service: $e');
-                  continue;
-                }
-              }
-              services.clear();
-              services.addAll(serviceList);
-            }
           }
         } else {
           // No data in response, clear services list
           services.clear();
         }
-      },
-      onComplete: () {
-        isLoadingServices.value = false;
-        hasLoadedServices.value = true;
-        resetState(); // Reset pageState to dismiss loader
-        debugPrint('Services loaded. Count: ${services.length}');
       },
     );
   }
@@ -189,7 +175,7 @@ class YourServicesController extends BaseController {
     debugPrint('_loadProfessionServices called');
     await callDataService<ApiResponse<dynamic>>(
       _userApiService.getProfessionServices(),
-      showLoader: true,
+      showLoader: false, // Managed by _loadProfileAndServices
       onSuccess: (response) {
         debugPrint('Profession services API response received');
         if (response.success && response.data != null) {
