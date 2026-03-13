@@ -100,9 +100,8 @@ class SignupPersonDetailsController extends BaseController {
       return;
     }
 
-    final userApiService = Get.isRegistered<UserApiService>()
-        ? Get.find<UserApiService>()
-        : null;
+    final userApiService =
+        Get.isRegistered<UserApiService>() ? Get.find<UserApiService>() : null;
 
     if (userApiService == null) {
       promoCodeMessage.value = 'API service not available';
@@ -304,7 +303,8 @@ class SignupPersonDetailsController extends BaseController {
         'longitude': selectedLongitude.value,
         'profileImagePath': selectedImage.value?.path,
         'socialProfileImageUrl': socialProfileImageUrl.value,
-        'promoCode': isPromoCodeValid.value ? promoCodeController.text.trim() : '',
+        'promoCode':
+            isPromoCodeValid.value ? promoCodeController.text.trim() : '',
       },
     );
   }

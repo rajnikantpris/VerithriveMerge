@@ -9,8 +9,9 @@ import '../../utils/api_services.dart';
 import '../../utils/common_dialog.dart';
 
 class ChangePasswordController extends BaseController {
-  final ProjectRepository _repository = Get.find(tag: (ProjectRepository).toString());
-  
+  final ProjectRepository _repository =
+      Get.find(tag: (ProjectRepository).toString());
+
   final formKey = GlobalKey<FormState>();
   final isLoading = false.obs;
   final passwordController = TextEditingController();
@@ -30,8 +31,8 @@ class ChangePasswordController extends BaseController {
     if (value == null || value.isEmpty) {
       return 'Password is required';
     }
-    if (value.length < 12) {
-      return 'Password must be at least 12 characters';
+    if (value.length < 8 || value.length > 12) {
+      return 'Password must be at least 8-12 characters';
     }
     if (!value.contains(RegExp(r'[A-Z]'))) {
       return 'Password must contain an uppercase letter';
@@ -68,7 +69,7 @@ class ChangePasswordController extends BaseController {
       data['new_password'] = passwordController.text.trim();
       return data;
     }
-    
+
     var service = _repository.sendPostApiRequest(
       toJson,
       change_password,
@@ -83,14 +84,15 @@ class ChangePasswordController extends BaseController {
     );
   }
 
-  Future<void> _handleChangePasswordResponseSuccess(dynamic baseResponse) async {
+  Future<void> _handleChangePasswordResponseSuccess(
+      dynamic baseResponse) async {
     isLoading.value = false;
 
     try {
       Map<String, dynamic> responseData;
       if (baseResponse != null && baseResponse.data != null) {
-        responseData = baseResponse.data is Map<String, dynamic> 
-            ? baseResponse.data 
+        responseData = baseResponse.data is Map<String, dynamic>
+            ? baseResponse.data
             : baseResponse.data as Map<String, dynamic>;
       } else if (baseResponse is Map<String, dynamic>) {
         responseData = baseResponse;
@@ -99,7 +101,8 @@ class ChangePasswordController extends BaseController {
       }
 
       bool success = responseData['success'] ?? false;
-      String message = responseData['message'] ?? 'Password changed successfully';
+      String message =
+          responseData['message'] ?? 'Password changed successfully';
 
       if (success == true) {
         showResponseDialog(
@@ -160,4 +163,3 @@ class ChangePasswordController extends BaseController {
     super.onClose();
   }
 }
-

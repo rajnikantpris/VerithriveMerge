@@ -13,18 +13,18 @@ import '../../widgets/response_dialog.dart';
 
 class SignupController extends BaseController {
   SignupController(
-      this._userApiService, [
-        StorageService? storageService,
-      ]) : _storageService = storageService ??
-      (Get.isRegistered<StorageService>()
-          ? Get.find<StorageService>()
-          : null);
+    this._userApiService, [
+    StorageService? storageService,
+  ]) : _storageService = storageService ??
+            (Get.isRegistered<StorageService>()
+                ? Get.find<StorageService>()
+                : null);
 
   final UserApiService _userApiService;
   final StorageService? _storageService;
   final SocialAuthService _socialAuthService = SocialAuthService();
   final NotificationPermissionService _notificationPermissionService =
-  NotificationPermissionService();
+      NotificationPermissionService();
   final emailController = TextEditingController();
   final phoneController = TextEditingController();
   final passwordController = TextEditingController();
@@ -119,9 +119,10 @@ class SignupController extends BaseController {
           if (response.data is Map<String, dynamic>) {
             final data = response.data as Map<String, dynamic>;
             final isValid = data['is_valid'] as bool? ?? false;
-            
+
             if (isValid) {
-              promoCodeMessage.value = response.message ?? 'Promo code applied successfully!';
+              promoCodeMessage.value =
+                  response.message ?? 'Promo code applied successfully!';
               isPromoCodeValid.value = true;
               isPromoCodeApplied.value = true;
             } else {
@@ -131,12 +132,14 @@ class SignupController extends BaseController {
             }
           } else {
             // Fallback for unexpected response format
-            promoCodeMessage.value = response.message ?? 'Promo code applied successfully!';
+            promoCodeMessage.value =
+                response.message ?? 'Promo code applied successfully!';
             isPromoCodeValid.value = true;
             isPromoCodeApplied.value = true;
           }
         } else {
-          promoCodeMessage.value = response.errorMessage ?? 'Invalid promo code';
+          promoCodeMessage.value =
+              response.errorMessage ?? 'Invalid promo code';
           isPromoCodeValid.value = false;
         }
       },
@@ -174,8 +177,8 @@ class SignupController extends BaseController {
     if (value == null || value.isEmpty) {
       return 'Please enter a password';
     }
-    if (value.length < 10 || value.length > 12) {
-      return 'Password must be 10-12 characters long';
+    if (value.length < 8 || value.length > 12) {
+      return 'Password must be 8-12 characters long';
     }
     if (!value.contains(RegExp(r'[A-Z]'))) {
       return 'Password must include at least one uppercase letter';
@@ -276,37 +279,37 @@ class SignupController extends BaseController {
               otp = otpValue.toString();
             }
           }
-          Get.toNamed(
-            Routes.verifyEmail,
-            arguments: {
-              'email': email,
-              // 'phone': phone,
-              'promo_code': isPromoCodeValid.value ? promoCode : '',
-              'password': password,
-              'user_type': userType,
-              if (otp != null) 'otp': otp,
-            },
-          );
-
-          // showResponseDialog(
-          //   message: messageText,
-          //   title: 'Success',
-          //   isError: false,
-          //   showButton: false,
-          //   onOkPressed: () {
-          //     Get.toNamed(
-          //       Routes.verifyEmail,
-          //       arguments: {
-          //         'email': email,
-          //         // 'phone': phone,
-          //         'promo_code': isPromoCodeValid.value ? promoCode : '',
-          //         'password': password,
-          //         'user_type': userType,
-          //         if (otp != null) 'otp': otp,
-          //       },
-          //     );
+          // Get.toNamed(
+          //   Routes.verifyEmail,
+          //   arguments: {
+          //     'email': email,
+          //     // 'phone': phone,
+          //     'promo_code': isPromoCodeValid.value ? promoCode : '',
+          //     'password': password,
+          //     'user_type': userType,
+          //     if (otp != null) 'otp': otp,
           //   },
           // );
+
+          showResponseDialog(
+            message: messageText,
+            title: 'Success',
+            isError: false,
+            showButton: false,
+            onOkPressed: () {
+              Get.toNamed(
+                Routes.verifyEmail,
+                arguments: {
+                  'email': email,
+                  // 'phone': phone,
+                  'promo_code': isPromoCodeValid.value ? promoCode : '',
+                  'password': password,
+                  'user_type': userType,
+                  if (otp != null) 'otp': otp,
+                },
+              );
+            },
+          );
         } else {
           // Handle failure case
           showResponseDialog(

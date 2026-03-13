@@ -21,7 +21,6 @@ import '../profile/ProfileBinding.dart';
 import '../profile/ProfileView.dart';
 import 'dart:convert';
 
-
 class LoginController extends BaseController {
   late final formKey = GlobalKey<FormState>();
 
@@ -52,17 +51,17 @@ class LoginController extends BaseController {
 
       final isRememberMe =
           storage.readBool(SharePreferenceConst.rememberMe) ?? false;
-      
+
       if (isRememberMe) {
         rememberMe.value = true;
-        
+
         // Load saved email
         final savedEmail =
             storage.readString(SharePreferenceConst.savedEmail) ?? '';
         if (savedEmail.isNotEmpty) {
           emailController.text = savedEmail;
         }
-        
+
         // Load saved password
         final savedPassword =
             storage.readString(SharePreferenceConst.savedPassword) ?? '';
@@ -94,15 +93,15 @@ class LoginController extends BaseController {
     if (value == null || value.isEmpty) {
       return 'Please enter password';
     }
-    // You can tighten these rules to match register if you want
-    if (value.length < 6) {
-      return 'Password must be at least 6 characters';
-    }
+    // // You can tighten these rules to match register if you want
+    // if (value.length < 6) {
+    //   return 'Password must be at least 6 characters';
+    // }
     return null;
   }
 
   void loginApiCall() {
-   // Get.toNamed(AppRoutes.main);
+    // Get.toNamed(AppRoutes.main);
     if (!formKey.currentState!.validate()) return;
 
     isLoading.value = true;
@@ -148,7 +147,6 @@ class LoginController extends BaseController {
       );
     }
   }
-
 
   Future<void> onAppleSignIn() async {
     try {
@@ -200,7 +198,6 @@ class LoginController extends BaseController {
       );
     }
   }
-
 
   /// Check social account before proceeding with login/signup
   Future<void> _checkSocialAccount({
@@ -285,7 +282,7 @@ class LoginController extends BaseController {
     super.onClose();
   }*/
 
-  void callLoginService(){
+  void callLoginService() {
     Map<String, dynamic> toJson() {
       final Map<String, dynamic> data = <String, dynamic>{};
       data['email'] = emailController.value.text.trim();
@@ -293,32 +290,29 @@ class LoginController extends BaseController {
       data['user_type'] = 'normal';
       return data;
     }
-    var service = _repository.sendPostApiRequest(toJson,login,false);
 
-    callDataService(
-        service,
+    var service = _repository.sendPostApiRequest(toJson, login, false);
+
+    callDataService(service,
         onSuccess: _handleLoginResponseSuccess,
         onError: handleOnError,
-        isShowLoading: true
-    );
-
-
+        isShowLoading: true);
   }
 
   void toggleRememberMe(bool? value) {
     rememberMe.value = value ?? false;
   }
 
-
-  Future<void> _handleLoginResponseSuccess(dynamic baseResponse, [File? profileImageFile]) async {
+  Future<void> _handleLoginResponseSuccess(dynamic baseResponse,
+      [File? profileImageFile]) async {
     isLoading.value = false;
 
     try {
       // Parse the response - baseResponse is a Dio Response object
       Map<String, dynamic> responseData;
       if (baseResponse != null && baseResponse.data != null) {
-        responseData = baseResponse.data is Map<String, dynamic> 
-            ? baseResponse.data 
+        responseData = baseResponse.data is Map<String, dynamic>
+            ? baseResponse.data
             : baseResponse.data as Map<String, dynamic>;
       } else if (baseResponse is Map<String, dynamic>) {
         responseData = baseResponse;
@@ -327,7 +321,7 @@ class LoginController extends BaseController {
       }
 
       LoginModel response = LoginModel.fromJson(responseData);
-      
+
       if (response.success == true && response.data != null) {
         LoginData loginData = response.data!;
         User? user = loginData.user;
@@ -381,7 +375,8 @@ class LoginController extends BaseController {
             // Save profile picture from API
             if (user.profilePicture != null &&
                 user.profilePicture!.isNotEmpty) {
-              await storage.writeString(SharePreferenceConst.socialProfilePicture,
+              await storage.writeString(
+                  SharePreferenceConst.socialProfilePicture,
                   user.profilePicture!);
             }
           }
@@ -396,8 +391,8 @@ class LoginController extends BaseController {
                 SharePreferenceConst.TimeZone, user.timezone!);
           }
 
-           final userType = user.userType;
- if (userType != null && userType.isNotEmpty) {
+          final userType = user.userType;
+          if (userType != null && userType.isNotEmpty) {
             await _storageService?.writeString('userType', userType);
           }
 
@@ -459,7 +454,8 @@ class LoginController extends BaseController {
                 SharePreferenceConst.isWorkFull, user.isWorkFull!);
           }
           if (user.isPersonalIdentification != null) {
-            await storage.writeBool(SharePreferenceConst.isPersonalIdentification,
+            await storage.writeBool(
+                SharePreferenceConst.isPersonalIdentification,
                 user.isPersonalIdentification!);
           }
           if (user.isAboutYou != null) {
@@ -508,7 +504,7 @@ class LoginController extends BaseController {
 
         // Navigate based on is_personal_details
         bool isPersonalDetailsCompleted = user?.isPersonalDetails ?? false;
-        
+
         // Prepare social login data to pass to profile screen
         Map<String, dynamic> socialData = {};
         if (user?.isSocialLogin == true) {
@@ -518,7 +514,7 @@ class LoginController extends BaseController {
             'profileImageFile': profileImageFile,
           };
         }
-        
+
         if (isPersonalDetailsCompleted) {
           Get.offAll(() => MainScreen());
         } else {
@@ -542,9 +538,8 @@ class LoginController extends BaseController {
         );
       }
     } catch (e) {
-
       showResponseDialog(
-        message: "Error processing login response"+e.toString(),
+        message: "Error processing login response" + e.toString(),
         title: 'Error',
         isError: true,
         showButton: true,
@@ -558,9 +553,7 @@ class LoginController extends BaseController {
   void handleOnError(dynamic e) {
     isLoading.value = false;
 
-    if(e is BaseException) {
-
-
+    if (e is BaseException) {
       showResponseDialog(
         message: e.message,
         title: 'Error',
@@ -571,6 +564,5 @@ class LoginController extends BaseController {
         },
       );
     }
-
   }
 }

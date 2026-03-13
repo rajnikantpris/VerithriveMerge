@@ -13,7 +13,8 @@ import '../../utils/api_services.dart';
 class CreatePasswordController extends BaseController {
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
 
-  final ProjectRepository _repository = Get.find(tag: (ProjectRepository).toString());
+  final ProjectRepository _repository =
+      Get.find(tag: (ProjectRepository).toString());
 
   final isLoading = false.obs;
 
@@ -40,24 +41,25 @@ class CreatePasswordController extends BaseController {
     }
   }
 
-
   void updatePasswordState() {
     // Update reactive state when text changes
     try {
       final password = passwordController.text.trim();
       final confirmPassword = confirmPasswordController.text.trim();
-      
+
       // Check if both fields are not empty
-      final bothFieldsNotEmpty = password.isNotEmpty && confirmPassword.isNotEmpty;
-      
+      final bothFieldsNotEmpty =
+          password.isNotEmpty && confirmPassword.isNotEmpty;
+
       // Check if passwords match
       final passwordsMatch = password == confirmPassword;
-      
+
       // Check if password meets validation criteria
       final passwordValid = validatePassword(password) == null;
-      
+
       // Enable continue button only if all conditions are met
-      _isPasswordComplete.value = bothFieldsNotEmpty && passwordsMatch && passwordValid;
+      _isPasswordComplete.value =
+          bothFieldsNotEmpty && passwordsMatch && passwordValid;
     } catch (e) {
       // Ignore any errors
     }
@@ -119,8 +121,9 @@ class CreatePasswordController extends BaseController {
       data['user_type'] = 'normal';
       return data;
     }
-    
-    var service = _repository.sendPostApiRequest(toJson, forgot_password_reset, false);
+
+    var service =
+        _repository.sendPostApiRequest(toJson, forgot_password_reset, false);
 
     callDataService(
       service,
@@ -130,14 +133,15 @@ class CreatePasswordController extends BaseController {
     );
   }
 
-  Future<void> _handleForgotPasswordResetResponseSuccess(dynamic baseResponse) async {
+  Future<void> _handleForgotPasswordResetResponseSuccess(
+      dynamic baseResponse) async {
     isLoading.value = false;
 
     try {
       Map<String, dynamic> responseData;
       if (baseResponse != null && baseResponse.data != null) {
-        responseData = baseResponse.data is Map<String, dynamic> 
-            ? baseResponse.data 
+        responseData = baseResponse.data is Map<String, dynamic>
+            ? baseResponse.data
             : baseResponse.data as Map<String, dynamic>;
       } else if (baseResponse is Map<String, dynamic>) {
         responseData = baseResponse;
@@ -157,7 +161,7 @@ class CreatePasswordController extends BaseController {
           onOkPressed: () {
             // Close the dialog first
             Navigator.of(Get.context!, rootNavigator: true).pop();
-            
+
             // Wait for dialog to close, then navigate
             // Use post-frame callback to ensure dialog is fully closed
             WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -224,8 +228,8 @@ class CreatePasswordController extends BaseController {
     if (value == null || value.isEmpty) {
       return 'Password is required';
     }
-    if (value.length < 12) {
-      return 'Password must be at least 12 characters';
+    if (value.length < 8 || value.length > 12) {
+      return 'Password must be at least 8-12 characters';
     }
     if (!value.contains(RegExp(r'[A-Z]'))) {
       return 'Password must contain an uppercase letter';

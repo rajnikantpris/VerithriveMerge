@@ -84,8 +84,8 @@ class ChangePasswordController extends BaseController {
     }
 
     // Check minimum length
-    if (value.length < 8) {
-      return 'Password must be at least 8 characters long';
+    if (value.length < 8 || value.length > 12) {
+      return 'Password must be at least 8-12 characters long';
     }
 
     // Check for uppercase letter

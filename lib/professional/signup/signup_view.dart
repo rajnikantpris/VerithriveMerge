@@ -154,7 +154,7 @@ class SignupView extends BaseView<SignupController> {
                 // SizedBox(height: HightWidthSizes.setValue_18),
                 // Password field
                 Obx(
-                      () => CustomTextField(
+                  () => CustomTextField(
                     label: 'Create password',
                     hintText: 'Password',
                     icon: Icons.lock_outline,
@@ -178,7 +178,7 @@ class SignupView extends BaseView<SignupController> {
                 Padding(
                   padding: EdgeInsets.only(left: HightWidthSizes.setValue_4),
                   child: Text(
-                    'Your password must be at least 10-12 characters long and include at least one uppercase letter, one lowercase letter, and one number. Please revise your password to meet these criteria.',
+                    'Your password must be at least 8-12 characters long and include at least one uppercase letter, one lowercase letter, and one number. Please revise your password to meet these criteria.',
                     style: TextStyle(
                       fontFamily: AppFonts.rubikRegular,
                       fontWeight: FontWeight.w400,
@@ -191,7 +191,7 @@ class SignupView extends BaseView<SignupController> {
                 SizedBox(height: HightWidthSizes.setValue_18),
                 // Confirm password field
                 Obx(
-                      () => CustomTextField(
+                  () => CustomTextField(
                     label: 'Confirm Password',
                     hintText: 'Password',
                     icon: Icons.lock_outline,
@@ -214,156 +214,168 @@ class SignupView extends BaseView<SignupController> {
                 SizedBox(height: HightWidthSizes.setValue_18),
                 // Custom Promo Code Section
                 Obx(() => Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Enter promo code',
-                      style: TextStyle(
-                        fontFamily: AppFonts.rubikRegular,
-                        fontWeight: FontWeight.w400,
-                        fontSize: FontSizes.setFontValue_14,
-                        color: AppColor.color_2D2D2D,
-                      ),
-                    ),
-                    SizedBox(height: HightWidthSizes.setValue_5),
-                    Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(HightWidthSizes.setValue_10),
-                        border: Border.all(
-                          color: controller.isPromoCodeApplied.value
-                              ? AppColor.color_2FC4B2
-                              : AppColor.borderColor,
-                          width: HightWidthSizes.setValue_1,
-                        ),
-                        color: controller.isPromoCodeApplied.value
-                            ? AppColor.color_D7F1EB.withOpacity(0.3)
-                            : AppColor.white,
-                      ),
-                      child: Column(
-                        children: [
-                          if (!controller.isPromoCodeApplied.value) ...[
-                            // Input field with apply button
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: TextField(
-                                    controller: controller.promoCodeController,
-                                    keyboardType: TextInputType.text,
-                                    style: TextStyle(
-                                      fontFamily: AppFonts.rubikRegular,
-                                      fontSize: FontSizes.setFontValue_15_5,
-                                      color: AppColor.color_2D2D2D,
-                                    ),
-                                    decoration: InputDecoration(
-                                      hintText: 'Enter here',
-                                      hintStyle: TextStyle(
-                                        fontFamily: AppFonts.rubikRegular,
-                                        fontSize: FontSizes.setFontValue_15_5,
-                                        color: AppColor.color_9D9D9D,
-                                      ),
-                                      prefixIcon: Icon(
-                                        Icons.local_offer_outlined,
-                                        color: AppColor.color_9D9D9D,
-                                        size: HightWidthSizes.setValue_16,
-                                      ),
-                                      border: InputBorder.none,
-                                      contentPadding: EdgeInsets.symmetric(
-                                        horizontal: HightWidthSizes.setValue_12,
-                                        vertical: HightWidthSizes.setValue_14,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                Container(
-                                  height: HightWidthSizes.setValue_45,
-                                  decoration: BoxDecoration(
-                                    color: AppColor.color_2FC4B2,
-                                    borderRadius: BorderRadius.only(
-                                      topRight: Radius.circular(HightWidthSizes.setValue_9),
-                                      bottomRight: Radius.circular(HightWidthSizes.setValue_9),
-                                    ),
-                                  ),
-                                  child: MaterialButton(
-                                    onPressed: controller.checkPromoCode,
-                                    minWidth: HightWidthSizes.setValue_60,
-                                    height: HightWidthSizes.setValue_45,
-                                    child: Text(
-                                      'Apply',
-                                      style: TextStyle(
-                                        fontFamily: AppFonts.rubikMedium,
-                                        fontWeight: FontWeight.w500,
-                                        fontSize: FontSizes.setFontValue_14,
-                                        color: AppColor.white,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                SizedBox(width: 3,)
-                              ],
-                            ),
-                          ] else ...[
-                            // Applied promo code display with remove button
-                            Padding(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: HightWidthSizes.setValue_12,
-                                vertical: HightWidthSizes.setValue_14,
-                              ),
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    Icons.check_circle_outline,
-                                    color: AppColor.color_2FC4B2,
-                                    size: HightWidthSizes.setValue_20,
-                                  ),
-                                  SizedBox(width: HightWidthSizes.setValue_8),
-                                  Expanded(
-                                    child: Text(
-                                      controller.promoCodeController.text.trim(),
-                                      style: TextStyle(
-                                        fontFamily: AppFonts.rubikMedium,
-                                        fontWeight: FontWeight.w500,
-                                        fontSize: FontSizes.setFontValue_15_5,
-                                        color: AppColor.color_2FC4B2,
-                                      ),
-                                    ),
-                                  ),
-                                  GestureDetector(
-                                    onTap: controller.removePromoCode,
-                                    child: Icon(
-                                      Icons.close,
-                                      color: AppColor.color_2FC4B2,
-                                      size: HightWidthSizes.setValue_20,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                    // Promo code message
-                    if (controller.promoCodeMessage.value.isNotEmpty) ...[
-                      SizedBox(height: HightWidthSizes.setValue_5),
-                      Padding(
-                        padding: EdgeInsets.only(left: HightWidthSizes.setValue_4),
-                        child: Text(
-                          controller.promoCodeMessage.value,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Enter promo code',
                           style: TextStyle(
                             fontFamily: AppFonts.rubikRegular,
                             fontWeight: FontWeight.w400,
-                            fontSize: FontSizes.setFontValue_12,
-                            color: controller.isPromoCodeValid.value
-                                ? AppColor.color_2FC4B2
-                                : AppColor.color_E74C3C,
-                            height: 1.4,
+                            fontSize: FontSizes.setFontValue_14,
+                            color: AppColor.color_2D2D2D,
                           ),
                         ),
-                      ),
-                    ],
-                  ],
-                )),
-
+                        SizedBox(height: HightWidthSizes.setValue_5),
+                        Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(
+                                HightWidthSizes.setValue_10),
+                            border: Border.all(
+                              color: controller.isPromoCodeApplied.value
+                                  ? AppColor.color_2FC4B2
+                                  : AppColor.borderColor,
+                              width: HightWidthSizes.setValue_1,
+                            ),
+                            color: controller.isPromoCodeApplied.value
+                                ? AppColor.color_D7F1EB.withOpacity(0.3)
+                                : AppColor.white,
+                          ),
+                          child: Column(
+                            children: [
+                              if (!controller.isPromoCodeApplied.value) ...[
+                                // Input field with apply button
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: TextField(
+                                        controller:
+                                            controller.promoCodeController,
+                                        keyboardType: TextInputType.text,
+                                        style: TextStyle(
+                                          fontFamily: AppFonts.rubikRegular,
+                                          fontSize: FontSizes.setFontValue_15_5,
+                                          color: AppColor.color_2D2D2D,
+                                        ),
+                                        decoration: InputDecoration(
+                                          hintText: 'Enter here',
+                                          hintStyle: TextStyle(
+                                            fontFamily: AppFonts.rubikRegular,
+                                            fontSize:
+                                                FontSizes.setFontValue_15_5,
+                                            color: AppColor.color_9D9D9D,
+                                          ),
+                                          prefixIcon: Icon(
+                                            Icons.local_offer_outlined,
+                                            color: AppColor.color_9D9D9D,
+                                            size: HightWidthSizes.setValue_16,
+                                          ),
+                                          border: InputBorder.none,
+                                          contentPadding: EdgeInsets.symmetric(
+                                            horizontal:
+                                                HightWidthSizes.setValue_12,
+                                            vertical:
+                                                HightWidthSizes.setValue_14,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    Container(
+                                      height: HightWidthSizes.setValue_45,
+                                      decoration: BoxDecoration(
+                                        color: AppColor.color_2FC4B2,
+                                        borderRadius: BorderRadius.only(
+                                          topRight: Radius.circular(
+                                              HightWidthSizes.setValue_9),
+                                          bottomRight: Radius.circular(
+                                              HightWidthSizes.setValue_9),
+                                        ),
+                                      ),
+                                      child: MaterialButton(
+                                        onPressed: controller.checkPromoCode,
+                                        minWidth: HightWidthSizes.setValue_60,
+                                        height: HightWidthSizes.setValue_45,
+                                        child: Text(
+                                          'Apply',
+                                          style: TextStyle(
+                                            fontFamily: AppFonts.rubikMedium,
+                                            fontWeight: FontWeight.w500,
+                                            fontSize: FontSizes.setFontValue_14,
+                                            color: AppColor.white,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    SizedBox(
+                                      width: 3,
+                                    )
+                                  ],
+                                ),
+                              ] else ...[
+                                // Applied promo code display with remove button
+                                Padding(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: HightWidthSizes.setValue_12,
+                                    vertical: HightWidthSizes.setValue_14,
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.check_circle_outline,
+                                        color: AppColor.color_2FC4B2,
+                                        size: HightWidthSizes.setValue_20,
+                                      ),
+                                      SizedBox(
+                                          width: HightWidthSizes.setValue_8),
+                                      Expanded(
+                                        child: Text(
+                                          controller.promoCodeController.text
+                                              .trim(),
+                                          style: TextStyle(
+                                            fontFamily: AppFonts.rubikMedium,
+                                            fontWeight: FontWeight.w500,
+                                            fontSize:
+                                                FontSizes.setFontValue_15_5,
+                                            color: AppColor.color_2FC4B2,
+                                          ),
+                                        ),
+                                      ),
+                                      GestureDetector(
+                                        onTap: controller.removePromoCode,
+                                        child: Icon(
+                                          Icons.close,
+                                          color: AppColor.color_2FC4B2,
+                                          size: HightWidthSizes.setValue_20,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                        // Promo code message
+                        if (controller.promoCodeMessage.value.isNotEmpty) ...[
+                          SizedBox(height: HightWidthSizes.setValue_5),
+                          Padding(
+                            padding: EdgeInsets.only(
+                                left: HightWidthSizes.setValue_4),
+                            child: Text(
+                              controller.promoCodeMessage.value,
+                              style: TextStyle(
+                                fontFamily: AppFonts.rubikRegular,
+                                fontWeight: FontWeight.w400,
+                                fontSize: FontSizes.setFontValue_12,
+                                color: controller.isPromoCodeValid.value
+                                    ? AppColor.color_2FC4B2
+                                    : AppColor.color_E74C3C,
+                                height: 1.4,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    )),
 
                 SizedBox(height: HightWidthSizes.setValue_30),
                 // Join now button
@@ -375,7 +387,7 @@ class SignupView extends BaseView<SignupController> {
                       foregroundColor: AppColor.white,
                       elevation: 0,
                       minimumSize:
-                      Size(double.infinity, HightWidthSizes.setValue_45),
+                          Size(double.infinity, HightWidthSizes.setValue_45),
                       padding: EdgeInsets.symmetric(
                           vertical: HightWidthSizes.setValue_12,
                           horizontal: HightWidthSizes.setValue_16),
@@ -490,12 +502,14 @@ class SignupView extends BaseView<SignupController> {
             borderRadius: isFullWidth
                 ? BorderRadius.circular(HightWidthSizes.setValue_10)
                 : (label == "Apple"
-                ? BorderRadius.only(
-                topRight: Radius.circular(HightWidthSizes.setValue_10),
-                bottomRight: Radius.circular(HightWidthSizes.setValue_10))
-                : BorderRadius.only(
-                topLeft: Radius.circular(HightWidthSizes.setValue_10),
-                bottomLeft: Radius.circular(HightWidthSizes.setValue_10))),
+                    ? BorderRadius.only(
+                        topRight: Radius.circular(HightWidthSizes.setValue_10),
+                        bottomRight:
+                            Radius.circular(HightWidthSizes.setValue_10))
+                    : BorderRadius.only(
+                        topLeft: Radius.circular(HightWidthSizes.setValue_10),
+                        bottomLeft:
+                            Radius.circular(HightWidthSizes.setValue_10))),
           ),
           backgroundColor: AppColor.color_D7F1EB,
         ),
@@ -505,15 +519,15 @@ class SignupView extends BaseView<SignupController> {
           children: [
             isGoogle
                 ? AppImages.google_image(
-              width: 24,
-              height: 24,
-              fit: BoxFit.contain,
-            )
+                    width: 24,
+                    height: 24,
+                    fit: BoxFit.contain,
+                  )
                 : AppImages.apple_image(
-              width: 24,
-              height: 24,
-              fit: BoxFit.contain,
-            ),
+                    width: 24,
+                    height: 24,
+                    fit: BoxFit.contain,
+                  ),
           ],
         ),
       ),

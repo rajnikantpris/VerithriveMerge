@@ -77,9 +77,8 @@ class VerifyEmailView extends BaseView<VerifyEmailController> {
                         minimumSize: Size.zero,
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
-                      onPressed: controller.canResend
-                          ? controller.resendOtp
-                          : null,
+                      onPressed:
+                          controller.canResend ? controller.resendOtp : null,
                       child: Text(
                         controller.isResending.value
                             ? 'Sending...'
@@ -99,7 +98,6 @@ class VerifyEmailView extends BaseView<VerifyEmailController> {
               Obx(
                 () => SizedBox(
                   width: double.infinity,
-
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColor.color_2FC4B2,
@@ -107,16 +105,18 @@ class VerifyEmailView extends BaseView<VerifyEmailController> {
                       foregroundColor: AppColor.white,
                       disabledForegroundColor: AppColor.white.withOpacity(0.9),
                       elevation: 0,
-                      minimumSize: Size(double.infinity, HightWidthSizes.setValue_45),
-                      padding: EdgeInsets.symmetric(vertical: HightWidthSizes.setValue_12, horizontal: HightWidthSizes.setValue_16),
+                      minimumSize:
+                          Size(double.infinity, HightWidthSizes.setValue_45),
+                      padding: EdgeInsets.symmetric(
+                          vertical: HightWidthSizes.setValue_12,
+                          horizontal: HightWidthSizes.setValue_16),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(
                           HightWidthSizes.setValue_10,
                         ),
                       ),
                     ),
-                    onPressed:
-                        controller.isOtpComplete &&
+                    onPressed: controller.isOtpComplete &&
                             !controller.isVerifying.value
                         ? controller.submitOtp
                         : null,

@@ -8,8 +8,6 @@
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
 	<string>Verithrive</string>
-	<key>GMSApiKey</key>
-    <string>AIzaSyDIHdFq55OMUeaBaKgsAB1Cpi5r5vEFU8k</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -31,18 +29,20 @@
 			<string>Editor</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>com.googleusercontent.apps.38374486736-hqvrhf74vldi9qcnarh2hofc5edt1pmg</string>
+				<string>com.googleusercontent.apps.38374486736-nhsvpeivd90b872p5mr9vjpc8gpu6s1a</string>
 			</array>
 		</dict>
 	</array>
 	<key>CFBundleVersion</key>
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
+	<key>GMSApiKey</key>
+	<string>AIzaSyDIHdFq55OMUeaBaKgsAB1Cpi5r5vEFU8k</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 	<key>LSApplicationQueriesSchemes</key>
 	<array>
 		<string>google</string>
-		<string>com.googleusercontent.apps.38374486736-hqvrhf74vldi9qcnarh2hofc5edt1pmg</string>
+		<string>com.googleusercontent.apps.38374486736-nhsvpeivd90b872p5mr9vjpc8gpu6s1a</string>
 	</array>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
@@ -71,9 +71,7 @@
 		<string>UIInterfaceOrientationPortrait</string>
 		<string>UIInterfaceOrientationPortraitUpsideDown</string>
 	</array>
-    <key>GMSApiKey</key>
-        <string>AIzaSyDIHdFq55OMUeaBaKgsAB1Cpi5r5vEFU8k</string>
-        <key>UIUserInterfaceStyle</key>
-        <string>Light</string>
+	<key>UIUserInterfaceStyle</key>
+	<string>Light</string>
 </dict>
 </plist>

@@ -74,7 +74,7 @@ class CreateNewPasswordView extends BaseView<CreateNewPasswordController> {
                 Padding(
                   padding: EdgeInsets.only(left: HightWidthSizes.setValue_4),
                   child: Text(
-                    'Your password must be at least 8 characters long and include at least one uppercase letter, one lowercase letter, and one number. Please revise your password to meet these criteria.',
+                    'Your password must be at least 8-12 characters long and include at least one uppercase letter, one lowercase letter, and one number. Please revise your password to meet these criteria.',
                     style: TextStyle(
                       fontFamily: AppFonts.rubikRegular,
                       fontWeight: FontWeight.w400,

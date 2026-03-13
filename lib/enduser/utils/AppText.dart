@@ -37,25 +37,31 @@ abstract class AppText {
   static const String rememberMe = "Remember me";
   static const String forgotPassword = "Forgot your password?";
   static const String enterEmail = "Enter email";
-  static const String enterEmailDescription = "Enter the email you signed up with and we'll send you a one-time code to log in.";
+  static const String enterEmailDescription =
+      "Enter the email you signed up with and we'll send you a one-time code to log in.";
   static const String createNewPassword = "Create new password";
   static const String enterNewPassword = "Enter new password";
   static const String confirmPassword = "Confirm password";
   static const String enterOTP = "Enter OTP";
-  static const String otpDescription = "Please enter OTP (one time password) sent to your registered email address.";
+  static const String otpDescription =
+      "Please enter OTP (one time password) sent to your registered email address.";
   static const String noCodeYet = "No code yet? ";
   static const String sendItAgain = "Send it again";
   static const String continueAsGuest = "Continue as a guest";
 
   // Onboarding
   static const String discoverTrustedExperts = "Discover trusted experts";
-  static const String discoverTrustedExpertsSubtitle = "Verified fitness, wellness, and nutrition professionals - all in one place.";
+  static const String discoverTrustedExpertsSubtitle =
+      "Verified fitness, wellness, and nutrition professionals - all in one place.";
   static const String getPersonalizedGuidance = "Compare & Choose easily";
-  static const String getPersonalizedGuidanceSubtitle = "Profiles, reviews, and pricing - so you can book with confidence.";
+  static const String getPersonalizedGuidanceSubtitle =
+      "Profiles, reviews, and pricing - so you can book with confidence.";
   static const String trackYourProgress = "Designed around you";
-  static const String trackYourProgressSubtitle = "From personal trainers to nutritionists, find what fits your lifestyle.";
+  static const String trackYourProgressSubtitle =
+      "From personal trainers to nutritionists, find what fits your lifestyle.";
   static const String startYourJourney = "Verified professionals";
-  static const String startYourJourneySubtitle = "Every professional is verified - so you can focus on thriving.";
+  static const String startYourJourneySubtitle =
+      "Every professional is verified - so you can focus on thriving.";
 
   // Form Fields
   static const String email = "Email";
@@ -77,8 +83,10 @@ abstract class AppText {
   static const String personalDetails = "Personal details";
   static const String uploadProfilePicture = "Upload profile picture";
   static const String maxFileSize = "Max. file size 5MB";
-  static const String passwordCriteria = "Your password must be at least 10–12 characters long and include at least one uppercase letter, one lowercase letter, and one number. Please revise your password to meet these criteria";
-  static const String change_password_message = "Your password must be at least 8 characters long and include at least one uppercase letter, one lowercase letter, and one number. Please revise your password to meet these criteria.";
+  static const String passwordCriteria =
+      "Your password must be at least 8-12 characters long and include at least one uppercase letter, one lowercase letter, and one number. Please revise your password to meet these criteria";
+  static const String change_password_message =
+      "Your password must be at least 8-12 characters long and include at least one uppercase letter, one lowercase letter, and one number. Please revise your password to meet these criteria.";
 
   // Home Screen
   static const String whoCanWeHelp = "Who can we help you\nfind today?";
@@ -96,7 +104,8 @@ abstract class AppText {
   static const String privateChef = "Private chef";
 
   // Appointment
-  static const String lastMinuteAppointment = "Are you in a hurry or do you\nneed a last minute\nappointment?";
+  static const String lastMinuteAppointment =
+      "Are you in a hurry or do you\nneed a last minute\nappointment?";
   static const String yes = "Yes";
   static const String no = "No";
   static const String selectAvailability = "Select availability";
@@ -116,8 +125,10 @@ abstract class AppText {
   static const String dateTime = "Date & Time";
   static const String location = "Location";
   static const String editBooking = "Edit booking";
-  static const String completeBookingExpiry = "Complete your booking or this session expires  in ";
-  static const String cancelRescheduleInfo = "Cancel or reschedule free up to 48 hours before your session. Within 48 hours, your 20% deposit and booking fee are non-refundable.";
+  static const String completeBookingExpiry =
+      "Complete your booking or this session expires  in ";
+  static const String cancelRescheduleInfo =
+      "Cancel or reschedule free up to 48 hours before your session. Within 48 hours, your 20% deposit and booking fee are non-refundable.";
 
   // Payment
   static const String paymentMethod = "Payment Method";
@@ -137,7 +148,8 @@ abstract class AppText {
   static const String paymentSuccessful = "Payment Successful";
   static const String pleaseWait = "Please wait!";
   static const String almostThere = "Almost there – wrapping up your payment";
-  static const String allSetPayment = "All set! Your payment was successful🎉 Redirecting you now.";
+  static const String allSetPayment =
+      "All set! Your payment was successful🎉 Redirecting you now.";
 
   // Therapist Listing
   static const String sportTherapists = "Sport therapists";
@@ -163,19 +175,22 @@ abstract class AppText {
   static const String noNotifications = "No Notifications";
   static const String allCaughtUp = "You're all caught up!";
   static const String profileComplete = "Profile complete";
-  static const String profileCompleteDescription = "Congrats on completing your profile. Start browsing verified professionals today!";
+  static const String profileCompleteDescription =
+      "Congrats on completing your profile. Start browsing verified professionals today!";
   static const String reviewSarah = "Review Sarah";
   static const String appointmentConfirmed = "Appointment Confirmed";
   static const String paymentSuccessfulNotification = "Payment Successful";
   static const String deleted = "Deleted";
   static const String notificationRemoved = "Notification removed";
-  static const String areYouSureClearAll = "Are you sure you want to clear all notifications?";
+  static const String areYouSureClearAll =
+      "Are you sure you want to clear all notifications?";
   static const String cleared = "Cleared";
   static const String allNotificationsRemoved = "All notifications removed";
 
   // Terms & Conditions
   static const String termsConditions = "Terms & conditions";
-  static const String marketingEmailText = "Tick if you would like to receive marketing emails from VERITHRIVE to keep you upto date about latest offers and trends.";
+  static const String marketingEmailText =
+      "Tick if you would like to receive marketing emails from VERITHRIVE to keep you upto date about latest offers and trends.";
 
   // Summary
   static const String summary = "Summary";
@@ -192,7 +207,8 @@ abstract class AppText {
   // Review Dialog
   static const String writeReview = "Write a review";
   static const String ratingRequired = "Rating Required";
-  static const String pleaseSelectRating = "Please select a rating before submitting";
+  static const String pleaseSelectRating =
+      "Please select a rating before submitting";
   static const String reviewSubmitted = "Review Submitted";
   static const String thankYouFeedback = "Thank you for your feedback!";
   static const String addReview = "Add review";
@@ -201,5 +217,4 @@ abstract class AppText {
   static const String selectHerePlaceholder = "Select here";
   static const String zeroKm = "0";
   static const String twentyFiveKm = "25mi";
-
 }

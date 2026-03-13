@@ -91,12 +91,12 @@ class ChangePasswordView extends BaseView<ChangePasswordController> {
                   ),
                 ),
                 SizedBox(height: HightWidthSizes.setValue_12),
-                
+
                 // Password Requirements Text
                 Padding(
                   padding: EdgeInsets.only(left: HightWidthSizes.setValue_4),
                   child: Text(
-                    'Your password must be at least 8 characters long and include at least one uppercase letter, one lowercase letter, and one number. Please revise your password to meet these criteria.',
+                    'Your password must be at least 8-12 characters long and include at least one uppercase letter, one lowercase letter, and one number. Please revise your password to meet these criteria.',
                     style: TextStyle(
                       fontFamily: AppFonts.rubikRegular,
                       fontWeight: FontWeight.w400,
@@ -107,7 +107,7 @@ class ChangePasswordView extends BaseView<ChangePasswordController> {
                   ),
                 ),
                 SizedBox(height: HightWidthSizes.setValue_20),
-                
+
                 // Confirm Password Section
                 Obx(
                   () => CustomTextField(
@@ -157,14 +157,12 @@ class ChangePasswordView extends BaseView<ChangePasswordController> {
       child: SafeArea(
         child: SizedBox(
           width: double.infinity,
-
           child: ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColor.color_2FC4B2,
               foregroundColor: AppColor.white,
               elevation: 0,
-              minimumSize:
-              Size(double.infinity, HightWidthSizes.setValue_45),
+              minimumSize: Size(double.infinity, HightWidthSizes.setValue_45),
               padding: EdgeInsets.symmetric(
                   vertical: HightWidthSizes.setValue_12,
                   horizontal: HightWidthSizes.setValue_16),
@@ -190,4 +188,3 @@ class ChangePasswordView extends BaseView<ChangePasswordController> {
     );
   }
 }
-

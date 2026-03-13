@@ -69,8 +69,8 @@ class CreateNewPasswordController extends BaseController {
     if (value == null || value.isEmpty) {
       return 'Please enter a password';
     }
-    if (value.length < 8) {
-      return 'Password must be at least 8 characters long';
+    if (value.length < 8 || value.length > 12) {
+      return 'Password must be at least 8-12 characters long';
     }
     if (!value.contains(RegExp(r'[A-Z]'))) {
       return 'Password must include at least one uppercase letter';

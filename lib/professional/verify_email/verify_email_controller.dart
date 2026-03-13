@@ -239,12 +239,12 @@ class VerifyEmailController extends BaseController {
   Future<void> _registerUser() async {
     await callDataService<ApiResponse<dynamic>>(
       _userApiService.register(
-        email: email,
-        userType: userType,
-        mobileNumber: phone,
-        password: password,
-        promo_code: promo_code
-      ),
+          email: email,
+          userType: userType,
+          mobileNumber: phone,
+          password: password,
+          promo_code: promo_code),
+      showLoader: true,
       mapErrorMessage: (error) {
         if (error is ApiResponse) {
           // Handle specific HTTP status codes

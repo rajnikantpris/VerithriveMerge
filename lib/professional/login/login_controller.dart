@@ -58,7 +58,8 @@ class ProfessionalLoginController extends BaseController {
     final storage = _storageService;
     if (storage == null) return;
 
-    final savedRememberMe = storage.readBool('professional_remember_me') ?? false;
+    final savedRememberMe =
+        storage.readBool('professional_remember_me') ?? false;
     rememberMe.value = savedRememberMe;
 
     if (savedRememberMe) {
@@ -120,9 +121,9 @@ class ProfessionalLoginController extends BaseController {
     if (value == null || value.isEmpty) {
       return 'Please enter your password';
     }
-    if (value.length < 6) {
-      return 'Password must be at least 6 characters';
-    }
+    // if (value.length < 6) {
+    //   return 'Password must be at least 6 characters';
+    // }
     return null;
   }
 
@@ -592,7 +593,7 @@ class ProfessionalLoginController extends BaseController {
           final userType = loginData.user?.userType;
           // Always save userType as 'professional' for professional login
           await _storageService?.writeString('userType', 'professional');
-          
+
           // Also save the userType from API if available (for debugging/backup)
           if (userType != null && userType.isNotEmpty) {
             debugPrint('API userType: $userType');

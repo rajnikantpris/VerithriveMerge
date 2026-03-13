@@ -21,8 +21,9 @@ import 'dart:convert';
 
 class RegisterController extends BaseController {
   final formKey = GlobalKey<FormState>();
-  
-  final ProjectRepository _repository = Get.find(tag: (ProjectRepository).toString());
+
+  final ProjectRepository _repository =
+      Get.find(tag: (ProjectRepository).toString());
   final StorageService? _storageService =
       Get.isRegistered<StorageService>() ? Get.find<StorageService>() : null;
   final emailController = TextEditingController();
@@ -68,8 +69,8 @@ class RegisterController extends BaseController {
     if (value == null || value.isEmpty) {
       return 'Please enter a password';
     }
-    if (value.length < 10 || value.length > 12) {
-      return 'Password must be 10-12 characters long';
+    if (value.length < 8 || value.length > 12) {
+      return 'Password must be 8-12 characters long';
     }
     if (!value.contains(RegExp(r'[A-Z]'))) {
       return 'Password must include at least one uppercase letter';
@@ -94,7 +95,7 @@ class RegisterController extends BaseController {
   }
 
   void registerApiCall() {
-   // Get.toNamed(AppRoutes.otp);
+    // Get.toNamed(AppRoutes.otp);
     if (!formKey.currentState!.validate()) return;
 
     isLoading.value = true;
@@ -106,7 +107,7 @@ class RegisterController extends BaseController {
     final email = emailController.value.text.trim();
     final phone = phoneController.value.text.trim();
     final password = passwordController.value.text.trim();
-    
+
     Map<String, dynamic> toJson() {
       final Map<String, dynamic> data = <String, dynamic>{};
       data['email'] = email;
@@ -115,7 +116,7 @@ class RegisterController extends BaseController {
       data['user_type'] = 'normal';
       return data;
     }
-    
+
     var service = _repository.sendPostApiRequest(toJson, send_otp, false);
 
     callDataService(
@@ -133,8 +134,8 @@ class RegisterController extends BaseController {
       // Parse the response - baseResponse is a Dio Response object
       Map<String, dynamic> responseData;
       if (baseResponse != null && baseResponse.data != null) {
-        responseData = baseResponse.data is Map<String, dynamic> 
-            ? baseResponse.data 
+        responseData = baseResponse.data is Map<String, dynamic>
+            ? baseResponse.data
             : baseResponse.data as Map<String, dynamic>;
       } else if (baseResponse is Map<String, dynamic>) {
         responseData = baseResponse;
@@ -144,13 +145,13 @@ class RegisterController extends BaseController {
 
       bool success = responseData['success'] ?? false;
       String message = responseData['message'] ?? 'Registration completed';
-      
+
       // Extract OTP from response data if available
       String? receivedOtp;
       if (responseData['data'] != null && responseData['data'] is Map) {
         receivedOtp = responseData['data']['otp']?.toString();
       }
-      
+
       if (success == true) {
         // Show success message
         showResponseDialog(
@@ -163,7 +164,7 @@ class RegisterController extends BaseController {
             final email = emailController.value.text.trim();
             final phone = phoneController.value.text.trim();
             final password = passwordController.value.text.trim();
-            
+
             // Navigate to OTP screen after successful registration with all registration data and OTP
             Map<String, dynamic> arguments = {
               'type': 'register',
@@ -176,11 +177,8 @@ class RegisterController extends BaseController {
             }
             // Use offNamed to remove register screen from stack
             // Get.offNamed(AppRoutes.otp, arguments: arguments);
-            Get.to(
-                  () => const OTPView(),
-              binding: OTPBinding(),
-              arguments: arguments
-            );
+            Get.to(() => const OTPView(),
+                binding: OTPBinding(), arguments: arguments);
           },
         );
       } else {
@@ -300,15 +298,16 @@ class RegisterController extends BaseController {
     }
   }
 
-  Future<void> _handleSocialRegisterResponseSuccess(dynamic baseResponse) async {
+  Future<void> _handleSocialRegisterResponseSuccess(
+      dynamic baseResponse) async {
     isLoading.value = false;
 
     try {
       // Parse the response - baseResponse is a Dio Response object
       Map<String, dynamic> responseData;
       if (baseResponse != null && baseResponse.data != null) {
-        responseData = baseResponse.data is Map<String, dynamic> 
-            ? baseResponse.data 
+        responseData = baseResponse.data is Map<String, dynamic>
+            ? baseResponse.data
             : baseResponse.data as Map<String, dynamic>;
       } else if (baseResponse is Map<String, dynamic>) {
         responseData = baseResponse;
@@ -317,7 +316,7 @@ class RegisterController extends BaseController {
       }
 
       LoginModel response = LoginModel.fromJson(responseData);
-      
+
       if (response.success == true && response.data != null) {
         LoginData loginData = response.data!;
         User? user = loginData.user;
@@ -328,7 +327,7 @@ class RegisterController extends BaseController {
           await storage.writeBool(SharePreferenceConst.isLogin, true);
           // Clear guest flag when user logs in
           await storage.writeBool(SharePreferenceConst.isGuest, false);
-          
+
           // Save token
           await storage.writeString(
               SharePreferenceConst.access_token, loginData.token);
@@ -353,7 +352,8 @@ class RegisterController extends BaseController {
             // Save profile picture from API
             if (user.profilePicture != null &&
                 user.profilePicture!.isNotEmpty) {
-              await storage.writeString(SharePreferenceConst.socialProfilePicture,
+              await storage.writeString(
+                  SharePreferenceConst.socialProfilePicture,
                   user.profilePicture!);
             }
           }
@@ -367,7 +367,7 @@ class RegisterController extends BaseController {
             await storage.writeString(
                 SharePreferenceConst.userType, user.userType!);
           }
-          
+
           // Boolean flags
           if (user.isSocialLogin != null) {
             await storage.writeBool(
@@ -377,7 +377,7 @@ class RegisterController extends BaseController {
 
         // Navigate based on is_personal_details
         bool isPersonalDetailsCompleted = user?.isPersonalDetails ?? false;
-        
+
         // Prepare social login data to pass to profile screen
         Map<String, dynamic> socialData = {};
         if (user?.isSocialLogin == true) {
@@ -386,7 +386,7 @@ class RegisterController extends BaseController {
             'profilePicture': user?.profilePicture ?? '',
           };
         }
-        
+
 /*        if (isPersonalDetailsCompleted) {
           Get.offAllNamed(AppRoutes.main);
         } else {
@@ -397,7 +397,7 @@ class RegisterController extends BaseController {
           Get.offAll(() => MainScreen());
         } else {
           Get.offAll(
-                () => const ProfileView(),
+            () => const ProfileView(),
             binding: ProfileBinding(),
             arguments: socialData,
           );
