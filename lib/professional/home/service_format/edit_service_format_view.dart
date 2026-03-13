@@ -164,6 +164,7 @@ class EditServiceFormatView extends BaseView<EditServiceFormatController> {
                       hintText: 'Price',
                       controller: controller.priceController,
                       showLabel: false,
+                      textInputAction: TextInputAction.done,
                       keyboardType: TextInputType.number,
                       borderColor: Color(0xFFE0E2E6), // #E0E2E6
                       hintTextColor: Color(0xFF828282), // #828282
@@ -191,6 +192,7 @@ class EditServiceFormatView extends BaseView<EditServiceFormatController> {
                           CustomTextField(
                             label: '',
                             hintText: 'Offer text',
+                            textInputAction: TextInputAction.done,
                             controller: controller.offerTextController,
                             showLabel: false,
                             maxLines: 2,

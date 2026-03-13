@@ -13,13 +13,13 @@ import 'package:verithrive_dev/enduser/utils/location_permission_service.dart';
 
 class ProfileController extends GetxController {
   final formKey = GlobalKey<FormState>();
-  
+
   final fullNameController = TextEditingController();
   final dobController = TextEditingController();
   final postcodeController = TextEditingController();
   final addressController = TextEditingController();
   final postcodeFocusNode = FocusNode();
-  
+
   final selectedGender = ''.obs;
   final selectedAddress = ''.obs;
   final selectedPostcode = ''.obs;
@@ -30,8 +30,10 @@ class ProfileController extends GetxController {
   final longitude = 0.0.obs;
 
   final ImagePicker _picker = ImagePicker();
-  final CameraStoragePermissionService _cameraStoragePermissionService = CameraStoragePermissionService();
-  final LocationPermissionService _locationPermissionService = LocationPermissionService();
+  final CameraStoragePermissionService _cameraStoragePermissionService =
+      CameraStoragePermissionService();
+  final LocationPermissionService _locationPermissionService =
+      LocationPermissionService();
 
   // Selected address data
   final selectedLatitude = Rxn<double>();
@@ -39,27 +41,33 @@ class ProfileController extends GetxController {
 
   // Gender options
   final List<String> genderOptions = ['Male', 'Female', 'Prefer not to say'];
-  
+
   // Validation error messages
   final genderError = RxString('');
   final addressError = RxString('');
-  
+
   // Track if user clicked "enter manually" for postcode
   final isManualEntry = false.obs;
 
   @override
   void onInit() {
     super.onInit();
-    
+
+    // Ask for location permission when profile screen opens
+    // Fire and forget; dialog and system prompt are handled by the service
+    _locationPermissionService.requestLocationPermission();
+
     // Check if social data was passed from login
     final arguments = Get.arguments as Map<String, dynamic>?;
     if (arguments != null && arguments!.isNotEmpty) {
       // Use social data passed from login screen
-      if (arguments!['fullName'] != null && arguments!['fullName'].toString().isNotEmpty) {
+      if (arguments!['fullName'] != null &&
+          arguments!['fullName'].toString().isNotEmpty) {
         fullNameController.text = arguments!['fullName'].toString();
-        print("Profile screen - Social full name: ${arguments!['fullName'].toString()}");
+        print(
+            "Profile screen - Social full name: ${arguments!['fullName'].toString()}");
       }
-      
+
       // Set profile image from social data
       String profilePic = arguments!['profilePicture']?.toString() ?? '';
       if (profilePic.isEmpty && arguments!['googleProfilePicture'] != null) {
@@ -70,11 +78,13 @@ class ProfileController extends GetxController {
         profileImageUrl.value = profilePic;
         print("Profile screen - Social profile picture: $profilePic");
       }
-      
+
       // Store the profileImageFile if passed from login
-      if (arguments!['profileImageFile'] != null && arguments!['profileImageFile'] is File) {
+      if (arguments!['profileImageFile'] != null &&
+          arguments!['profileImageFile'] is File) {
         profileImage.value = arguments!['profileImageFile'] as File;
-        print("Profile screen - Received profileImageFile: ${profileImage.value?.path}");
+        print(
+            "Profile screen - Received profileImageFile: ${profileImage.value?.path}");
       }
     }
   }
@@ -129,10 +139,10 @@ class ProfileController extends GetxController {
     }
     return null;
   }
-  
+
   String? validateAddressField() {
-    final address = selectedAddress.value.isNotEmpty 
-        ? selectedAddress.value 
+    final address = selectedAddress.value.isNotEmpty
+        ? selectedAddress.value
         : addressController.text.trim();
     if (address.isEmpty) {
       return 'Address is required';
@@ -146,7 +156,8 @@ class ProfileController extends GetxController {
   Future<void> selectDateOfBirth(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: DateTime.now().subtract(const Duration(days: 6570)), // 18 years ago
+      initialDate:
+          DateTime.now().subtract(const Duration(days: 6570)), // 18 years ago
       firstDate: DateTime(1900),
       lastDate: DateTime.now(),
       builder: (context, child) {
@@ -162,9 +173,10 @@ class ProfileController extends GetxController {
         );
       },
     );
-    
+
     if (picked != null) {
-      dobController.text = '${picked.day.toString().padLeft(2, '0')}/${picked.month.toString().padLeft(2, '0')}/${picked.year}';
+      dobController.text =
+          '${picked.day.toString().padLeft(2, '0')}/${picked.month.toString().padLeft(2, '0')}/${picked.year}';
     }
   }
 
@@ -240,10 +252,10 @@ class ProfileController extends GetxController {
     await navigateToMapScreen();
   }
 
-
   Future<void> pickProfileImage() async {
     // Request storage permission using CameraStoragePermissionService
-    bool hasPermission = await _cameraStoragePermissionService.requestStoragePermission();
+    bool hasPermission =
+        await _cameraStoragePermissionService.requestStoragePermission();
     if (!hasPermission) {
       return; // Permission service handles the error messages
     }
@@ -255,7 +267,7 @@ class ProfileController extends GetxController {
         maxHeight: 1024,
         imageQuality: 85,
       );
-      
+
       if (image != null) {
         profileImage.value = File(image.path);
       }
@@ -272,7 +284,8 @@ class ProfileController extends GetxController {
 
   Future<void> takePhoto() async {
     // Request camera permission using CameraStoragePermissionService
-    bool hasPermission = await _cameraStoragePermissionService.requestCameraPermission();
+    bool hasPermission =
+        await _cameraStoragePermissionService.requestCameraPermission();
     if (!hasPermission) {
       return; // Permission service handles the error messages
     }
@@ -284,7 +297,7 @@ class ProfileController extends GetxController {
         maxHeight: 1024,
         imageQuality: 85,
       );
-      
+
       if (image != null) {
         profileImage.value = File(image.path);
       }
@@ -323,7 +336,8 @@ class ProfileController extends GetxController {
             ),
             const SizedBox(height: 20),
             ListTile(
-              leading: const Icon(Icons.photo_library, color: Color(0xFF00BFA5)),
+              leading:
+                  const Icon(Icons.photo_library, color: Color(0xFF00BFA5)),
               title: const Text('Choose from gallery'),
               onTap: () {
                 Get.back();
@@ -357,7 +371,7 @@ class ProfileController extends GetxController {
     // Clear previous errors
     genderError.value = '';
     addressError.value = '';
-    
+
     // Validate form fields
     if (!formKey.currentState!.validate()) {
       return;
@@ -400,15 +414,29 @@ class ProfileController extends GetxController {
     return {
       'full_name': fullNameController.text.trim(),
       'dob': getFormattedDOB() ?? '',
-      'gender': (getFormattedGender() == "prefer not to say") ? "prefer_not_to_say" : getFormattedGender() ?? '',
+      'gender': (getFormattedGender() == "prefer not to say")
+          ? "prefer_not_to_say"
+          : getFormattedGender() ?? '',
       'postcode': postcodeController.text.trim(),
-      'address': selectedAddress.value.isNotEmpty 
-          ? selectedAddress.value 
+      'address': selectedAddress.value.isNotEmpty
+          ? selectedAddress.value
           : addressController.text.trim(),
       'latitude': latitude.value,
       'longitude': longitude.value,
       'profile_picture': profileImage.value?.path ?? '',
     };
+  }
+
+  /// Request location permission using the common service
+  /// Returns true if permission is granted, false otherwise
+  Future<bool> requestLocationPermission() async {
+    return await _locationPermissionService.requestLocationPermission();
+  }
+
+  /// Check location permission status using the common service
+  /// Returns true if permission is granted, false otherwise
+  Future<bool> checkLocationPermissionStatus() async {
+    return await _locationPermissionService.checkLocationPermissionStatus();
   }
 
   @override
@@ -422,6 +450,21 @@ class ProfileController extends GetxController {
   }
 
   Future<void> navigateToMapScreen() async {
+    // First check if location permission is already granted
+    bool hasPermission =
+        await _locationPermissionService.checkLocationPermissionStatus();
+
+    // If not granted, request permission
+    if (!hasPermission) {
+      hasPermission =
+          await _locationPermissionService.requestLocationPermission();
+    }
+
+    if (!hasPermission) {
+      // Permission service already shows appropriate message/dialog
+      return;
+    }
+
     final result = await Get.to(
       () => SelectAddressMapView(),
       binding: SelectAddressMapBinding(),
@@ -430,7 +473,7 @@ class ProfileController extends GetxController {
       // Update latitude and longitude
       selectedLatitude.value = result['latitude'] as double?;
       selectedLongitude.value = result['longitude'] as double?;
-      
+
       // Update latitude and longitude for API calls
       if (result['latitude'] != null) {
         latitude.value = result['latitude'] as double;
@@ -438,7 +481,7 @@ class ProfileController extends GetxController {
       if (result['longitude'] != null) {
         longitude.value = result['longitude'] as double;
       }
-      
+
       // Set address from map selection
       final address = result['address'] as String? ?? '';
       if (address.isNotEmpty) {
@@ -460,7 +503,7 @@ class ProfileController extends GetxController {
   void enterManually() {
     // Toggle manual entry mode for postcode
     isManualEntry.value = !isManualEntry.value;
-    
+
     // If toggling back to non-editable mode, sync selectedPostcode with controller text
     if (!isManualEntry.value && postcodeController.text.isNotEmpty) {
       selectedPostcode.value = postcodeController.text;

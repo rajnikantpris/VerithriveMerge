@@ -206,16 +206,17 @@ class VerifyEmailController extends BaseController {
                 },
               );
             } else {
+              await _registerUser();
               // Registration flow - proceed with registration
-              showResponseDialog(
-                message: messageText,
-                title: 'Success',
-                isError: false,
-                showButton: false,
-                onOkPressed: () async {
-                  await _registerUser();
-                },
-              );
+              // showResponseDialog(
+              //   message: messageText,
+              //   title: 'Success',
+              //   isError: false,
+              //   showButton: false,
+              //   onOkPressed: () async {
+              //
+              //   },
+              // );
             }
           } else {
             showResponseDialog(
@@ -306,6 +307,9 @@ class VerifyEmailController extends BaseController {
               email.isNotEmpty) {
             await _storageService?.writeString('user_email', email);
           }
+
+          // Ensure is_social_login is false for normal registration
+          await _storageService?.writeBool('is_social_login', false);
 
           Get.offAllNamed(Routes.signupPersonDetails);
         } else {

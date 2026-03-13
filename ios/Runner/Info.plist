@@ -35,6 +35,8 @@
 	</array>
 	<key>CFBundleVersion</key>
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>LSApplicationQueriesSchemes</key>
 	<array>
 		<string>google</string>
@@ -42,12 +44,12 @@
 	</array>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>We need camera access to update your profile picture.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>This app needs your location even when the app is in background.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>This app needs your location to show nearby services.</string>
-	<key>NSCameraUsageDescription</key>
-	<string>We need camera access to update your profile picture.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>We need photo access to select images from your gallery.</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
@@ -67,5 +69,9 @@
 		<string>UIInterfaceOrientationPortrait</string>
 		<string>UIInterfaceOrientationPortraitUpsideDown</string>
 	</array>
+    <key>GMSApiKey</key>
+        <string>AIzaSyDIHdFq55OMUeaBaKgsAB1Cpi5r5vEFU8k</string>
+        <key>UIUserInterfaceStyle</key>
+        <string>Light</string>
 </dict>
 </plist>

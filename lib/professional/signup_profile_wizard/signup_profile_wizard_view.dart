@@ -149,6 +149,7 @@ class SignupProfileWizardView extends BaseView<SignupProfileWizardController> {
 
   Widget _buildCreateProfile(BuildContext context) {
     return SingleChildScrollView(
+      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
       child: Obx(
         () => Form(
@@ -384,6 +385,7 @@ class SignupProfileWizardView extends BaseView<SignupProfileWizardController> {
 
   Widget _buildAddAddress(BuildContext context) {
     return SingleChildScrollView(
+      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
       child: Obx(
         () => Form(
@@ -488,6 +490,7 @@ class SignupProfileWizardView extends BaseView<SignupProfileWizardController> {
 
   Widget _buildServices(BuildContext context) {
     return SingleChildScrollView(
+      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -692,6 +695,7 @@ class SignupProfileWizardView extends BaseView<SignupProfileWizardController> {
 
   Widget _buildQualifications(BuildContext context) {
     return SingleChildScrollView(
+      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
       controller: controller.qualificationsScrollController,
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
       child: Obx(
@@ -939,6 +943,7 @@ class SignupProfileWizardView extends BaseView<SignupProfileWizardController> {
 
   Widget _buildIdentification(BuildContext context) {
     return SingleChildScrollView(
+      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
       child: Obx(
         () => Form(
@@ -1119,90 +1124,189 @@ class SignupProfileWizardView extends BaseView<SignupProfileWizardController> {
     );
   }
 
+  // Widget _buildAboutYou(BuildContext context) {
+  //   return SingleChildScrollView(
+  //     keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+  //     padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+  //     child: Obx(
+  //       () => Form(
+  //         key: controller.aboutYouFormKey,
+  //         autovalidateMode: controller.aboutYouHasValidated.value
+  //             ? AutovalidateMode.onUserInteraction
+  //             : AutovalidateMode.disabled,
+  //         child: Column(
+  //           crossAxisAlignment: CrossAxisAlignment.start,
+  //           children: [
+  //             SizedBox(height: HightWidthSizes.setValue_8),
+  //             Text(
+  //               'You can write about yourself, experience, skills etc. This information will be seen by other users.',
+  //               style: TextStyle(
+  //                 fontFamily: AppFonts.rubikRegular,
+  //                 fontWeight: FontWeight.w400,
+  //                 fontSize: FontSizes.setFontValue_12,
+  //                 color: AppColor.color_2D2D2D,
+  //               ),
+  //             ),
+  //             SizedBox(height: HightWidthSizes.setValue_14),
+  //             Column(
+  //               crossAxisAlignment: CrossAxisAlignment.end,
+  //               children: [
+  //                 Container(
+  //                   decoration: BoxDecoration(
+  //                     borderRadius:
+  //                         BorderRadius.circular(HightWidthSizes.setValue_10),
+  //                     border: Border.all(color: AppColor.borderColor),
+  //                   ),
+  //                   padding: EdgeInsets.symmetric(
+  //                     horizontal: HightWidthSizes.setValue_12,
+  //                     vertical: HightWidthSizes.setValue_8,
+  //                   ),
+  //                   child: TextFormField(
+  //                     controller: controller.aboutYouController,
+  //                     maxLines: 6,
+  //                     onChanged: controller.onAboutYouChanged,
+  //                     validator: (value) {
+  //                       if (value == null || value.trim().isEmpty) {
+  //                         return 'Please enter description';
+  //                       }
+  //                       return null;
+  //                     },
+  //                     decoration: InputDecoration(
+  //                       border: InputBorder.none,
+  //                       hintText: 'Enter here',
+  //                       errorBorder: InputBorder.none,
+  //                       focusedErrorBorder: InputBorder.none,
+  //                       errorStyle: TextStyle(
+  //                         fontFamily: AppFonts.rubikRegular,
+  //                         fontWeight: FontWeight.w400,
+  //                         fontSize: FontSizes.setFontValue_12,
+  //                         color: Colors.red,
+  //                         height: 1.4,
+  //                       ),
+  //                       errorMaxLines: 2,
+  //                     ),
+  //                     style: TextStyle(
+  //                       fontFamily: AppFonts.rubikRegular,
+  //                       fontWeight: FontWeight.w400,
+  //                       fontSize: FontSizes.setFontValue_14,
+  //                       color: AppColor.color_0E1027,
+  //                     ),
+  //                   ),
+  //                 ),
+  //                 SizedBox(height: HightWidthSizes.setValue_6),
+  //                 Obx(
+  //                   () => Text(
+  //                     '${controller.aboutYouCharacterCount.value}/500 characters',
+  //                     style: TextStyle(
+  //                       fontFamily: AppFonts.rubikRegular,
+  //                       fontWeight: FontWeight.w400,
+  //                       fontSize: FontSizes.setFontValue_12,
+  //                       color: AppColor.color_9D9D9D,
+  //                     ),
+  //                   ),
+  //                 ),
+  //               ],
+  //             ),
+  //             SizedBox(height: HightWidthSizes.setValue_20),
+  //           ],
+  //         ),
+  //       ),
+  //     ),
+  //   );
+  // }
   Widget _buildAboutYou(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
-      child: Obx(
-        () => Form(
-          key: controller.aboutYouFormKey,
-          autovalidateMode: controller.aboutYouHasValidated.value
-              ? AutovalidateMode.onUserInteraction
-              : AutovalidateMode.disabled,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(height: HightWidthSizes.setValue_8),
-              Text(
-                'You can write about yourself, experience, skills etc. This information will be seen by other users.',
-                style: TextStyle(
-                  fontFamily: AppFonts.rubikRegular,
-                  fontWeight: FontWeight.w400,
-                  fontSize: FontSizes.setFontValue_12,
-                  color: AppColor.color_2D2D2D,
+    return GestureDetector(
+      behavior: HitTestBehavior.translucent,
+      onTap: () => FocusScope.of(context).unfocus(),
+      child: SingleChildScrollView(
+        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+        child: Obx(
+          () => Form(
+            key: controller.aboutYouFormKey,
+            autovalidateMode: controller.aboutYouHasValidated.value
+                ? AutovalidateMode.onUserInteraction
+                : AutovalidateMode.disabled,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(height: HightWidthSizes.setValue_8),
+                Text(
+                  'You can write about yourself, experience, skills etc. This information will be seen by other users.',
+                  style: TextStyle(
+                    fontFamily: AppFonts.rubikRegular,
+                    fontWeight: FontWeight.w400,
+                    fontSize: FontSizes.setFontValue_12,
+                    color: AppColor.color_2D2D2D,
+                  ),
                 ),
-              ),
-              SizedBox(height: HightWidthSizes.setValue_14),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Container(
-                    decoration: BoxDecoration(
-                      borderRadius:
-                          BorderRadius.circular(HightWidthSizes.setValue_10),
-                      border: Border.all(color: AppColor.borderColor),
+                SizedBox(height: HightWidthSizes.setValue_14),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Container(
+                      decoration: BoxDecoration(
+                        borderRadius:
+                            BorderRadius.circular(HightWidthSizes.setValue_10),
+                        border: Border.all(color: AppColor.borderColor),
+                      ),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: HightWidthSizes.setValue_12,
+                        vertical: HightWidthSizes.setValue_8,
+                      ),
+                      child: TextFormField(
+                        controller: controller.aboutYouController,
+                        maxLines: 6,
+                        textInputAction: TextInputAction.done,
+                        onChanged: controller.onAboutYouChanged,
+                        onFieldSubmitted: (_) =>
+                            FocusScope.of(context).unfocus(),
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Please enter description';
+                          }
+                          return null;
+                        },
+                        decoration: InputDecoration(
+                          border: InputBorder.none,
+                          hintText: 'Enter here',
+                          errorBorder: InputBorder.none,
+                          focusedErrorBorder: InputBorder.none,
+                          errorStyle: TextStyle(
+                            fontFamily: AppFonts.rubikRegular,
+                            fontWeight: FontWeight.w400,
+                            fontSize: FontSizes.setFontValue_12,
+                            color: Colors.red,
+                            height: 1.4,
+                          ),
+                          errorMaxLines: 2,
+                        ),
+                        style: TextStyle(
+                          fontFamily: AppFonts.rubikRegular,
+                          fontWeight: FontWeight.w400,
+                          fontSize: FontSizes.setFontValue_14,
+                          color: AppColor.color_0E1027,
+                        ),
+                      ),
                     ),
-                    padding: EdgeInsets.symmetric(
-                      horizontal: HightWidthSizes.setValue_12,
-                      vertical: HightWidthSizes.setValue_8,
-                    ),
-                    child: TextFormField(
-                      controller: controller.aboutYouController,
-                      maxLines: 6,
-                      onChanged: controller.onAboutYouChanged,
-                      validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return 'Please enter description';
-                        }
-                        return null;
-                      },
-                      decoration: InputDecoration(
-                        border: InputBorder.none,
-                        hintText: 'Enter here',
-                        errorBorder: InputBorder.none,
-                        focusedErrorBorder: InputBorder.none,
-                        errorStyle: TextStyle(
+                    SizedBox(height: HightWidthSizes.setValue_6),
+                    Obx(
+                      () => Text(
+                        '${controller.aboutYouCharacterCount.value}/500 characters',
+                        style: TextStyle(
                           fontFamily: AppFonts.rubikRegular,
                           fontWeight: FontWeight.w400,
                           fontSize: FontSizes.setFontValue_12,
-                          color: Colors.red,
-                          height: 1.4,
+                          color: AppColor.color_9D9D9D,
                         ),
-                        errorMaxLines: 2,
-                      ),
-                      style: TextStyle(
-                        fontFamily: AppFonts.rubikRegular,
-                        fontWeight: FontWeight.w400,
-                        fontSize: FontSizes.setFontValue_14,
-                        color: AppColor.color_0E1027,
                       ),
                     ),
-                  ),
-                  SizedBox(height: HightWidthSizes.setValue_6),
-                  Obx(
-                    () => Text(
-                      '${controller.aboutYouCharacterCount.value}/500 characters',
-                      style: TextStyle(
-                        fontFamily: AppFonts.rubikRegular,
-                        fontWeight: FontWeight.w400,
-                        fontSize: FontSizes.setFontValue_12,
-                        color: AppColor.color_9D9D9D,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(height: HightWidthSizes.setValue_20),
-            ],
+                  ],
+                ),
+                SizedBox(height: HightWidthSizes.setValue_20),
+              ],
+            ),
           ),
         ),
       ),

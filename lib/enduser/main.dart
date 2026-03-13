@@ -592,11 +592,11 @@ bool _isChatDetailActiveWithUser(String? senderId, String? roomId) {
 
     // Check if current chat is with the same user
     final isSameUser =
-        currentConversation.userId == senderId ||
-        currentConversation.id == roomId;
+        currentConversation.value!.userId == senderId ||
+        currentConversation.value!.id == roomId;
 
-    print("Current chat user ID: ${currentConversation.userId}");
-    print("Current chat room ID: ${currentConversation.id}");
+    print("Current chat user ID: ${currentConversation.value!.userId}");
+    print("Current chat room ID: ${currentConversation.value!.id}");
     print("Incoming sender ID: $senderId");
     print("Incoming room ID: $roomId");
     print("Is same user: $isSameUser");

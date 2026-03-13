@@ -19,16 +19,17 @@ class UserApiService extends GetxService {
   final SocialAuthService _socialAuthService = SocialAuthService();
 
   // Base URL for the API
- //  static const String baseUrl = 'http://192.168.0.33:4142/api/v2/professional/';
+  //  static const String baseUrl = 'http://192.168.0.33:4142/api/v2/professional/';
+  static const String socketUrl = 'https://adminportal.verithrive.co.uk';
   static const String baseUrl =
-  'http://18.135.255.93:4142/api/v2/professional/';
+      'https://adminportal.verithrive.co.uk/api/api/v2/professional/';
   // static const String baseUrl = 'http://27.54.168.101:4142/api/v1/professional/';
 
   /// Get the socket base URL (same server, different port/path)
   /// Extracts the protocol, host, and port from the API baseUrl
   /// Socket.IO typically runs on /socket.io path
   static String get socketBaseUrl {
-    final uri = Uri.parse(baseUrl);
+    final uri = Uri.parse(socketUrl);
     return '${uri.scheme}://${uri.host}:${uri.port}';
   }
 
@@ -638,6 +639,7 @@ class UserApiService extends GetxService {
     double? latitude,
     double? longitude,
     String? profileImagePath,
+    String? promoCode,
   }) async {
     try {
       final fullUrl = '$baseUrl$_updatePersonalDetailsPath';
@@ -650,6 +652,11 @@ class UserApiService extends GetxService {
         'address': address,
         'is_term_condition': isTermCondition ? 'true' : 'false',
       };
+
+      // Optional promo code
+      if (promoCode != null && promoCode.isNotEmpty) {
+        fields['promo_code'] = promoCode;
+      }
 
       // Optional coordinates
       if (latitude != null) {
@@ -1020,6 +1027,7 @@ class UserApiService extends GetxService {
     required String fullName,
     required String dob,
     required String gender,
+    required int optStatus,
     File? profilePicture,
   }) async {
     try {
@@ -1032,6 +1040,7 @@ class UserApiService extends GetxService {
         'full_name': fullName,
         'dob': dob,
         'gender': _convertGenderToApiFormat(gender),
+        'opt_status': optStatus,
       };
 
       final response = await _dioClient.uploadMultipart<dynamic>(

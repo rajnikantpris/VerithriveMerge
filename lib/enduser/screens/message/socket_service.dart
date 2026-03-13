@@ -242,6 +242,57 @@ class SocketService extends GetxService {
     log('Marked messages as read: $readData');
   }
 
+  /// Get inbox data - get_inbox event
+  void getInbox() {
+    if (_socket == null || !_isConnected) {
+      log('Cannot get inbox: Socket not connected');
+      return;
+    }
+
+    _socket!.emit('get_inbox');
+    log('Requested inbox data via Socket.IO');
+  }
+
+  /// Listen for inbox data - inbox_data event
+  void onInboxData(Function(Map<String, dynamic>) callback) {
+    if (_socket == null) {
+      log('Cannot listen for inbox data: Socket not initialized');
+      return;
+    }
+
+    _socket!.on('inbox_data', (data) {
+      log('Received inbox data via Socket.IO: $data');
+      if (data is Map<String, dynamic>) {
+        callback(data);
+      }
+    });
+  }
+
+  /// Remove inbox_data listener
+  void offInboxData() {
+    _socket?.off('inbox_data');
+  }
+
+  /// Listen for user connection status updates - user_connection_status event
+  void onUserConnectionStatus(Function(Map<String, dynamic>) callback) {
+    if (_socket == null) {
+      log('Cannot listen for user connection status: Socket not initialized');
+      return;
+    }
+
+    _socket!.on('user_connection_status', (data) {
+      log('Received user connection status via Socket.IO: $data');
+      if (data is Map<String, dynamic>) {
+        callback(data);
+      }
+    });
+  }
+
+  /// Remove user_connection_status listener
+  void offUserConnectionStatus() {
+    _socket?.off('user_connection_status');
+  }
+
   /// Disconnect from Socket.IO server
   void disconnect() {
     if (_socket != null) {

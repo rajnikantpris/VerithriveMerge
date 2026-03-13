@@ -55,8 +55,15 @@ class SelectAddressMapController extends BaseController {
   Future<void> _initializeMap() async {
     try {
       // Request location permission
-      final hasPermission =
-          await _locationPermissionService.requestLocationPermission();
+      bool hasPermission =
+          await _locationPermissionService.checkLocationPermissionStatus();
+
+      // If not granted, request permission
+      if (!hasPermission) {
+        hasPermission =
+            await _locationPermissionService.requestLocationPermission();
+      }
+
       if (hasPermission) {
         await _getCurrentLocation();
       } else {

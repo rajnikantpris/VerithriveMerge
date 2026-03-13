@@ -9,6 +9,8 @@ import '../../utils/CustomTextField.dart';
 import 'UpdateProfileController.dart';
 
 class UpdateProfileScreen extends StatelessWidget {
+
+  // this is my uncommited code
   @override
   Widget build(BuildContext context) {
     final controller = Get.find<UpdateProfileController>();
@@ -152,6 +154,9 @@ class UpdateProfileScreen extends StatelessWidget {
                 SizedBox(height: 16),
                 // Gender
                 _buildGenderField(controller),
+                SizedBox(height: 16),
+                // Marketing
+                _buildMarketingField(controller),
                 SizedBox(height: 16),
                 // Postcode
                 Column(
@@ -321,6 +326,64 @@ class UpdateProfileScreen extends StatelessWidget {
                 ),
               )
             : SizedBox.shrink()),
+      ],
+    );
+  }
+
+  Widget _buildMarketingField(UpdateProfileController controller) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text(
+              'Marketing',
+              style: AppTextStyles.labelStyle(),
+            ),
+            SizedBox(width: 8),
+            GestureDetector(
+              onTap: controller.showMarketingInfo,
+              child: Icon(
+                Icons.info_outline,
+                size: 16,
+                color: AppColors.grey,
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: 8),
+        Obx(() => GestureDetector(
+          onTap: controller.openMarketingBottomSheet,
+          child: Container(
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            decoration: BoxDecoration(
+              color: AppColors.white,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: AppColors.lightGrey,
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  controller.selectedMarketingPreference.value.isEmpty
+                      ? 'Select Marketing Preference'
+                      : controller.selectedMarketingPreference.value,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontFamily: 'Rubik',
+                    fontWeight: FontWeight.w400,
+                    color: controller.selectedMarketingPreference.value.isEmpty
+                        ? AppColors.grey
+                        : AppColors.color2D2D2D,
+                  ),
+                ),
+                SvgPicture.asset(AppAssets.arrow_right),
+              ],
+            ),
+          ),
+        )),
       ],
     );
   }

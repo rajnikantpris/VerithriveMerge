@@ -1,6 +1,7 @@
-//var bareUrl = 'http://192.168.0.33:4142/api/v2/user/';
+var bareUrl = 'http://192.168.0.33:4142/api/v2/user/';
 //var bareUrl = 'http://27.54.168.101:4142/api/v1/user/';
-var bareUrl = 'http://18.135.255.93:4142/api/v2/user/';
+//var bareUrl = 'http://18.135.255.93:4142/api/v2/user/';
+var socketUrl = 'https://adminportal.verithrive.co.uk';
 
 // Global variables for Google Sign-In
 String? serverClientIdGlb;
@@ -8,7 +9,7 @@ String baseURL = bareUrl;
 String social_register_login = "social/register-login";
 
 String get socketBaseUrl {
-  final uri = Uri.parse(bareUrl);
+  final uri = Uri.parse(socketUrl);
   return '${uri.scheme}://${uri.host}:${uri.port}';
 }
 

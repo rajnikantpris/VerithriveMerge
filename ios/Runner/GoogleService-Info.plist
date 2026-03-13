@@ -3,11 +3,11 @@
 <plist version="1.0">
 <dict>
 	<key>CLIENT_ID</key>
-	<string>38374486736-hqvrhf74vldi9qcnarh2hofc5edt1pmg.apps.googleusercontent.com</string>
+	<string>38374486736-nhsvpeivd90b872p5mr9vjpc8gpu6s1a.apps.googleusercontent.com</string>
 	<key>REVERSED_CLIENT_ID</key>
-	<string>com.googleusercontent.apps.38374486736-hqvrhf74vldi9qcnarh2hofc5edt1pmg</string>
+	<string>com.googleusercontent.apps.38374486736-nhsvpeivd90b872p5mr9vjpc8gpu6s1a</string>
 	<key>ANDROID_CLIENT_ID</key>
-	<string>38374486736-g17f5i7ei7slb152q615qgg5u934rdhv.apps.googleusercontent.com</string>
+	<string>38374486736-evfr1j4bvc6gb9jfuv7ouomv276luh61.apps.googleusercontent.com</string>
 	<key>API_KEY</key>
 	<string>AIzaSyBbVbb_af4GqIHHjVCRsx37fJpuL73-5n8</string>
 	<key>GCM_SENDER_ID</key>
@@ -15,7 +15,7 @@
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
-	<string>com.app.verithrive.professional.verithrive</string>
+	<string>com.verithrive.verithrive</string>
 	<key>PROJECT_ID</key>
 	<string>verithrive-31bd6</string>
 	<key>STORAGE_BUCKET</key>
@@ -31,6 +31,6 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:38374486736:ios:b589d4e8890c404d9264d5</string>
+	<string>1:38374486736:ios:97070ef8164b7a989264d5</string>
 </dict>
 </plist>

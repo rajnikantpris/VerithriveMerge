@@ -345,6 +345,7 @@ class AddServiceFormatView extends BaseView<AddServiceFormatController> {
                               controller.getBundlePriceController(index),
                           showLabel: false,
                           keyboardType: TextInputType.number,
+                          textInputAction: TextInputAction.done,
                           borderColor:
                               controller.fieldErrors['bundlePrice_$index'] !=
                                       null
@@ -394,6 +395,7 @@ class AddServiceFormatView extends BaseView<AddServiceFormatController> {
               borderColor: Color(0xFFE0E2E6), // #E0E2E6
               hintTextColor: Color(0xFF828282), // #828282
               hintTextFontFamily: AppFonts.poppinsRegular,
+              textInputAction: TextInputAction.done,
               hintTextFontSize: FontSizes.setFontValue_12,
               validator: (value) => controller.validateOfferText(index),
               onChanged: (value) {
@@ -510,6 +512,7 @@ class AddServiceFormatView extends BaseView<AddServiceFormatController> {
                           controller: controller.getPriceController(index),
                           showLabel: false,
                           keyboardType: TextInputType.number,
+                          textInputAction: TextInputAction.done,
                           borderColor:
                               controller.fieldErrors['price_$index'] != null
                                   ? Colors.red

@@ -312,7 +312,7 @@ class ConsultationBookingScreen extends StatelessWidget {
                               : isAvailable
                               ? AppColors.availableColor
                               : isDisabled
-                              ? AppColors.lightGrey
+                              ? AppColors.unavailableColor
                               : AppColors.unavailableColor,
                           borderRadius: BorderRadius.circular(8),
                           border: isSelected

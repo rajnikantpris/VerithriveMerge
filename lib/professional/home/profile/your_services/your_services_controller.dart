@@ -11,6 +11,8 @@ import '../../../../widgets/response_dialog.dart';
 class YourServicesController extends BaseController {
   final UserApiService _userApiService;
 
+  static const int _visibleThreshold = 10;
+
   // Services data
   final RxList<ServiceModel> services = <ServiceModel>[].obs;
   final selectedServices = <String>{}
@@ -60,6 +62,9 @@ class YourServicesController extends BaseController {
           });
         }
       });
+      
+      // Initialize visible counts for all services
+      _initializeVisibleCounts();
     }
   }
 
@@ -292,6 +297,111 @@ class YourServicesController extends BaseController {
         debugPrint('Error loading profession services: $error');
       },
     );
+  }
+  
+  // Show more/show less functionality
+  final showMoreServices = <String, bool>{}.obs; // Tracks which services have "show more" clicked
+  final visibleServicesCount = <String, int>{}.obs; // Tracks visible count for each service
+
+  /// Initialize visible counts for all services (limit to 10 initially)
+  void _initializeVisibleCounts() {
+    visibleServicesCount.clear();
+    
+    // For services without sub-services, limit to 10 initially
+    final servicesWithoutSubServices = services.where((service) => 
+        service.subServices == null || service.subServices!.isEmpty).toList();
+    
+    for (int i = 0; i < servicesWithoutSubServices.length; i++) {
+      final service = servicesWithoutSubServices[i];
+      final serviceId = service.id ?? '';
+      
+      // Show only first 10 services initially
+      if (i < _visibleThreshold) {
+        visibleServicesCount[serviceId] = 1; // Show this service
+      } else {
+        visibleServicesCount[serviceId] = 0; // Hide this service initially
+      }
+    }
+    
+    // For services with sub-services, show all sub-services initially
+    for (final service in services) {
+      final serviceId = service.id ?? '';
+      if (service.subServices != null && service.subServices!.isNotEmpty) {
+        visibleServicesCount[serviceId] = service.subServices!.length;
+      }
+    }
+    visibleServicesCount.refresh();
+  }
+
+  /// Toggle show more/less for services list
+  void toggleShowMore() {
+    final servicesWithoutSubServices = services.where((service) => 
+        service.subServices == null || service.subServices!.isEmpty).toList();
+    
+    // Check if currently showing more than threshold
+    final visibleCount = servicesWithoutSubServices.where((service) => 
+        (visibleServicesCount[service.id ?? 0] ?? 0) > 0).length;
+    
+    if (visibleCount > _visibleThreshold) {
+      // Currently showing all, so show less (limit to threshold)
+      _showLessServices();
+    } else {
+      // Currently showing limited, so show all
+      _showAllServices();
+    }
+  }
+
+  /// Show only first N services
+  void _showLessServices() {
+    final servicesWithoutSubServices = services.where((service) => 
+        service.subServices == null || service.subServices!.isEmpty).toList();
+    
+    for (int i = 0; i < servicesWithoutSubServices.length; i++) {
+      final service = servicesWithoutSubServices[i];
+      final serviceId = service.id ?? '';
+      
+      if (i < _visibleThreshold) {
+        visibleServicesCount[serviceId] = 1; // Show this service
+      } else {
+        visibleServicesCount[serviceId] = 0; // Hide this service
+      }
+    }
+    visibleServicesCount.refresh();
+  }
+
+  /// Show all services
+  void _showAllServices() {
+    final servicesWithoutSubServices = services.where((service) => 
+        service.subServices == null || service.subServices!.isEmpty).toList();
+    
+    for (final service in servicesWithoutSubServices) {
+      final serviceId = service.id ?? '';
+      visibleServicesCount[serviceId] = 1; // Show all services
+    }
+    visibleServicesCount.refresh();
+  }
+
+  /// Check if service should be visible
+  bool isServiceVisible(String serviceId) {
+    return (visibleServicesCount[serviceId] ?? 0) > 0;
+  }
+
+  /// Check if showing more than threshold
+  bool get isShowingMoreServices {
+    final servicesWithoutSubServices = services.where((service) => 
+        service.subServices == null || service.subServices!.isEmpty).toList();
+    
+    final visibleCount = servicesWithoutSubServices.where((service) => 
+        isServiceVisible(service.id ?? '')).length;
+    
+    return visibleCount > _visibleThreshold;
+  }
+
+  /// Check if the "Show more/less" button should be displayed
+  bool get shouldShowMoreButton {
+    final servicesWithoutSubServices = services.where((service) => 
+        service.subServices == null || service.subServices!.isEmpty).toList();
+    return servicesWithoutSubServices.length > _visibleThreshold;
   }
 
   void toggleService(String serviceName, String serviceId) {

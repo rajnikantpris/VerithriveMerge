@@ -319,6 +319,10 @@ class PersonalDetailsView extends BaseView<PersonalDetailsController> {
                         onChanged: controller.setGender,
                       ),
                     ),
+                    SizedBox(height: HightWidthSizes.setValue_16),
+
+                    // Marketing Preferences field
+                    _buildMarketingField(),
                     SizedBox(height: HightWidthSizes.setValue_20),
                   ],
                 ),
@@ -469,6 +473,86 @@ class PersonalDetailsView extends BaseView<PersonalDetailsController> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildMarketingField() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text(
+              'Marketing',
+              style: TextStyle(
+                fontFamily: AppFonts.rubikRegular,
+                fontWeight: FontWeight.w400,
+                fontSize: FontSizes.setFontValue_14,
+                color: AppColor.color_2D2D2D,
+              ),
+            ),
+            SizedBox(width: HightWidthSizes.setValue_8),
+            GestureDetector(
+              onTap: controller.showMarketingInfo,
+              child: Icon(
+                Icons.info_outline,
+                size: HightWidthSizes.setValue_16,
+                color: AppColor.color_9D9D9D,
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: HightWidthSizes.setValue_5),
+        Obx(
+          () => DropdownButtonFormField2<String>(
+            isExpanded: true,
+            isDense: true,
+            alignment: AlignmentDirectional.centerStart,
+            value: controller.selectedMarketingPreference.value.isEmpty
+                ? null
+                : controller.selectedMarketingPreference.value,
+            decoration: _dropdownDecoration(),
+            dropdownStyleData: DropdownStyleData(
+              decoration: BoxDecoration(
+                color: AppColor.white,
+                borderRadius: BorderRadius.circular(HightWidthSizes.setValue_10),
+              ),
+            ),
+            iconStyleData: IconStyleData(
+              icon: AppImages.right_arrow_image(
+                width: HightWidthSizes.setValue_16,
+                height: HightWidthSizes.setValue_16,
+              ),
+            ),
+            hint: Text(
+              'Select preference',
+              style: TextStyle(
+                fontFamily: AppFonts.rubikRegular,
+                fontWeight: FontWeight.w400,
+                fontSize: FontSizes.setFontValue_16,
+                color: AppColor.color_9D9D9D,
+              ),
+            ),
+            items: controller.marketingOptions
+                .map(
+                  (option) => DropdownMenuItem<String>(
+                    value: option,
+                    child: Text(
+                      option,
+                      style: TextStyle(
+                        fontFamily: AppFonts.rubikRegular,
+                        fontWeight: FontWeight.w400,
+                        fontSize: FontSizes.setFontValue_16,
+                        color: AppColor.color_2D2D2D,
+                      ),
+                    ),
+                  ),
+                )
+                .toList(),
+            onChanged: controller.setMarketingPreference,
+          ),
+        ),
+      ],
     );
   }
 

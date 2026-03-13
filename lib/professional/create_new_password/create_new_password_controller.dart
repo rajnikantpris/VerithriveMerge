@@ -147,22 +147,31 @@ class CreateNewPasswordController extends BaseController {
           if (response.success) {
             final messageText =
                 response.message ?? 'Password reset successfully';
-            showResponseDialog(
-              message: messageText,
-              title: 'Success',
-              isError: false,
-              showButton: true,
-              onOkPressed: () {
+            if (!isClosed) {
+              // Small delay to ensure UI operations complete before navigation
+              Future.delayed(const Duration(milliseconds: 100), () {
                 if (!isClosed) {
-                  // Small delay to ensure UI operations complete before navigation
-                  Future.delayed(const Duration(milliseconds: 100), () {
-                    if (!isClosed) {
-                      Get.offAllNamed(Routes.login);
-                    }
-                  });
+                  Get.offAllNamed(Routes.login);
                 }
-              },
-            );
+              });
+            }
+
+            // showResponseDialog(
+            //   message: messageText,
+            //   title: 'Success',
+            //   isError: false,
+            //   showButton: true,
+            //   onOkPressed: () {
+            //     if (!isClosed) {
+            //       // Small delay to ensure UI operations complete before navigation
+            //       Future.delayed(const Duration(milliseconds: 100), () {
+            //         if (!isClosed) {
+            //           Get.offAllNamed(Routes.login);
+            //         }
+            //       });
+            //     }
+            //   },
+            // );
           } else {
             showResponseDialog(
               title: 'Error',

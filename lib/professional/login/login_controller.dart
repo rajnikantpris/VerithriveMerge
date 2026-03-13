@@ -58,12 +58,12 @@ class ProfessionalLoginController extends BaseController {
     final storage = _storageService;
     if (storage == null) return;
 
-    final savedRememberMe = storage.readBool('remember_me') ?? false;
+    final savedRememberMe = storage.readBool('professional_remember_me') ?? false;
     rememberMe.value = savedRememberMe;
 
     if (savedRememberMe) {
-      final savedEmail = storage.readString('saved_email');
-      final savedPassword = storage.readString('saved_password');
+      final savedEmail = storage.readString('professional_saved_email');
+      final savedPassword = storage.readString('professional_saved_password');
 
       if (savedEmail != null && savedEmail.isNotEmpty) {
         emailController.text = savedEmail;
@@ -80,14 +80,14 @@ class ProfessionalLoginController extends BaseController {
     if (storage == null) return;
 
     if (rememberMe.value) {
-      await storage.writeString('saved_email', email);
-      await storage.writeString('saved_password', password);
-      await storage.writeBool('remember_me', true);
+      await storage.writeString('professional_saved_email', email);
+      await storage.writeString('professional_saved_password', password);
+      await storage.writeBool('professional_remember_me', true);
     } else {
       // Clear saved credentials if remember me is unchecked
-      await storage.writeString('saved_email', '');
-      await storage.writeString('saved_password', '');
-      await storage.writeBool('remember_me', false);
+      await storage.writeString('professional_saved_email', '');
+      await storage.writeString('professional_saved_password', '');
+      await storage.writeBool('professional_remember_me', false);
     }
   }
 
@@ -249,6 +249,9 @@ class ProfessionalLoginController extends BaseController {
           if (userEmail != null && userEmail.isNotEmpty) {
             await _storageService?.writeString('user_email', userEmail);
           }
+
+          // Always save userType as 'professional' for professional social login
+          await _storageService?.writeString('userType', 'professional');
 
           // Extract user flags from user model
           final userFlags = _extractUserFlagsFromModel(loginData.user);
@@ -587,8 +590,12 @@ class ProfessionalLoginController extends BaseController {
           }
 
           final userType = loginData.user?.userType;
- if (userType != null && userType.isNotEmpty) {
-            await _storageService?.writeString('userType', userType);
+          // Always save userType as 'professional' for professional login
+          await _storageService?.writeString('userType', 'professional');
+          
+          // Also save the userType from API if available (for debugging/backup)
+          if (userType != null && userType.isNotEmpty) {
+            debugPrint('API userType: $userType');
           }
           // Extract user flags from user model
           final userFlags = _extractUserFlagsFromModel(loginData.user);
@@ -738,5 +745,8 @@ class ProfessionalLoginController extends BaseController {
 
     final socialProfilePicture = user?.profilePicture ?? '';
     await storage.writeString('user_profile_picture', socialProfilePicture);
+
+    final isSocial = user?.isSocialLogin ?? false;
+    await storage.writeBool('is_social_login', isSocial);
   }
 }
