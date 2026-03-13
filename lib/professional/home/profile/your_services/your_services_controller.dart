@@ -46,32 +46,31 @@ class YourServicesController extends BaseController {
 
   /// Load profile details and services in parallel where possible
   Future<void> _loadProfileAndServices() async {
-    // We don't use the blocking showLoading() here to allow progressive loading
+    // Show a single loader for the entire process
+    showLoading();
     isLoadingServices.value = true;
     hasLoadedServices.value = false;
 
     try {
-      // Start loading already selected services in parallel with profile details
-      final profileLoadTask = _loadProfileDetails();
-      final professionServicesLoadTask = _loadProfessionServices();
+      // Start loading profile details and already selected services in parallel
+      // They don't depend on each other.
+      await Future.wait([
+        _loadProfileDetails(),
+        _loadProfessionServices(),
+      ]);
 
-      // Wait for profile details as they are needed for loading all services
-      await profileLoadTask;
-      
       // If we have professionSubTypeId, load all available services
       if (professionSubTypeId.value != null &&
           professionSubTypeId.value!.isNotEmpty) {
         await _loadServices();
         _initializeVisibleCounts();
       }
-      
-      // Ensure selected services are also finished loading
-      await professionServicesLoadTask;
     } catch (e) {
       debugPrint('Error in _loadProfileAndServices: $e');
     } finally {
       isLoadingServices.value = false;
       hasLoadedServices.value = true;
+      resetState(); // Dismiss the single loader
       debugPrint('Initial data loading completed. Services: ${services.length}');
     }
   }

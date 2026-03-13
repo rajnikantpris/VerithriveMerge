@@ -67,22 +67,9 @@ class YourServicesView extends BaseView<YourServicesController> {
             SizedBox(height: HightWidthSizes.setValue_8),
             Obx(
               () {
-                // Show loader while services are loading
-                if (controller.isLoadingServices.value &&
-                    controller.services.isEmpty) {
-                  return Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(HightWidthSizes.setValue_40),
-                      child: CircularProgressIndicator(
-                        color: AppColor.color_2FC4B2,
-                      ),
-                    ),
-                  );
-                }
-
                 // Only show "No services available" if API call has completed and services list is empty
                 if (controller.hasLoadedServices.value &&
-                    controller.services.isEmpty) {
+                    controller.services.isEmpty && !controller.isLoadingServices.value) {
                   return Center(
                     child: Padding(
                       padding: const EdgeInsets.all(20.0),
