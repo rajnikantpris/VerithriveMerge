@@ -258,7 +258,7 @@ class SignupProfileWizardController extends BaseController {
         // Load colleges first, then qualifications (so IDs can be matched)
         _loadCollegesUniversities().then((_) {
           // Wait a bit for colleges to be fully processed
-          Future.delayed(const Duration(milliseconds: 300), () {
+          Future.delayed(const Duration(milliseconds: 100), () {
             _loadQualificationsDetails();
           });
         });
@@ -348,7 +348,7 @@ class SignupProfileWizardController extends BaseController {
 
     await callDataService<ApiResponse<dynamic>>(
       _userApiService.getCreateProfileDetails(),
-      showLoader: false,
+      showLoader: true,
       onSuccess: (response) {
         if (response.success && response.data != null) {
           try {
@@ -471,7 +471,7 @@ class SignupProfileWizardController extends BaseController {
   Future<void> _loadCreateAddressDetails() async {
     await callDataService<ApiResponse<dynamic>>(
       _userApiService.getCreateAddressDetails(),
-      showLoader: false,
+      showLoader: true,
       onSuccess: (response) {
         if (response.success && response.data != null) {
           try {
@@ -3284,7 +3284,7 @@ class SignupProfileWizardController extends BaseController {
     debugPrint('Loading personal identification details...');
     await callDataService<ApiResponse<dynamic>>(
       _userApiService.getPersonalIdentificationDetails(),
-      showLoader: false,
+      showLoader: true,
       onSuccess: (response) {
         if (response.success && response.data != null) {
           try {
@@ -3430,7 +3430,7 @@ class SignupProfileWizardController extends BaseController {
     debugPrint('Loading about you details...');
     await callDataService<ApiResponse<dynamic>>(
       _userApiService.getAboutYouDetails(),
-      showLoader: false,
+      showLoader: true,
       onSuccess: (response) {
         if (response.success && response.data != null) {
           try {
@@ -3474,7 +3474,7 @@ class SignupProfileWizardController extends BaseController {
     isLoadingCollegesUniversities.value = true;
     await callDataService<ApiResponse<dynamic>>(
       _userApiService.getCollegesUniversities(),
-      showLoader: false,
+      showLoader: true,
       onSuccess: (response) {
         debugPrint('Colleges/Universities API response: ${response.success}');
         if (response.success && response.data != null) {
