@@ -4,6 +4,8 @@ import '../../core/values/sharePrefrenceConst.dart';
 import '../../routes/app_routes.dart';
 import 'package:verithrive_dev/services/storage_service.dart';
 
+import '../main/MainScreen.dart';
+
 class OnboardingController extends GetxController {
   final PageController pageController = PageController();
   final RxInt currentPage = 0.obs;
@@ -26,7 +28,9 @@ class OnboardingController extends GetxController {
     // Set guest flag
     await _storageService.writeBool(SharePreferenceConst.isGuest, true);
     // Navigate to main screen (home screen)
-    Get.offAllNamed(AppRoutes.main);
+   // Get.offAllNamed(AppRoutes.main);
+
+    Get.offAll(() => MainScreen());
   }
 
   @override

@@ -3,12 +3,12 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:verithrive_dev/enduser/screens/consultation/ConsultationBinding.dart';
 import 'package:verithrive_dev/enduser/screens/consultation/ConsultationBookingScreen.dart';
+import 'package:verithrive_dev/enduser/screens/login/LoginBinding.dart';
+import 'package:verithrive_dev/enduser/screens/login/LoginView.dart';
 import 'package:verithrive_dev/enduser/screens/message/ChatDetailBinding.dart';
 import 'package:verithrive_dev/enduser/screens/message/ChatDetailScreen.dart';
 import 'package:verithrive_dev/enduser/utils/app_assets.dart';
-
 import '../../core/widget/animated_loader.dart';
-import '../../core/widget/common_widgets.dart';
 import '../../utils/AppText.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/app_text_styles.dart';
@@ -390,6 +390,8 @@ class TherapistDetailScreen extends StatelessWidget {
                             }
                           }
 
+                          print("Rajnikant testing testing --->"+controller.isGuest.value.toString());
+
                           if(!controller.isGuest.value) {
                             Get.to(
                               () => ConsultationBookingScreen(),
@@ -412,7 +414,11 @@ class TherapistDetailScreen extends StatelessWidget {
                               },
                             );
                           }else{
-                            CommonUtils.getIntance().toastMessage("Please login to book service");
+                            //CommonUtils.getIntance().toastMessage("Please login to book service");
+                            Get.to(
+                                  () => const LoginView(),
+                              binding: LoginBinding(),
+                            );
                           }
                         },
                         style: ElevatedButton.styleFrom(
@@ -595,7 +601,11 @@ class TherapistDetailScreen extends StatelessWidget {
               arguments: conversation,
             );
           }else{
-            CommonUtils.getIntance().toastMessage("Please login to chat");
+            // CommonUtils.getIntance().toastMessage("Please login to chat");
+            Get.to(
+                  () => const LoginView(),
+              binding: LoginBinding(),
+            );
           }
         },
         style: ElevatedButton.styleFrom(

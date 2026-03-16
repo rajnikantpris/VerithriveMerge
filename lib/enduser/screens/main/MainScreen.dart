@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:verithrive_dev/enduser/core/widget/common_widgets.dart';
+import 'package:verithrive_dev/enduser/screens/login/LoginBinding.dart';
+import 'package:verithrive_dev/enduser/screens/login/LoginView.dart';
 import 'package:verithrive_dev/enduser/utils/app_assets.dart';
 import 'package:verithrive_dev/enduser/utils/app_colors.dart';
 import '../../utils/AppText.dart';
@@ -129,7 +131,12 @@ class _MainScreenState extends State<MainScreen> {
           }
           
 
-          CommonUtils.getIntance().toastMessage("Please login to access "+featureName);
+        //  CommonUtils.getIntance().toastMessage("Please login to access "+featureName);
+
+          Get.to(
+                () => const LoginView(),
+            binding: LoginBinding(),
+          );
           
           // Check if login route is already active to prevent multiple navigations
     /*      if (!Get.currentRoute.startsWith('/login')) {

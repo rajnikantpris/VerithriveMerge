@@ -381,7 +381,7 @@ class TherapistDetailController extends BaseController
   }
 
   Future<void> getPreferenceDetails() async {
-    isGuest.value = _storageService?.readDouble(SharePreferenceConst.isGuest) == 1.0;
+    isGuest.value = _storageService?.readBool(SharePreferenceConst.isGuest) ?? false;
   }
 }
 

@@ -2,6 +2,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
+import 'package:verithrive_dev/enduser/screens/login/LoginBinding.dart';
+import 'package:verithrive_dev/enduser/screens/login/LoginView.dart';
 import 'package:verithrive_dev/enduser/screens/notification/NotificationBinding.dart';
 import 'package:verithrive_dev/enduser/screens/notification/NotificationScreen.dart';
 import 'package:verithrive_dev/enduser/utils/app_assets.dart';
@@ -80,8 +82,11 @@ class _HomeMainScreenState extends State<HomeMainScreen> {
                       binding: NotificationBinding(),
                     );
                   } else {
-                    CommonUtils.getIntance().toastMessage(
-                        "Please login to access notifications");
+                    // CommonUtils.getIntance().toastMessage("Please login to access notifications");
+                    Get.to(
+                          () => LoginView(),
+                      binding: LoginBinding(),
+                    );
                   }
                 },
               ),
