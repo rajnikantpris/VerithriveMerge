@@ -155,6 +155,7 @@ class ProfileView extends GetView<ProfileController> {
                   label: AppText.fullName,
                   hint: AppText.enterFullName,
                   keyboardType: TextInputType.name,
+                  textCapitalization: TextCapitalization.words,
                   validator: controller.validateFullName,
                 ),
 

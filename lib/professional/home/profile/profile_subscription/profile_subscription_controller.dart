@@ -206,10 +206,13 @@ class ProfileSubscriptionController extends BaseController {
       return;
     }
 
-    // Navigate to payment method screen with plan ID
+    // Navigate to payment method screen with plan ID and name
     Get.toNamed(
       Routes.paymentMethod,
-      arguments: {'planId': plan.id!},
+      arguments: {
+        'planId': plan.id!,
+        'planName': plan.name ?? '',
+      },
     );
   }
 

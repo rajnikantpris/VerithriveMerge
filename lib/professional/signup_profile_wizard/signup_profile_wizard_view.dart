@@ -706,12 +706,21 @@ class SignupProfileWizardView extends BaseView<SignupProfileWizardController> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
+                // Text(
+                //   'Qualification & certification',
+                //   style: TextStyle(
+                //     fontFamily: AppFonts.rubikMedium,
+                //     fontWeight: FontWeight.w500,
+                //     fontSize: FontSizes.setFontValue_16,
+                //     color: AppColor.color_2D3648,
+                //   ),
+                // ),
                 Text(
-                  'Qualification & certification',
+                  'Please add all relevant qualifications',
                   style: TextStyle(
                     fontFamily: AppFonts.rubikMedium,
                     fontWeight: FontWeight.w500,
-                    fontSize: FontSizes.setFontValue_16,
+                    fontSize: FontSizes.setFontValue_15,
                     color: AppColor.color_2D3648,
                   ),
                 ),
@@ -868,7 +877,7 @@ class SignupProfileWizardView extends BaseView<SignupProfileWizardController> {
         ),
         SizedBox(height: HightWidthSizes.setValue_14),
         CustomTextField(
-          label: 'Expiry date*',
+          label: 'Expiry date',
           hintText: 'dd/mm/yyyy',
           controller: qualification.qualificationExpiryController,
           icon: null,
@@ -888,13 +897,26 @@ class SignupProfileWizardView extends BaseView<SignupProfileWizardController> {
               height: HightWidthSizes.setValue_18,
             ),
           ),
-          validator: (value) {
+    /*      validator: (value) {
             // Only validate if user has clicked Next button
             if (!controller.qualificationsHasValidated.value) {
               return null;
             }
             return controller.validateRequiredDate(value);
-          },
+          },*/
+        ),
+        Padding(
+          padding: EdgeInsets.only(left: HightWidthSizes.setValue_4,top: HightWidthSizes.setValue_4),
+          child: Text(
+            'Please leave blank if your qualification does not have an expiration date.',
+            style: TextStyle(
+              fontFamily: AppFonts.rubikRegular,
+              fontWeight: FontWeight.w400,
+              fontSize: FontSizes.setFontValue_10,
+              color: AppColor.color_898989,
+              height: 1.4,
+            ),
+          ),
         ),
         SizedBox(height: HightWidthSizes.setValue_14),
         _uploadField(
@@ -1044,6 +1066,19 @@ class SignupProfileWizardView extends BaseView<SignupProfileWizardController> {
                   return controller.validateRequiredDate(value);
                 },
               ),
+              // Padding(
+              //   padding: EdgeInsets.only(left: HightWidthSizes.setValue_4,top: HightWidthSizes.setValue_4),
+              //   child: Text(
+              //     'Please leave blank if your qualification does not have an expiration date.',
+              //     style: TextStyle(
+              //       fontFamily: AppFonts.rubikRegular,
+              //       fontWeight: FontWeight.w400,
+              //       fontSize: FontSizes.setFontValue_10,
+              //       color: AppColor.color_898989,
+              //       height: 1.4,
+              //     ),
+              //   ),
+              // ),
               SizedBox(height: HightWidthSizes.setValue_16),
               _uploadField(
                 context,

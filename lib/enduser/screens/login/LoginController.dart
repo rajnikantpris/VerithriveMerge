@@ -283,6 +283,9 @@ class LoginController extends BaseController {
   }*/
 
   void callLoginService() {
+
+    if (!(formKey.currentState?.validate() ?? false)) return;
+
     Map<String, dynamic> toJson() {
       final Map<String, dynamic> data = <String, dynamic>{};
       data['email'] = emailController.value.text.trim();

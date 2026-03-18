@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 import '../../common/base_view.dart';
 import '../../theme/colors.dart';
@@ -39,22 +40,25 @@ class ProcessingPaymentView extends BaseView<ProcessingPaymentController> {
               ),
               SizedBox(height: HightWidthSizes.setValue_32),
               Text(
-                'Please wait!',
+                'Processing payment',
                 textAlign: TextAlign.center,
-                style: AppTextStyles.popinSemiboldTextStyle(
-                  fontSize: 18,
+                style: AppTextStyles.popinMediumTextStyle(
+                  fontSize: 17,
                   color: AppColors.primaryColor,
                 ),
               ),
               SizedBox(height: HightWidthSizes.setValue_12),
-              Text(
-                'Processing payment',
-                textAlign: TextAlign.center,
-                style: AppTextStyles.popinMediumTextStyle(
-                  fontSize: 14,
-                  color: AppColors.blueColor,
-                ),
-              ),
+              Obx(() => Padding(
+                padding: const EdgeInsets.all(10.0),
+                child: Text(
+                      'Thank you for creating your profile. We\'ll start reviewing while you select your ${controller.selectedtitle.value.isNotEmpty ? controller.selectedtitle.value : 'monthly plan'}!',
+                      textAlign: TextAlign.center,
+                      style: AppTextStyles.popinSemiboldTextStyle(
+                        fontSize: 14,
+                        color: AppColor.color_898989,
+                      ),
+                    ),
+              )),
             ],
           ),
         ),

@@ -1,5 +1,8 @@
+import 'package:webview_flutter/webview_flutter.dart';
+import 'package:verithrive_dev/enduser/utils/api_services.dart';
+import 'package:flutter/gestures.dart';
+import 'package:verithrive_dev/enduser/screens/term_condition/webview_screen.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_html/flutter_html.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:verithrive_dev/enduser/utils/app_assets.dart';
@@ -41,43 +44,17 @@ class TermsView extends GetView<TermsController> {
           // Scrollable Content
           Expanded(
             child: Obx(
-              () => controller.isContentLoading.value
-                  ? Center(
+              () => Stack(
+                children: [
+                  WebViewWidget(controller: controller.webViewController),
+                  if (controller.isContentLoading.value)
+                    Center(
                       child: CircularProgressIndicator(
                         color: AppColors.primaryColor,
                       ),
-                    )
-                  : SingleChildScrollView(
-                      padding: EdgeInsets.all(20),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Title - Display HTML content with styling
-                          if (controller.termsTitle.value.isNotEmpty)
-                            Html(
-                              data: controller.termsTitle.value,
-                              style: {
-                                "body": Style(
-                                  color: Colors.black,
-                                  fontSize: FontSize.medium,
-                                ),
-                              },
-                            ),
-                          SizedBox(height: 16),
-                          // Content - Display HTML content with styling
-                          if (controller.termsContent.value.isNotEmpty)
-                            Html(
-                              data: controller.termsContent.value,
-                              style: {
-                                "body": Style(
-                                  color: Colors.black,
-                                  fontSize: FontSize.medium,
-                                ),
-                              },
-                            ),
-                        ],
-                      ),
                     ),
+                ],
+              ),
             ),
           ),
 
@@ -168,14 +145,46 @@ class TermsView extends GetView<TermsController> {
                       SizedBox(width: 12),
 
                       Expanded(
-                        child: Text(
-                          'I agree to the Terms & Conditions and Privacy Policy.',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontFamily: 'Rubik',
-                            fontWeight: FontWeight.w400,
-                            color: AppColors.black,
-                            height: 1.4,
+                        child: RichText(
+                          text: TextSpan(
+                            children: [
+                              TextSpan(
+                                text: 'I agree to the Terms & Conditions and ',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontFamily: 'Rubik',
+                                  fontWeight: FontWeight.w400,
+                                  color: AppColors.black,
+                                  height: 1.4,
+                                ),
+                              ),
+                              TextSpan(
+                                text: 'Privacy Policy',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontFamily: 'Rubik',
+                                  fontWeight: FontWeight.w400,
+                                  color: AppColors.primaryColor,
+                                  decoration: TextDecoration.underline,
+                                  height: 1.4,
+                                ),
+                                recognizer: TapGestureRecognizer()
+                                  ..onTap = () {
+                                    Get.to(() => WebViewScreen(
+                                        url: '${baseURL}get-static-page/webview?type=normal_privacy_policy'));
+                                  },
+                              ),
+                              TextSpan(
+                                text: '.',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontFamily: 'Rubik',
+                                  fontWeight: FontWeight.w400,
+                                  color: AppColors.black,
+                                  height: 1.4,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),

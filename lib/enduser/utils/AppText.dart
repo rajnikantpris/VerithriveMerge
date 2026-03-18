@@ -84,9 +84,9 @@ abstract class AppText {
   static const String uploadProfilePicture = "Upload profile picture";
   static const String maxFileSize = "Max. file size 5MB";
   static const String passwordCriteria =
-      "Your password must be at least 8-12 characters long and include at least one uppercase letter, one lowercase letter, and one number. Please revise your password to meet these criteria";
+      "Your password must be at least 8-20 characters long and include at least one uppercase letter, one lowercase letter, and one number. Please revise your password to meet these criteria";
   static const String change_password_message =
-      "Your password must be at least 8-12 characters long and include at least one uppercase letter, one lowercase letter, and one number. Please revise your password to meet these criteria.";
+      "Your password must be at least 8-20 characters long and include at least one uppercase letter, one lowercase letter, and one number. Please revise your password to meet these criteria.";
 
   // Home Screen
   static const String whoCanWeHelp = "Who can we help you\nfind today?";

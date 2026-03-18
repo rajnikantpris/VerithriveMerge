@@ -1,4 +1,5 @@
 import 'package:get/get.dart';
+import 'package:webview_flutter/webview_flutter.dart';
 
 import '../../api/api_response.dart';
 import '../../api/user_api_service.dart';
@@ -21,6 +22,8 @@ class SignupTermsConditionsController extends BaseController {
 
   /// Loaded terms & conditions text
   final termsText = ''.obs;
+  final isContentLoading = true.obs;
+  late final WebViewController webViewController;
 
   final marketingOptIn = false.obs;
   final termsAndConditionsAccepted = false.obs;
@@ -45,51 +48,23 @@ class SignupTermsConditionsController extends BaseController {
         (socialUrl != null && socialUrl.isNotEmpty) ? socialUrl : null;
     promoCode = args['promoCode'] as String?;
 
-    _loadTermsAndConditions();
+    _initializeWebViewController();
   }
 
-  Future<void> _loadTermsAndConditions() async {
-    await callDataService<ApiResponse<dynamic>>(
-      _userApi.getStaticPage(
-        type: 'professional_terms_and_conditions',
-      ),
-      showLoader: true,
-      onSuccess: (response) {
-        if (response.success) {
-          final data = response.data;
-          if (data is Map<String, dynamic>) {
-            // Extract content from response data
-            // Response structure: {success: true, data: {content: "...", title: "...", ...}}
-            final content = data['content'] as String?;
-            if (content != null && content.isNotEmpty) {
-              termsText.value = content;
-              return;
-            }
-
-            // Try alternative keys if content is not found
-            final alternativeContent = data['description'] as String? ??
-                data['text'] as String? ??
-                data['body'] as String?;
-            if (alternativeContent != null && alternativeContent.isNotEmpty) {
-              termsText.value = alternativeContent;
-              return;
-            }
-          }
-        }
-
-        // Fallback to message if content not found
-        if (response.message != null && response.message!.isNotEmpty) {
-          termsText.value = response.message!;
-        } else {
-          termsText.value =
-              'Unable to load terms & conditions. Please try again.';
-        }
-      },
-      onError: (error, stack) {
-        termsText.value =
-            'Failed to load terms & conditions. Please try again.';
-      },
-    );
+  void _initializeWebViewController() {
+    webViewController = WebViewController()
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..setNavigationDelegate(
+        NavigationDelegate(
+          onPageStarted: (String url) {
+            isContentLoading.value = true;
+          },
+          onPageFinished: (String url) {
+            isContentLoading.value = false;
+          },
+        ),
+      )
+      ..loadRequest(Uri.parse('${UserApiService.baseUrl}get-static-page/webview?type=professional_terms_and_conditions'));
   }
 
   void toggleMarketingOptIn(bool? value) {

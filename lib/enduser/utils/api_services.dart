@@ -1,7 +1,8 @@
 //var bareUrl = 'http://192.168.0.33:4142/api/v2/user/';
 //var bareUrl = 'http://27.54.168.101:4142/api/v1/user/';
 
-var bareUrl = 'http://18.135.255.93:4142/api/v2/user/';
+var bareUrl = 'https://adminportal.verithrive.co.uk/api/api/v2/user/';
+//var bareUrl = 'http://18.135.255.93:4142/api/v2/user/';
 var socketUrl = 'https://adminportal.verithrive.co.uk';
 
 // Global variables for Google Sign-In

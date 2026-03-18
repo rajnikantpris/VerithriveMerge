@@ -1,12 +1,16 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:webview_flutter/webview_flutter.dart';
 
+import '../../api/user_api_service.dart';
 import '../../common/base_view.dart';
 import '../../theme/colors.dart';
 import '../../theme/font_sizes.dart';
 import '../../theme/fonts.dart';
 import '../../theme/hight_width_sizes.dart';
 import '../../widgets/custom_app_bar.dart';
+import 'professional_webview_screen.dart';
 import 'signup_terms_conditions_controller.dart';
 
 class SignupTermsConditionsView
@@ -33,18 +37,16 @@ class SignupTermsConditionsView
         child: Column(
           children: [
             Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+              child: Obx(
+                () => Stack(
                   children: [
-                    Obx(
-                      () => _buildParagraph(
-                        controller.termsText.value.isEmpty
-                            ? 'Loading terms & conditions...'
-                            : controller.termsText.value,
+                    WebViewWidget(controller: controller.webViewController),
+                    if (controller.isContentLoading.value)
+                      const Center(
+                        child: CircularProgressIndicator(
+                          color: AppColor.color_2FC4B2,
+                        ),
                       ),
-                    ),
                   ],
                 ),
               ),
@@ -156,18 +158,48 @@ class SignupTermsConditionsView
             ),
             SizedBox(width: HightWidthSizes.setValue_12),
             Expanded(
-              child: Text(
-                'I agree to the Terms & Conditions and Privacy Policy.',
-                style: TextStyle(
-                  fontFamily: AppFonts.rubikRegular,
-                  fontWeight: FontWeight.w400,
-                  fontSize: FontSizes.setFontValue_14,
-                  color: AppColor.color_414141,
-                  height: 1.3,
+              child: RichText(
+                text: TextSpan(
+                  children: [
+                    TextSpan(
+                      text: 'I agree to the Terms & Conditions and ',
+                      style: TextStyle(
+                        fontFamily: AppFonts.rubikRegular,
+                        fontWeight: FontWeight.w400,
+                        fontSize: FontSizes.setFontValue_14,
+                        color: AppColor.color_414141,
+                        height: 1.3,
+                      ),
+                    ),
+                    TextSpan(
+                      text: 'Privacy Policy',
+                      style: TextStyle(
+                        fontFamily: AppFonts.rubikRegular,
+                        fontWeight: FontWeight.w400,
+                        fontSize: FontSizes.setFontValue_14,
+                        color: AppColor.color_2FC4B2,
+                        decoration: TextDecoration.underline,
+                        height: 1.3,
+                      ),
+                      recognizer: TapGestureRecognizer()
+                        ..onTap = () {
+                          Get.to(() => ProfessionalWebViewScreen(
+                              url:
+                                  '${UserApiService.baseUrl}get-static-page/webview?type=professional_privacy_policy'));
+                        },
+                    ),
+                    TextSpan(
+                      text: '.',
+                      style: TextStyle(
+                        fontFamily: AppFonts.rubikRegular,
+                        fontWeight: FontWeight.w400,
+                        fontSize: FontSizes.setFontValue_14,
+                        color: AppColor.color_414141,
+                        height: 1.3,
+                      ),
+                    ),
+                  ],
                 ),
-                maxLines: null,
-                softWrap: true,
-                overflow: TextOverflow.visible,
               ),
             ),
           ],

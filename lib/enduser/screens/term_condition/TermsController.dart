@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:get/get.dart';
+import 'package:webview_flutter/webview_flutter.dart';
 import 'package:verithrive_dev/enduser/core/base/base_controller.dart';
 import 'package:verithrive_dev/enduser/screens/main/MainScreen.dart';
 import 'package:verithrive_dev/enduser/utils/common_dialog.dart';
@@ -18,14 +19,30 @@ class TermsController extends BaseController {
   final isAccepted = false.obs;
   final termsAndConditionsAccepted = false.obs;
   final isLoading = false.obs;
-  final termsContent = ''.obs;
-  final termsTitle = ''.obs;
   final isContentLoading = true.obs;
+  late final WebViewController webViewController;
 
   @override
   void onInit() {
     super.onInit();
-    fetchTermsAndConditions();
+    // fetchTermsAndConditions(); // We'll use WebView instead
+    _initializeWebViewController();
+  }
+
+  void _initializeWebViewController() {
+    webViewController = WebViewController()
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..setNavigationDelegate(
+        NavigationDelegate(
+          onPageStarted: (String url) {
+            isContentLoading.value = true;
+          },
+          onPageFinished: (String url) {
+            isContentLoading.value = false;
+          },
+        ),
+      )
+      ..loadRequest(Uri.parse('${baseURL}get-static-page/webview?type=normal_terms_and_conditions'));
   }
 
   void toggleAcceptance(bool? value) {
@@ -34,72 +51,6 @@ class TermsController extends BaseController {
 
   void toggleTermsAndConditions(bool? value) {
     termsAndConditionsAccepted.value = value ?? false;
-  }
-
-  void fetchTermsAndConditions() {
-
-    Map<String, dynamic> toJson() {
-      final Map<String, dynamic> data = <String, dynamic>{};
-      data['type'] = 'normal_terms_and_conditions';
-
-      print(data);
-      return data;
-    }
-    
-    var service = _repository.sendGetApiWithParamRequest(
-      toJson,
-      get_static_pages,
-      false,
-    );
-
-    callDataService(
-      service,
-      onSuccess: _handleTermsResponseSuccess,
-      onError: _handleTermsError,
-      isShowLoading: true,
-    );
-  }
-
-  void _handleTermsResponseSuccess(dynamic baseResponse) {
-    isContentLoading.value = false;
-    
-    try {
-      Map<String, dynamic> responseData;
-      if (baseResponse != null && baseResponse.data != null) {
-        responseData = baseResponse.data is Map<String, dynamic> 
-              ? baseResponse.data 
-              : baseResponse.data as Map<String, dynamic>;
-      } else if (baseResponse is Map<String, dynamic>) {
-        responseData = baseResponse;
-      } else {
-        throw Exception('Invalid response format');
-      }
-
-      bool success = responseData['success'] ?? false;
-      
-      if (success == true && responseData['data'] != null) {
-        Map<String, dynamic> data = responseData['data'];
-        termsTitle.value = data['title'] ?? '';
-        termsContent.value = data['content'] ?? '';
-      } else {
-        // Set default content if API fails
-        termsTitle.value = '<h2>Terms & Conditions</h2>';
-        termsContent.value = '<p>Welcome to <strong>VeriThrive</strong>. By creating an account or using our services, you agree to comply with and be bound by the following Terms & Conditions. Please read them carefully before using the application.</p>';
-      }
-    } catch (e) {
-      print('Error parsing terms response: $e');
-      // Set default content on error
-      termsTitle.value = '<h2>Terms & Conditions</h2>';
-      termsContent.value = '<p>Welcome to <strong>VeriThrive</strong>. By creating an account or using our services, you agree to comply with and be bound by the following Terms & Conditions. Please read them carefully before using the application.</p>';
-    }
-  }
-
-  void _handleTermsError(dynamic e) {
-    isContentLoading.value = false;
-    print('Error fetching terms: $e');
-    // Set default content on error
-    termsTitle.value = '<h2>Terms & Conditions</h2>';
-    termsContent.value = '<p>Welcome to <strong>VeriThrive</strong>. By creating an account or using our services, you agree to comply with and be bound by the following Terms & Conditions. Please read them carefully before using the application.</p>';
   }
 
   void acceptAndContinue() {

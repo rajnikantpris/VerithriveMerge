@@ -259,18 +259,43 @@ class PersonalIdentificationView
                   ),
                 ),
               ),
-              onPressed: controller.confirmRightToWork.value
+              onPressed: controller.confirmRightToWork.value && !controller.isLoading.value
                   ? controller.onUpdateDetails
                   : null,
-              child: Text(
-                'Update details',
-                style: TextStyle(
-                  fontFamily: AppFonts.rubikMedium,
-                  fontWeight: FontWeight.w500,
-                  color: AppColor.white,
-                  fontSize: FontSizes.setFontValue_16,
-                ),
-              ),
+              child: controller.isLoading.value
+                  ? Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor:
+                                AlwaysStoppedAnimation<Color>(Colors.white),
+                          ),
+                        ),
+                        SizedBox(width: HightWidthSizes.setValue_10),
+                        Text(
+                          'Updating...',
+                          style: TextStyle(
+                            fontFamily: AppFonts.rubikMedium,
+                            fontWeight: FontWeight.w500,
+                            color: AppColor.white,
+                            fontSize: FontSizes.setFontValue_16,
+                          ),
+                        ),
+                      ],
+                    )
+                  : Text(
+                      'Update details',
+                      style: TextStyle(
+                        fontFamily: AppFonts.rubikMedium,
+                        fontWeight: FontWeight.w500,
+                        color: AppColor.white,
+                        fontSize: FontSizes.setFontValue_16,
+                      ),
+                    ),
             ),
           ),
         ),

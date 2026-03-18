@@ -21,7 +21,8 @@ class UserApiService extends GetxService {
   // Base URL for the API
    // static const String baseUrl = 'http://192.168.0.33:4142/api/v2/professional/';
   static const String socketUrl = 'https://adminportal.verithrive.co.uk';
-  static const String baseUrl = 'http://18.135.255.93:4142/api/v2/professional/';
+  static const String baseUrl = 'https://adminportal.verithrive.co.uk/api/api/v2/professional/';
+  //static const String baseUrl = 'http://18.135.255.93:4142/api/v2/professional/';
   // static const String baseUrl = 'http://27.54.168.101:4142/api/v1/professional/';
 
   /// Get the socket base URL (same server, different port/path)

@@ -66,13 +66,19 @@ class PaymentMethodController extends BaseController {
   final selectedMethodId = ''.obs;
   final isConfirming = false.obs;
   String selectedPlanId = '';
+  String selectedPlanName = '';
 
   @override
   void onInit() {
     super.onInit();
     final args = Get.arguments;
-    if (args is Map && args['planId'] is String) {
-      selectedPlanId = args['planId'] as String;
+    if (args is Map) {
+      if (args['planId'] is String) {
+        selectedPlanId = args['planId'] as String;
+      }
+      if (args['planName'] is String) {
+        selectedPlanName = args['planName'] as String;
+      }
     }
   }
 
@@ -119,7 +125,13 @@ class PaymentMethodController extends BaseController {
           }
 
           // Navigate to processing payment screen, which will auto-navigate to verification after 5 seconds
-          Get.offAllNamed(Routes.processingPayment);
+          Get.offAllNamed(
+            Routes.processingPayment,
+            arguments: {
+              'planId': selectedPlanId,
+              'planTitle': selectedPlanName,
+            },
+          );
         } else {
           showResponseDialog(
             message: response.errorMessage,

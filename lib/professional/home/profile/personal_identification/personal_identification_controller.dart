@@ -45,6 +45,7 @@ class PersonalIdentificationController extends BaseController {
   File? idFile; // Store uploaded ID file
   final identificationId = Rxn<String>(); // Store identification ID for updates
   String? idDocumentUrl; // Store document URL from API for existing documents
+  final isLoading = false.obs;
 
   @override
   void onInit() {
@@ -560,6 +561,7 @@ class PersonalIdentificationController extends BaseController {
 
   /// Save personal identification API call
   Future<void> _savePersonalIdentification() async {
+    isLoading.value = true;
     debugPrint('=== Starting Save Personal Identification ===');
 
     final idTypeText = selectedIdType.value;
@@ -583,6 +585,7 @@ class PersonalIdentificationController extends BaseController {
         isError: true,
         showButton: true,
       );
+      isLoading.value = false;
       return;
     }
 
@@ -604,6 +607,7 @@ class PersonalIdentificationController extends BaseController {
           isError: true,
           showButton: true,
         );
+        isLoading.value = false;
         return;
       }
     } catch (e) {
@@ -614,6 +618,7 @@ class PersonalIdentificationController extends BaseController {
         isError: true,
         showButton: true,
       );
+      isLoading.value = false;
       return;
     }
 
@@ -625,6 +630,7 @@ class PersonalIdentificationController extends BaseController {
         isError: true,
         showButton: true,
       );
+      isLoading.value = false;
       return;
     }
 
@@ -643,6 +649,7 @@ class PersonalIdentificationController extends BaseController {
             isError: true,
             showButton: true,
           );
+          isLoading.value = false;
           return;
         }
         debugPrint(
@@ -656,6 +663,7 @@ class PersonalIdentificationController extends BaseController {
           isError: true,
           showButton: true,
         );
+        isLoading.value = false;
         return;
       }
     }
@@ -726,6 +734,7 @@ class PersonalIdentificationController extends BaseController {
             showButton: true,
           );
         }
+        isLoading.value = false;
       },
       onError: (error, stack) {
         debugPrint('=== API Call Error ===');
@@ -741,6 +750,7 @@ class PersonalIdentificationController extends BaseController {
           isError: true,
           showButton: true,
         );
+        isLoading.value = false;
       },
     );
   }

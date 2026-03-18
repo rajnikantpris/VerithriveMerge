@@ -6,10 +6,21 @@ import '../../routes/app_routes.dart';
 
 class ProcessingPaymentController extends BaseController {
   Timer? _timer;
+  final selectedPlanId = ''.obs;
+  final selectedtitle = ''.obs;
 
   @override
   void onInit() {
     super.onInit();
+    final args = Get.arguments;
+    if (args is Map) {
+      if (args['planId'] is String) {
+        selectedPlanId.value = args['planId'] as String;
+      }
+      if (args['planTitle'] is String) {
+        selectedtitle.value = args['planTitle'] as String;
+      }
+    }
     _startTimer();
   }
 

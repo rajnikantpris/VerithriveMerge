@@ -53,6 +53,9 @@ class ProfileController extends GetxController {
   void onInit() {
     super.onInit();
 
+    // Add text change listener to automatically capitalize first letter
+    fullNameController.addListener(_capitalizeFullName);
+
     // Ask for location permission when profile screen opens
     // Fire and forget; dialog and system prompt are handled by the service
     _locationPermissionService.requestLocationPermission();
@@ -85,6 +88,28 @@ class ProfileController extends GetxController {
         profileImage.value = arguments!['profileImageFile'] as File;
         print(
             "Profile screen - Received profileImageFile: ${profileImage.value?.path}");
+      }
+    }
+  }
+
+  void _capitalizeFullName() {
+    String text = fullNameController.text;
+    if (text.isNotEmpty) {
+      // Capitalize first letter and keep the rest as is (don't force lowercase)
+      String capitalized = text.substring(0, 1).toUpperCase() + text.substring(1);
+      
+      // Only update if the text is different to prevent infinite loops
+      if (text != capitalized) {
+        // Remove listener temporarily to prevent infinite loop
+        fullNameController.removeListener(_capitalizeFullName);
+        fullNameController.text = capitalized;
+        // Add listener back
+        fullNameController.addListener(_capitalizeFullName);
+        
+        // Move cursor to the end
+        fullNameController.selection = TextSelection.fromPosition(
+          TextPosition(offset: capitalized.length),
+        );
       }
     }
   }

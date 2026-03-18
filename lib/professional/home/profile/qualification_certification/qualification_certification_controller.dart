@@ -47,6 +47,7 @@ class QualificationCertificationController extends BaseController {
   final hasLoadedCollegesUniversities = false.obs;
   final removedQualificationIds = <String>[].obs;
   final hasValidated = false.obs;
+  final isLoading = false.obs;
 
   QualificationCertificationController(this._userApiService);
 
@@ -724,6 +725,7 @@ class QualificationCertificationController extends BaseController {
     if (formKey.currentState == null || !formKey.currentState!.validate()) {
       return;
     }
+    isLoading.value = true;
 
     int totalExperience = 0;
     try {
@@ -854,6 +856,7 @@ class QualificationCertificationController extends BaseController {
             showButton: true,
           );
         }
+        isLoading.value = false;
       },
       onError: (error, stack) {
         final errorMsg = errorMessage.value.isNotEmpty
@@ -865,6 +868,7 @@ class QualificationCertificationController extends BaseController {
           isError: true,
           showButton: true,
         );
+        isLoading.value = false;
       },
     );
   }

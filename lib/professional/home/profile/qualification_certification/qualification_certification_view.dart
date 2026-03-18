@@ -77,12 +77,21 @@ class QualificationCertificationView
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
+                  /*  Text(
                       'Qualification & certification',
                       style: TextStyle(
                         fontFamily: AppFonts.rubikMedium,
                         fontWeight: FontWeight.w500,
                         fontSize: FontSizes.setFontValue_16,
+                        color: AppColor.color_2D3648,
+                      ),
+                    ),*/
+                    Text(
+                      'Please add all relevant qualifications',
+                      style: TextStyle(
+                        fontFamily: AppFonts.rubikMedium,
+                        fontWeight: FontWeight.w500,
+                        fontSize: FontSizes.setFontValue_15,
                         color: AppColor.color_2D3648,
                       ),
                     ),
@@ -381,7 +390,7 @@ class QualificationCertificationView
 
         // Expiry date field
         CustomTextField(
-          label: 'Expiry date*',
+          label: 'Expiry date',
           hintText: 'dd/mm/yyyy',
           controller: qualification.qualificationExpiryController,
           readOnly: true,
@@ -399,13 +408,13 @@ class QualificationCertificationView
               height: HightWidthSizes.setValue_18,
             ),
           ),
-          validator: (value) {
-            // Only validate if user has clicked Update details button
-            if (!controller.hasValidated.value) {
-              return null;
-            }
-            return controller.validateRequiredDate(value);
-          },
+          // validator: (value) {
+          //   // Only validate if user has clicked Update details button
+          //   if (!controller.hasValidated.value) {
+          //     return null;
+          //   }
+          //   return controller.validateRequiredDate(value);
+          // },
         ),
         SizedBox(height: HightWidthSizes.setValue_14),
 
@@ -502,36 +511,60 @@ class QualificationCertificationView
         ],
       ),
       child: SafeArea(
-        child: SizedBox(
-          width: double.infinity,
-          child: ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColor.color_2FC4B2,
-              foregroundColor: AppColor.white,
-              elevation: 0,
-              minimumSize: Size(double.infinity, HightWidthSizes.setValue_45),
-              padding: EdgeInsets.symmetric(
-                  vertical: HightWidthSizes.setValue_12,
-                  horizontal: HightWidthSizes.setValue_16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(
-                  HightWidthSizes.setValue_10,
+        child: Obx(
+            () => ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColor.color_2FC4B2,
+                foregroundColor: AppColor.white,
+                elevation: 0,
+                minimumSize: Size(double.infinity, HightWidthSizes.setValue_45),
+                padding: EdgeInsets.symmetric(
+                    vertical: HightWidthSizes.setValue_12,
+                    horizontal: HightWidthSizes.setValue_16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(
+                    HightWidthSizes.setValue_10,
+                  ),
                 ),
               ),
-            ),
-            onPressed: controller.onUpdateDetails,
-            child: Text(
-              'Update details',
-              style: TextStyle(
-                fontFamily: AppFonts.rubikMedium,
-                fontWeight: FontWeight.w500,
-                color: AppColor.white,
-                fontSize: FontSizes.setFontValue_16,
-              ),
+              onPressed: controller.isLoading.value ? null : controller.onUpdateDetails,
+              child: controller.isLoading.value
+                  ? Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor:
+                                AlwaysStoppedAnimation<Color>(Colors.white),
+                          ),
+                        ),
+                        SizedBox(width: HightWidthSizes.setValue_10),
+                        Text(
+                          'Updating...',
+                          style: TextStyle(
+                            fontFamily: AppFonts.rubikMedium,
+                            fontWeight: FontWeight.w500,
+                            color: AppColor.white,
+                            fontSize: FontSizes.setFontValue_16,
+                          ),
+                        ),
+                      ],
+                    )
+                  : Text(
+                      'Update details',
+                      style: TextStyle(
+                        fontFamily: AppFonts.rubikMedium,
+                        fontWeight: FontWeight.w500,
+                        color: AppColor.white,
+                        fontSize: FontSizes.setFontValue_16,
+                      ),
+                    ),
             ),
           ),
         ),
-      ),
     );
   }
 }

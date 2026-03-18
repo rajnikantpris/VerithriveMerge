@@ -203,9 +203,23 @@ class SubscriptionController extends BaseController {
 
   void continueToPayment() {
     if (selectedPlanId.value.isEmpty) return;
+
+    final selectedPlan = plans.firstWhere(
+      (plan) => plan.id == selectedPlanId.value,
+      orElse: () => PlanOption(
+        id: '',
+        title: '',
+        priceLabel: '',
+        accentColor: Colors.transparent,
+      ),
+    );
+
     Get.toNamed(
       Routes.paymentMethod,
-      arguments: {'planId': selectedPlanId.value},
+      arguments: {
+        'planId': selectedPlanId.value,
+        'planName': selectedPlan.title,
+      },
     );
   }
 }
