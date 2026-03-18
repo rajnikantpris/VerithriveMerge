@@ -1,12 +1,19 @@
 import 'package:flutter/material.dart';
+
 import 'package:get/get.dart';
 
 import '../../../../common/base_view.dart';
+
 import '../../../../theme/colors.dart';
+
 import '../../../../theme/fonts.dart';
+
 import '../../../../theme/font_sizes.dart';
+
 import '../../../../theme/hight_width_sizes.dart';
+
 import '../../../../theme/image_paths.dart';
+
 import 'your_services_controller.dart';
 
 class YourServicesView extends BaseView<YourServicesController> {
@@ -22,7 +29,9 @@ class YourServicesView extends BaseView<YourServicesController> {
           boxShadow: [
             BoxShadow(
               color: Color(0x1A000000), // #0000001A
+
               blurRadius: HightWidthSizes.setValue_10,
+
               offset: Offset(0, 4),
             ),
           ],
@@ -66,10 +75,20 @@ class YourServicesView extends BaseView<YourServicesController> {
           children: [
             SizedBox(height: HightWidthSizes.setValue_8),
             Obx(
-              () {
+                  () {
+                if (controller.isLoadingServices.value) {
+                  return const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(20.0),
+                      child: CircularProgressIndicator(),
+                    ),
+                  );
+                }
+
                 // Only show "No services available" if API call has completed and services list is empty
+
                 if (controller.hasLoadedServices.value &&
-                    controller.services.isEmpty && !controller.isLoadingServices.value) {
+                    controller.services.isEmpty) {
                   return Center(
                     child: Padding(
                       padding: const EdgeInsets.all(20.0),
@@ -84,22 +103,26 @@ class YourServicesView extends BaseView<YourServicesController> {
                     ),
                   );
                 }
+
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Services without sub_services - show as tags/chips with show more/less
+
                     Wrap(
                       spacing: HightWidthSizes.setValue_10,
                       runSpacing: HightWidthSizes.setValue_10,
                       children: controller.services
                           .where((service) =>
-                              service.subServices == null ||
-                              service.subServices!.isEmpty)
-                          .where((service) => controller.isServiceVisible(service.id ?? ''))
+                      service.subServices == null ||
+                          service.subServices!.isEmpty)
+                          .where((service) =>
+                          controller.isServiceVisible(service.id ?? ''))
                           .map((service) {
                         final isSelected = controller.selectedServices.contains(
                           service.serviceName ?? '',
                         );
+
                         return GestureDetector(
                           onTap: () => controller.toggleService(
                               service.serviceName ?? '', service.id ?? ''),
@@ -131,13 +154,19 @@ class YourServicesView extends BaseView<YourServicesController> {
                         );
                       }).toList(),
                     ),
+
                     // Show more/less button for services
-                    if (controller.shouldShowMoreButton) ...[
+
+                    if (controller.services.any((service) =>
+                    service.subServices == null ||
+                        service.subServices!.isEmpty)) ...[
                       SizedBox(height: HightWidthSizes.setValue_12),
-                      GestureDetector(
+                      (controller.shouldShowMoreButton) ?  GestureDetector(
                         onTap: () => controller.toggleShowMore(),
                         child: Text(
-                          controller.isShowingMoreServices ? 'Show less' : 'Show more',
+                          controller.isShowingMoreServices
+                              ? 'Show less'
+                              : 'Show more',
                           style: TextStyle(
                             fontFamily: AppFonts.rubikRegular,
                             fontSize: FontSizes.setFontValue_12,
@@ -146,16 +175,19 @@ class YourServicesView extends BaseView<YourServicesController> {
                             decoration: TextDecoration.underline,
                           ),
                         ),
-                      ),
+                      ) : SizedBox(),
                     ],
+
                     // Services with sub_services - show as expandable categories
+
                     ...controller.services
                         .where((service) =>
-                            service.subServices != null &&
-                            service.subServices!.isNotEmpty)
+                    service.subServices != null &&
+                        service.subServices!.isNotEmpty)
                         .map((service) {
                       final isExpanded =
-                          controller.isServiceExpanded(service.id ?? '');
+                      controller.isServiceExpanded(service.id ?? '');
+
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -180,7 +212,7 @@ class YourServicesView extends BaseView<YourServicesController> {
                               ),
                               child: Row(
                                 mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
+                                MainAxisAlignment.spaceBetween,
                                 children: [
                                   Expanded(
                                     child: Text(
@@ -195,15 +227,15 @@ class YourServicesView extends BaseView<YourServicesController> {
                                   ),
                                   isExpanded
                                       ? AppImages.add_down_arrow_svg(
-                                          width: HightWidthSizes.setValue_18,
-                                          height: HightWidthSizes.setValue_18,
-                                          color: AppColor.color_9D9D9D,
-                                        )
+                                    width: HightWidthSizes.setValue_18,
+                                    height: HightWidthSizes.setValue_18,
+                                    color: AppColor.color_9D9D9D,
+                                  )
                                       : AppImages.profile_right_arrow_svg(
-                                          width: HightWidthSizes.setValue_24,
-                                          height: HightWidthSizes.setValue_24,
-                                          color: AppColor.color_9D9D9D,
-                                        ),
+                                    width: HightWidthSizes.setValue_24,
+                                    height: HightWidthSizes.setValue_24,
+                                    color: AppColor.color_9D9D9D,
+                                  ),
                                 ],
                               ),
                             ),
@@ -217,9 +249,10 @@ class YourServicesView extends BaseView<YourServicesController> {
                                 children: (service.subServices ?? [])
                                     .map((subService) {
                                   final isSubSelected =
-                                      controller.selectedServices.contains(
+                                  controller.selectedServices.contains(
                                     subService.subServiceName ?? '',
                                   );
+
                                   return Padding(
                                     padding: EdgeInsets.only(
                                       bottom: HightWidthSizes.setValue_8,
@@ -293,7 +326,7 @@ class YourServicesView extends BaseView<YourServicesController> {
       ),
       child: SafeArea(
         child: Obx(
-          () => SizedBox(
+              () => SizedBox(
             width: double.infinity,
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(

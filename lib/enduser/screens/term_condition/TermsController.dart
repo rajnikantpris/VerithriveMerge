@@ -16,6 +16,7 @@ class TermsController extends BaseController {
   final StorageService _storageService = Get.find<StorageService>();
   
   final isAccepted = false.obs;
+  final termsAndConditionsAccepted = false.obs;
   final isLoading = false.obs;
   final termsContent = ''.obs;
   final termsTitle = ''.obs;
@@ -29,6 +30,10 @@ class TermsController extends BaseController {
 
   void toggleAcceptance(bool? value) {
     isAccepted.value = value ?? false;
+  }
+
+  void toggleTermsAndConditions(bool? value) {
+    termsAndConditionsAccepted.value = value ?? false;
   }
 
   void fetchTermsAndConditions() {
@@ -98,7 +103,7 @@ class TermsController extends BaseController {
   }
 
   void acceptAndContinue() {
-    if (!isAccepted.value) {
+    if (!termsAndConditionsAccepted.value) {
       showResponseDialog(
         message: 'Please accept the terms and conditions to continue',
         title: 'Error',
@@ -173,7 +178,8 @@ class TermsController extends BaseController {
       data['address'] = profileData['address'] ?? '';
       data['latitude'] = profileData['latitude'] ?? 0.0;
       data['longitude'] = profileData['longitude'] ?? 0.0;
-      data['is_term_condition'] = true;
+      //data['is_term_condition'] = isAccepted.value ? true : false;
+      data['marketingOptIn'] = isAccepted.value ? true : false;
       // Note: profile_picture will be added as file in multipart
       return data;
     }

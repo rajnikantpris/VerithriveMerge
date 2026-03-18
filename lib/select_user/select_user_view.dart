@@ -38,8 +38,13 @@ class SelectUserView extends GetView<SelectUserController> {
         
               SizedBox(height: 30,),
         
-              Text(
+          /*    Text(
                 "How Would You Like to Continue?",
+                style: AppTextStyles.titleStyle(fontSize: 20),
+              ),*/
+
+              Text(
+                "Which best describes you?",
                 style: AppTextStyles.titleStyle(fontSize: 20),
               ),
         
@@ -57,7 +62,7 @@ class SelectUserView extends GetView<SelectUserController> {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: controller.openEndUser,
-                  child: const Text('End User'),
+                  child: const Text('Client'),
                 ),
               ),
             ],

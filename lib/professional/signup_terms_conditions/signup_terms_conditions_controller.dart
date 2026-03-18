@@ -23,6 +23,7 @@ class SignupTermsConditionsController extends BaseController {
   final termsText = ''.obs;
 
   final marketingOptIn = false.obs;
+  final termsAndConditionsAccepted = false.obs;
   final _userApi = Get.find<UserApiService>();
   final StorageService? _storageService =
       Get.isRegistered<StorageService>() ? Get.find<StorageService>() : null;
@@ -93,6 +94,10 @@ class SignupTermsConditionsController extends BaseController {
 
   void toggleMarketingOptIn(bool? value) {
     marketingOptIn.value = value ?? false;
+  }
+
+  void toggleTermsAndConditions(bool? value) {
+    termsAndConditionsAccepted.value = value ?? false;
   }
 
   Future<void> onAccept() async {

@@ -188,7 +188,7 @@ class PersonalIdentificationView
                       SizedBox(width: HightWidthSizes.setValue_12),
                       Expanded(
                         child: Text(
-                          'By clicking, you confirm that you have legal right to work in the UK.',
+                          'By checking this box, you confirm that you have the legal right to work in the United Kingdom.',
                           style: TextStyle(
                             fontFamily: AppFonts.rubikRegular,
                             fontWeight: FontWeight.w400,
@@ -197,6 +197,17 @@ class PersonalIdentificationView
                           ),
                         ),
                       ),
+                     /* Expanded(
+                        child: Text(
+                          'By clicking, you confirm that you have legal right to work in the UK.',
+                          style: TextStyle(
+                            fontFamily: AppFonts.rubikRegular,
+                            fontWeight: FontWeight.w400,
+                            fontSize: FontSizes.setFontValue_12,
+                            color: AppColor.color_2D2D2D,
+                          ),
+                        ),
+                      ),*/
                     ],
                   ),
                 ),

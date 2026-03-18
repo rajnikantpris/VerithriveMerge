@@ -150,7 +150,7 @@ class OnboardingView extends BaseView<OnboardingController> {
                   ),
                 ],
               ),
-              SizedBox(height: HightWidthSizes.setValue_14),
+            /*  SizedBox(height: HightWidthSizes.setValue_14),
               TextButton(
                 onPressed: controller.continueAsGuest,
                 child: Row(
@@ -172,7 +172,7 @@ class OnboardingView extends BaseView<OnboardingController> {
                     ),
                   ],
                 ),
-              ),
+              ),*/
             ],
           ),
         ),

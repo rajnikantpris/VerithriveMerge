@@ -68,6 +68,8 @@ class SignupTermsConditionsView
                 children: [
                   _buildMarketingOptIn(),
                   SizedBox(height: HightWidthSizes.setValue_12),
+                  _buildTermsAndConditionsCheckbox(),
+                  SizedBox(height: HightWidthSizes.setValue_12),
                   Obx(
                     () => SizedBox(
                       width: double.infinity,
@@ -93,7 +95,7 @@ class SignupTermsConditionsView
                             ),
                           ),
                         ),
-                        onPressed: controller.marketingOptIn.value
+                        onPressed: controller.termsAndConditionsAccepted.value
                             ? controller.onAccept
                             : null,
                         child: Text(
@@ -109,6 +111,63 @@ class SignupTermsConditionsView
                     ),
                   ),
                 ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTermsAndConditionsCheckbox() {
+    return Obx(
+      () => InkWell(
+        onTap: () => controller.toggleTermsAndConditions(
+            !controller.termsAndConditionsAccepted.value),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: HightWidthSizes.setValue_20,
+              height: HightWidthSizes.setValue_20,
+              margin: EdgeInsets.only(top: HightWidthSizes.setValue_2),
+              decoration: BoxDecoration(
+                shape: BoxShape.rectangle,
+                borderRadius: BorderRadius.circular(
+                  HightWidthSizes.setValue_4,
+                ),
+                border: Border.all(
+                  color: controller.termsAndConditionsAccepted.value
+                      ? AppColor.color_32435F
+                      : const Color(0x99000000), // #00000099
+                  width: HightWidthSizes.setValue_1,
+                ),
+                color: controller.termsAndConditionsAccepted.value
+                    ? AppColor.color_32435F
+                    : Colors.transparent,
+              ),
+              child: controller.termsAndConditionsAccepted.value
+                  ? Icon(
+                      Icons.check,
+                      size: HightWidthSizes.setValue_14,
+                      color: AppColor.white,
+                    )
+                  : null,
+            ),
+            SizedBox(width: HightWidthSizes.setValue_12),
+            Expanded(
+              child: Text(
+                'I agree to the Terms & Conditions and Privacy Policy.',
+                style: TextStyle(
+                  fontFamily: AppFonts.rubikRegular,
+                  fontWeight: FontWeight.w400,
+                  fontSize: FontSizes.setFontValue_14,
+                  color: AppColor.color_414141,
+                  height: 1.3,
+                ),
+                maxLines: null,
+                softWrap: true,
+                overflow: TextOverflow.visible,
               ),
             ),
           ],
@@ -168,15 +227,34 @@ class SignupTermsConditionsView
             SizedBox(width: HightWidthSizes.setValue_12),
             Expanded(
               child: Text(
-                'Tick if you would like to receive marketing emails from VERITHRIVE to keep you upto date about latest offers and trends.',
+                'Check this box to receive marketing emails from VERITHRIVE to keep you updated with the latest offers and trends.',
                 style: TextStyle(
                   fontFamily: AppFonts.rubikRegular,
                   fontWeight: FontWeight.w400,
                   fontSize: FontSizes.setFontValue_14,
                   color: AppColor.color_414141,
+                  height: 1.3,
                 ),
+                maxLines: null,
+                softWrap: true,
+                overflow: TextOverflow.visible,
               ),
             ),
+    /*        Expanded(
+              child: Text(
+                'Tick if you would like to receive marketing emails from VERITHRIVE to keep you up to date about latest offers and trends.',
+                style: TextStyle(
+                  fontFamily: AppFonts.rubikRegular,
+                  fontWeight: FontWeight.w400,
+                  fontSize: FontSizes.setFontValue_14,
+                  color: AppColor.color_414141,
+                  height: 1.3,
+                ),
+                maxLines: null,
+                softWrap: true,
+                overflow: TextOverflow.visible,
+              ),
+            ),*/
           ],
         ),
       ),

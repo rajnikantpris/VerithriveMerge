@@ -4,7 +4,6 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:image_cropper/image_cropper.dart';
-import 'package:permission_handler/permission_handler.dart';
 
 import '../../../../api/api_response.dart';
 import '../../../../api/user_api_service.dart';
@@ -24,9 +23,8 @@ import '../../home_controller.dart';
 class PersonalDetailsController extends BaseController {
   final UserApiService _userApiService;
   final CameraStoragePermissionService _cameraStoragePermissionService =
-  CameraStoragePermissionService();
+      CameraStoragePermissionService();
   final ImagePicker _imagePicker = ImagePicker();
-  bool _isPicking = false; // Guard against double picker calls
 
   PersonalDetailsController(this._userApiService);
 
@@ -49,11 +47,14 @@ class PersonalDetailsController extends BaseController {
   final marketingOptions = ['Yes', 'No'];
   final selectedMarketingPreference = ''.obs;
 
+  /// Convert API gender format to display format
+  /// Converts "prefer_not_to_say" to "Prefer not to say" and capitalizes other values
   String _convertGenderFromApiFormat(String apiGender) {
     final lowerGender = apiGender.toLowerCase().trim();
     if (lowerGender == 'prefer_not_to_say') {
       return 'Prefer not to say';
     }
+    // Capitalize first letter for other values
     if (lowerGender.isNotEmpty) {
       return lowerGender[0].toUpperCase() + lowerGender.substring(1);
     }
@@ -80,8 +81,11 @@ class PersonalDetailsController extends BaseController {
   @override
   void onInit() {
     super.onInit();
+    // Initialize formKey to ensure a new key is created each time
     formKey = GlobalKey<FormState>();
+    // Load data from API
     _loadProfessionTypes();
+
   }
 
   @override
@@ -137,6 +141,7 @@ class PersonalDetailsController extends BaseController {
     }
   }
 
+  /// Set selected profession type
   void setProfessionType(String? value) {
     if (value == null || value.isEmpty) {
       selectedProfessionType.value = null;
@@ -150,17 +155,21 @@ class PersonalDetailsController extends BaseController {
 
     selectedProfessionType.value = value;
     youAreInController.text = value;
+    // Get the _id for the selected profession type
     final professionTypeId = professionTypesMap[value];
     if (professionTypeId != null) {
       selectedProfessionTypeId.value = professionTypeId;
+      // Load sub-types for the selected profession type using _id
       _loadProfessionSubTypes(professionTypeId);
     } else {
+      // If _id not found, clear sub-types
       professionSubTypes.clear();
       selectedProfessionSubType.value = null;
       professionController.clear();
     }
   }
 
+  /// Set selected profession sub-type
   void setProfessionSubType(String? value) {
     if (value == null || value.isEmpty) {
       selectedProfessionSubType.value = null;
@@ -171,6 +180,7 @@ class PersonalDetailsController extends BaseController {
 
     selectedProfessionSubType.value = value;
     professionController.text = value;
+    // Get the _id for the selected profession sub-type
     final professionSubTypeId = professionSubTypesMap[value];
     if (professionSubTypeId != null) {
       selectedProfessionSubTypeId.value = professionSubTypeId;
@@ -181,186 +191,49 @@ class PersonalDetailsController extends BaseController {
     await pickProfileImage(context);
   }
 
-  // ─── CORE FIX ─────────────────────────────────────────────────────────────
-  //
-  // Android 13+ (API 33+): Calling Permission.photos.request() or
-  // Permission.storage.request() before pickImage() triggers the system photo
-  // picker sheet. Then pickImage() opens a SECOND picker — double-open bug.
-  //
-  // Fix per source:
-  //   CAMERA  → Still requires explicit permission check (no double-open risk).
-  //   GALLERY (Android) → Skip all manual permission calls. image_picker
-  //                        handles permissions internally via ActivityResult
-  //                        API and never double-opens.
-  //   GALLERY (iOS)     → Check status first; only request if undetermined;
-  //                        bail out if result is .limited (OS already showed
-  //                        its own picker during the request).
-  // ──────────────────────────────────────────────────────────────────────────
   Future<void> pickProfileImage(BuildContext context) async {
-    // Guard: prevent multiple simultaneous picker calls
-    if (_isPicking) return;
-
     try {
+      // Show options to pick from camera or gallery
       final source = await _showImageSourceDialog(context);
       if (source == null) return;
 
+      // Double-check permission for the selected source
       if (source == ImageSource.camera) {
-        await _pickFromCamera();
+        final hasCameraPermission =
+            await _cameraStoragePermissionService.requestCameraPermission();
+        if (!hasCameraPermission) {
+          return;
+        }
       } else {
-        await _pickFromGallery();
+        // For gallery, check storage/photos permission
+        final hasStoragePermission =
+            await _cameraStoragePermissionService.requestStoragePermission();
+        if (!hasStoragePermission) {
+          return;
+        }
       }
-    } catch (e) {
-      Get.snackbar(
-        'Error',
-        'Failed to pick image: ${e.toString()}',
-        snackPosition: SnackPosition.BOTTOM,
-      );
-    }
-  }
-
-  /// Pick image from CAMERA
-  /// Camera always requires an explicit runtime permission check — no
-  /// double-open risk because the permission prompt and the camera UI are
-  /// completely separate system components.
-  Future<void> _pickFromCamera() async {
-    if (_isPicking) return;
-    _isPicking = true;
-
-    try {
-      final hasCameraPermission =
-      await _cameraStoragePermissionService.requestCameraPermission();
-      if (!hasCameraPermission) return;
 
       final XFile? pickedFile = await _imagePicker.pickImage(
-        source: ImageSource.camera,
+        source: source,
         maxWidth: 1024,
         maxHeight: 1024,
         imageQuality: 85,
       );
 
       if (pickedFile != null) {
+        // Crop the selected image
         final croppedFile = await _cropImage(File(pickedFile.path));
         if (croppedFile != null) {
           selectedImage.value = croppedFile;
         }
       }
     } catch (e) {
-      debugPrint('Error picking from camera: $e');
-      Get.snackbar(
-        'Error',
-        'Failed to take photo: ${e.toString()}',
-        snackPosition: SnackPosition.BOTTOM,
-      );
-    } finally {
-      _isPicking = false;
-    }
-  }
-
-  /// Pick image from GALLERY
-  /// Applies platform-specific permission strategy to prevent double-open.
-  Future<void> _pickFromGallery() async {
-    if (_isPicking) return;
-    _isPicking = true;
-
-    try {
-      if (Platform.isAndroid) {
-        // ── Android: Let image_picker handle permissions internally ────────
-        // DO NOT call Permission.photos.request() or Permission.storage.request().
-        // On Android 13+, READ_MEDIA_VISUAL_USER_SELECTED (partial access)
-        // causes permission_handler to show the system photo picker, then
-        // image_picker opens a SECOND one.
-        // image_picker's native ActivityResultLauncher handles this cleanly.
-        final XFile? pickedFile = await _imagePicker.pickImage(
-          source: ImageSource.gallery,
-          maxWidth: 1024,
-          maxHeight: 1024,
-          imageQuality: 85,
-        );
-
-        if (pickedFile != null) {
-          final croppedFile = await _cropImage(File(pickedFile.path));
-          if (croppedFile != null) {
-            selectedImage.value = croppedFile;
-          }
-        }
-      } else if (Platform.isIOS) {
-        // ── iOS: Check current status WITHOUT triggering a prompt ──────────
-        PermissionStatus status = await Permission.photos.status;
-        debugPrint('iOS photo permission status (before): $status');
-
-        if (status.isPermanentlyDenied) {
-          _showPermissionSettingsSnackbar();
-          return;
-        }
-
-        if (status.isDenied) {
-          // First-time request — iOS may show its own "Select Photos" sheet
-          // for "Limited Access" during this call.
-          status = await Permission.photos.request();
-          debugPrint('iOS photo permission status (after request): $status');
-
-          if (status.isLimited) {
-            // iOS already showed its own photo selection sheet during the
-            // permission request. Do NOT call pickImage() — that would open
-            // a second picker. Ask user to tap again instead.
-            Get.snackbar(
-              'Limited Access Granted',
-              'Tap the photo icon again to select a photo.',
-              snackPosition: SnackPosition.BOTTOM,
-              duration: const Duration(seconds: 3),
-            );
-            return; // ← KEY FIX: exit without opening picker a second time
-          }
-
-          if (status.isDenied || status.isPermanentlyDenied) {
-            _showPermissionSettingsSnackbar();
-            return;
-          }
-        }
-
-        // Status is .granted or .limited (second tap) — safe to open picker
-        if (status.isGranted || status.isLimited) {
-          final XFile? pickedFile = await _imagePicker.pickImage(
-            source: ImageSource.gallery,
-            maxWidth: 1024,
-            maxHeight: 1024,
-            imageQuality: 85,
-          );
-
-          if (pickedFile != null) {
-            final croppedFile = await _cropImage(File(pickedFile.path));
-            if (croppedFile != null) {
-              selectedImage.value = croppedFile;
-            }
-          }
-        }
-      }
-    } catch (e) {
-      debugPrint('Error picking from gallery: $e');
       Get.snackbar(
         'Error',
         'Failed to pick image: ${e.toString()}',
         snackPosition: SnackPosition.BOTTOM,
       );
-    } finally {
-      _isPicking = false;
     }
-  }
-
-  void _showPermissionSettingsSnackbar() {
-    Get.snackbar(
-      'Permission Required',
-      'Photo access is required. Please enable it in Settings.',
-      snackPosition: SnackPosition.BOTTOM,
-      duration: const Duration(seconds: 4),
-      mainButton: TextButton(
-        onPressed: () => openAppSettings(),
-        child: const Text(
-          'Settings',
-          style: TextStyle(color: Colors.white),
-        ),
-      ),
-    );
   }
 
   Future<File?> _cropImage(File imageFile) async {
@@ -462,7 +335,7 @@ class PersonalDetailsController extends BaseController {
                 ),
                 ListTile(
                   leading:
-                  const Icon(Icons.cancel, color: AppColor.color_2D2D2D),
+                      const Icon(Icons.cancel, color: AppColor.color_2D2D2D),
                   title: Text(
                     'Cancel',
                     style: TextStyle(
@@ -484,38 +357,55 @@ class PersonalDetailsController extends BaseController {
   Future<void> onUpdateProfile() async {
     if (!(formKey.currentState?.validate() ?? false)) return;
 
+    // Validate required fields
     if (selectedProfessionTypeId.value == null ||
         selectedProfessionTypeId.value!.isEmpty) {
-      Get.snackbar('Error', 'Please select profession type',
-          snackPosition: SnackPosition.BOTTOM);
+      Get.snackbar(
+        'Error',
+        'Please select profession type',
+        snackPosition: SnackPosition.BOTTOM,
+      );
       return;
     }
 
     if (selectedProfessionSubTypeId.value == null ||
         selectedProfessionSubTypeId.value!.isEmpty) {
-      Get.snackbar('Error', 'Please select profession',
-          snackPosition: SnackPosition.BOTTOM);
+      Get.snackbar(
+        'Error',
+        'Please select profession',
+        snackPosition: SnackPosition.BOTTOM,
+      );
       return;
     }
 
     if (selectedDob.value == null) {
-      Get.snackbar('Error', 'Please select date of birth',
-          snackPosition: SnackPosition.BOTTOM);
+      Get.snackbar(
+        'Error',
+        'Please select date of birth',
+        snackPosition: SnackPosition.BOTTOM,
+      );
       return;
     }
 
     if (selectedGender.value.isEmpty) {
-      Get.snackbar('Error', 'Please select gender',
-          snackPosition: SnackPosition.BOTTOM);
+      Get.snackbar(
+        'Error',
+        'Please select gender',
+        snackPosition: SnackPosition.BOTTOM,
+      );
       return;
     }
 
     if (profileId.value == null || profileId.value!.isEmpty) {
-      Get.snackbar('Error', 'Profile ID not found. Please try again.',
-          snackPosition: SnackPosition.BOTTOM);
+      Get.snackbar(
+        'Error',
+        'Profile ID not found. Please try again.',
+        snackPosition: SnackPosition.BOTTOM,
+      );
       return;
     }
 
+    // Format date of birth to ISO format
     final dobDate = selectedDob.value!;
     final dobFormatted = DateFormat('yyyy-MM-dd').format(dobDate);
 
@@ -538,7 +428,9 @@ class PersonalDetailsController extends BaseController {
             message: response.message ?? 'Profile updated successfully',
             title: 'Success',
             isError: false,
-            onOkPressed: () => Get.back(),
+            onOkPressed: () {
+              Get.back();
+            },
           );
         } else {
           showResponseDialog(
@@ -583,6 +475,7 @@ class PersonalDetailsController extends BaseController {
     return null;
   }
 
+  /// Load profession types from API
   Future<void> _loadProfessionTypes() async {
     isLoadingProfessionTypes.value = true;
     await callDataService<ApiResponse<dynamic>>(
@@ -598,9 +491,10 @@ class PersonalDetailsController extends BaseController {
               try {
                 if (item is Map<String, dynamic>) {
                   final professionType = ProfessionTypeModel.fromJson(item);
-                  if (professionType.id != null && professionType.type != null) {
+                  if (professionType.id != null &&
+                      professionType.type != null) {
                     professionTypesMap[professionType.type!] =
-                    professionType.id!;
+                        professionType.id!;
                     types.add(professionType.type!);
                   }
                 }
@@ -621,7 +515,7 @@ class PersonalDetailsController extends BaseController {
                     if (professionType.id != null &&
                         professionType.type != null) {
                       professionTypesMap[professionType.type!] =
-                      professionType.id!;
+                          professionType.id!;
                       types.add(professionType.type!);
                     }
                   }
@@ -641,7 +535,13 @@ class PersonalDetailsController extends BaseController {
     );
   }
 
+  /// Load personal details from API
   Future<void> _loadPersonalDetails() async {
+    // // Wait for profession types to be loaded first
+    // while (isLoadingProfessionTypes.value) {
+    //   await Future.delayed(const Duration(milliseconds: 50));
+    // }
+
     await callDataService<ApiResponse<dynamic>>(
       _userApiService.getCreateProfileDetails(),
       showLoader: true,
@@ -650,29 +550,38 @@ class PersonalDetailsController extends BaseController {
           try {
             final data = response.data as Map<String, dynamic>?;
             if (data != null) {
+              // Parse response using model
               final profileDetails = ProfileDetailsModel.fromJson(data);
 
+              // Store profile ID
               if (profileDetails.id != null && profileDetails.id!.isNotEmpty) {
                 profileId.value = profileDetails.id;
               }
 
+              // Store profile picture URL
               if (profileDetails.profilePicture != null &&
                   profileDetails.profilePicture!.isNotEmpty) {
                 profilePictureUrl.value = profileDetails.profilePicture;
               }
 
+              // Populate full name
               if (profileDetails.fullName != null &&
                   profileDetails.fullName!.isNotEmpty) {
                 fullNameController.text = profileDetails.fullName!;
               }
 
-              if (profileDetails.dob != null && profileDetails.dob!.isNotEmpty) {
+              // Populate date of birth
+              if (profileDetails.dob != null &&
+                  profileDetails.dob!.isNotEmpty) {
                 try {
+                  // Parse ISO format (2025-12-19T00:00:00.000Z)
                   final dobDate = DateTime.parse(profileDetails.dob!);
                   selectedDob.value = dobDate;
                   dobController.text = DateFormat('dd/MM/yyyy').format(dobDate);
                 } catch (e) {
+                  // If parsing fails, try other formats
                   try {
+                    // Try dd/MM/yyyy format
                     final parts = profileDetails.dob!.split('/');
                     if (parts.length == 3) {
                       final day = int.parse(parts[0]);
@@ -684,50 +593,60 @@ class PersonalDetailsController extends BaseController {
                           DateFormat('dd/MM/yyyy').format(dobDate);
                     }
                   } catch (e2) {
-                    dobController.text = profileDetails.dob!;
-                  }
+                  // If all parsing fails, just set the text
+                  dobController.text = profileDetails.dob!;
                 }
               }
+            }
 
-              if (profileDetails.optStatus != null) {
-                selectedMarketingPreference.value =
-                profileDetails.optStatus == 1 ? 'Yes' : 'No';
-              }
+            // Populate marketing preference
+            if (profileDetails.optStatus != null) {
+              selectedMarketingPreference.value =
+                  profileDetails.optStatus == 1 ? 'Yes' : 'No';
+            }
 
+              // Populate gender
               if (profileDetails.gender != null &&
                   profileDetails.gender!.isNotEmpty) {
+                // Convert API format to display format
                 final displayGender =
-                _convertGenderFromApiFormat(profileDetails.gender!);
+                    _convertGenderFromApiFormat(profileDetails.gender!);
+                // Try to match with dropdown items
                 final matchedGender = genders.firstWhere(
-                      (g) => g.toLowerCase() == displayGender.toLowerCase(),
+                  (g) => g.toLowerCase() == displayGender.toLowerCase(),
                   orElse: () => displayGender,
                 );
                 selectedGender.value = matchedGender;
               }
 
+              // Populate profession type using ID
               if (profileDetails.professionTypeId != null &&
                   profileDetails.professionTypeId!.isNotEmpty) {
                 final professionTypeId = profileDetails.professionTypeId!;
                 selectedProfessionTypeId.value = professionTypeId;
 
+                // Find profession type name by ID
                 try {
                   final matchingType = professionTypesMap.entries.firstWhere(
-                        (entry) => entry.value == professionTypeId,
+                    (entry) => entry.value == professionTypeId,
                   );
                   selectedProfessionType.value = matchingType.key;
                   youAreInController.text = matchingType.key;
 
+                  // Load profession sub-types for the selected type
                   _loadProfessionSubTypes(professionTypeId).then((_) {
+                    // Populate profession sub-type after sub-types are loaded
                     if (profileDetails.professionSubTypeId != null &&
                         profileDetails.professionSubTypeId!.isNotEmpty) {
                       final professionSubTypeId =
-                      profileDetails.professionSubTypeId!;
+                          profileDetails.professionSubTypeId!;
                       selectedProfessionSubTypeId.value = professionSubTypeId;
 
+                      // Find profession sub-type name by ID
                       try {
                         final matchingSubType =
-                        professionSubTypesMap.entries.firstWhere(
-                              (entry) => entry.value == professionSubTypeId,
+                            professionSubTypesMap.entries.firstWhere(
+                          (entry) => entry.value == professionSubTypeId,
                         );
                         selectedProfessionSubType.value = matchingSubType.key;
                         professionController.text = matchingSubType.key;
@@ -749,6 +668,7 @@ class PersonalDetailsController extends BaseController {
     );
   }
 
+  /// Load profession sub-types from API
   Future<void> _loadProfessionSubTypes(String professionTypeId) async {
     isLoadingProfessionSubTypes.value = true;
     await callDataService<ApiResponse<dynamic>>(
@@ -758,7 +678,7 @@ class PersonalDetailsController extends BaseController {
         if (response.success && response.data != null) {
           professionSubTypesMap.clear();
           professionSubTypes.clear();
-          final seenSubTypes = <String>{};
+          final seenSubTypes = <String>{}; // Track unique sub-types
           if (response.data is List) {
             final list = response.data as List;
             final subTypes = <String>[];
@@ -766,12 +686,12 @@ class PersonalDetailsController extends BaseController {
               try {
                 if (item is Map<String, dynamic>) {
                   final professionSubType =
-                  ProfessionSubTypeModel.fromJson(item);
+                      ProfessionSubTypeModel.fromJson(item);
                   if (professionSubType.id != null &&
                       professionSubType.subType != null &&
                       !seenSubTypes.contains(professionSubType.subType!)) {
                     professionSubTypesMap[professionSubType.subType!] =
-                    professionSubType.id!;
+                        professionSubType.id!;
                     subTypes.add(professionSubType.subType!);
                     seenSubTypes.add(professionSubType.subType!);
                   }
@@ -790,12 +710,12 @@ class PersonalDetailsController extends BaseController {
                 try {
                   if (item is Map<String, dynamic>) {
                     final professionSubType =
-                    ProfessionSubTypeModel.fromJson(item);
+                        ProfessionSubTypeModel.fromJson(item);
                     if (professionSubType.id != null &&
                         professionSubType.subType != null &&
                         !seenSubTypes.contains(professionSubType.subType!)) {
                       professionSubTypesMap[professionSubType.subType!] =
-                      professionSubType.id!;
+                          professionSubType.id!;
                       subTypes.add(professionSubType.subType!);
                       seenSubTypes.add(professionSubType.subType!);
                     }
@@ -808,6 +728,7 @@ class PersonalDetailsController extends BaseController {
             }
           }
 
+          // If selected value is not in the new list, clear it
           if (selectedProfessionSubType.value != null &&
               !professionSubTypes.contains(selectedProfessionSubType.value)) {
             selectedProfessionSubType.value = null;

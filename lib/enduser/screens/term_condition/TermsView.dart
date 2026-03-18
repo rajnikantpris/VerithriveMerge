@@ -97,7 +97,7 @@ class TermsView extends GetView<TermsController> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Checkbox
+                // Marketing Checkbox
                 Obx(
                   () => Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -116,9 +116,60 @@ class TermsView extends GetView<TermsController> {
                         ),
                       ),
                       SizedBox(width: 12),
+
                       Expanded(
                         child: Text(
+                          'Check this box to receive marketing emails from VERITHRIVE to keep you updated with the latest offers and trends.',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontFamily: 'Rubik',
+                            fontWeight: FontWeight.w400,
+                            color: AppColors.black,
+                            height: 1.4,
+                          ),
+                        ),
+                      ),
+                 /*     Expanded(
+                        child: Text(
                           'Tick if you would like to receive marketing emails from VERITHRIVE to keep you upto date about latest offers and trends.',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontFamily: 'Rubik',
+                            fontWeight: FontWeight.w400,
+                            color: AppColors.black,
+                            height: 1.4,
+                          ),
+                        ),
+                      ),*/
+                    ],
+                  ),
+                ),
+
+                SizedBox(height: 16),
+
+                // Terms & Conditions Checkbox
+                Obx(
+                  () => Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: Checkbox(
+                          value: controller.termsAndConditionsAccepted.value,
+                          onChanged: controller.toggleTermsAndConditions,
+                          activeColor: AppColors.primaryColor,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          side: BorderSide(color: AppColors.grey, width: 1.5),
+                        ),
+                      ),
+                      SizedBox(width: 12),
+
+                      Expanded(
+                        child: Text(
+                          'I agree to the Terms & Conditions and Privacy Policy.',
                           style: TextStyle(
                             fontSize: 14,
                             fontFamily: 'Rubik',
@@ -140,7 +191,7 @@ class TermsView extends GetView<TermsController> {
                     width: double.infinity,
                     height: 50,
                     child: ElevatedButton(
-                      onPressed: controller.isLoading.value
+                      onPressed: controller.isLoading.value || !controller.termsAndConditionsAccepted.value
                           ? null
                           : controller.acceptAndContinue,
                       style: ElevatedButton.styleFrom(
