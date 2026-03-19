@@ -14,8 +14,8 @@ import GoogleMaps
      
       GMSServices.provideAPIKey("AIzaSyDIHdFq55OMUeaBaKgsAB1Cpi5r5vEFU8k")
 
-//      FirebaseApp.configure()
-//      Messaging.messaging().delegate = self
+      FirebaseApp.configure()
+      Messaging.messaging().delegate = self
     GeneratedPluginRegistrant.register(with: self)
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
