@@ -35,4 +35,19 @@ import GoogleMaps
  
         Messaging.messaging().appDidReceiveMessage(userInfo)
     }
+    // 👇 THIS IS IMPORTANT
+      override func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        willPresent notification: UNNotification,
+        withCompletionHandler completionHandler:
+          @escaping (UNNotificationPresentationOptions) -> Void
+      ) {
+          print("🔥 Foreground Notification Received")
+  
+  let userInfo = notification.request.content.userInfo
+  print("📩 Notification Data: \(userInfo)")
+
+
+        completionHandler([.alert, .badge, .sound])
+      }
 }
