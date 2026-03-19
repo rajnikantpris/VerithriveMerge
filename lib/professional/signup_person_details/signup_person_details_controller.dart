@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 import '../../api/api_response.dart';
 import '../../api/dio_client.dart';
@@ -315,35 +316,115 @@ class SignupPersonDetailsController extends BaseController {
       final source = await _showImageSourceDialog(context);
       if (source == null) return;
 
-      // Double-check permission for the selected source
       if (source == ImageSource.camera) {
-        final hasCameraPermission =
-            await _cameraStoragePermissionService.requestCameraPermission();
-        if (!hasCameraPermission) {
-          return;
-        }
-      } else {
-        // For gallery, check storage/photos permission
-        final hasStoragePermission =
-            await _cameraStoragePermissionService.requestStoragePermission();
-        if (!hasStoragePermission) {
-          return;
-        }
+        await _pickFromCamera();
+      } else if (source == ImageSource.gallery) {
+        await _pickFromGallery();
+      }
+    } catch (e) {
+      Get.snackbar(
+        'Error',
+        'Failed to pick image: ${e.toString()}',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    }
+  }
+
+  Future<void> _pickFromCamera() async {
+    try {
+      // Request camera permission for camera access
+      final hasCameraPermission =
+          await _cameraStoragePermissionService.requestCameraPermission();
+      if (!hasCameraPermission) {
+        _showPermissionSettingsSnackbar();
+        return;
       }
 
       final XFile? pickedFile = await _imagePicker.pickImage(
-        source: source,
+        source: ImageSource.camera,
         maxWidth: 1024,
         maxHeight: 1024,
         imageQuality: 85,
       );
 
       if (pickedFile != null) {
-        // Crop the selected image
-        final croppedFile = await _cropImage(File(pickedFile.path));
-        if (croppedFile != null) {
-          selectedImage.value = croppedFile;
-          socialProfileImageUrl.value = '';
+        await _processSelectedImage(pickedFile);
+      }
+    } catch (e) {
+      Get.snackbar(
+        'Error',
+        'Failed to pick image: ${e.toString()}',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    }
+  }
+
+  Future<void> _pickFromGallery() async {
+    try {
+      if (Platform.isAndroid) {
+        // ── Android: Let image_picker handle permissions internally ────────
+        // DO NOT call Permission.photos.request() or Permission.storage.request().
+        // On Android 13+, READ_MEDIA_VISUAL_USER_SELECTED (partial access)
+        // causes permission_handler to show the system photo picker, then
+        // image_picker opens a SECOND one.
+        // image_picker's native ActivityResultLauncher handles this cleanly.
+        final XFile? pickedFile = await _imagePicker.pickImage(
+          source: ImageSource.gallery,
+          maxWidth: 1024,
+          maxHeight: 1024,
+          imageQuality: 85,
+        );
+
+        if (pickedFile != null) {
+          await _processSelectedImage(pickedFile);
+        }
+      } else if (Platform.isIOS) {
+        // ── iOS: Check current status WITHOUT triggering a prompt ──────────
+        PermissionStatus status = await Permission.photos.status;
+        debugPrint('iOS photo permission status (before): $status');
+
+        if (status.isPermanentlyDenied) {
+          _showPermissionSettingsSnackbar();
+          return;
+        }
+
+        if (status.isDenied) {
+          // First-time request — iOS may show its own "Select Photos" sheet
+          // for "Limited Access" during this call.
+          status = await Permission.photos.request();
+          debugPrint('iOS photo permission status (after request): $status');
+
+          if (status.isLimited) {
+            // iOS already showed its own photo selection sheet during the
+            // permission request. Do NOT call pickImage() — that would open
+            // a second picker. Ask user to tap again instead.
+            Get.snackbar(
+              'Limited Access Granted',
+              'Tap the photo icon again to select a photo.',
+              snackPosition: SnackPosition.BOTTOM,
+              duration: const Duration(seconds: 3),
+            );
+            return; // ← KEY FIX: exit without opening picker a second time
+          }
+
+          if (status.isDenied || status.isPermanentlyDenied) {
+            _showPermissionSettingsSnackbar();
+            return;
+          }
+        }
+
+        // Status is .granted or .limited (second tap) — safe to open picker
+        if (status.isGranted || status.isLimited) {
+          final XFile? pickedFile = await _imagePicker.pickImage(
+            source: ImageSource.gallery,
+            maxWidth: 1024,
+            maxHeight: 1024,
+            imageQuality: 85,
+          );
+
+          if (pickedFile != null) {
+            await _processSelectedImage(pickedFile);
+          }
         }
       }
     } catch (e) {
@@ -353,6 +434,40 @@ class SignupPersonDetailsController extends BaseController {
         snackPosition: SnackPosition.BOTTOM,
       );
     }
+  }
+
+  /// Process the selected image (common logic for both platforms)
+  Future<void> _processSelectedImage(XFile pickedFile) async {
+    try {
+      // Crop the selected image
+      final croppedFile = await _cropImage(File(pickedFile.path));
+      if (croppedFile != null) {
+        selectedImage.value = croppedFile;
+        socialProfileImageUrl.value = '';
+      }
+    } catch (e) {
+      Get.snackbar(
+        'Error',
+        'Failed to process image: ${e.toString()}',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    }
+  }
+
+  void _showPermissionSettingsSnackbar() {
+    Get.snackbar(
+      'Permission Required',
+      'Camera/Photo access is required. Please enable it in Settings.',
+      snackPosition: SnackPosition.BOTTOM,
+      duration: const Duration(seconds: 4),
+      mainButton: TextButton(
+        onPressed: () => openAppSettings(),
+        child: const Text(
+          'Settings',
+          style: TextStyle(color: Colors.white),
+        ),
+      ),
+    );
   }
 
   Future<File?> _cropImage(File imageFile) async {

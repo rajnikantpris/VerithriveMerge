@@ -7,6 +7,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:dio/dio.dart' as dio;
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
+import 'package:permission_handler/permission_handler.dart';
 
 import '../../../../api/api_response.dart';
 import '../../../../api/user_api_service.dart';
@@ -232,39 +233,71 @@ class PersonalIdentificationController extends BaseController {
   /// Pick ID image file
   Future<void> _pickIdImage() async {
     try {
-      final hasPermissions =
-          await _cameraStoragePermissionService.requestStoragePermission();
-      if (!hasPermissions) {
-        return;
-      }
+      if (Platform.isAndroid) {
+        // ── Android: Let image_picker handle permissions internally ────────
+        // DO NOT call Permission.photos.request() or Permission.storage.request().
+        // On Android 13+, READ_MEDIA_VISUAL_USER_SELECTED (partial access)
+        // causes permission_handler to show the system photo picker, then
+        // image_picker opens a SECOND one.
+        // image_picker's native ActivityResultLauncher handles this cleanly.
+        final XFile? pickedFile = await _imagePicker.pickImage(
+          source: ImageSource.gallery,
+          maxWidth: 2048,
+          maxHeight: 2048,
+          imageQuality: 90,
+        );
 
-      final XFile? pickedFile = await _imagePicker.pickImage(
-        source: ImageSource.gallery,
-        maxWidth: 2048,
-        maxHeight: 2048,
-        imageQuality: 90,
-      );
+        if (pickedFile != null) {
+          await _processSelectedIdFile(pickedFile);
+        }
+      } else if (Platform.isIOS) {
+        // ── iOS: Check current status WITHOUT triggering a prompt ──────────
+        PermissionStatus status = await Permission.photos.status;
+        debugPrint('iOS photo permission status (before): $status');
 
-      if (pickedFile != null) {
-        final file = File(pickedFile.path);
-        final fileSize = await file.length();
-        const maxSize = 5 * 1024 * 1024; // 5MB
-
-        if (fileSize > maxSize) {
-          Get.snackbar(
-            'Error',
-            'File size exceeds 5MB limit',
-            snackPosition: SnackPosition.BOTTOM,
-          );
+        if (status.isPermanentlyDenied) {
+          _showPermissionSettingsSnackbar();
           return;
         }
 
-        idFile = file;
-        idUploadController.text = pickedFile.name;
-        idDocumentUrl = null; // Clear existing URL when new file is selected
+        if (status.isDenied) {
+          // First-time request — iOS may show its own "Select Photos" sheet
+          // for "Limited Access" during this call.
+          status = await Permission.photos.request();
+          debugPrint('iOS photo permission status (after request): $status');
 
-        // Trigger form validation after file is selected
-        formKey.currentState?.validate();
+          if (status.isLimited) {
+            // iOS already showed its own photo selection sheet during the
+            // permission request. Do NOT call pickImage() — that would open
+            // a second picker. Ask user to tap again instead.
+            Get.snackbar(
+              'Limited Access Granted',
+              'Tap the upload button again to select a photo.',
+              snackPosition: SnackPosition.BOTTOM,
+              duration: const Duration(seconds: 3),
+            );
+            return; // ← KEY FIX: exit without opening picker a second time
+          }
+
+          if (status.isDenied || status.isPermanentlyDenied) {
+            _showPermissionSettingsSnackbar();
+            return;
+          }
+        }
+
+        // Status is .granted or .limited (second tap) — safe to open picker
+        if (status.isGranted || status.isLimited) {
+          final XFile? pickedFile = await _imagePicker.pickImage(
+            source: ImageSource.gallery,
+            maxWidth: 2048,
+            maxHeight: 2048,
+            imageQuality: 90,
+          );
+
+          if (pickedFile != null) {
+            await _processSelectedIdFile(pickedFile);
+          }
+        }
       }
     } catch (e) {
       Get.snackbar(
@@ -275,40 +308,92 @@ class PersonalIdentificationController extends BaseController {
     }
   }
 
+  /// Process the selected ID file (common logic for both platforms)
+  Future<void> _processSelectedIdFile(XFile pickedFile) async {
+    final file = File(pickedFile.path);
+    final fileSize = await file.length();
+    const maxSize = 5 * 1024 * 1024; // 5MB
+
+    if (fileSize > maxSize) {
+      Get.snackbar(
+        'Error',
+        'File size exceeds 5MB limit',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return;
+    }
+
+    idFile = file;
+    idUploadController.text = pickedFile.name;
+    idDocumentUrl = null; // Clear existing URL when new file is selected
+
+    // Trigger form validation after file is selected
+    formKey.currentState?.validate();
+  }
+
+  void _showPermissionSettingsSnackbar() {
+    Get.snackbar(
+      'Permission Required',
+      'Photo access is required. Please enable it in Settings.',
+      snackPosition: SnackPosition.BOTTOM,
+      duration: const Duration(seconds: 4),
+      mainButton: TextButton(
+        onPressed: () => openAppSettings(),
+        child: const Text(
+          'Settings',
+          style: TextStyle(color: Colors.white),
+        ),
+      ),
+    );
+  }
+
   /// Pick ID PDF file
   Future<void> _pickIdPDF() async {
     try {
-      final hasPermissions =
-          await _cameraStoragePermissionService.requestStoragePermission();
-      if (!hasPermissions) {
-        return;
-      }
+      if (Platform.isAndroid) {
+        // ── Android: Let file_picker handle permissions internally ────────
+        // DO NOT call Permission.storage.request() manually.
+        // On Android 13+, file_picker handles permissions properly.
+        final result = await FilePicker.platform.pickFiles(
+          type: FileType.custom,
+          allowedExtensions: ['pdf'],
+        );
 
-      final result = await FilePicker.platform.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: ['pdf'],
-      );
+        if (result != null && result.files.single.path != null) {
+          await _processSelectedPdfFile(result.files.single);
+        }
+      } else if (Platform.isIOS) {
+        // ── iOS: Check current status WITHOUT triggering a prompt ──────────
+        PermissionStatus status = await Permission.photos.status;
+        debugPrint('iOS photo permission status (before): $status');
 
-      if (result != null && result.files.single.path != null) {
-        final file = File(result.files.single.path!);
-        final fileSize = await file.length();
-        const maxSize = 5 * 1024 * 1024; // 5MB
-
-        if (fileSize > maxSize) {
-          Get.snackbar(
-            'Error',
-            'File size exceeds 5MB limit',
-            snackPosition: SnackPosition.BOTTOM,
-          );
+        if (status.isPermanentlyDenied) {
+          _showPermissionSettingsSnackbar();
           return;
         }
 
-        idFile = file;
-        idUploadController.text = result.files.single.name;
-        idDocumentUrl = null; // Clear existing URL when new file is selected
+        if (status.isDenied) {
+          // First-time request — iOS may show its own permission dialog
+          status = await Permission.photos.request();
+          debugPrint('iOS photo permission status (after request): $status');
 
-        // Trigger form validation after file is selected
-        formKey.currentState?.validate();
+          if (status.isDenied || status.isPermanentlyDenied) {
+            _showPermissionSettingsSnackbar();
+            return;
+          }
+        }
+
+        // Status is .granted or .limited — safe to open picker
+        if (status.isGranted || status.isLimited) {
+          final result = await FilePicker.platform.pickFiles(
+            type: FileType.custom,
+            allowedExtensions: ['pdf'],
+          );
+
+          if (result != null && result.files.single.path != null) {
+            await _processSelectedPdfFile(result.files.single);
+          }
+        }
       }
     } catch (e) {
       Get.snackbar(
@@ -316,6 +401,31 @@ class PersonalIdentificationController extends BaseController {
         'Failed to pick PDF: ${e.toString()}',
         snackPosition: SnackPosition.BOTTOM,
       );
+    }
+  }
+
+  /// Process the selected PDF file (common logic for both platforms)
+  Future<void> _processSelectedPdfFile(PlatformFile file) async {
+    if (file.path != null) {
+      final pdfFile = File(file.path!);
+      final fileSize = await pdfFile.length();
+      const maxSize = 5 * 1024 * 1024; // 5MB
+
+      if (fileSize > maxSize) {
+        Get.snackbar(
+          'Error',
+          'File size exceeds 5MB limit',
+          snackPosition: SnackPosition.BOTTOM,
+        );
+        return;
+      }
+
+      idFile = pdfFile;
+      idUploadController.text = file.name;
+      idDocumentUrl = null; // Clear existing URL when new file is selected
+
+      // Trigger form validation after file is selected
+      formKey.currentState?.validate();
     }
   }
 

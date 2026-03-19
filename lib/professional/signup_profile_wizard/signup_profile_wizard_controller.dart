@@ -6,10 +6,12 @@ import 'package:intl/intl.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:image_cropper/image_cropper.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:dio/dio.dart' as dio;
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
+import 'package:permission_handler/permission_handler.dart';
 
 import '../../api/api_response.dart';
 import '../../api/user_api_service.dart';
@@ -224,6 +226,278 @@ class SignupProfileWizardController extends BaseController {
     if (initialStep > 0) {
       _loadStepData(initialStep);
     }
+  }
+
+  bool _isPicking = false;
+
+  Future<void> pickProfileImage(BuildContext context) async {
+    // Guard: prevent multiple simultaneous picker calls
+    if (_isPicking) return;
+
+    try {
+      final source = await _showImageSourceDialog(context);
+      if (source == null) return;
+
+      if (source == ImageSource.camera) {
+        await _pickFromCamera();
+      } else if (source == ImageSource.gallery) {
+        await _pickFromGallery();
+      }
+    } catch (e) {
+      debugPrint('Error in pickProfileImage: $e');
+      Get.snackbar(
+        'Error',
+        'Failed to pick image: ${e.toString()}',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    }
+  }
+
+  Future<void> _pickFromCamera() async {
+    if (_isPicking) return;
+    _isPicking = true;
+
+    try {
+      final bool hasPermission = await _cameraStoragePermissionService
+          .requestCameraAndStoragePermissions();
+      if (!hasPermission) {
+        _showPermissionSettingsSnackbar();
+        return;
+      }
+
+      final XFile? pickedFile = await _imagePicker.pickImage(
+        source: ImageSource.camera,
+        maxWidth: 1024,
+        maxHeight: 1024,
+        imageQuality: 85,
+      );
+
+      if (pickedFile != null) {
+        final croppedFile = await _cropImage(File(pickedFile.path));
+        if (croppedFile != null) {
+          // selectedImage.value = croppedFile; // This controller does not have selectedImage
+        }
+      }
+    } catch (e) {
+      debugPrint('Error picking from camera: $e');
+      Get.snackbar(
+        'Error',
+        'Failed to pick image: ${e.toString()}',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    } finally {
+      _isPicking = false;
+    }
+  }
+
+  Future<void> _pickFromGallery() async {
+    if (_isPicking) return;
+    _isPicking = true;
+
+    try {
+      if (Platform.isAndroid) {
+        // ── Android: Let image_picker handle permissions internally ────────
+        // DO NOT call Permission.photos.request() or Permission.storage.request().
+        // On Android 13+, READ_MEDIA_VISUAL_USER_SELECTED (partial access)
+        // causes permission_handler to show the system photo picker, then
+        // image_picker opens a SECOND one.
+        // image_picker's native ActivityResultLauncher handles this cleanly.
+        final XFile? pickedFile = await _imagePicker.pickImage(
+          source: ImageSource.gallery,
+          maxWidth: 1024,
+          maxHeight: 1024,
+          imageQuality: 85,
+        );
+
+        if (pickedFile != null) {
+          final croppedFile = await _cropImage(File(pickedFile.path));
+          if (croppedFile != null) {
+            // selectedImage.value = croppedFile;
+          }
+        }
+      } else if (Platform.isIOS) {
+        // ── iOS: Check current status WITHOUT triggering a prompt ──────────
+        PermissionStatus status = await Permission.photos.status;
+        debugPrint('iOS photo permission status (before): $status');
+
+        if (status.isPermanentlyDenied) {
+          _showPermissionSettingsSnackbar();
+          return;
+        }
+
+        if (status.isDenied) {
+          // First-time request — iOS may show its own "Select Photos" sheet
+          // for "Limited Access" during this call.
+          status = await Permission.photos.request();
+          debugPrint('iOS photo permission status (after request): $status');
+
+          if (status.isLimited) {
+            // iOS already showed its own photo selection sheet during the
+            // permission request. Do NOT call pickImage() — that would open
+            // a second picker. Ask user to tap again instead.
+            Get.snackbar(
+              'Limited Access Granted',
+              'Tap the photo icon again to select a photo.',
+              snackPosition: SnackPosition.BOTTOM,
+              duration: const Duration(seconds: 3),
+            );
+            return; // ← KEY FIX: exit without opening picker a second time
+          }
+
+          if (status.isDenied || status.isPermanentlyDenied) {
+            _showPermissionSettingsSnackbar();
+            return;
+          }
+        }
+
+        // Status is .granted or .limited (second tap) — safe to open picker
+        if (status.isGranted || status.isLimited) {
+          final XFile? pickedFile = await _imagePicker.pickImage(
+            source: ImageSource.gallery,
+            maxWidth: 1024,
+            maxHeight: 1024,
+            imageQuality: 85,
+          );
+
+          if (pickedFile != null) {
+            final croppedFile = await _cropImage(File(pickedFile.path));
+            if (croppedFile != null) {
+              // selectedImage.value = croppedFile;
+            }
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('Error picking from gallery: $e');
+      Get.snackbar(
+        'Error',
+        'Failed to pick image: ${e.toString()}',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    } finally {
+      _isPicking = false;
+    }
+  }
+
+  void _showPermissionSettingsSnackbar() {
+    Get.snackbar(
+      'Permission Required',
+      'Photo access is required. Please enable it in Settings.',
+      snackPosition: SnackPosition.BOTTOM,
+      duration: const Duration(seconds: 4),
+      mainButton: TextButton(
+        onPressed: () => openAppSettings(),
+        child: const Text(
+          'Settings',
+          style: TextStyle(color: Colors.white),
+        ),
+      ),
+    );
+  }
+
+  Future<File?> _cropImage(File imageFile) async {
+    try {
+      final croppedFile = await ImageCropper().cropImage(
+        sourcePath: imageFile.path,
+        aspectRatio: const CropAspectRatio(ratioX: 1, ratioY: 1),
+        uiSettings: [
+          AndroidUiSettings(
+            toolbarTitle: 'Crop Image',
+            toolbarColor: Colors.blue,
+            toolbarWidgetColor: Colors.white,
+            initAspectRatio: CropAspectRatioPreset.square,
+            lockAspectRatio: true,
+            aspectRatioPresets: [
+              CropAspectRatioPreset.square,
+            ],
+          ),
+          IOSUiSettings(
+            title: 'Crop Image',
+            aspectRatioPresets: [
+              CropAspectRatioPreset.square,
+            ],
+            aspectRatioLockEnabled: true,
+          ),
+        ],
+        compressFormat: ImageCompressFormat.jpg,
+        compressQuality: 85,
+      );
+
+      if (croppedFile != null) {
+        return File(croppedFile.path);
+      }
+      return null;
+    } catch (e) {
+      debugPrint('Error cropping image: $e');
+      Get.snackbar(
+        'Error',
+        'Failed to crop image: ${e.toString()}',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return null;
+    }
+  }
+
+  Future<ImageSource?> _showImageSourceDialog(BuildContext context) async {
+    return await showModalBottomSheet<ImageSource>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (BuildContext context) {
+        return Container(
+          decoration: BoxDecoration(
+            color: AppColor.white,
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(HightWidthSizes.setValue_20),
+              topRight: Radius.circular(HightWidthSizes.setValue_20),
+            ),
+          ),
+          child: SafeArea(
+            child: Wrap(
+              children: [
+                Padding(
+                  padding: EdgeInsets.all(HightWidthSizes.setValue_16),
+                  child: Text(
+                    'Select Image Source',
+                    style: TextStyle(
+                      fontFamily: AppFonts.rubikMedium,
+                      fontSize: FontSizes.setFontValue_18,
+                      fontWeight: FontWeight.w500,
+                      color: AppColor.color_2D2D2D,
+                    ),
+                  ),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.photo_library,
+                      color: AppColor.color_2D2D2D),
+                  title: Text(
+                    'Choose from Gallery',
+                    style: TextStyle(
+                      fontFamily: AppFonts.rubikRegular,
+                      fontSize: FontSizes.setFontValue_16,
+                      color: AppColor.color_2D2D2D,
+                    ),
+                  ),
+                  onTap: () => Navigator.of(context).pop(ImageSource.gallery),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.photo_camera,
+                      color: AppColor.color_2D2D2D),
+                  title: Text(
+                    'Take a Photo',
+                    style: TextStyle(
+                      fontFamily: AppFonts.rubikRegular,
+                      fontSize: FontSizes.setFontValue_16,
+                      color: AppColor.color_2D2D2D,
+                    ),
+                  ),
+                  onTap: () => Navigator.of(context).pop(ImageSource.camera),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   /// Centralized method to load step-wise data
@@ -2268,40 +2542,70 @@ class SignupProfileWizardController extends BaseController {
   /// Pick image file
   Future<void> _pickImage(QualificationItem qualification, int index) async {
     try {
-      final hasPermissions =
-          await _cameraStoragePermissionService.requestStoragePermission();
-      if (!hasPermissions) {
-        return;
-      }
+      if (Platform.isAndroid) {
+        // ── Android: Let image_picker handle permissions internally ────────
+        // DO NOT call Permission.photos.request() or Permission.storage.request().
+        // On Android 13+, READ_MEDIA_VISUAL_USER_SELECTED (partial access)
+        // causes permission_handler to show the system photo picker, then
+        // image_picker opens a SECOND one.
+        // image_picker's native ActivityResultLauncher handles this cleanly.
+        final XFile? pickedFile = await _imagePicker.pickImage(
+          source: ImageSource.gallery,
+          maxWidth: 2048,
+          maxHeight: 2048,
+          imageQuality: 90,
+        );
 
-      final XFile? pickedFile = await _imagePicker.pickImage(
-        source: ImageSource.gallery,
-        maxWidth: 2048,
-        maxHeight: 2048,
-        imageQuality: 90,
-      );
+        if (pickedFile != null) {
+          await _processSelectedFile(pickedFile, qualification, index);
+        }
+      } else if (Platform.isIOS) {
+        // ── iOS: Check current status WITHOUT triggering a prompt ──────────
+        PermissionStatus status = await Permission.photos.status;
+        debugPrint('iOS photo permission status (before): $status');
 
-      if (pickedFile != null) {
-        final file = File(pickedFile.path);
-        final fileSize = await file.length();
-        const maxSize = 5 * 1024 * 1024; // 5MB
-
-        if (fileSize > maxSize) {
-          Get.snackbar(
-            'Error',
-            'File size exceeds 5MB limit',
-            snackPosition: SnackPosition.BOTTOM,
-          );
+        if (status.isPermanentlyDenied) {
+          _showPermissionSettingsSnackbar();
           return;
         }
 
-        qualification.certificateFile = file;
-        qualification.uploadCertificateController.text = pickedFile.name;
+        if (status.isDenied) {
+          // First-time request — iOS may show its own "Select Photos" sheet
+          // for "Limited Access" during this call.
+          status = await Permission.photos.request();
+          debugPrint('iOS photo permission status (after request): $status');
 
-        // Trigger form validation after file is selected
-        if (index >= 0 && index < qualificationFormKeys.length) {
-          final formKey = qualificationFormKeys[index];
-          formKey.currentState?.validate();
+          if (status.isLimited) {
+            // iOS already showed its own photo selection sheet during the
+            // permission request. Do NOT call pickImage() — that would open
+            // a second picker. Ask user to tap again instead.
+            Get.snackbar(
+              'Limited Access Granted',
+              'Tap the upload button again to select a photo.',
+              snackPosition: SnackPosition.BOTTOM,
+              duration: const Duration(seconds: 3),
+            );
+            return; // ← KEY FIX: exit without opening picker a second time
+          }
+
+          if (status.isDenied || status.isPermanentlyDenied) {
+            _showPermissionSettingsSnackbar();
+            return;
+          }
+        }
+
+        // Status is .granted or .limited (second tap) — safe to open picker
+        if (status.isGranted || status.isLimited) {
+          final XFile? pickedFile = await _imagePicker.pickImage(
+            source: ImageSource.gallery,
+            maxWidth: 2048,
+            maxHeight: 2048,
+            imageQuality: 90,
+          );
+
+          if (pickedFile != null) {
+            await _processSelectedFile(pickedFile, qualification, index);
+          }
         }
       }
     } catch (e) {
@@ -2310,6 +2614,31 @@ class SignupProfileWizardController extends BaseController {
         'Failed to pick image: ${e.toString()}',
         snackPosition: SnackPosition.BOTTOM,
       );
+    }
+  }
+
+  /// Process the selected file (common logic for both platforms)
+  Future<void> _processSelectedFile(XFile pickedFile, QualificationItem qualification, int index) async {
+    final file = File(pickedFile.path);
+    final fileSize = await file.length();
+    const maxSize = 5 * 1024 * 1024; // 5MB
+
+    if (fileSize > maxSize) {
+      Get.snackbar(
+        'Error',
+        'File size exceeds 5MB limit',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return;
+    }
+
+    qualification.certificateFile = file;
+    qualification.uploadCertificateController.text = pickedFile.name;
+
+    // Trigger form validation after file is selected
+    if (index >= 0 && index < qualificationFormKeys.length) {
+      final formKey = qualificationFormKeys[index];
+      formKey.currentState?.validate();
     }
   }
 
@@ -2442,38 +2771,71 @@ class SignupProfileWizardController extends BaseController {
   /// Pick ID image file
   Future<void> _pickIdImage() async {
     try {
-      final hasPermissions =
-          await _cameraStoragePermissionService.requestStoragePermission();
-      if (!hasPermissions) {
-        return;
-      }
+      if (Platform.isAndroid) {
+        // ── Android: Let image_picker handle permissions internally ────────
+        // DO NOT call Permission.photos.request() or Permission.storage.request().
+        // On Android 13+, READ_MEDIA_VISUAL_USER_SELECTED (partial access)
+        // causes permission_handler to show the system photo picker, then
+        // image_picker opens a SECOND one.
+        // image_picker's native ActivityResultLauncher handles this cleanly.
+        final XFile? pickedFile = await _imagePicker.pickImage(
+          source: ImageSource.gallery,
+          maxWidth: 2048,
+          maxHeight: 2048,
+          imageQuality: 90,
+        );
 
-      final XFile? pickedFile = await _imagePicker.pickImage(
-        source: ImageSource.gallery,
-        maxWidth: 2048,
-        maxHeight: 2048,
-        imageQuality: 90,
-      );
+        if (pickedFile != null) {
+          await _processSelectedIdFile(pickedFile);
+        }
+      } else if (Platform.isIOS) {
+        // ── iOS: Check current status WITHOUT triggering a prompt ──────────
+        PermissionStatus status = await Permission.photos.status;
+        debugPrint('iOS photo permission status (before): $status');
 
-      if (pickedFile != null) {
-        final file = File(pickedFile.path);
-        final fileSize = await file.length();
-        const maxSize = 5 * 1024 * 1024; // 5MB
-
-        if (fileSize > maxSize) {
-          Get.snackbar(
-            'Error',
-            'File size exceeds 5MB limit',
-            snackPosition: SnackPosition.BOTTOM,
-          );
+        if (status.isPermanentlyDenied) {
+          _showPermissionSettingsSnackbar();
           return;
         }
 
-        idFile = file;
-        idUploadController.text = pickedFile.name;
+        if (status.isDenied) {
+          // First-time request — iOS may show its own "Select Photos" sheet
+          // for "Limited Access" during this call.
+          status = await Permission.photos.request();
+          debugPrint('iOS photo permission status (after request): $status');
 
-        // Trigger form validation after file is selected
-        identificationFormKey.currentState?.validate();
+          if (status.isLimited) {
+            // iOS already showed its own photo selection sheet during the
+            // permission request. Do NOT call pickImage() — that would open
+            // a second picker. Ask user to tap again instead.
+            Get.snackbar(
+              'Limited Access Granted',
+              'Tap the upload button again to select a photo.',
+              snackPosition: SnackPosition.BOTTOM,
+              duration: const Duration(seconds: 3),
+            );
+            return; // ← KEY FIX: exit without opening picker a second time
+          }
+
+          if (status.isDenied || status.isPermanentlyDenied) {
+            _showPermissionSettingsSnackbar();
+            return;
+          }
+        }
+
+        // Status is .granted or .limited (second tap) — safe to open picker
+        if (status.isGranted || status.isLimited) {
+          final XFile? pickedFile = await _imagePicker.pickImage(
+            source: ImageSource.gallery,
+            maxWidth: 2048,
+            maxHeight: 2048,
+            imageQuality: 90,
+          );
+
+          if (pickedFile != null) {
+            await _processSelectedIdFile(pickedFile);
+          }
+        }
       }
     } catch (e) {
       Get.snackbar(
@@ -2482,6 +2844,29 @@ class SignupProfileWizardController extends BaseController {
         snackPosition: SnackPosition.BOTTOM,
       );
     }
+  }
+
+  /// Process the selected ID file (common logic for both platforms)
+  Future<void> _processSelectedIdFile(XFile pickedFile) async {
+    final file = File(pickedFile.path);
+    final fileSize = await file.length();
+    const maxSize = 5 * 1024 * 1024; // 5MB
+
+    if (fileSize > maxSize) {
+      Get.snackbar(
+        'Error',
+        'File size exceeds 5MB limit',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return;
+    }
+
+    idFile = file;
+    idUploadController.text = pickedFile.name;
+    idDocumentUrl = null; // Clear existing URL when new file is selected
+
+    // Trigger form validation after file is selected
+    identificationFormKey.currentState?.validate();
   }
 
   /// Pick ID PDF file

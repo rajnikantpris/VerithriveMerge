@@ -9,7 +9,7 @@
     
     <!-- Storage permissions for API 21-32 -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28" />
     
     <!-- Storage permissions for API 33+ (Android 13+) -->
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
