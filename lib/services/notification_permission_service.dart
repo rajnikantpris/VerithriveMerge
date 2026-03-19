@@ -61,67 +61,84 @@ class NotificationPermissionService {
         // This is more reliable than permission_handler on iOS
         try {
           final firebaseMessaging = FirebaseMessaging.instance;
-          
+
           // Check current notification settings
-          final currentSettings = await firebaseMessaging.getNotificationSettings();
-          debugPrint('Current iOS notification authorization status: ${currentSettings.authorizationStatus}');
-          
+          final currentSettings =
+              await firebaseMessaging.getNotificationSettings();
+          debugPrint(
+              'Current iOS notification authorization status: ${currentSettings.authorizationStatus}');
+
           // If already authorized or provisional, return true
-          if (currentSettings.authorizationStatus == AuthorizationStatus.authorized ||
-              currentSettings.authorizationStatus == AuthorizationStatus.provisional) {
-            debugPrint('Notification permission already granted (authorized or provisional)');
+          if (currentSettings.authorizationStatus ==
+                  AuthorizationStatus.authorized ||
+              currentSettings.authorizationStatus ==
+                  AuthorizationStatus.provisional) {
+            debugPrint(
+                'Notification permission already granted (authorized or provisional)');
             return true;
           }
-          
+
           // Request permission via Firebase Messaging (this shows the system dialog)
-          debugPrint('Requesting notification permission via Firebase Messaging...');
+          debugPrint(
+              'Requesting notification permission via Firebase Messaging...');
           final requestedSettings = await firebaseMessaging.requestPermission(
             alert: true,
             badge: true,
             sound: true,
             provisional: false,
           );
-          
-          debugPrint('Requested iOS notification authorization status: ${requestedSettings.authorizationStatus}');
-          
+
+          debugPrint(
+              'Requested iOS notification authorization status: ${requestedSettings.authorizationStatus}');
+
           // Check if permission was granted
-          if (requestedSettings.authorizationStatus == AuthorizationStatus.authorized ||
-              requestedSettings.authorizationStatus == AuthorizationStatus.provisional) {
-            debugPrint('Notification permission granted via Firebase Messaging');
+          if (requestedSettings.authorizationStatus ==
+                  AuthorizationStatus.authorized ||
+              requestedSettings.authorizationStatus ==
+                  AuthorizationStatus.provisional) {
+            debugPrint(
+                'Notification permission granted via Firebase Messaging');
             return true;
           }
-          
+
           // If denied, check if it's permanently denied (user needs to go to Settings)
-          if (requestedSettings.authorizationStatus == AuthorizationStatus.denied) {
+          if (requestedSettings.authorizationStatus ==
+              AuthorizationStatus.denied) {
             // Wait a moment and check again - sometimes there's a delay
             await Future.delayed(const Duration(milliseconds: 500));
-            final recheckSettings = await firebaseMessaging.getNotificationSettings();
-            
-            if (recheckSettings.authorizationStatus == AuthorizationStatus.authorized ||
-                recheckSettings.authorizationStatus == AuthorizationStatus.provisional) {
+            final recheckSettings =
+                await firebaseMessaging.getNotificationSettings();
+
+            if (recheckSettings.authorizationStatus ==
+                    AuthorizationStatus.authorized ||
+                recheckSettings.authorizationStatus ==
+                    AuthorizationStatus.provisional) {
               debugPrint('Notification permission granted after recheck');
               return true;
             }
-            
+
             // Check if it's permanently denied (notDetermined means we can still request)
             // On iOS, if authorizationStatus is denied, it means user explicitly denied
             // We should guide them to Settings
-            debugPrint('Notification permission denied. Authorization status: ${recheckSettings.authorizationStatus}');
-            
+            debugPrint(
+                'Notification permission denied. Authorization status: ${recheckSettings.authorizationStatus}');
+
             // Show settings dialog to guide user to enable in Settings
             await _showNotificationPermissionSettingsDialog();
             return false;
           }
-          
+
           // If notDetermined, we can try again later
-          if (requestedSettings.authorizationStatus == AuthorizationStatus.notDetermined) {
+          if (requestedSettings.authorizationStatus ==
+              AuthorizationStatus.notDetermined) {
             debugPrint('Notification permission not determined yet');
             return false;
           }
-          
+
           return false;
         } catch (e, stackTrace) {
-          debugPrint('Error using Firebase Messaging for iOS notification permission: $e');
+          debugPrint(
+              'Error using Firebase Messaging for iOS notification permission: $e');
           debugPrint('Stack trace: $stackTrace');
           // Fallback to permission_handler if Firebase fails
           final notificationStatus = await Permission.notification.status;
@@ -131,7 +148,6 @@ class NotificationPermissionService {
           final requestedStatus = await Permission.notification.request();
           return requestedStatus.isGranted;
         }
-
       }
     } catch (e, stackTrace) {
       debugPrint('Error in requestNotificationPermission: $e');
@@ -164,12 +180,14 @@ class NotificationPermissionService {
         try {
           final firebaseMessaging = FirebaseMessaging.instance;
           final settings = await firebaseMessaging.getNotificationSettings();
-          
+
           // Return true if authorized or provisional
-          return settings.authorizationStatus == AuthorizationStatus.authorized ||
-                 settings.authorizationStatus == AuthorizationStatus.provisional;
+          return settings.authorizationStatus ==
+                  AuthorizationStatus.authorized ||
+              settings.authorizationStatus == AuthorizationStatus.provisional;
         } catch (e) {
-          debugPrint('Error checking iOS notification permission via Firebase: $e');
+          debugPrint(
+              'Error checking iOS notification permission via Firebase: $e');
           // Fallback to permission_handler
           final notificationStatus = await Permission.notification.status;
           return notificationStatus.isGranted;

@@ -6,11 +6,10 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'dart:io';
 import 'package:verithrive_dev/enduser/flavors/build_config.dart'
-as enduser_build;
-import 'package:verithrive_dev/enduser/flavors/env_config.dart'
-as enduser_env;
+    as enduser_build;
+import 'package:verithrive_dev/enduser/flavors/env_config.dart' as enduser_env;
 import 'package:verithrive_dev/enduser/flavors/environment.dart'
-as enduser_environment;
+    as enduser_environment;
 import 'enduser/FirebaseTokenService.dart';
 import 'enduser/screens/DevHttpOverrides.dart';
 import 'routes/app_pages.dart';
@@ -36,7 +35,6 @@ Future<void> _firebaseBackgroundMessageHandler(RemoteMessage message) async {
 }
 
 Future<void> main() async {
-
   HttpOverrides.global = DevHttpOverrides();
   final enduser_env.EnvConfig enduserConfig = enduser_env.EnvConfig(
     appName: "VERITHRIVE",
@@ -54,11 +52,18 @@ Future<void> main() async {
   // Initialize Firebase with platform-specific options
   if (Platform.isIOS) {
     await Firebase.initializeApp();
+    // 🔥 ADD THIS (VERY IMPORTANT)
+    await FirebaseMessaging.instance
+        .setForegroundNotificationPresentationOptions(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
   } else {
     await Firebase.initializeApp(options: FirebaseConfig.getFirebaseOptions());
   }
 
-   FirebaseTokenService.getFCMToken();
+  FirebaseTokenService.getFCMToken();
 
   // Register the background message handler
   FirebaseMessaging.onBackgroundMessage(_firebaseBackgroundMessageHandler);
