@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:developer';
+import 'dart:io';
 import 'package:get/get.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import '../../utils/api_services.dart';
@@ -11,6 +12,7 @@ class SocketService extends GetxService {
   IO.Socket? _socket;
   bool _isConnected = false;
   String? _currentUserId;
+  Timer? _connectionTimeout;
 
   // Socket connection status
   final isConnected = false.obs;
@@ -87,8 +89,20 @@ class SocketService extends GetxService {
           .disableAutoConnect() // Disable auto-connect to control connection manually
           .setExtraHeaders({
             'auth': token, // Token is guaranteed to be non-null here
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            // iOS-specific headers
+            if (Platform.isIOS) ...{
+              'User-Agent': 'iOS-Verithrive-App',
+              'Connection': 'keep-alive',
+            },
           }) // Add userId and token as query parameters
           .setPath('/socket.io') // Explicitly set Socket.IO path
+          // iOS-specific configurations
+          .enableReconnection() // Enable automatic reconnection
+          .setReconnectionAttempts(5) // Limit reconnection attempts
+          .setReconnectionDelay(1000) // 1 second delay between reconnections
+          .setTimeout(30000) // 30 seconds timeout
           .build();
 
       log(
@@ -110,10 +124,31 @@ class SocketService extends GetxService {
       log('Calling socket.connect()...');
       _socket!.connect();
       log('socket.connect() called, waiting for connection...');
+      
+      // Add connection timeout for iOS
+      if (Platform.isIOS) {
+        _connectionTimeout = Timer(Duration(seconds: 30), () {
+          if (!_isConnected) {
+            log('iOS socket connection timeout - attempting polling fallback');
+            _fallbackToPolling();
+          }
+        });
+      }
     } catch (e) {
       log('Error connecting to Socket.IO: $e');
       _isConnected = false;
       isConnected.value = false;
+      
+      // iOS-specific error handling
+      if (Platform.isIOS) {
+        log('iOS socket connection error: $e');
+        if (e.toString().contains('Network') || e.toString().contains('Connection')) {
+          log('iOS network connection issue - check network settings');
+        } else if (e.toString().contains('WebSocket') || e.toString().contains('websocket')) {
+          log('iOS WebSocket issue - attempting polling fallback');
+          _fallbackToPolling();
+        }
+      }
     }
   }
 
@@ -131,6 +166,10 @@ class SocketService extends GetxService {
       isConnected.value = true;
       log('✅ Socket.IO connected successfully!');
       log('Socket ID: ${_socket?.id}');
+      
+      // Clear connection timeout if connected
+      _connectionTimeout?.cancel();
+      _connectionTimeout = null;
     });
 
     _socket!.onDisconnect((reason) {
@@ -145,11 +184,29 @@ class SocketService extends GetxService {
       log('❌ Socket.IO connection error: $error');
       log('Error type: ${error.runtimeType}');
       log('Error details: ${error.toString()}');
+      
+      // iOS-specific error handling
+      if (Platform.isIOS) {
+        log('iOS-specific socket error detected');
+        if (error.toString().contains('websocket')) {
+          log('WebSocket error on iOS, falling back to polling');
+          // Try to reconnect with polling only
+          _fallbackToPolling();
+        }
+      }
     });
 
     _socket!.onError((error) {
       log('❌ Socket.IO error: $error');
       log('Error details: ${error.toString()}');
+      
+      // iOS-specific error handling
+      if (Platform.isIOS) {
+        log('iOS socket error: $error');
+        if (error.toString().contains('network') || error.toString().contains('connection')) {
+          log('Network connection error on iOS, check network availability');
+        }
+      }
     });
 
     _socket!.on('connect_error', (error) {
@@ -157,6 +214,11 @@ class SocketService extends GetxService {
       log('Error details: ${error.toString()}');
       _isConnected = false;
       isConnected.value = false;
+      
+      // iOS-specific error handling
+      if (Platform.isIOS) {
+        log('iOS connect_error: $error');
+      }
     });
 
     // Handle authentication errors
@@ -295,6 +357,10 @@ class SocketService extends GetxService {
 
   /// Disconnect from Socket.IO server
   void disconnect() {
+    // Clear connection timeout
+    _connectionTimeout?.cancel();
+    _connectionTimeout = null;
+    
     if (_socket != null) {
       _socket!.disconnect();
       _socket!.dispose();
@@ -309,6 +375,11 @@ class SocketService extends GetxService {
   /// Reset connection completely - used for logout/login scenarios
   void resetConnection() {
     log('Resetting socket connection');
+    
+    // Clear connection timeout
+    _connectionTimeout?.cancel();
+    _connectionTimeout = null;
+    
     disconnect();
     
     // Force a complete reset by creating a new instance
@@ -318,6 +389,59 @@ class SocketService extends GetxService {
     _socket = null;
     
     log('Socket connection reset complete');
+  }
+
+  /// Fallback to polling transport for iOS WebSocket issues
+  Future<void> _fallbackToPolling() async {
+    try {
+      log('Attempting to reconnect with polling transport only...');
+      
+      // Wait a bit before reconnecting
+      await Future.delayed(Duration(seconds: 2));
+      
+      // Get user credentials again
+      final userId = await _getUserId();
+      final token = await _getAccessToken();
+      
+      if (userId == null || token == null) {
+        log('Cannot fallback: User credentials not available');
+        return;
+      }
+      
+      // Create new options with polling only
+      final pollingOptions = IO.OptionBuilder()
+          .setTransports(['polling']) // Use polling only
+          .disableAutoConnect()
+          .setExtraHeaders({
+            'auth': token,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            if (Platform.isIOS) ...{
+              'User-Agent': 'iOS-Verithrive-App-Polling',
+              'Connection': 'keep-alive',
+            },
+          })
+          .setPath('/socket.io')
+          .enableReconnection()
+          .setReconnectionAttempts(3)
+          .setReconnectionDelay(2000)
+          .setTimeout(30000)
+          .build();
+      
+      // Dispose old socket
+      _socket?.dispose();
+      
+      // Create new socket with polling options
+      _socket = IO.io(socketBaseUrl, pollingOptions);
+      
+      // Setup listeners and connect
+      _setupEventListeners();
+      _socket!.connect();
+      
+      log('Polling fallback connection initiated');
+    } catch (e) {
+      log('Error in polling fallback: $e');
+    }
   }
 
   /// Get user ID from storage (matching login screen implementation)

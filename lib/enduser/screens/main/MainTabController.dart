@@ -5,14 +5,13 @@ import 'package:verithrive_dev/services/storage_service.dart';
 
 class MainTabController extends GetxController {
   final RxInt currentIndex = 0.obs;
-
-  // Get SocketService if available
-  SocketService? get _socketService =>
-      Get.isRegistered<SocketService>() ? Get.find<SocketService>() : null;
+  SocketService? _socketService;
 
   @override
   void onInit() {
     super.onInit();
+    // Initialize local socket service
+    _socketService = SocketService();
     // Connect socket for authenticated users
     _connectSocket();
   }
@@ -47,6 +46,14 @@ class MainTabController extends GetxController {
 
     // Connect socket with user ID and token
     await _socketService!.connect(userId: userId, token: token);
+  }
+
+  @override
+  void onClose() {
+    // Disconnect socket service
+    _socketService?.disconnect();
+    _socketService = null;
+    super.onClose();
   }
 }
 
