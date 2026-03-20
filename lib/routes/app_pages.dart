@@ -2,6 +2,7 @@ import 'package:get/get.dart';
 
 import '../api/dio_client.dart';
 import '../api/user_api_service.dart';
+import '../services/socket_service.dart';
 import '../professional/forgot_password/forgot_password_binding.dart';
 import '../professional/forgot_password/forgot_password_view.dart';
 import '../professional/login/login_binding.dart';
@@ -90,6 +91,7 @@ class AppBinding extends Bindings {
     Get.put(DioClient(), permanent: true);
     Get.put(UserApiService(Get.find<DioClient>()), permanent: true);
     Get.put(NotificationService(), permanent: true);
+    Get.put(SocketService(), permanent: true);
   }
 }
 

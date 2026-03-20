@@ -7,6 +7,7 @@ import '../../common/base_controller.dart';
 import '../../routes/app_routes.dart';
 import '../../services/storage_service.dart';
 import '../../services/social_auth_service.dart';
+import '../../services/socket_service.dart';
 import '../../theme/colors.dart';
 import '../../theme/fonts.dart';
 import '../../theme/font_sizes.dart';
@@ -114,6 +115,13 @@ class ProfileController extends BaseController {
   }
 
   Future<void> _clearLocalDataAndNavigate() async {
+    // Reset socket service first
+    if (Get.isRegistered<SocketService>()) {
+      final socketService = Get.find<SocketService>();
+      socketService.resetConnection();
+      debugPrint('Socket service reset during logout');
+    }
+
     // Sign out from social providers first
     try {
       await _socialAuthService.signOutSocialProviders();

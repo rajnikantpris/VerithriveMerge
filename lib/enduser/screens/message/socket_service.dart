@@ -306,6 +306,20 @@ class SocketService extends GetxService {
     }
   }
 
+  /// Reset connection completely - used for logout/login scenarios
+  void resetConnection() {
+    log('Resetting socket connection');
+    disconnect();
+    
+    // Force a complete reset by creating a new instance
+    _isConnected = false;
+    isConnected.value = false;
+    _currentUserId = null;
+    _socket = null;
+    
+    log('Socket connection reset complete');
+  }
+
   /// Get user ID from storage (matching login screen implementation)
   Future<String?> _getUserId() async {
     try {

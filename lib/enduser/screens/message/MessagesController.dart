@@ -8,9 +8,9 @@ import '../../utils/api_services.dart';
 import '../../network/exceptions/base_exception.dart';
 import '../../utils/common_dialog.dart';
 import '../../utils/auth_service.dart';
-import 'socket_service.dart';
 import '../../core/values/sharePrefrenceConst.dart';
 import 'package:verithrive_dev/services/storage_service.dart';
+import 'socket_service.dart';
 
 class MessagesController extends BaseController {
   final ProjectRepository _repository = Get.find(tag: (ProjectRepository).toString());
@@ -37,6 +37,9 @@ class MessagesController extends BaseController {
   @override
   void onClose() {
     _cleanupSocketListeners();
+    // Disconnect and dispose local socket service
+    _socketService?.disconnect();
+    _socketService = null;
     super.onClose();
   }
 
@@ -79,6 +82,10 @@ class MessagesController extends BaseController {
       } else {
         // Try to reconnect and then get inbox
         await checkAndReconnectSocket();
+        // Try again after reconnection
+        if (_socketService != null && _socketService!.connected) {
+          _socketService!.getInbox();
+        }
       }
     } catch (e) {
       print('Error in silent refresh: $e');
@@ -405,11 +412,9 @@ class MessagesController extends BaseController {
         return;
       }
 
-      // Get or create SocketService
-      if (Get.isRegistered<SocketService>()) {
-        _socketService = Get.find<SocketService>();
-      } else {
-        _socketService = Get.put(SocketService());
+      // Get or create local SocketService
+      if (_socketService == null) {
+        _socketService = SocketService();
       }
 
       // Check if socket is connected
