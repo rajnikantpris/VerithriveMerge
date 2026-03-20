@@ -8,7 +8,7 @@ import '../../utils/api_services.dart';
 import '../../network/exceptions/base_exception.dart';
 import '../../utils/common_dialog.dart';
 import '../../utils/auth_service.dart';
-class MessagesController extends BaseController {
+class MessagesControllerOld extends BaseController {
   final ProjectRepository _repository = Get.find(tag: (ProjectRepository).toString());
   
   // Observable list of conversations

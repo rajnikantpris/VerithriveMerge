@@ -11,6 +11,7 @@ import '../../utils/auth_service.dart';
 import 'socket_service.dart';
 import '../../core/values/sharePrefrenceConst.dart';
 import 'package:verithrive_dev/services/storage_service.dart';
+
 class MessagesController extends BaseController {
   final ProjectRepository _repository = Get.find(tag: (ProjectRepository).toString());
   
@@ -41,27 +42,27 @@ class MessagesController extends BaseController {
 
   @override
   void fetchData() async {
-    print("API Called: Messages Loaded");
+    print("Socket-based: Messages Loaded");
     _checkAuthAndFetchMessages();
   }
 
-  // Refresh data method called by MainScreen
+  // Refresh data method called by MainScreen - now socket-based
   void refreshData() {
     isLoading.value = false;
     _checkAuthAndFetchMessages();
   }
 
-  // Check authentication and fetch messages
+  // Check authentication and fetch messages via socket
   Future<void> _checkAuthAndFetchMessages() async {
     bool canAccess = await AuthService.requireAuth();
     if (canAccess) {
-      fetchChatInbox(isInitialLoad: true);
+      checkAndReconnectSocket();
     }
   }
 
-  /// Silent refresh for notification updates - no loading states, no blinking
+  /// Silent refresh for notification updates - now socket-based
   Future<void> silentRefreshInbox() async {
-    print("Silent refresh triggered for messages");
+    print("Silent refresh triggered for messages via socket");
     
     // Prevent concurrent refreshes
     if (_isRefreshing) {
@@ -70,95 +71,30 @@ class MessagesController extends BaseController {
     }
 
     _isRefreshing = true;
-    // Don't set isLoading.value = true to prevent blinking
     
-    var service = _repository.sendGetApiNoParamRequest(chat_inbox);
-    
-    callDataService(
-      service,
-      onSuccess: _handleChatInboxSuccess,
-      onError: _handleChatInboxError,
-      isShowLoading: false,
-      onComplete: () {
-        _isRefreshing = false;
-        // Don't set isLoading.value = false to prevent blinking
-      },
-    );
-  }
-
-  /// Fetch chat inbox from API
-  Future<void> fetchChatInbox({bool isInitialLoad = false}) async {
-    // Prevent concurrent refreshes
-    if (_isRefreshing) {
-      return;
-    }
-
-    _isRefreshing = true;
-    
-    // Set loading states appropriately
-    if (isInitialLoad) {
-      isInitialLoading.value = true;
-    } else {
-      isLoading.value = true;
-    }
-    
-    var service = _repository.sendGetApiNoParamRequest(chat_inbox);
-    
-    callDataService(
-      service,
-      onSuccess: _handleChatInboxSuccess,
-      onError: _handleChatInboxError,
-      isShowLoading: false, // We're using isLoading observable
-      onComplete: () {
-        _isRefreshing = false;
-        isInitialLoading.value = false;
-        isLoading.value = false;
-      },
-    );
-  }
-
-  /// Handle successful API response
-  Future<void> _handleChatInboxSuccess(dynamic baseResponse) async {
     try {
-      Map<String, dynamic> responseData;
-      if (baseResponse != null && baseResponse.data != null) {
-        responseData = baseResponse.data is Map<String, dynamic>
-            ? baseResponse.data
-            : baseResponse.data as Map<String, dynamic>;
-      } else if (baseResponse is Map<String, dynamic>) {
-        responseData = baseResponse;
+      // Request inbox data via socket if connected
+      if (_socketService != null && _socketService!.connected) {
+        _socketService!.getInbox();
       } else {
-        conversations.value = [];
-        return;
-      }
-
-      bool success = responseData['success'] ?? false;
-      
-      if (success == true) {
-        _parseApiResponse(responseData);
-      } else {
-        conversations.value = [];
+        // Try to reconnect and then get inbox
+        await checkAndReconnectSocket();
       }
     } catch (e) {
-      print('Error parsing chat inbox response: $e');
-      conversations.value = [];
+      print('Error in silent refresh: $e');
+    } finally {
+      _isRefreshing = false;
     }
   }
 
-  /// Handle API error
-  void _handleChatInboxError(Exception exception) {
-    print('Chat Inbox API Error: $exception');
-    conversations.value = [];
-    
-    if (exception is BaseException) {
-      showResponseDialog(
-        message: exception.message,
-        title: 'Error',
-        isError: true,
-        showButton: true,
-        onOkPressed: () {},
-      );
+  /// Check if the current user is a guest (no access token)
+  bool _isGuestUser() {
+    if (!Get.isRegistered<StorageService>()) {
+      return true; // No storage service means guest
     }
+    final storage = Get.find<StorageService>();
+    final token = storage.readString('access_token');
+    return token == null || token.isEmpty;
   }
 
   /// Parse API response and update conversations list
@@ -463,6 +399,12 @@ class MessagesController extends BaseController {
   /// Check socket connection and reconnect if needed
   Future<void> checkAndReconnectSocket() async {
     try {
+      // Check if user is guest, don't connect socket
+      if (_isGuestUser()) {
+        print('Guest user detected, skipping socket connection');
+        return;
+      }
+
       // Get or create SocketService
       if (Get.isRegistered<SocketService>()) {
         _socketService = Get.find<SocketService>();
@@ -494,6 +436,7 @@ class MessagesController extends BaseController {
 
   /// Get current user ID from storage
   Future<String?> _getCurrentUserId() async {
+    if (!Get.isRegistered<StorageService>()) return null;
     final storage = Get.find<StorageService>();
     return storage.readString('user_id') ??
         storage.readString('userId') ??
@@ -503,6 +446,7 @@ class MessagesController extends BaseController {
   /// Get access token from storage
   Future<String?> _getAccessToken() async {
     try {
+      if (!Get.isRegistered<StorageService>()) return null;
       final storage = Get.find<StorageService>();
       final token = storage.readString('access_token') ??
           storage.readString('accessToken') ??

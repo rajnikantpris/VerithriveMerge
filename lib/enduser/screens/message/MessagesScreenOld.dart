@@ -11,7 +11,7 @@ import '../../core/widget/animated_loader.dart';
 import '../../routes/app_routes.dart';
 import 'MessagesController.dart';
 
-class MessagesScreen extends StatelessWidget {
+class MessagesScreenOld extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = Get.find<MessagesController>(tag: 'messages');
@@ -116,20 +116,17 @@ class MessagesScreen extends StatelessWidget {
                   ),
                 );
               }
-              return RefreshIndicator(
-                onRefresh: () => controller.fetchChatInbox(), // Use normal refresh for swipe
-                child: ListView.builder(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  itemCount: filteredConversations.length,
-                  itemBuilder: (context, index) {
-                    final conversation = filteredConversations[index];
-                    return _buildConversationItem(
-                      context,
-                      conversation,
-                      controller,
-                    );
-                  },
-                ),
+              return ListView.builder(
+                physics: const AlwaysScrollableScrollPhysics(),
+                itemCount: filteredConversations.length,
+                itemBuilder: (context, index) {
+                  final conversation = filteredConversations[index];
+                  return _buildConversationItem(
+                    context,
+                    conversation,
+                    controller,
+                  );
+                },
               );
             }),
           ),
