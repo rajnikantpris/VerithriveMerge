@@ -5,14 +5,47 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../utils/logger.dart';
 import '../routes/app_routes.dart';
-import '../professional/home/messages_controller.dart';
+import '../professional/home/messages_controller.dart' hide MessagesController;
 import '../professional/home/home_controller.dart';
 import '../professional/home/calendar_controller.dart';
 import '../professional/home/chat/chat_controller.dart';
+import '../enduser/screens/message/MessagesController.dart';
+import '../enduser/screens/message/ChatDetailController.dart';
+import '../enduser/screens/booking/BookingsController.dart';
+import '../enduser/screens/home_main/HomeMainController.dart';
+import '../enduser/screens/main/MainTabController.dart';
+import '../enduser/models/Conversation.dart';
+import '../enduser/routes/app_routes.dart' as enduser_routes;
+import '../enduser/app/modules/notification/model/NotificationPayloadModel.dart';
+import '../enduser/data/repository/project_repository.dart';
+import '../enduser/network/exceptions/not_found_exception.dart';
+import '../enduser/network/exceptions/api_exception.dart';
+import '../enduser/utils/app_assets.dart';
+import '../enduser/utils/app_colors.dart';
+import '../enduser/utils/app_text_styles.dart';
+import '../enduser/utils/api_services.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'notification_service.dart';
 import 'storage_service.dart';
 
-/// Service to handle foreground notifications
+/// Notification types that should open the Bookings tab for end users
+const List<String> _endUserBookingNotificationTypes = [
+  'booking_rescheduled_by_professional',
+  'booking_cancelled_by_professional',
+  'booking_three_day_reminder',
+  'booking_one_day_reminder',
+  'booking_one_hour_reminder',
+  'booking_end_reminder',
+  'booking_ended',
+  'booking_started',
+  'booking_start_reminder',
+  'booking_completed_review',
+  'review_reminder',
+  'final_review_reminder',
+];
+
+/// Service to handle foreground notifications for both user types
 class ForegroundNotificationServiceOld {
   static final FlutterLocalNotificationsPlugin _localNotifications =
       FlutterLocalNotificationsPlugin();
@@ -30,6 +63,41 @@ class ForegroundNotificationServiceOld {
   /// Clear pending notification after it's been handled
   static void clearPendingNotification() {
     _pendingNotification = null;
+  }
+
+  /// Get the current user type from storage
+  static String? _getUserType() {
+    try {
+      if (!Get.isRegistered<StorageService>()) {
+        logInfo('StorageService not registered, cannot determine user type');
+        return null;
+      }
+      final storage = Get.find<StorageService>();
+      final userType = storage.readString('userType');
+      logInfo('Retrieved user type: $userType');
+      return userType;
+    } catch (e) {
+      logError('Error getting user type', error: e);
+      return null;
+    }
+  }
+
+  /// Check if current user is professional
+  static bool _isProfessionalUser() {
+    final userType = _getUserType();
+    return userType == 'professional';
+  }
+
+  /// Check if current user is end user
+  static bool _isEndUser() {
+    final userType = _getUserType();
+    return userType == 'end_user' || userType == 'normal';
+  }
+
+  /// Check if notification type is booking-related for end users
+  static bool _isEndUserBookingNotificationType(String? type) {
+    if (type == null) return false;
+    return _endUserBookingNotificationTypes.contains(type);
   }
 
   /// Handle pending notification - call this from Home after it's ready
@@ -111,6 +179,7 @@ class ForegroundNotificationServiceOld {
       logInfo('Notification object exists: ${message.notification != null}');
       logInfo('Notification title: ${message.notification?.title}');
       logInfo('Notification body: ${message.notification?.body}');
+      logInfo('User type: ${_getUserType()}');
 
       final notification = message.notification;
       final android = message.notification?.android;
@@ -142,25 +211,14 @@ class ForegroundNotificationServiceOld {
       // Refresh notification count for any notification received
       _refreshNotificationCount();
 
-      if (notificationType == 'chat_message') {
-        logInfo('Chat message notification received - refreshing inbox');
-        _refreshChatInbox();
-
-        // Check if chat is open and if message is from the same user
-        if (_shouldHideChatNotification(message)) {
-          logInfo('Chat is open for same user - hiding notification');
-          return; // Don't show notification if chat is open for the same user
-        }
-      } else if (notificationType == 'new_booking' ||
-          notificationType == 'booking_cancelled' ||
-          notificationType == 'booking_updated') {
-        logInfo(
-            'Booking notification received (type: $notificationType) - refreshing calendar');
-        _refreshCalendar();
-      } else if (notificationType == 'application_approved') {
-        logInfo(
-            'Profile approval notification received - refreshing profile data');
-        _refreshProfile();
+      // Handle based on user type
+      if (_isProfessionalUser()) {
+        await _handleProfessionalForegroundNotification(message, notificationType);
+      } else if (_isEndUser()) {
+        await _handleEndUserForegroundNotification(message, notificationType);
+      } else {
+        logInfo('Unknown user type, using default notification handling');
+        await _handleDefaultForegroundNotification(message, notificationType);
       }
 
       logInfo('Preparing notification - Title: $title, Body: $body');
@@ -213,6 +271,80 @@ class ForegroundNotificationServiceOld {
       logError('Error showing foreground notification',
           error: e, stackTrace: stackTrace);
     }
+  }
+
+  /// Handle foreground notifications for professional users
+  static Future<void> _handleProfessionalForegroundNotification(
+    RemoteMessage message,
+    String? notificationType,
+  ) async {
+    if (notificationType == 'chat_message') {
+      logInfo('Professional chat message notification received - refreshing inbox');
+      _refreshChatInbox();
+
+      // Check if chat is open and if message is from the same user
+      if (_shouldHideChatNotification(message)) {
+        logInfo('Chat is open for same user - hiding notification');
+        return; // Don't show notification if chat is open for the same user
+      }
+    } else if (notificationType == 'new_booking' ||
+        notificationType == 'booking_cancelled' ||
+        notificationType == 'booking_updated') {
+      logInfo(
+          'Professional booking notification received (type: $notificationType) - refreshing calendar');
+      _refreshCalendar();
+    } else if (notificationType == 'application_approved') {
+      logInfo(
+          'Professional profile approval notification received - refreshing profile data');
+      _refreshProfile();
+    }
+  }
+
+  /// Handle foreground notifications for end users
+  static Future<void> _handleEndUserForegroundNotification(
+    RemoteMessage message,
+    String? notificationType,
+  ) async {
+    final data = message.data;
+    
+    if (notificationType == 'chat_message') {
+      logInfo('End user chat message notification received - refreshing inbox');
+      _refreshEndUserMessagesInbox();
+
+      // Check if chat detail screen is active with same user
+      if (_isEndUserChatDetailActiveWithUser(
+        data['sender_id']?.toString(),
+        data['room_id']?.toString(),
+      )) {
+        logInfo('End user chat detail screen is active with same user - skipping notification');
+        return;
+      }
+    } else if (_isEndUserBookingNotificationType(notificationType)) {
+      logInfo('End user booking notification received (type: $notificationType) - refreshing bookings');
+      _refreshEndUserBookings();
+      
+      // Handle review-related notifications in foreground - show dialog immediately
+      if (notificationType == "booking_completed_review" ||
+          notificationType == "review_reminder" ||
+          notificationType == "final_review_reminder") {
+        logInfo("Handling ${notificationType} in foreground for end user");
+        _openEndUserReviewDialog(data);
+      }
+    } else {
+      // For other notification types, refresh notification count
+      logInfo("End user notification received (type: $notificationType) - refreshing notification count");
+      _refreshEndUserNotificationCount();
+    }
+  }
+
+  /// Handle default foreground notifications when user type is unknown
+  static Future<void> _handleDefaultForegroundNotification(
+    RemoteMessage message,
+    String? notificationType,
+  ) async {
+    // Default handling - refresh notification count
+    _refreshNotificationCount();
+    logInfo('Default notification handling for type: $notificationType');
   }
 
   /// Setup Firebase foreground message handler
@@ -398,7 +530,7 @@ class ForegroundNotificationServiceOld {
     try {
       final notificationType = message.data['type']?.toString();
       final messageId = message.messageId;
-      logInfo('Handling notification tap - Type: $notificationType, ID: $messageId');
+      logInfo('Handling notification tap - Type: $notificationType, ID: $messageId, User Type: ${_getUserType()}');
 
       // Prevent duplicate handling of the same notification
       if (messageId != null && messageId == _lastHandledNotificationId) {
@@ -414,44 +546,91 @@ class ForegroundNotificationServiceOld {
       // Always refresh notification count when notification is tapped
       _refreshNotificationCount();
 
-      if (notificationType == 'chat_message') {
-        // Refresh chat inbox data
-        _refreshChatInbox();
-        // Navigate to specific chat
-        _navigateToChat(message);
-      } else if (notificationType == 'new_booking' ||
-          notificationType == 'booking_cancelled' ||
-          notificationType == 'booking_updated') {
-        // Refresh calendar and bookings data
-        _refreshCalendar();
-        // Navigate to home and select Calendar tab (index 1)
-        if (Get.currentRoute != Routes.home) {
-          Get.toNamed(Routes.home);
-          // Wait a bit for navigation to complete, then select Calendar tab
-          Future.delayed(const Duration(milliseconds: 300), () {
-            _selectCalendarTab();
-          });
-          logInfo('Navigated to home (calendar tab) for $notificationType');
-        } else {
-          // Already on home screen, just select Calendar tab
-          _selectCalendarTab();
-          logInfo(
-              'Already on home screen, selected Calendar tab for $notificationType');
-        }
-      } else if (notificationType == 'application_approved') {
-        // Refresh profile data when approval notification is tapped
-        _refreshProfile();
-        // Navigate to notifications screen
-        Get.toNamed(Routes.notifications);
-        logInfo('Navigated to notifications screen for application approval');
+      // Route based on user type
+      if (_isProfessionalUser()) {
+        _handleProfessionalNotificationTap(message, notificationType);
+      } else if (_isEndUser()) {
+        _handleEndUserNotificationTap(message, notificationType);
       } else {
-        // Handle other notification types if needed
-        logInfo('Unknown notification type: $notificationType');
+        logInfo('Unknown user type, using default notification handling');
+        _handleDefaultNotificationTap(message, notificationType);
       }
     } catch (e, stackTrace) {
       logError('Error handling notification tap',
           error: e, stackTrace: stackTrace);
     }
+  }
+
+  /// Handle notification tap for professional users
+  static void _handleProfessionalNotificationTap(RemoteMessage message, String? notificationType) {
+    if (notificationType == 'chat_message') {
+      // Refresh chat inbox data
+      _refreshChatInbox();
+      // Navigate to specific chat
+      _navigateToChat(message);
+    } else if (notificationType == 'new_booking' ||
+        notificationType == 'booking_cancelled' ||
+        notificationType == 'booking_updated') {
+      // Refresh calendar and bookings data
+      _refreshCalendar();
+      // Navigate to home and select Calendar tab (index 1)
+      if (Get.currentRoute != Routes.home) {
+        Get.toNamed(Routes.home);
+        // Wait a bit for navigation to complete, then select Calendar tab
+        Future.delayed(const Duration(milliseconds: 300), () {
+          _selectCalendarTab();
+        });
+        logInfo('Navigated to home (calendar tab) for $notificationType');
+      } else {
+        // Already on home screen, just select Calendar tab
+        _selectCalendarTab();
+        logInfo(
+            'Already on home screen, selected Calendar tab for $notificationType');
+      }
+    } else if (notificationType == 'application_approved') {
+      // Refresh profile data when approval notification is tapped
+      _refreshProfile();
+      // Navigate to notifications screen
+      Get.toNamed(Routes.notifications);
+      logInfo('Navigated to notifications screen for application approval');
+    } else {
+      // Handle other notification types if needed
+      logInfo('Unknown notification type for professional: $notificationType');
+    }
+  }
+
+  /// Handle notification tap for end users
+  static void _handleEndUserNotificationTap(RemoteMessage message, String? notificationType) {
+    final data = message.data;
+    
+    if (_isEndUserBookingNotificationType(notificationType)) {
+      if (notificationType == "booking_completed_review" ||
+          notificationType == "review_reminder" ||
+          notificationType == "final_review_reminder") {
+        _openEndUserReviewDialog(data);
+        logInfo(
+            'Opened review dialog from ${notificationType} notification (FCM tap)');
+      } else {
+        _openEndUserBookingsTab();
+        logInfo("Navigated to Bookings tab from booking notification (FCM tap)");
+      }
+      return;
+    }
+
+    // Handle chat message notification - navigate to chat detail
+    if (notificationType == "chat_message") {
+      _refreshEndUserMessagesInbox();
+      _navigateToEndUserChat(message);
+      return;
+    }
+
+    // Handle other notification types
+    logInfo('Unknown notification type for end user: $notificationType');
+  }
+
+  /// Handle default notification tap when user type is unknown
+  static void _handleDefaultNotificationTap(RemoteMessage message, String? notificationType) {
+    logInfo('Default notification handling for type: $notificationType');
   }
 
   /// Select Messages tab (index 2) in HomeController
@@ -513,49 +692,203 @@ class ForegroundNotificationServiceOld {
     try {
       // Parse payload - it's a string representation of the data map
       // Format: "{key1: value1, key2: value2}"
-      logInfo('Parsing payload: $payload');
+      logInfo('Parsing payload: $payload, User Type: ${_getUserType()}');
 
       // Always refresh notification count when notification is tapped
       _refreshNotificationCount();
 
-      // Extract type from payload string
-      if (payload.contains("type: chat_message") ||
-          payload.contains("'type': 'chat_message'")) {
-        // Refresh chat inbox data
-        _refreshChatInbox();
-        // Navigate to specific chat from payload
-        _navigateToChatFromPayload(payload);
-      } else if (payload.contains("type: new_booking") ||
-          payload.contains("'type': 'new_booking'") ||
-          payload.contains("type: booking_cancelled") ||
-          payload.contains("'type': 'booking_cancelled'") ||
-          payload.contains("type: booking_updated") ||
-          payload.contains("'type': 'booking_updated'")) {
-        // Refresh calendar and bookings data
-        _refreshCalendar();
-        // Navigate to home and select Calendar tab (index 1)
-        if (Get.currentRoute != Routes.home) {
-          Get.toNamed(Routes.home);
-          // Wait a bit for navigation to complete, then select Calendar tab
-          Future.delayed(const Duration(milliseconds: 300), () {
-            _selectCalendarTab();
-          });
-          logInfo('Navigated to home (calendar tab) from payload');
-        } else {
-          // Already on home screen, just select Calendar tab
-          _selectCalendarTab();
-          logInfo('Already on home screen, selected Calendar tab from payload');
-        }
-      } else if (payload.contains("type: application_approved") ||
-          payload.contains("'type': 'application_approved'")) {
-        // Refresh profile data and navigate to notifications screen
-        _refreshProfile();
-        Get.toNamed(Routes.notifications);
-        logInfo(
-            'Navigated to notifications screen from payload for application approval');
+      // Route based on user type
+      if (_isProfessionalUser()) {
+        _handleProfessionalNotificationTapFromPayload(payload);
+      } else if (_isEndUser()) {
+        _handleEndUserNotificationTapFromPayload(payload);
+      } else {
+        logInfo('Unknown user type, using default payload handling');
+        _handleDefaultNotificationTapFromPayload(payload);
       }
     } catch (e, stackTrace) {
       logError('Error handling notification tap from payload',
+          error: e, stackTrace: stackTrace);
+    }
+  }
+
+  /// Handle notification tap from payload for professional users
+  static void _handleProfessionalNotificationTapFromPayload(String payload) {
+    // Extract type from payload string
+    if (payload.contains("type: chat_message") ||
+        payload.contains("'type': 'chat_message'")) {
+      // Refresh chat inbox data
+      _refreshChatInbox();
+      // Navigate to specific chat from payload
+      _navigateToChatFromPayload(payload);
+    } else if (payload.contains("type: new_booking") ||
+        payload.contains("'type': 'new_booking'") ||
+        payload.contains("type: booking_cancelled") ||
+        payload.contains("'type': 'booking_cancelled'") ||
+        payload.contains("type: booking_updated") ||
+        payload.contains("'type': 'booking_updated'")) {
+      // Refresh calendar and bookings data
+      _refreshCalendar();
+      // Navigate to home and select Calendar tab (index 1)
+      if (Get.currentRoute != Routes.home) {
+        Get.toNamed(Routes.home);
+        // Wait a bit for navigation to complete, then select Calendar tab
+        Future.delayed(const Duration(milliseconds: 300), () {
+          _selectCalendarTab();
+        });
+        logInfo('Professional navigated to home (calendar tab) from payload');
+      } else {
+        // Already on home screen, just select Calendar tab
+        _selectCalendarTab();
+        logInfo('Professional already on home screen, selected Calendar tab from payload');
+      }
+    } else if (payload.contains("type: application_approved") ||
+        payload.contains("'type': 'application_approved'")) {
+      // Refresh profile data and navigate to notifications screen
+      _refreshProfile();
+      Get.toNamed(Routes.notifications);
+      logInfo(
+          'Professional navigated to notifications screen from payload for application approval');
+    }
+  }
+
+  /// Handle notification tap from payload for end users
+  static void _handleEndUserNotificationTapFromPayload(String payload) {
+    // Check for booking notifications first
+    if (payload.contains("type: booking_rescheduled_by_professional") ||
+        payload.contains("'type': 'booking_rescheduled_by_professional'") ||
+        payload.contains("type: booking_cancelled_by_professional") ||
+        payload.contains("'type': 'booking_cancelled_by_professional'") ||
+        payload.contains("type: booking_three_day_reminder") ||
+        payload.contains("'type': 'booking_three_day_reminder'") ||
+        payload.contains("type: booking_one_day_reminder") ||
+        payload.contains("'type': 'booking_one_day_reminder'") ||
+        payload.contains("type: booking_one_hour_reminder") ||
+        payload.contains("'type': 'booking_one_hour_reminder'") ||
+        payload.contains("type: booking_end_reminder") ||
+        payload.contains("'type': 'booking_end_reminder'") ||
+        payload.contains("type: booking_ended") ||
+        payload.contains("'type': 'booking_ended'") ||
+        payload.contains("type: booking_started") ||
+        payload.contains("'type': 'booking_started'") ||
+        payload.contains("type: booking_start_reminder") ||
+        payload.contains("'type': 'booking_start_reminder'")) {
+      _openEndUserBookingsTab();
+      logInfo("End user navigated to Bookings tab from booking notification (local tap)");
+      return;
+    }
+
+    // Handle review-related notifications
+    if (payload.contains("type: booking_completed_review") ||
+        payload.contains("'type': 'booking_completed_review'") ||
+        payload.contains("type: review_reminder") ||
+        payload.contains("'type': 'review_reminder'") ||
+        payload.contains("type: final_review_reminder") ||
+        payload.contains("'type': 'final_review_reminder'")) {
+      // Parse payload to extract data
+      Map<String, dynamic> data = _parsePayloadToMap(payload);
+      _openEndUserReviewDialog(data);
+      logInfo("End user opened review dialog from ${data['type']} notification (local tap)");
+      return;
+    }
+
+    // Handle chat message notifications
+    if (payload.contains("type: chat_message") ||
+        payload.contains("'type': 'chat_message'")) {
+      _refreshEndUserMessagesInbox();
+      _navigateToEndUserChatFromPayload(payload);
+      logInfo("End user navigated to chat from chat message notification (local tap)");
+      return;
+    }
+
+    logInfo('End user unknown notification type in payload: $payload');
+  }
+
+  /// Handle default notification tap from payload when user type is unknown
+  static void _handleDefaultNotificationTapFromPayload(String payload) {
+    logInfo('Default payload handling for: $payload');
+  }
+
+  /// Parse payload string to Map
+  static Map<String, dynamic> _parsePayloadToMap(String payload) {
+    try {
+      // Remove outer braces if present
+      if (payload.startsWith('{') && payload.endsWith('}')) {
+        payload = payload.substring(1, payload.length - 1);
+      }
+
+      Map<String, dynamic> mapped = {};
+      List<String> keyValuePairs = payload.split(',');
+      for (String keyValuePair in keyValuePairs) {
+        List<String> keyValue = keyValuePair.split(':');
+        if (keyValue.length == 2) {
+          String key = keyValue[0].trim().replaceAll(RegExp(r'[{}"]'), '');
+          String value = keyValue
+              .sublist(1)
+              .join(':')
+              .trim()
+              .replaceAll(RegExp(r'["}]'), '');
+          mapped[key] = value;
+        }
+      }
+      return mapped;
+    } catch (e) {
+      logError("Error parsing payload to map: $e");
+      return {};
+    }
+  }
+
+  /// Navigate to end user chat from payload
+  static void _navigateToEndUserChatFromPayload(String payload) {
+    try {
+      Map<String, dynamic> valueMap = _parsePayloadToMap(payload);
+
+      // Extract chat room information from notification model
+      final chatRoomId = valueMap['room_id']?.toString();
+      final receiverId = valueMap['sender_id']?.toString();
+      final senderName = valueMap['full_name']?.toString() ?? 'Unknown';
+      final profilePicture = valueMap['profile_picture']?.toString() ?? '';
+      final lastMessage = valueMap['body']?.toString() ?? 'New message';
+      final title = valueMap['title']?.toString() ?? 'New Message';
+
+      logInfo("=== END USER NOTIFICATION EXTRACTION DEBUG ===");
+      logInfo("Extracted chatRoomId: $chatRoomId");
+      logInfo("Extracted receiverId: $receiverId");
+      logInfo("Extracted senderName: $senderName");
+      logInfo("Extracted profilePicture: $profilePicture");
+
+      // Create conversation object for navigation with all payload data
+      final conversation = Conversation(
+        id: chatRoomId ?? '',
+        name: senderName,
+        lastMessage: lastMessage,
+        lastMessageTime: DateTime.now(),
+        userId: receiverId,
+        isOnline: false,
+        profileImageUrl: profilePicture,
+      );
+
+      // Navigate to chat detail screen with conversation data
+      Get.toNamed(
+        enduser_routes.AppRoutes.chat_detail,
+        arguments: {
+          'conversation': conversation,
+          'notificationData': {
+            'title': title,
+            'body': lastMessage,
+            'sender_id': receiverId,
+            'room_id': chatRoomId,
+            'full_name': senderName,
+            'profile_picture': profilePicture,
+            'timestamp': valueMap['timestamp'],
+            'click_action': valueMap['click_action'],
+          },
+        },
+      );
+
+      logInfo("End user navigated to chat detail from notification");
+    } catch (e, stackTrace) {
+      logError('Error navigating end user to chat from payload',
           error: e, stackTrace: stackTrace);
     }
   }
@@ -868,6 +1201,534 @@ class ForegroundNotificationServiceOld {
       } else {
         _selectMessagesTab();
       }
+    }
+  }
+
+  // ==================== END USER SPECIFIC METHODS ====================
+
+  /// Check if end user chat detail screen is active with the same user
+  static bool _isEndUserChatDetailActiveWithUser(String? senderId, String? roomId) {
+    try {
+      // Check if ChatDetailController is registered and active
+      if (!Get.isRegistered<ChatDetailController>()) {
+        logInfo("End user ChatDetailController not registered");
+        return false;
+      }
+
+      final chatController = Get.find<ChatDetailController>();
+      final currentConversation = chatController.conversation;
+
+      // Check if current chat is with the same user
+      final isSameUser =
+          currentConversation.value!.userId == senderId ||
+          currentConversation.value!.id == roomId;
+
+      logInfo("End user current chat user ID: ${currentConversation.value!.userId}");
+      logInfo("End user current chat room ID: ${currentConversation.value!.id}");
+      logInfo("End user incoming sender ID: $senderId");
+      logInfo("End user incoming room ID: $roomId");
+      logInfo("End user is same user: $isSameUser");
+
+      return isSameUser;
+    } catch (e) {
+      logError("Error checking end user chat detail status: $e");
+      return false;
+    }
+  }
+
+  /// Refresh end user messages inbox
+  static void _refreshEndUserMessagesInbox() {
+    try {
+      if (Get.isRegistered<MessagesController>(tag: 'messages')) {
+        final messagesController = Get.find<MessagesController>(tag: 'messages');
+        messagesController.silentRefreshInbox();
+        logInfo('End user messages inbox refresh triggered');
+      } else {
+        logInfo('End user MessagesController not registered, skipping inbox refresh');
+      }
+    } catch (e, stackTrace) {
+      logError('Error refreshing end user messages inbox', error: e, stackTrace: stackTrace);
+    }
+  }
+
+  /// Refresh end user notification count
+  static void _refreshEndUserNotificationCount() {
+    try {
+      if (Get.isRegistered<HomeMainController>(tag: 'home')) {
+        Get.find<HomeMainController>(tag: 'home').fetchNotificationCount();
+        logInfo('End user notification count refresh triggered');
+      } else {
+        logInfo('End user HomeMainController not registered, skipping notification count refresh');
+      }
+    } catch (e, stackTrace) {
+      logError('Error refreshing end user notification count', error: e, stackTrace: stackTrace);
+    }
+  }
+
+  /// Refresh end user bookings
+  static void _refreshEndUserBookings() {
+    try {
+      if (Get.isRegistered<BookingsController>(tag: 'bookings')) {
+        final bookingsController = Get.find<BookingsController>(tag: 'bookings');
+        bookingsController.refreshData();
+        logInfo('End user bookings refresh triggered');
+      } else {
+        logInfo('End user BookingsController not registered, skipping bookings refresh');
+      }
+    } catch (e, stackTrace) {
+      logError('Error refreshing end user bookings', error: e, stackTrace: stackTrace);
+    }
+  }
+
+  /// Open the Bookings tab for end users
+  static void _openEndUserBookingsTab() {
+    try {
+      if (Get.isRegistered<MainTabController>()) {
+        final controller = Get.find<MainTabController>();
+        controller.setTab(1); // 0: home, 1: bookings, 2: messages
+        logInfo("End user switched to Bookings tab via MainTabController");
+        // Also refresh bookings data if controller is available
+        if (Get.isRegistered<BookingsController>(tag: 'bookings')) {
+          try {
+            final bookingsController = Get.find<BookingsController>(tag: 'bookings');
+            bookingsController.refreshData();
+            logInfo("End user refreshed bookings data after switching tab");
+          } catch (e) {
+            logError("Error refreshing end user bookings after switching tab: $e");
+          }
+        }
+      } else {
+        Get.toNamed(enduser_routes.AppRoutes.main, arguments: {'openTab': 1});
+        logInfo("End user navigated to MainScreen with Bookings tab open");
+      }
+    } catch (e) {
+      logError("Error opening end user Bookings tab: $e");
+    }
+  }
+
+  /// Open review dialog for end users
+  static Future<void> _openEndUserReviewDialog(Map<String, dynamic> data) async {
+    try {
+      // Extract required data from notification
+      final professionalId = data['professional_id']?.toString() ?? '';
+      final bookingId = data['booking_id']?.toString() ?? '';
+      final professionalName =
+          data['professional_name']?.toString() ??
+          data['full_name']?.toString() ??
+          'Professional';
+
+      if (professionalId.isEmpty || bookingId.isEmpty) {
+        logError("Missing professional_id or booking_id in notification data");
+        // Fallback to bookings tab if required data is missing
+        _openEndUserBookingsTab();
+        return;
+      }
+
+      logInfo(
+        "Opening end user review dialog for professional: $professionalName, ID: $professionalId, Booking: $bookingId",
+      );
+
+      // Navigate to home screen first, then show dialog
+      final navigationResult = await Get.toNamed(
+        enduser_routes.AppRoutes.main,
+        arguments: {'openTab': 0}, // Home tab
+      );
+
+      // Show dialog after navigation completes with retry logic
+      _showEndUserReviewDialogWithRetry(professionalName, professionalId, bookingId);
+    } catch (e) {
+      logError("Error opening end user review dialog: $e");
+      // Fallback to bookings tab
+      _openEndUserBookingsTab();
+    }
+  }
+
+  /// Show review dialog with retry logic for end users
+  static void _showEndUserReviewDialogWithRetry(
+    String professionalName,
+    String professionalId,
+    String bookingId,
+  ) {
+    int retryCount = 0;
+    const maxRetries = 10;
+
+    void tryShowDialog() {
+      retryCount++;
+      logInfo("Attempting to show end user review dialog (attempt $retryCount/$maxRetries)");
+
+      if (Get.isRegistered<HomeMainController>()) {
+        logInfo("End user HomeMainController found, showing dialog");
+        final homeController = Get.find<HomeMainController>();
+        homeController.showReviewDialog(
+          professionalName,
+          professionalId,
+          bookingId,
+        );
+      } else if (retryCount < maxRetries) {
+        logInfo("End user HomeMainController not yet registered, retrying in 500ms...");
+        Future.delayed(Duration(milliseconds: 500), () {
+          tryShowDialog();
+        });
+      } else {
+        logInfo(
+          "End user HomeMainController not registered after $maxRetries attempts, showing fallback dialog",
+        );
+        _showEndUserFallbackReviewDialog(professionalName, professionalId, bookingId);
+      }
+    }
+
+    tryShowDialog();
+  }
+
+  /// Show fallback review dialog directly for end users
+  static void _showEndUserFallbackReviewDialog(
+    String professionalName,
+    String professionalId,
+    String bookingId,
+  ) {
+    logInfo("Showing end user fallback review dialog for: $professionalName");
+
+    // Create the dialog directly without relying on HomeMainController
+    final TextEditingController reviewController = TextEditingController();
+    final RxInt rating = 0.obs;
+    final RxBool isSubmitting = false.obs;
+
+    Get.dialog(
+      Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        insetPadding: EdgeInsets.symmetric(horizontal: 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Main content container
+            Container(
+              padding: EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: AppColors.white,
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(20),
+                  topRight: Radius.circular(20),
+                ),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SizedBox(width: 24),
+                      Expanded(
+                        child: Text(
+                          'Rate your recent session with\n"$professionalName"',
+                          textAlign: TextAlign.center,
+                          style: AppTextStyles.popinMediumTextStyle(),
+                        ),
+                      ),
+                      GestureDetector(
+                        onTap: () => Get.back(),
+                        child: Icon(
+                          Icons.close,
+                          color: Colors.grey.shade600,
+                          size: 24,
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  SizedBox(height: 24),
+
+                  // Star Rating
+                  Obx(
+                    () => Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(5, (index) {
+                        return GestureDetector(
+                          onTap: () => rating.value = index + 1,
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 4),
+                            child: SvgPicture.asset(
+                              AppAssets.rating_selected,
+                              color: index < rating.value
+                                  ? AppColors.ratingSelectedColor
+                                  : AppColors.unselectedTabColor,
+                            ),
+                          ),
+                        );
+                      }),
+                    ),
+                  ),
+
+                  SizedBox(height: 24),
+
+                  // Review Text Field
+                  Container(
+                    decoration: BoxDecoration(
+                      color: AppColors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.grey.shade300, width: 1),
+                    ),
+                    child: TextField(
+                      controller: reviewController,
+                      maxLines: 5,
+                      decoration: InputDecoration(
+                        hintText: 'Write a review',
+                        hintStyle: AppTextStyles.popinRegularTextStyle(
+                          fontSize: 14,
+                          color: AppColors.color919191,
+                        ),
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.all(16),
+                        counterStyle: AppTextStyles.regularTextStyle(
+                          fontSize: 12,
+                          color: Colors.grey.shade500,
+                        ),
+                      ),
+                      style: AppTextStyles.regularTextStyle(
+                        fontSize: 14,
+                        color: AppColors.black,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Submit Button - Attached at bottom
+            Obx(
+              () => Container(
+                width: double.infinity,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: isSubmitting.value
+                      ? Colors.grey
+                      : AppColors.primaryColor,
+                  borderRadius: BorderRadius.only(
+                    bottomLeft: Radius.circular(20),
+                    bottomRight: Radius.circular(20),
+                  ),
+                ),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: isSubmitting.value
+                        ? null
+                        : () async {
+                            if (rating.value == 0) {
+                              Get.snackbar(
+                                'Rating Required',
+                                'Please select a rating before submitting',
+                                snackPosition: SnackPosition.BOTTOM,
+                                backgroundColor: Colors.orange.shade100,
+                                duration: Duration(seconds: 2),
+                              );
+                              return;
+                            }
+
+                            // Submit review with API call
+                            isSubmitting.value = true;
+
+                            try {
+                              await _submitEndUserReviewFallback(
+                                professionalId: professionalId,
+                                bookingId: bookingId,
+                                rating: rating.value,
+                                review: reviewController.text.trim(),
+                              );
+
+                              Get.back(); // Close dialog
+                              Get.snackbar(
+                                'Review Submitted',
+                                'Thank you for your feedback!',
+                                snackPosition: SnackPosition.BOTTOM,
+                                backgroundColor: AppColors.primaryColor
+                                    .withOpacity(0.2),
+                                duration: Duration(seconds: 2),
+                              );
+                            } catch (e) {
+                              String errorMessage =
+                                  "Failed to submit review. Please try again.";
+
+                              // Handle different exception types to extract proper error messages
+                              if (e is NotFoundException) {
+                                errorMessage = e.message;
+                              } else if (e is ApiException) {
+                                errorMessage = e.message;
+                              } else if (e is Exception) {
+                                String exceptionString = e.toString();
+                                if (exceptionString.startsWith('Exception: ')) {
+                                  errorMessage = exceptionString.replaceFirst(
+                                    'Exception: ',
+                                    '',
+                                  );
+                                } else {
+                                  errorMessage = exceptionString;
+                                }
+                              }
+
+                              Get.snackbar(
+                                'Error',
+                                errorMessage,
+                                snackPosition: SnackPosition.BOTTOM,
+                                backgroundColor: Colors.red.shade100,
+                                duration: Duration(seconds: 3),
+                              );
+                            } finally {
+                              isSubmitting.value = false;
+                            }
+                          },
+                    borderRadius: BorderRadius.only(
+                      bottomLeft: Radius.circular(20),
+                      bottomRight: Radius.circular(20),
+                    ),
+                    child: Center(
+                      child: isSubmitting.value
+                          ? SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.white,
+                                ),
+                              ),
+                            )
+                          : Text(
+                              'Add review',
+                              style: AppTextStyles.buttonTextStyle(),
+                            ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+      barrierDismissible: false,
+    );
+  }
+
+  /// Submit review fallback for end users
+  static Future<void> _submitEndUserReviewFallback({
+    required String professionalId,
+    required String bookingId,
+    required int rating,
+    required String review,
+  }) async {
+    logInfo(
+      "Submitting end user review (fallback): professionalId=$professionalId, bookingId=$bookingId, rating=$rating, review=$review",
+    );
+
+    if (!Get.isRegistered<ProjectRepository>(
+      tag: (ProjectRepository).toString(),
+    )) {
+      throw Exception('Repository not available');
+    }
+
+    final repository = Get.find<ProjectRepository>(
+      tag: (ProjectRepository).toString(),
+    );
+
+    final requestData = {
+      "professional_id": professionalId,
+      "booking_id": bookingId,
+      "rating": rating,
+      "review": review.isEmpty ? "" : review,
+    };
+
+    var service = repository.sendPostApiRequest(
+      () => requestData,
+      professionals_rate_review,
+      true,
+    );
+
+    var response = await service;
+
+    // Parse the response
+    Map<String, dynamic> responseData;
+    if (response != null && response.data != null) {
+      responseData = response.data is Map<String, dynamic>
+          ? response.data
+          : response.data as Map<String, dynamic>;
+    } else if (response is Map<String, dynamic>) {
+      responseData = response;
+    } else {
+      throw Exception('Invalid response format');
+    }
+
+    bool success = responseData['success'] ?? false;
+
+    if (!success) {
+      String message = responseData['message'] ?? 'Failed to submit review';
+      throw Exception(message);
+    }
+
+    logInfo("End user review submitted successfully (fallback): ${responseData['message']}");
+  }
+
+  /// Navigate to end user chat
+  static void _navigateToEndUserChat(RemoteMessage message) {
+    try {
+      final data = message.data;
+
+      // Extract chat room information from notification data
+      final chatRoomId =
+          data['room_id']?.toString() ??
+          data['room_id']?.toString();
+      final receiverId =
+          data['sender_id']?.toString() ??
+          data['sender_id']?.toString();
+      final senderName =
+          data['full_name']?.toString() ??
+          data['full_name']?.toString() ??
+          'Unknown';
+      final profilePicture =
+          data['profile_picture']?.toString() ??
+          data['profile_picture']?.toString() ??
+          '';
+      final lastMessage =
+          data['body']?.toString() ?? 'New message';
+      final title =
+          data['title']?.toString() ?? 'New Message';
+
+      logInfo("=== END USER NAVIGATION FROM MESSAGE TAP DEBUG ===");
+      logInfo("chatRoomId: $chatRoomId");
+      logInfo("receiverId: $receiverId");
+      logInfo("senderName: $senderName");
+      logInfo("profilePicture: $profilePicture");
+
+      final conversation = Conversation(
+        id: chatRoomId ?? '',
+        name: senderName,
+        lastMessage: lastMessage,
+        lastMessageTime: DateTime.now(),
+        userId: receiverId,
+        isOnline: false,
+        profileImageUrl: profilePicture,
+      );
+
+      Get.toNamed(
+        enduser_routes.AppRoutes.chat_detail,
+        arguments: {
+          'conversation': conversation,
+          'notificationData': {
+            'title': title,
+            'body': lastMessage,
+            'sender_id': receiverId,
+            'room_id': chatRoomId,
+            'full_name': senderName,
+            'profile_picture': profilePicture,
+            'timestamp': data['timestamp'],
+            'click_action': data['click_action'],
+          },
+        },
+      );
+
+      logInfo("End user navigated to chat detail from FCM notification tap");
+    } catch (e, stackTrace) {
+      logError('Error navigating end user to chat from notification',
+          error: e, stackTrace: stackTrace);
     }
   }
 }
