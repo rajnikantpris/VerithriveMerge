@@ -104,6 +104,18 @@ class MessagesController extends BaseController {
     return token == null || token.isEmpty;
   }
 
+  /// Get current user type
+  String _getCurrentUserType() {
+    if (!Get.isRegistered<StorageService>()) {
+      return 'unknown';
+    }
+    final storage = Get.find<StorageService>();
+    return storage.readString('userType') ?? 
+           storage.readString('user_type') ?? 
+           storage.readString(SharePreferenceConst.userType) ?? 
+           'normal'; // Default to 'normal' for end-user
+  }
+
   /// Parse API response and update conversations list
   void _parseApiResponse(Map<String, dynamic> data) {
     try {
@@ -417,10 +429,14 @@ class MessagesController extends BaseController {
         _socketService = SocketService();
       }
 
+      // Get current user ID for debugging
+      final currentUserId = await _getCurrentUserId();
+      final currentUserType = _getCurrentUserType();
+      print('End-user socket connection - User ID: $currentUserId, User Type: $currentUserType');
+
       // Check if socket is connected
       if (!_socketService!.connected) {
         // Socket not connected, reconnect it
-        final currentUserId = await _getCurrentUserId();
         final token = await _getAccessToken();
         await _socketService!.connect(userId: currentUserId, token: token);
       }
@@ -439,13 +455,17 @@ class MessagesController extends BaseController {
     }
   }
 
-  /// Get current user ID from storage
+  /// Get current user ID from storage (end-user specific)
   Future<String?> _getCurrentUserId() async {
     if (!Get.isRegistered<StorageService>()) return null;
     final storage = Get.find<StorageService>();
-    return storage.readString('user_id') ??
+    
+    // Try end-user specific keys first, then fallback to generic keys
+    return storage.readString(SharePreferenceConst.id) ?? // End-user uses 'id' key
+        storage.readString('id') ??
+        storage.readString('_id') ??
         storage.readString('userId') ??
-        storage.readString('_id');
+        storage.readString('user_id'); // Fallback to professional key (least priority)
   }
 
   /// Get access token from storage
@@ -488,8 +508,23 @@ class MessagesController extends BaseController {
   void _handleInboxData(Map<String, dynamic> data) {
     try {
       print('Received inbox data from socket: $data');
+      
+      // Log current user type for debugging
+      final currentUserType = _getCurrentUserType();
+      print('Current user type: $currentUserType');
+      
+      // Validate that this data is for end-user
+      final dataType = data['type']?.toString() ?? data['userType']?.toString() ?? '';
+      print('Data type from server: $dataType');
+      
+      if (dataType.isNotEmpty && dataType == 'professional') {
+        print('Ignoring professional data in end-user controller');
+        return;
+      }
+      
       // Parse the inbox data and update conversations list
       _parseApiResponse(data);
+      print('Processed end-user inbox data successfully');
     } catch (e) {
       print('Error handling inbox data: $e');
       // Handle parsing errors - keep existing data or clear

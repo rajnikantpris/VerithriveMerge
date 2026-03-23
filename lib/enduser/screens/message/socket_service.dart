@@ -3,6 +3,7 @@ import 'dart:developer';
 import 'dart:io';
 import 'package:get/get.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
+import '../../../utils/logger.dart';
 import '../../utils/api_services.dart';
 import '../../core/values/sharePrefrenceConst.dart';
 import 'package:verithrive_dev/services/storage_service.dart';
@@ -322,8 +323,8 @@ class SocketService extends GetxService {
       return;
     }
 
-    _socket!.on('inbox_data', (data) {
-      log('Received inbox data via Socket.IO: $data');
+    _socket!.on('get_inbox', (data) {
+      log('Received inbox data via Socket.IO End user Client: $data');
       if (data is Map<String, dynamic>) {
         callback(data);
       }
@@ -332,7 +333,7 @@ class SocketService extends GetxService {
 
   /// Remove inbox_data listener
   void offInboxData() {
-    _socket?.off('inbox_data');
+    _socket?.off('get_inbox');
   }
 
   /// Listen for user connection status updates - user_connection_status event
@@ -549,5 +550,27 @@ class SocketService extends GetxService {
 
     final result = await completer.future;
     return result;
+  }
+
+  void forceDisconnect() {
+    if (_socket != null) {
+      try {
+        // Clear all event listeners by removing the socket itself
+        // Socket.IO doesn't have offAll(), so we remove the socket instance
+        _socket!.disconnect();
+        _socket!.dispose();
+        _socket = null;
+
+        logInfo('Socket.IO force disconnected and disposed');
+      } catch (e) {
+        logInfo('Error during force disconnect: $e');
+        _socket = null;
+      }
+    }
+
+    // Reset all state
+    _isConnected = false;
+    isConnected.value = false;
+    _currentUserId = null;
   }
 }

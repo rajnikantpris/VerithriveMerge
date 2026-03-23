@@ -71,8 +71,7 @@ class HomeController extends BaseController {
     super.onInit();
     // Check if user is authenticated before making API calls
     if (!_isGuestUser()) {
-      // Connect Socket.IO for authenticated users
-      _connectSocket();
+
       // Update device token on initialization
       updateDeviceToken();
       // Load bookings for current date by default
@@ -81,6 +80,8 @@ class HomeController extends BaseController {
       _notificationService?.fetchNotificationCount();
       // Load user profile details
       loadProfileDetails();
+      // Connect Socket.IO for authenticated users
+      _connectSocket();
     }
     // Clear all sessions initially
     upcomingSessions.clear();
@@ -242,9 +243,11 @@ class HomeController extends BaseController {
 
     if (index == 2) {
       // Check and reconnect socket when Messages tab is selected
+      print('Messages tab selected - checking socket connection');
       if (Get.isRegistered<MessagesController>()) {
         final messagesController = Get.find<MessagesController>();
         messagesController.checkAndReconnectSocket();
+        print('Messages tab selected - Get.isRegistered<MessagesController>');
       }
     }
     
@@ -716,15 +719,17 @@ class HomeController extends BaseController {
 
     // Get current user ID
     String? userId;
+    String? token;
     if (Get.isRegistered<StorageService>()) {
       final storage = Get.find<StorageService>();
-      userId = storage.readString('user_id') ??
-          storage.readString('userId') ??
-          storage.readString('_id');
+      userId = storage.readString('user_id');
+      token= storage.readString('access_token');
     }
 
+    print('HomeController - Connecting socket with User ID: $userId');
+
     // Connect socket with user ID
-    await _socketService!.connect(userId: userId);
+    await _socketService!.connect(userId: userId,token: token);
   }
 
   /// Load user profile details

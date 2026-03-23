@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
 import '../../api/api_response.dart';
 import '../../api/user_api_service.dart';
 import '../../common/base_controller.dart';
@@ -118,7 +117,7 @@ class ProfileController extends BaseController {
     // Reset socket service first
     if (Get.isRegistered<SocketService>()) {
       final socketService = Get.find<SocketService>();
-      socketService.resetConnection();
+      socketService.disconnect();
       debugPrint('Socket service reset during logout');
     }
 

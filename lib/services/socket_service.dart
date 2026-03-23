@@ -62,9 +62,14 @@ class SocketService extends GetxService {
         return;
       }
 
+      // Get user type for professional identification
+      final userType = await _getUserType();
+      logInfo('User type: $userType');
+
       final baseUrl = UserApiService.socketBaseUrl;
       logInfo('Connecting to Socket.IO: $baseUrl');
       logInfo('User ID: $userId');
+      logInfo('User Type: $userType');
       logInfo('Token available: true');
       logInfo('Token length: ${token.length}');
       logInfo(
@@ -75,17 +80,13 @@ class SocketService extends GetxService {
 
       // Socket.IO options
       // Note: Socket.IO client automatically adds /socket.io path by default
-      // Build query parameters with userId and token (server expects token in query)
-      // final queryParams = <String, dynamic>{
-      //   'userId': userId,
-      //   'token': token, // Token is guaranteed to be non-null here
-      // };
-
+      // User type and token are sent in headers for server identification
       final options = IO.OptionBuilder()
           .setTransports(['websocket', 'polling']) // Try both transports
           .disableAutoConnect() // Disable auto-connect to control connection manually
           .setExtraHeaders({
             'auth': token, // Token is guaranteed to be non-null here
+            'userType': userType ?? 'professional', // Add user type to headers
           }) // Add userId and token as query parameters
           .setPath('/socket.io') // Explicitly set Socket.IO path
           .build();
@@ -323,13 +324,13 @@ class SocketService extends GetxService {
   void resetConnection() {
     logInfo('Resetting socket connection');
     disconnect();
-    
+
     // Force a complete reset by creating a new instance
     _isConnected = false;
     isConnected.value = false;
     _currentUserId = null;
     _socket = null;
-    
+
     logInfo('Socket connection reset complete');
   }
 
@@ -347,6 +348,25 @@ class SocketService extends GetxService {
     if (!Get.isRegistered<StorageService>()) return null;
     final storage = Get.find<StorageService>();
     return storage.readString('access_token');
+  }
+
+  /// Get user type from storage
+  Future<String?> _getUserType() async {
+    try {
+      if (!Get.isRegistered<StorageService>()) return null;
+      final storage = Get.find<StorageService>();
+
+      // Try multiple possible keys for user type
+      final userType = storage.readString('userType') ??
+          storage.readString('user_type') ??
+          'professional'; // Default to 'professional' for professional users
+
+      logInfo('Retrieved user type: $userType');
+      return userType;
+    } catch (e) {
+      logInfo('Error getting user type from storage: $e');
+      return 'professional'; // Default to 'professional' for professional users
+    }
   }
 
   /// Check if socket is connected

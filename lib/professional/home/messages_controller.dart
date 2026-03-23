@@ -1,5 +1,6 @@
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:verithrive_dev/utils/logger.dart';
 
 import '../../api/api_response.dart';
 import '../../api/user_api_service.dart';
@@ -34,7 +35,12 @@ class MessagesController extends BaseController {
   void onInit() {
     super.onInit();
     // fetchChatInbox();
+
+    print("Call ON init message controller ---");
     if (!_isGuestUser()) {
+      if (Get.isRegistered<SocketService>()) {
+        Get.delete<SocketService>();
+      }
       checkAndReconnectSocket();
     }
   }
@@ -59,6 +65,8 @@ class MessagesController extends BaseController {
       if (!_socketService!.connected) {
         // Socket not connected, reconnect it
         final currentUserId = await _getCurrentUserId();
+        logInfo(
+            'Message UserID:----- ${currentUserId.toString()}' );
         await _socketService!.connect(userId: currentUserId);
       }
 
@@ -79,9 +87,7 @@ class MessagesController extends BaseController {
   Future<String?> _getCurrentUserId() async {
     if (!Get.isRegistered<StorageService>()) return null;
     final storage = Get.find<StorageService>();
-    return storage.readString('user_id') ??
-        storage.readString('userId') ??
-        storage.readString('_id');
+    return storage.readString('user_id');
   }
 
   /// Setup Socket.IO event listeners for inbox_data
