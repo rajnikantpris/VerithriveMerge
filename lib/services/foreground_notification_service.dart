@@ -361,8 +361,13 @@ class ForegroundNotificationService {
         logInfo('Notification Body: ${message.notification?.body}');
         logInfo('===================================');
 
-        // Show the notification
-        showForegroundNotification(message);
+        if(message.notification == null){
+          // Show the notification
+          showForegroundNotification(message);
+        }else {
+         print("AAAAAAAAAAAAA");
+        }
+
       });
 
       // Handle message opened app (when user taps notification while app is in background)
