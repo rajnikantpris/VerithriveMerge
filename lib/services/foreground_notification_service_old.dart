@@ -3,6 +3,8 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../enduser/screens/message/ChatDetailBinding.dart';
+import '../enduser/screens/message/ChatDetailScreen.dart';
 import '../utils/logger.dart';
 import '../routes/app_routes.dart';
 import '../professional/home/messages_controller.dart' hide MessagesController;
@@ -46,9 +48,9 @@ const List<String> _endUserBookingNotificationTypes = [
 ];
 
 /// Service to handle foreground notifications for both user types
-class ForegroundNotificationServiceOld {
+class ForegroundNotificationService {
   static final FlutterLocalNotificationsPlugin _localNotifications =
-      FlutterLocalNotificationsPlugin();
+  FlutterLocalNotificationsPlugin();
 
   /// Stores pending notification data when app is opened from terminated state
   /// This allows splash to navigate to Home first, then Home can navigate to Chat
@@ -91,7 +93,7 @@ class ForegroundNotificationServiceOld {
   /// Check if current user is end user
   static bool _isEndUser() {
     final userType = _getUserType();
-    return userType == 'end_user' || userType == 'normal';
+    return  userType == 'normal';
   }
 
   /// Check if notification type is booking-related for end users
@@ -114,7 +116,7 @@ class ForegroundNotificationServiceOld {
   static Future<void> initialize() async {
     // Android initialization settings
     const androidSettings =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
+    AndroidInitializationSettings('@mipmap/ic_launcher');
 
     // iOS initialization settings
     const iosSettings = DarwinInitializationSettings(
@@ -156,7 +158,7 @@ class ForegroundNotificationServiceOld {
 
     await _localNotifications
         .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>()
+        AndroidFlutterLocalNotificationsPlugin>()
         ?.createNotificationChannel(androidChannel);
 
     logInfo('Android notification channel created');
@@ -170,8 +172,8 @@ class ForegroundNotificationServiceOld {
 
   /// Show notification when app is in foreground
   static Future<void> showForegroundNotification(
-    RemoteMessage message,
-  ) async {
+      RemoteMessage message,
+      ) async {
     try {
       logInfo('=== ATTEMPTING TO SHOW FOREGROUND NOTIFICATION ===');
       logInfo('Message ID: ${message.messageId}');
@@ -275,9 +277,9 @@ class ForegroundNotificationServiceOld {
 
   /// Handle foreground notifications for professional users
   static Future<void> _handleProfessionalForegroundNotification(
-    RemoteMessage message,
-    String? notificationType,
-  ) async {
+      RemoteMessage message,
+      String? notificationType,
+      ) async {
     if (notificationType == 'chat_message') {
       logInfo('Professional chat message notification received - refreshing inbox');
       _refreshChatInbox();
@@ -297,16 +299,17 @@ class ForegroundNotificationServiceOld {
       logInfo(
           'Professional profile approval notification received - refreshing profile data');
       _refreshProfile();
+      _refreshCalendar();
     }
   }
 
   /// Handle foreground notifications for end users
   static Future<void> _handleEndUserForegroundNotification(
-    RemoteMessage message,
-    String? notificationType,
-  ) async {
+      RemoteMessage message,
+      String? notificationType,
+      ) async {
     final data = message.data;
-    
+
     if (notificationType == 'chat_message') {
       logInfo('End user chat message notification received - refreshing inbox');
       _refreshEndUserMessagesInbox();
@@ -322,7 +325,7 @@ class ForegroundNotificationServiceOld {
     } else if (_isEndUserBookingNotificationType(notificationType)) {
       logInfo('End user booking notification received (type: $notificationType) - refreshing bookings');
       _refreshEndUserBookings();
-      
+
       // Handle review-related notifications in foreground - show dialog immediately
       if (notificationType == "booking_completed_review" ||
           notificationType == "review_reminder" ||
@@ -339,9 +342,9 @@ class ForegroundNotificationServiceOld {
 
   /// Handle default foreground notifications when user type is unknown
   static Future<void> _handleDefaultForegroundNotification(
-    RemoteMessage message,
-    String? notificationType,
-  ) async {
+      RemoteMessage message,
+      String? notificationType,
+      ) async {
     // Default handling - refresh notification count
     _refreshNotificationCount();
     logInfo('Default notification handling for type: $notificationType');
@@ -359,8 +362,14 @@ class ForegroundNotificationServiceOld {
         logInfo('Notification Body: ${message.notification?.body}');
         logInfo('===================================');
 
-        // Show the notification
-        showForegroundNotification(message);
+        if(Platform.isIOS) {
+          if (message.notification == null) {
+            // Show the notification
+            showForegroundNotification(message);
+          }
+        }else{
+          showForegroundNotification(message);
+        }
       });
 
       // Handle message opened app (when user taps notification while app is in background)
@@ -403,7 +412,7 @@ class ForegroundNotificationServiceOld {
   static Future<void> checkInitialMessage() async {
     try {
       final initialMessage =
-          await FirebaseMessaging.instance.getInitialMessage();
+      await FirebaseMessaging.instance.getInitialMessage();
       if (initialMessage != null) {
         logInfo(
             'App opened from terminated state via notification: ${initialMessage.messageId}');
@@ -602,7 +611,7 @@ class ForegroundNotificationServiceOld {
   /// Handle notification tap for end users
   static void _handleEndUserNotificationTap(RemoteMessage message, String? notificationType) {
     final data = message.data;
-    
+
     if (_isEndUserBookingNotificationType(notificationType)) {
       if (notificationType == "booking_completed_review" ||
           notificationType == "review_reminder" ||
@@ -868,9 +877,9 @@ class ForegroundNotificationServiceOld {
         profileImageUrl: profilePicture,
       );
 
-      // Navigate to chat detail screen with conversation data
-      Get.toNamed(
-        enduser_routes.AppRoutes.chat_detail,
+      Get.to(
+            () => ChatDetailScreen(),
+        binding: ChatDetailBinding(),
         arguments: {
           'conversation': conversation,
           'notificationData': {
@@ -885,6 +894,24 @@ class ForegroundNotificationServiceOld {
           },
         },
       );
+
+      // Navigate to chat detail screen with conversation data
+/*      Get.toNamed(
+        enduser_routes.AppRoutes.chat_detail,
+        arguments: {
+          'conversation': conversation,
+          'notificationData': {
+            'title': title,
+            'body': lastMessage,
+            'sender_id': receiverId,
+            'room_id': chatRoomId,
+            'full_name': senderName,
+            'profile_picture': profilePicture,
+            'timestamp': valueMap['timestamp'],
+            'click_action': valueMap['click_action'],
+          },
+        },
+      );*/
 
       logInfo("End user navigated to chat detail from notification");
     } catch (e, stackTrace) {
@@ -1221,7 +1248,7 @@ class ForegroundNotificationServiceOld {
       // Check if current chat is with the same user
       final isSameUser =
           currentConversation.value!.userId == senderId ||
-          currentConversation.value!.id == roomId;
+              currentConversation.value!.id == roomId;
 
       logInfo("End user current chat user ID: ${currentConversation.value!.userId}");
       logInfo("End user current chat room ID: ${currentConversation.value!.id}");
@@ -1314,8 +1341,8 @@ class ForegroundNotificationServiceOld {
       final bookingId = data['booking_id']?.toString() ?? '';
       final professionalName =
           data['professional_name']?.toString() ??
-          data['full_name']?.toString() ??
-          'Professional';
+              data['full_name']?.toString() ??
+              'Professional';
 
       if (professionalId.isEmpty || bookingId.isEmpty) {
         logError("Missing professional_id or booking_id in notification data");
@@ -1345,10 +1372,10 @@ class ForegroundNotificationServiceOld {
 
   /// Show review dialog with retry logic for end users
   static void _showEndUserReviewDialogWithRetry(
-    String professionalName,
-    String professionalId,
-    String bookingId,
-  ) {
+      String professionalName,
+      String professionalId,
+      String bookingId,
+      ) {
     int retryCount = 0;
     const maxRetries = 10;
 
@@ -1382,10 +1409,10 @@ class ForegroundNotificationServiceOld {
 
   /// Show fallback review dialog directly for end users
   static void _showEndUserFallbackReviewDialog(
-    String professionalName,
-    String professionalId,
-    String bookingId,
-  ) {
+      String professionalName,
+      String professionalId,
+      String bookingId,
+      ) {
     logInfo("Showing end user fallback review dialog for: $professionalName");
 
     // Create the dialog directly without relying on HomeMainController
@@ -1440,7 +1467,7 @@ class ForegroundNotificationServiceOld {
 
                   // Star Rating
                   Obx(
-                    () => Row(
+                        () => Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: List.generate(5, (index) {
                         return GestureDetector(
@@ -1496,7 +1523,7 @@ class ForegroundNotificationServiceOld {
 
             // Submit Button - Attached at bottom
             Obx(
-              () => Container(
+                  () => Container(
                 width: double.infinity,
                 height: 56,
                 decoration: BoxDecoration(
@@ -1514,69 +1541,69 @@ class ForegroundNotificationServiceOld {
                     onTap: isSubmitting.value
                         ? null
                         : () async {
-                            if (rating.value == 0) {
-                              Get.snackbar(
-                                'Rating Required',
-                                'Please select a rating before submitting',
-                                snackPosition: SnackPosition.BOTTOM,
-                                backgroundColor: Colors.orange.shade100,
-                                duration: Duration(seconds: 2),
-                              );
-                              return;
-                            }
+                      if (rating.value == 0) {
+                        Get.snackbar(
+                          'Rating Required',
+                          'Please select a rating before submitting',
+                          snackPosition: SnackPosition.BOTTOM,
+                          backgroundColor: Colors.orange.shade100,
+                          duration: Duration(seconds: 2),
+                        );
+                        return;
+                      }
 
-                            // Submit review with API call
-                            isSubmitting.value = true;
+                      // Submit review with API call
+                      isSubmitting.value = true;
 
-                            try {
-                              await _submitEndUserReviewFallback(
-                                professionalId: professionalId,
-                                bookingId: bookingId,
-                                rating: rating.value,
-                                review: reviewController.text.trim(),
-                              );
+                      try {
+                        await _submitEndUserReviewFallback(
+                          professionalId: professionalId,
+                          bookingId: bookingId,
+                          rating: rating.value,
+                          review: reviewController.text.trim(),
+                        );
 
-                              Get.back(); // Close dialog
-                              Get.snackbar(
-                                'Review Submitted',
-                                'Thank you for your feedback!',
-                                snackPosition: SnackPosition.BOTTOM,
-                                backgroundColor: AppColors.primaryColor
-                                    .withOpacity(0.2),
-                                duration: Duration(seconds: 2),
-                              );
-                            } catch (e) {
-                              String errorMessage =
-                                  "Failed to submit review. Please try again.";
+                        Get.back(); // Close dialog
+                        Get.snackbar(
+                          'Review Submitted',
+                          'Thank you for your feedback!',
+                          snackPosition: SnackPosition.BOTTOM,
+                          backgroundColor: AppColors.primaryColor
+                              .withOpacity(0.2),
+                          duration: Duration(seconds: 2),
+                        );
+                      } catch (e) {
+                        String errorMessage =
+                            "Failed to submit review. Please try again.";
 
-                              // Handle different exception types to extract proper error messages
-                              if (e is NotFoundException) {
-                                errorMessage = e.message;
-                              } else if (e is ApiException) {
-                                errorMessage = e.message;
-                              } else if (e is Exception) {
-                                String exceptionString = e.toString();
-                                if (exceptionString.startsWith('Exception: ')) {
-                                  errorMessage = exceptionString.replaceFirst(
-                                    'Exception: ',
-                                    '',
-                                  );
-                                } else {
-                                  errorMessage = exceptionString;
-                                }
-                              }
+                        // Handle different exception types to extract proper error messages
+                        if (e is NotFoundException) {
+                          errorMessage = e.message;
+                        } else if (e is ApiException) {
+                          errorMessage = e.message;
+                        } else if (e is Exception) {
+                          String exceptionString = e.toString();
+                          if (exceptionString.startsWith('Exception: ')) {
+                            errorMessage = exceptionString.replaceFirst(
+                              'Exception: ',
+                              '',
+                            );
+                          } else {
+                            errorMessage = exceptionString;
+                          }
+                        }
 
-                              Get.snackbar(
-                                'Error',
-                                errorMessage,
-                                snackPosition: SnackPosition.BOTTOM,
-                                backgroundColor: Colors.red.shade100,
-                                duration: Duration(seconds: 3),
-                              );
-                            } finally {
-                              isSubmitting.value = false;
-                            }
-                          },
+                        Get.snackbar(
+                          'Error',
+                          errorMessage,
+                          snackPosition: SnackPosition.BOTTOM,
+                          backgroundColor: Colors.red.shade100,
+                          duration: Duration(seconds: 3),
+                        );
+                      } finally {
+                        isSubmitting.value = false;
+                      }
+                    },
                     borderRadius: BorderRadius.only(
                       bottomLeft: Radius.circular(20),
                       bottomRight: Radius.circular(20),
@@ -1584,19 +1611,19 @@ class ForegroundNotificationServiceOld {
                     child: Center(
                       child: isSubmitting.value
                           ? SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                  Colors.white,
-                                ),
-                              ),
-                            )
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            Colors.white,
+                          ),
+                        ),
+                      )
                           : Text(
-                              'Add review',
-                              style: AppTextStyles.buttonTextStyle(),
-                            ),
+                        'Add review',
+                        style: AppTextStyles.buttonTextStyle(),
+                      ),
                     ),
                   ),
                 ),
@@ -1638,7 +1665,7 @@ class ForegroundNotificationServiceOld {
     };
 
     var service = repository.sendPostApiRequest(
-      () => requestData,
+          () => requestData,
       professionals_rate_review,
       true,
     );
@@ -1675,18 +1702,18 @@ class ForegroundNotificationServiceOld {
       // Extract chat room information from notification data
       final chatRoomId =
           data['room_id']?.toString() ??
-          data['room_id']?.toString();
+              data['room_id']?.toString();
       final receiverId =
           data['sender_id']?.toString() ??
-          data['sender_id']?.toString();
+              data['sender_id']?.toString();
       final senderName =
           data['full_name']?.toString() ??
-          data['full_name']?.toString() ??
-          'Unknown';
+              data['full_name']?.toString() ??
+              'Unknown';
       final profilePicture =
           data['profile_picture']?.toString() ??
-          data['profile_picture']?.toString() ??
-          '';
+              data['profile_picture']?.toString() ??
+              '';
       final lastMessage =
           data['body']?.toString() ?? 'New message';
       final title =
@@ -1708,8 +1735,9 @@ class ForegroundNotificationServiceOld {
         profileImageUrl: profilePicture,
       );
 
-      Get.toNamed(
-        enduser_routes.AppRoutes.chat_detail,
+      Get.to(
+            () => ChatDetailScreen(),
+        binding: ChatDetailBinding(),
         arguments: {
           'conversation': conversation,
           'notificationData': {
@@ -1725,10 +1753,38 @@ class ForegroundNotificationServiceOld {
         },
       );
 
+      /*    Get.toNamed(
+        enduser_routes.AppRoutes.chat_detail,
+        arguments: {
+          'conversation': conversation,
+          'notificationData': {
+            'title': title,
+            'body': lastMessage,
+            'sender_id': receiverId,
+            'room_id': chatRoomId,
+            'full_name': senderName,
+            'profile_picture': profilePicture,
+            'timestamp': data['timestamp'],
+            'click_action': data['click_action'],
+          },
+        },
+      );*/
+
       logInfo("End user navigated to chat detail from FCM notification tap");
     } catch (e, stackTrace) {
       logError('Error navigating end user to chat from notification',
           error: e, stackTrace: stackTrace);
+    }
+  }
+
+  static Future<void> backgroundMessageHandler(RemoteMessage message) async {
+    if (message.notification == null) {
+      // Data-only message – FCM won't show anything, so we must.
+      await showForegroundNotification(message);
+    } else {
+      final type = message.data['type']?.toString() ?? '';
+      logInfo(
+          'Background FCM message (type: $type) – FCM handles display automatically');
     }
   }
 }

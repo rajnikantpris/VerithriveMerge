@@ -1,5 +1,6 @@
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 import '../../../../common/base_view.dart';
@@ -56,19 +57,26 @@ class AddServiceFormatView extends BaseView<AddServiceFormatController> {
 
   @override
   Widget buildView(BuildContext context) {
-    return Container(
-      color: AppColor.white,
-      child: Form(
-        key: controller.formKey,
-        autovalidateMode: AutovalidateMode.onUserInteraction,
-        child: SingleChildScrollView(
-          padding: EdgeInsets.symmetric(
-            horizontal: HightWidthSizes.setValue_16,
-            vertical: HightWidthSizes.setValue_20,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+    return GestureDetector(
+      onTap: () {
+        // Dismiss keyboard when tapping outside on iOS
+        if (Theme.of(context).platform == TargetPlatform.iOS) {
+          FocusScope.of(context).unfocus();
+        }
+      },
+      child: Container(
+        color: AppColor.white,
+        child: Form(
+          key: controller.formKey,
+          autovalidateMode: AutovalidateMode.onUserInteraction,
+          child: SingleChildScrollView(
+            padding: EdgeInsets.symmetric(
+              horizontal: HightWidthSizes.setValue_16,
+              vertical: HightWidthSizes.setValue_20,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
               // Service format label
               Text(
                 'Service format*',
@@ -172,6 +180,7 @@ class AddServiceFormatView extends BaseView<AddServiceFormatController> {
             ],
           ),
         ),
+      ),
       ),
     );
   }
