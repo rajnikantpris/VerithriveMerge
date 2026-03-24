@@ -16,6 +16,17 @@ class AddServiceFormatView extends BaseView<AddServiceFormatController> {
   const AddServiceFormatView({super.key});
 
   @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        // Dismiss keyboard when tapping anywhere on screen
+        FocusScope.of(context).unfocus();
+      },
+      child: super.build(context),
+    );
+  }
+
+  @override
   PreferredSizeWidget? appBar(BuildContext context) {
     return PreferredSize(
       preferredSize: const Size.fromHeight(kToolbarHeight + 1),
@@ -57,26 +68,19 @@ class AddServiceFormatView extends BaseView<AddServiceFormatController> {
 
   @override
   Widget buildView(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        // Dismiss keyboard when tapping outside on iOS
-        if (Theme.of(context).platform == TargetPlatform.iOS) {
-          FocusScope.of(context).unfocus();
-        }
-      },
-      child: Container(
-        color: AppColor.white,
-        child: Form(
-          key: controller.formKey,
-          autovalidateMode: AutovalidateMode.onUserInteraction,
-          child: SingleChildScrollView(
-            padding: EdgeInsets.symmetric(
-              horizontal: HightWidthSizes.setValue_16,
-              vertical: HightWidthSizes.setValue_20,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+    return Container(
+      color: AppColor.white,
+      child: Form(
+        key: controller.formKey,
+        autovalidateMode: AutovalidateMode.onUserInteraction,
+        child: SingleChildScrollView(
+          padding: EdgeInsets.symmetric(
+            horizontal: HightWidthSizes.setValue_16,
+            vertical: HightWidthSizes.setValue_20,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
               // Service format label
               Text(
                 'Service format*',
@@ -180,7 +184,6 @@ class AddServiceFormatView extends BaseView<AddServiceFormatController> {
             ],
           ),
         ),
-      ),
       ),
     );
   }
