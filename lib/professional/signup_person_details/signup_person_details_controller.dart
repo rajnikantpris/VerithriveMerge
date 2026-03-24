@@ -45,6 +45,7 @@ class SignupPersonDetailsController extends BaseController {
   final genders = ['Male', 'Female', 'Prefer not to say'];
   final selectedGender = ''.obs;
   final isManualPostcode = false.obs;
+  final isManualAddress = false.obs;
   final selectedImage = Rxn<File>();
   final socialProfileImageUrl = ''.obs;
   final isSocialLogin = false.obs;
@@ -279,6 +280,7 @@ class SignupPersonDetailsController extends BaseController {
 
   void enableManualPostcode() {
     isManualPostcode.value = true;
+    isManualAddress.value = true;
   }
 
   String? validateNotEmpty(String? value, String label) {
@@ -704,7 +706,23 @@ class SignupPersonDetailsController extends BaseController {
       // Auto-fill postcode if available
       if (result['postcode'] != null &&
           result['postcode'].toString().isNotEmpty) {
-        postcodeController.text = result['postcode'] as String;
+        postcodeController.text = (result['postcode'] as String?)!;
+      }
+    }
+  }
+
+  /// Navigate to manual address entry screen
+  Future<void> navigateToManualAddressScreen() async {
+    final result = await Get.toNamed(Routes.selectAddressMap);
+    if (result != null && result is Map<String, dynamic>) {
+      selectedLatitude.value = result['latitude'] as double?;
+      selectedLongitude.value = result['longitude'] as double?;
+      addressController.text = result['address'] as String? ?? '';
+
+      // Auto-fill postcode if available
+      if (result['postcode'] != null &&
+          result['postcode'].toString().isNotEmpty) {
+        postcodeController.text = (result['postcode'] as String?)!;
       }
     }
   }

@@ -68,8 +68,8 @@ class SignupPersonDetailsView extends BaseView<SignupPersonDetailsController> {
                     hintText: 'Select address',
                     controller: controller.addressController,
                     icon: null,
-                    readOnly: true,
-                    onTap: () => controller.navigateToMapScreen(),
+                    readOnly: !controller.isManualAddress.value,
+                    //onTap: controller.isManualAddress.value ? null : () => controller.navigateToManualAddressScreen(),
                     suffixIcon: Padding(
                       padding: EdgeInsets.only(
                         right: HightWidthSizes.setValue_15,
@@ -80,6 +80,7 @@ class SignupPersonDetailsView extends BaseView<SignupPersonDetailsController> {
                         height: HightWidthSizes.setValue_16,
                       ),
                     ),
+                    showLabel: false,
                     validator: (value) =>
                         controller.validateNotEmpty(value, 'address'),
                   ),
@@ -401,9 +402,10 @@ class SignupPersonDetailsView extends BaseView<SignupPersonDetailsController> {
             controller: controller.postcodeController,
             icon: null,
             readOnly: !controller.isManualPostcode.value,
+            onTap: () => controller.navigateToMapScreen(),
+            showLabel: false,
             validator: (value) =>
                 controller.validateNotEmpty(value, 'postcode'),
-            showLabel: false,
           ),
         ),
       ],

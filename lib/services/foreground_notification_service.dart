@@ -299,6 +299,7 @@ class ForegroundNotificationService {
       logInfo(
           'Professional profile approval notification received - refreshing profile data');
       _refreshProfile();
+      _refreshCalendar();
     }
   }
 
@@ -361,13 +362,14 @@ class ForegroundNotificationService {
         logInfo('Notification Body: ${message.notification?.body}');
         logInfo('===================================');
 
-        if(message.notification == null){
-          // Show the notification
+        if(Platform.isIOS) {
+          if (message.notification == null) {
+            // Show the notification
+            showForegroundNotification(message);
+          }
+        }else{
           showForegroundNotification(message);
-        }else {
-         print("AAAAAAAAAAAAA");
         }
-
       });
 
       // Handle message opened app (when user taps notification while app is in background)
