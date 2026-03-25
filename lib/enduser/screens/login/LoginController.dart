@@ -21,6 +21,8 @@ import '../profile/ProfileBinding.dart';
 import '../profile/ProfileView.dart';
 import 'dart:convert';
 
+import '../therapy_details/TherapistDetailController.dart';
+
 class LoginController extends BaseController {
   late final formKey = GlobalKey<FormState>();
 
@@ -37,9 +39,12 @@ class LoginController extends BaseController {
   final rememberMe = false.obs;
   final isLoading = false.obs;
 
+  String guestUser = "";
+
   @override
   void onInit() {
     super.onInit();
+    guestUser = Get.arguments;
     _loadRememberMeData();
   }
 
@@ -505,29 +510,34 @@ class LoginController extends BaseController {
           );
         }
 
-        // Navigate based on is_personal_details
-        bool isPersonalDetailsCompleted = user?.isPersonalDetails ?? false;
-
-        // Prepare social login data to pass to profile screen
-        Map<String, dynamic> socialData = {};
-        if (user?.isSocialLogin == true) {
-          socialData = {
-            'fullName': user?.fullName ?? '',
-            'profilePicture': user?.profilePicture ?? '',
-            'profileImageFile': profileImageFile,
-          };
-        }
-
-        if (isPersonalDetailsCompleted) {
-          Get.offAll(() => MainScreen());
+        if(guestUser.isNotEmpty && guestUser == "guest"){
+          final TherapistDetailController controller = Get.put(TherapistDetailController());
+          controller.getPreferenceDetails();
+          Get.back();
         } else {
-          Get.offAll(
-            () => const ProfileView(),
-            binding: ProfileBinding(),
-            arguments: socialData,
-          );
+          // Navigate based on is_personal_details
+          bool isPersonalDetailsCompleted = user?.isPersonalDetails ?? false;
+          // Prepare social login data to pass to profile screen
+          Map<String, dynamic> socialData = {};
+          if (user?.isSocialLogin == true) {
+            socialData = {
+              'fullName': user?.fullName ?? '',
+              'profilePicture': user?.profilePicture ?? '',
+              'profileImageFile': profileImageFile,
+            };
+          }
+
+          if (isPersonalDetailsCompleted) {
+            Get.offAll(() => MainScreen());
+          } else {
+            Get.offAll(
+                  () => const ProfileView(),
+              binding: ProfileBinding(),
+              arguments: socialData,
+            );
+          }
+          update();
         }
-        update();
       } else {
         // Show error message if login failed
         showResponseDialog(

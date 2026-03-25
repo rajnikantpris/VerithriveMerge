@@ -77,6 +77,7 @@ class AddressView extends BaseView<AddressController> {
                 isManual: controller.isManualYourPostcode,
                 onEnableManual: controller.enableManualYourPostcode,
                 isRequired: true,
+                onTap: controller.onYourAddressTap,
               ),
               SizedBox(height: HightWidthSizes.setValue_14),
               Text(
@@ -89,25 +90,27 @@ class AddressView extends BaseView<AddressController> {
                 ),
               ),
               SizedBox(height: HightWidthSizes.setValue_5),
-              CustomTextField(
-                label: '',
-                hintText: 'Select address',
-                controller: controller.yourAddressController,
-                showLabel: false,
-                readOnly: true,
-                onTap: controller.onYourAddressTap,
-                suffixIcon: Padding(
-                  padding: EdgeInsets.only(
-                    right: HightWidthSizes.setValue_15,
-                    left: HightWidthSizes.setValue_10,
+              Obx(
+                () => CustomTextField(
+                  label: '',
+                  hintText: 'Select address',
+                  controller: controller.yourAddressController,
+                  showLabel: false,
+                  readOnly: !controller.isManualYourAddress.value,
+                  onTap: controller.isManualYourAddress.value ? null : controller.onYourAddressTap,
+                  suffixIcon: GestureDetector(
+                    onTap: controller.onYourAddressTap,
+                    child: Padding(
+                      padding: EdgeInsets.only(
+                        right: HightWidthSizes.setValue_15,
+                        left: HightWidthSizes.setValue_10,
+                      ),
+                      child: Icon(Icons.location_on, color: AppColor.color_2FC4B2),
+                    ),
                   ),
-                  child: AppImages.profile_right_arrow_svg(
-                    width: HightWidthSizes.setValue_20,
-                    height: HightWidthSizes.setValue_20,
-                  ),
+                  validator: (value) =>
+                      controller.validateNotEmpty(value, 'address'),
                 ),
-                validator: (value) =>
-                    controller.validateNotEmpty(value, 'address'),
               ),
               SizedBox(height: HightWidthSizes.setValue_24),
 
@@ -121,6 +124,7 @@ class AddressView extends BaseView<AddressController> {
                 isManual: controller.isManualWorkPostcode,
                 onEnableManual: controller.enableManualWorkPostcode,
                 isRequired: false,
+                onTap: controller.onWorkAddressTap,
               ),
               SizedBox(height: HightWidthSizes.setValue_14),
               Text(
@@ -133,21 +137,23 @@ class AddressView extends BaseView<AddressController> {
                 ),
               ),
               SizedBox(height: HightWidthSizes.setValue_5),
-              CustomTextField(
-                label: '',
-                hintText: 'Select address',
-                controller: controller.workAddressController,
-                showLabel: false,
-                readOnly: true,
-                onTap: controller.onWorkAddressTap,
-                suffixIcon: Padding(
-                  padding: EdgeInsets.only(
-                    right: HightWidthSizes.setValue_15,
-                    left: HightWidthSizes.setValue_10,
-                  ),
-                  child: AppImages.profile_right_arrow_svg(
-                    width: HightWidthSizes.setValue_20,
-                    height: HightWidthSizes.setValue_20,
+              Obx(
+                () => CustomTextField(
+                  label: '',
+                  hintText: 'Select address',
+                  controller: controller.workAddressController,
+                  showLabel: false,
+                  readOnly: !controller.isManualWorkAddress.value,
+                  onTap: controller.isManualWorkAddress.value ? null : controller.onWorkAddressTap,
+                  suffixIcon: GestureDetector(
+                    onTap: controller.onWorkAddressTap,
+                    child: Padding(
+                      padding: EdgeInsets.only(
+                        right: HightWidthSizes.setValue_15,
+                        left: HightWidthSizes.setValue_10,
+                      ),
+                      child: Icon(Icons.location_on, color: AppColor.color_2FC4B2),
+                    ),
                   ),
                 ),
               ),
@@ -256,6 +262,7 @@ class AddressView extends BaseView<AddressController> {
     required RxBool isManual,
     required VoidCallback onEnableManual,
     required bool isRequired,
+    VoidCallback? onTap,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -293,18 +300,17 @@ class AddressView extends BaseView<AddressController> {
           ],
         ),
         SizedBox(height: HightWidthSizes.setValue_5),
-        Obx(
-          () => CustomTextField(
-            label: '',
-            hintText: hint,
-            controller: controller,
-            showLabel: false,
-            readOnly: !isManual.value,
-            validator: isRequired
-                ? (value) => this.controller.validateNotEmpty(value, 'postcode')
-                : null,
-          ),
-        ),
+        CustomTextField(
+          label: '',
+          hintText: hint,
+          controller: controller,
+          showLabel: false,
+          readOnly: true,
+          onTap: onTap,
+          validator: isRequired
+              ? (value) => this.controller.validateNotEmpty(value, 'postcode')
+              : null,
+        )
       ],
     );
   }

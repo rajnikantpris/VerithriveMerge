@@ -70,14 +70,18 @@ class SignupPersonDetailsView extends BaseView<SignupPersonDetailsController> {
                     icon: null,
                     readOnly: !controller.isManualAddress.value,
                     //onTap: controller.isManualAddress.value ? null : () => controller.navigateToManualAddressScreen(),
-                    suffixIcon: Padding(
-                      padding: EdgeInsets.only(
-                        right: HightWidthSizes.setValue_15,
-                        left: HightWidthSizes.setValue_10,
-                      ),
-                      child: AppImages.right_arrow_image(
-                        width: HightWidthSizes.setValue_16,
-                        height: HightWidthSizes.setValue_16,
+                    suffixIcon: GestureDetector(
+                      onTap: () => controller.navigateToMapScreen(),
+                      child: Padding(
+                        padding: EdgeInsets.only(
+                          right: HightWidthSizes.setValue_15,
+                          left: HightWidthSizes.setValue_10,
+                        ),
+                        child: Icon(Icons.location_on,color: AppColor.color_2FC4B2,),
+                    /*    child: AppImages.right_arrow_image(
+                          width: HightWidthSizes.setValue_16,
+                          height: HightWidthSizes.setValue_16,
+                        ),*/
                       ),
                     ),
                     showLabel: false,
@@ -395,19 +399,18 @@ class SignupPersonDetailsView extends BaseView<SignupPersonDetailsController> {
           ],
         ),
         SizedBox(height: HightWidthSizes.setValue_5),
-        Obx(
-          () => CustomTextField(
-            label: 'Postcode',
-            hintText: 'Eg. EC1 2AB',
-            controller: controller.postcodeController,
-            icon: null,
-            readOnly: !controller.isManualPostcode.value,
-            onTap: () => controller.navigateToMapScreen(),
-            showLabel: false,
-            validator: (value) =>
-                controller.validateNotEmpty(value, 'postcode'),
-          ),
-        ),
+        CustomTextField(
+          label: 'Postcode',
+          hintText: 'Eg. EC1 2AB',
+          controller: controller.postcodeController,
+          icon: null,
+          readOnly: true,
+          // readOnly: !controller.isManualPostcode.value,
+          onTap: () => controller.navigateToMapScreen(),
+          showLabel: false,
+          validator: (value) =>
+              controller.validateNotEmpty(value, 'postcode'),
+        )
       ],
     );
   }

@@ -90,6 +90,8 @@ class SignupProfileWizardController extends BaseController {
   // Location data
   final isManualPostcode = false.obs;
   final isManualWorkPostcode = false.obs;
+  final isManualAddress = false.obs;
+  final isManualWorkAddress = false.obs;
   final selectedLatitude = Rxn<double>();
   final selectedLongitude = Rxn<double>();
   final workLatitude = Rxn<double>();
@@ -3057,10 +3059,12 @@ class SignupProfileWizardController extends BaseController {
 
   void enableManualPostcode() {
     isManualPostcode.value = true;
+    isManualAddress.value = true;
   }
 
   void enableManualWorkPostcode() {
     isManualWorkPostcode.value = true;
+    isManualWorkAddress.value = true;
   }
 
   /// Load services from API based on profession_sub_type_id

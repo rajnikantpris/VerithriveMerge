@@ -418,6 +418,7 @@ class TherapistDetailScreen extends StatelessWidget {
                             Get.to(
                                   () => const LoginView(),
                               binding: LoginBinding(),
+                              arguments: "guest"
                             );
                           }
                         },

@@ -2,7 +2,6 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:verithrive_dev/enduser/routes/app_routes.dart';
 import 'package:verithrive_dev/enduser/screens/select_address/SelectAddressMapBinding.dart';
 import 'package:verithrive_dev/enduser/screens/select_address/SelectAddressMapView.dart';
 import 'package:verithrive_dev/enduser/screens/term_condition/TermsConditionBinding.dart';

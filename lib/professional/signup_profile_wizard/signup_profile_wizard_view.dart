@@ -1366,23 +1366,30 @@ class SignupProfileWizardView extends BaseView<SignupProfileWizardController> {
     VoidCallback? onTap,
     String? Function(String?)? validator,
   }) {
-    return CustomTextField(
-      label: label ?? '',
-      hintText: hint,
-      controller: controller,
-      icon: null,
-      showLabel: label != null,
-      readOnly: true,
-      onTap: onTap,
-      validator: validator,
-      suffixIcon: Padding(
-        padding: EdgeInsets.only(
-          right: HightWidthSizes.setValue_15,
-          left: HightWidthSizes.setValue_10,
-        ),
-        child: AppImages.right_arrow_image(
-          width: HightWidthSizes.setValue_16,
-          height: HightWidthSizes.setValue_16,
+    final isWorkAddress = controller == this.controller.workAddressController;
+    return Obx(
+      () => CustomTextField(
+        label: label ?? '',
+        hintText: hint,
+        controller: controller,
+        icon: null,
+        showLabel: label != null,
+        readOnly: isWorkAddress
+            ? !this.controller.isManualWorkAddress.value
+            : !this.controller.isManualAddress.value,
+        onTap: isWorkAddress
+            ? (this.controller.isManualWorkAddress.value ? null : onTap)
+            : (this.controller.isManualAddress.value ? null : onTap),
+        validator: validator,
+        suffixIcon: GestureDetector(
+          onTap: onTap,
+          child: Padding(
+            padding: EdgeInsets.only(
+              right: HightWidthSizes.setValue_15,
+              left: HightWidthSizes.setValue_10,
+            ),
+            child: Icon(Icons.location_on, color: AppColor.color_2FC4B2),
+          ),
         ),
       ),
     );
@@ -1416,28 +1423,28 @@ class SignupProfileWizardView extends BaseView<SignupProfileWizardController> {
                   fontWeight: FontWeight.w400,
                   fontSize: FontSizes.setFontValue_14,
                   color: AppColor.color_2D2D2D,
-                  decoration: TextDecoration.underline,
                 ),
               ),
             ),
           ],
         ),
         SizedBox(height: HightWidthSizes.setValue_6),
-        Obx(
-          () => CustomTextField(
-            label: 'Postcode',
-            hintText: hint,
-            controller: controller,
-            icon: null,
-            showLabel: false,
-            readOnly: onManualPressed != null
-                ? !(isWorkPostcode
-                    ? this.controller.isManualWorkPostcode.value
-                    : this.controller.isManualPostcode.value)
-                : false,
-            validator: validator,
-          ),
-        ),
+        CustomTextField(
+          label: 'Postcode',
+          hintText: hint,
+          controller: controller,
+          icon: null,
+          showLabel: false,
+          readOnly: true,
+          onTap: () {
+            if (isWorkPostcode) {
+              this.controller.navigateToWorkMapScreen();
+            } else {
+              this.controller.navigateToMapScreen();
+            }
+          },
+          validator: validator,
+        )
       ],
     );
   }

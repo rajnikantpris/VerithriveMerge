@@ -17,11 +17,13 @@ class AddressController extends BaseController {
   final yourPostcodeController = TextEditingController();
   final yourAddressController = TextEditingController();
   final isManualYourPostcode = false.obs;
+  final isManualYourAddress = false.obs;
 
   // Work address fields
   final workPostcodeController = TextEditingController();
   final workAddressController = TextEditingController();
   final isManualWorkPostcode = false.obs;
+  final isManualWorkAddress = false.obs;
 
   // Location data
   final selectedLatitude = Rxn<double>();
@@ -53,10 +55,12 @@ class AddressController extends BaseController {
 
   void enableManualYourPostcode() {
     isManualYourPostcode.value = true;
+    isManualYourAddress.value = true;
   }
 
   void enableManualWorkPostcode() {
     isManualWorkPostcode.value = true;
+    isManualWorkAddress.value = true;
   }
 
   /// Navigate to map screen to select address
