@@ -44,7 +44,9 @@ class LoginController extends BaseController {
   @override
   void onInit() {
     super.onInit();
-    guestUser = Get.arguments;
+    if(Get.arguments != null) {
+      guestUser = Get.arguments;
+    }
     _loadRememberMeData();
   }
 
