@@ -301,6 +301,8 @@ class VerifyEmailController extends BaseController {
             }
           }
 
+          await _storageService?.writeString('userType', 'professional');
+
           // Fallback: Save email from controller if not found in response
           final storedEmail = _storageService?.readString('user_email');
           if ((storedEmail == null || storedEmail.isEmpty) &&

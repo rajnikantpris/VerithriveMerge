@@ -594,6 +594,8 @@ class SignupController extends BaseController {
             await _storageService?.writeString('access_token', token);
           }
 
+          await _storageService?.writeString('userType', 'professional');
+
           // Save user ID from login response
           final userId = loginData.user?.id;
           if (userId != null && userId.isNotEmpty) {
