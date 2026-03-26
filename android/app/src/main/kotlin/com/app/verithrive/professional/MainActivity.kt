@@ -1,4 +1,4 @@
-package com.app.verithrive.professional
+package com.app.verithrive
 
 import io.flutter.embedding.android.FlutterActivity
 

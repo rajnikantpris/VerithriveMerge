@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.app.verithrive.professional"
+    namespace = "com.app.verithrive"
     compileSdk = 36
     ndkVersion = "27.0.12077973"
 
