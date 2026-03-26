@@ -1,8 +1,11 @@
 import 'dart:io';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:geocoding/geocoding.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:verithrive_dev/enduser/screens/select_address/SelectAddressMapBinding.dart';
 import 'package:verithrive_dev/enduser/screens/select_address/SelectAddressMapView.dart';
 import '../../utils/app_colors.dart';
@@ -11,7 +14,8 @@ import '../../data/repository/project_repository.dart';
 import '../../network/exceptions/base_exception.dart';
 import '../../utils/api_services.dart';
 import '../../utils/common_dialog.dart';
-import '../../utils/camera_storage_permission_service.dart';
+import 'package:verithrive_dev/enduser/utils/camera_storage_permission_service.dart';
+import 'package:verithrive_dev/enduser/utils/location_permission_service.dart';
 import '../../core/values/sharePrefrenceConst.dart';
 import 'package:verithrive_dev/services/storage_service.dart';
 
@@ -25,7 +29,9 @@ class UpdateProfileController extends BaseController {
   final fullNameController = TextEditingController();
   final dobController = TextEditingController();
   final postcodeController = TextEditingController();
+  final addressController = TextEditingController();
   final postcodeFocusNode = FocusNode();
+  final addressFocusNode = FocusNode();
 
   final selectedGender = ''.obs;
   final selectedAddress = ''.obs;
@@ -40,6 +46,8 @@ class UpdateProfileController extends BaseController {
   final ImagePicker _picker = ImagePicker();
   final CameraStoragePermissionService _cameraStoragePermissionService =
   CameraStoragePermissionService();
+  final LocationPermissionService _locationPermissionService =
+  LocationPermissionService();
 
   bool _isPicking = false; // Guard against double picker calls
 
@@ -55,6 +63,7 @@ class UpdateProfileController extends BaseController {
   final addressError = RxString('');
 
   final isManualEntry = false.obs;
+  final isManualAddress = false.obs;
 
   @override
   void onInit() {
@@ -62,6 +71,9 @@ class UpdateProfileController extends BaseController {
     
     // Add text change listener to automatically capitalize first letter
     fullNameController.addListener(_capitalizeFullName);
+    
+    // Get current location and auto-fill address and postcode
+    getCurrentLocationAndFillAddress();
     
     fetchPersonalDetails();
   }
@@ -236,6 +248,12 @@ class UpdateProfileController extends BaseController {
   String? validatePostcode(String? value) {
     if (value == null || value.isEmpty) return 'Postcode is required';
     if (value.length < 5) return 'Postcode must be at least 5 characters';
+    return null;
+  }
+
+  String? validateAddress(String? value) {
+    if (value == null || value.isEmpty) return 'Address is required';
+    if (value.length < 10) return 'Address must be at least 10 characters';
     return null;
   }
 
@@ -442,14 +460,19 @@ class UpdateProfileController extends BaseController {
   }
 
   void enterManually() {
+    // Toggle manual entry mode for postcode
     isManualEntry.value = !isManualEntry.value;
-
+    // Also enable manual address when manual entry is enabled
+    if (isManualEntry.value) {
+      isManualAddress.value = true;
+      // Focus address field when manual mode is enabled
+      Future.delayed(Duration(milliseconds: 100), () {
+        addressFocusNode.requestFocus();
+      });
+    }
+    // If toggling back to non-editable mode, sync selectedPostcode with controller text
     if (!isManualEntry.value && postcodeController.text.isNotEmpty) {
       selectedPostcode.value = postcodeController.text;
-    } else if (isManualEntry.value) {
-      Future.delayed(Duration(milliseconds: 100), () {
-        postcodeFocusNode.requestFocus();
-      });
     }
   }
 
@@ -814,12 +837,123 @@ class UpdateProfileController extends BaseController {
     }
   }
 
+  /// Get current location and auto-fill address and postcode
+  Future<void> getCurrentLocationAndFillAddress() async {
+    try {
+      // First check if permission is already granted
+      bool hasPermission =
+          await _locationPermissionService.checkLocationPermissionStatus();
+
+      // If not granted, request permission
+      if (!hasPermission) {
+        hasPermission =
+            await _locationPermissionService.requestLocationPermission();
+      }
+
+      if (!hasPermission) {
+        debugPrint('Location permission not granted');
+        return;
+      }
+
+      // Check if location services are enabled
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        debugPrint('Location services are disabled');
+        Get.snackbar(
+          'Location Services',
+          'Please enable location services to get your address automatically',
+          snackPosition: SnackPosition.BOTTOM,
+        );
+        return;
+      }
+
+      // Get current position with timeout
+      final position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      ).timeout(
+        const Duration(seconds: 15),
+        onTimeout: () {
+          throw TimeoutException('Location request timed out');
+        },
+      );
+
+      // Store coordinates
+      selectedLatitude.value = position.latitude;
+      selectedLongitude.value = position.longitude;
+      latitude.value = position.latitude;
+      longitude.value = position.longitude;
+
+      // Reverse geocode to get address and postcode
+      await reverseGeocodeAndFillFields(
+        position.latitude,
+        position.longitude,
+      );
+    } on TimeoutException catch (e) {
+      debugPrint('Timeout getting current location: $e');
+      Get.snackbar(
+        'Location Timeout',
+        'Getting location took too long. Please try selecting address manually.',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    } catch (e) {
+      debugPrint('Error getting current location: $e');
+      // Silently fail - user can manually select address
+    }
+  }
+
+  /// Reverse geocode coordinates and fill address and postcode fields
+  Future<void> reverseGeocodeAndFillFields(
+    double latitude,
+    double longitude,
+  ) async {
+    try {
+      final placemarks = await placemarkFromCoordinates(latitude, longitude);
+
+      if (placemarks.isNotEmpty) {
+        final placemark = placemarks.first;
+        final addressParts = <String>[];
+
+        if (placemark.street != null && placemark.street!.isNotEmpty) {
+          addressParts.add(placemark.street!);
+        }
+        if (placemark.subThoroughfare != null &&
+            placemark.subThoroughfare!.isNotEmpty) {
+          addressParts.insert(0, placemark.subThoroughfare!);
+        }
+        if (placemark.locality != null && placemark.locality!.isNotEmpty) {
+          addressParts.add(placemark.locality!);
+        }
+        if (placemark.postalCode != null && placemark.postalCode!.isNotEmpty) {
+          // Auto-fill postcode only if not manually entered
+          if (!isManualEntry.value) {
+            postcodeController.text = placemark.postalCode!;
+            selectedPostcode.value = placemark.postalCode!;
+          }
+          addressParts.add(placemark.postalCode!);
+        }
+        if (placemark.country != null && placemark.country!.isNotEmpty) {
+          addressParts.add(placemark.country!);
+        }
+
+        // Auto-fill address
+        final fullAddress = addressParts.join(', ');
+        addressController.text = fullAddress;
+        selectedAddress.value = fullAddress;
+        addressError.value = ''; // Clear error when address is filled
+      }
+    } catch (e) {
+      debugPrint('Error reverse geocoding: $e');
+    }
+  }
+
   @override
   void onClose() {
     fullNameController.dispose();
     dobController.dispose();
     postcodeController.dispose();
+    addressController.dispose();
     postcodeFocusNode.dispose();
+    addressFocusNode.dispose();
     super.onClose();
   }
 }

@@ -81,9 +81,15 @@
 <!--            android:name="com.google.android.geo.API_KEY"-->
 <!--            android:value="AIzaSyDIMB5KidUiA91o_6Cny-_txO83w5NUAy4" />-->
 
+<!--        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyDIHdFq55OMUeaBaKgsAB1Cpi5r5vEFU8k" />-->
+
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="AIzaSyDIHdFq55OMUeaBaKgsAB1Cpi5r5vEFU8k" />
+            android:value="AIzaSyDjdom-8K5VyqYV_zFUtPX_Zabk3r-C6XQ" />
+
+
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

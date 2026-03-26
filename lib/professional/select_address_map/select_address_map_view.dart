@@ -113,7 +113,8 @@ class SelectAddressMapView extends BaseView<SelectAddressMapController> {
                 // Get your API key from: https://console.cloud.google.com/
                 // Enable "Places API" and "Geocoding API" in your Google Cloud project
                 // googleAPIKey: "AIzaSyDIMB5KidUiA91o_6Cny-_txO83w5NUAy4",
-                googleAPIKey: "AIzaSyDIHdFq55OMUeaBaKgsAB1Cpi5r5vEFU8k",
+                //googleAPIKey: "AIzaSyDIHdFq55OMUeaBaKgsAB1Cpi5r5vEFU8k",
+                googleAPIKey: "AIzaSyDjdom-8K5VyqYV_zFUtPX_Zabk3r-C6XQ",
                 inputDecoration: InputDecoration(
                   hintText: 'Search address',
                   hintStyle: TextStyle(
@@ -140,11 +141,7 @@ class SelectAddressMapView extends BaseView<SelectAddressMapController> {
                 ),
                 debounceTime: 400,
                 countries: const [
-                  "uk",
-                  "us",
-                  "ca",
-                  "au",
-                  "in"
+                  "uk"
                 ], // Add countries as needed
                 isLatLngRequired: true,
                 getPlaceDetailWithLatLng: (prediction) {

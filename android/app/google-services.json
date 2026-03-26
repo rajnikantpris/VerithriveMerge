@@ -1,30 +1,21 @@
 {
   "project_info": {
-    "project_number": "38374486736",
-    "project_id": "verithrive-31bd6",
-    "storage_bucket": "verithrive-31bd6.firebasestorage.app"
+    "project_number": "616853878729",
+    "project_id": "verithrive-5380e",
+    "storage_bucket": "verithrive-5380e.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:38374486736:android:61f63046006e9c099264d5",
+        "mobilesdk_app_id": "1:616853878729:android:981ded7c32ec4320e25a18",
         "android_client_info": {
-          "package_name": "com.app.verithrive.professional"
+          "package_name": "com.app.verithrive"
         }
       },
-      "oauth_client": [
-        {
-          "client_id": "38374486736-gokhhf7duhnvcsianpbei5du36lk58nd.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.app.verithrive.professional",
-            "certificate_hash": "5e4aea01258c82d8fe075f5429b129dd8fa5fc30"
-          }
-        }
-      ],
+      "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyDIHdFq55OMUeaBaKgsAB1Cpi5r5vEFU8k"
+          "current_key": "AIzaSyDjdom-8K5VyqYV_zFUtPX_Zabk3r-C6XQ"
         }
       ],
       "services": {

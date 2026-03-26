@@ -1,5 +1,8 @@
 import 'dart:io';
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:geocoding/geocoding.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:verithrive_dev/enduser/screens/select_address/SelectAddressMapBinding.dart';
@@ -18,6 +21,7 @@ class ProfileController extends GetxController {
   final postcodeController = TextEditingController();
   final addressController = TextEditingController();
   final postcodeFocusNode = FocusNode();
+  final addressFocusNode = FocusNode();
 
   final selectedGender = ''.obs;
   final selectedAddress = ''.obs;
@@ -47,6 +51,7 @@ class ProfileController extends GetxController {
 
   // Track if user clicked "enter manually" for postcode
   final isManualEntry = false.obs;
+  final isManualAddress = false.obs;
 
   @override
   void onInit() {
@@ -55,9 +60,8 @@ class ProfileController extends GetxController {
     // Add text change listener to automatically capitalize first letter
     fullNameController.addListener(_capitalizeFullName);
 
-    // Ask for location permission when profile screen opens
-    // Fire and forget; dialog and system prompt are handled by the service
-    _locationPermissionService.requestLocationPermission();
+    // Get current location and auto-fill address and postcode
+    getCurrentLocationAndFillAddress();
 
     // Check if social data was passed from login
     final arguments = Get.arguments as Map<String, dynamic>?;
@@ -81,7 +85,7 @@ class ProfileController extends GetxController {
         print("Profile screen - Social profile picture: $profilePic");
       }
 
-      // Store the profileImageFile if passed from login
+      // Store profileImageFile if passed from login
       if (arguments!['profileImageFile'] != null &&
           arguments!['profileImageFile'] is File) {
         profileImage.value = arguments!['profileImageFile'] as File;
@@ -470,6 +474,7 @@ class ProfileController extends GetxController {
     postcodeController.dispose();
     addressController.dispose();
     postcodeFocusNode.dispose();
+    addressFocusNode.dispose();
     super.onClose();
   }
 
@@ -524,18 +529,129 @@ class ProfileController extends GetxController {
     }
   }
 
+  /// Get current location and auto-fill address and postcode
+  Future<void> getCurrentLocationAndFillAddress() async {
+    try {
+      // First check if permission is already granted
+      bool hasPermission =
+          await _locationPermissionService.checkLocationPermissionStatus();
+
+      // If not granted, request permission
+      if (!hasPermission) {
+        hasPermission =
+            await _locationPermissionService.requestLocationPermission();
+      }
+
+      if (!hasPermission) {
+        debugPrint('Location permission not granted');
+        return;
+      }
+
+      // Check if location services are enabled
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        debugPrint('Location services are disabled');
+        Get.snackbar(
+          'Location Services',
+          'Please enable location services to get your address automatically',
+          snackPosition: SnackPosition.BOTTOM,
+        );
+        return;
+      }
+
+      // Get current position with timeout
+      final position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      ).timeout(
+        const Duration(seconds: 15),
+        onTimeout: () {
+          throw TimeoutException('Location request timed out');
+        },
+      );
+
+      // Store coordinates
+      selectedLatitude.value = position.latitude;
+      selectedLongitude.value = position.longitude;
+      latitude.value = position.latitude;
+      longitude.value = position.longitude;
+
+      // Reverse geocode to get address and postcode
+      await reverseGeocodeAndFillFields(
+        position.latitude,
+        position.longitude,
+      );
+    } on TimeoutException catch (e) {
+      debugPrint('Timeout getting current location: $e');
+      Get.snackbar(
+        'Location Timeout',
+        'Getting location took too long. Please try selecting address manually.',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    } catch (e) {
+      debugPrint('Error getting current location: $e');
+      // Silently fail - user can manually select address
+    }
+  }
+
+  /// Reverse geocode coordinates and fill address and postcode fields
+  Future<void> reverseGeocodeAndFillFields(
+    double latitude,
+    double longitude,
+  ) async {
+    try {
+      final placemarks = await placemarkFromCoordinates(latitude, longitude);
+
+      if (placemarks.isNotEmpty) {
+        final placemark = placemarks.first;
+        final addressParts = <String>[];
+
+        if (placemark.street != null && placemark.street!.isNotEmpty) {
+          addressParts.add(placemark.street!);
+        }
+        if (placemark.subThoroughfare != null &&
+            placemark.subThoroughfare!.isNotEmpty) {
+          addressParts.insert(0, placemark.subThoroughfare!);
+        }
+        if (placemark.locality != null && placemark.locality!.isNotEmpty) {
+          addressParts.add(placemark.locality!);
+        }
+        if (placemark.postalCode != null && placemark.postalCode!.isNotEmpty) {
+          // Auto-fill postcode only if not manually entered
+          if (!isManualEntry.value) {
+            postcodeController.text = placemark.postalCode!;
+            selectedPostcode.value = placemark.postalCode!;
+          }
+          addressParts.add(placemark.postalCode!);
+        }
+        if (placemark.country != null && placemark.country!.isNotEmpty) {
+          addressParts.add(placemark.country!);
+        }
+
+        // Auto-fill address
+        final fullAddress = addressParts.join(', ');
+        addressController.text = fullAddress;
+        selectedAddress.value = fullAddress;
+        addressError.value = ''; // Clear error when address is filled
+      }
+    } catch (e) {
+      debugPrint('Error reverse geocoding: $e');
+    }
+  }
+
   void enterManually() {
     // Toggle manual entry mode for postcode
     isManualEntry.value = !isManualEntry.value;
-
+    // Also enable manual address when manual entry is enabled
+    if (isManualEntry.value) {
+      isManualAddress.value = true;
+      // Focus address field when manual mode is enabled
+      Future.delayed(Duration(milliseconds: 100), () {
+        addressFocusNode.requestFocus();
+      });
+    }
     // If toggling back to non-editable mode, sync selectedPostcode with controller text
     if (!isManualEntry.value && postcodeController.text.isNotEmpty) {
       selectedPostcode.value = postcodeController.text;
-    } else if (isManualEntry.value) {
-      // When field becomes editable, focus it after a short delay to ensure widget is built
-      Future.delayed(Duration(milliseconds: 100), () {
-        postcodeFocusNode.requestFocus();
-      });
     }
   }
 }

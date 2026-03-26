@@ -183,78 +183,23 @@ class ProfileView extends GetView<ProfileController> {
                 SizedBox(height: 16),
 
                 // Postcode
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          AppText.postcode,
-                          style: AppTextStyles.labelStyle(),
-                        ),
-                        GestureDetector(
-                          onTap: controller.enterManually,
-                          child: Text(
-                            AppText.enterManually,
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontFamily: 'Rubik',
-                              fontWeight: FontWeight.w400,
-                              color: AppColors.color2D2D2D,
-                              decoration: TextDecoration.underline,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 8),
-                    Obx(() => controller.isManualEntry.value
-                        ? CustomTextField(
-                            controller: controller.postcodeController,
-                            focusNode: controller.postcodeFocusNode,
-                            label: '',
-                            hint: AppText.postcodeExample,
-                            textCapitalization: TextCapitalization.characters,
-                            validator: controller.validatePostcode,
-                            showLabel: false,
-                            textColor: AppColors.color0E1027,
-                          )
-                        : GestureDetector(
-                            //onTap: controller.navigateToMapScreen,
-                            child: Container(
-                              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                              decoration: BoxDecoration(
-                                color: AppColors.white,
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(color: AppColors.lightGrey),
-                              ),
-                              child: Row(
-                                children: [
-                                  Expanded(
-                                    child: Obx(() => Text(
-                                      controller.selectedPostcode.value.isEmpty
-                                          ? AppText.postcodeExample
-                                          : controller.selectedPostcode.value,
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        color: controller.selectedPostcode.value.isEmpty
-                                            ? AppColors.grey
-                                            : AppColors.black,
-                                      ),
-                                    )),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          )),
-                  ],
+                _postcodeField(
+                  controller.postcodeController,
+                  hint: AppText.postcodeExample,
+                  onManualPressed: controller.enterManually,
+                  validator: controller.validatePostcode,
                 ),
 
                 SizedBox(height: 16),
 
                 // Address
-                _buildAddressField(),
+                _pickerField(
+                  controller.addressController,
+                  'Select address',
+                  label: 'Address',
+                  onTap: controller.selectAddress,
+                  validator: controller.validateAddress,
+                ),
 
                 SizedBox(height: 32),
 
@@ -347,6 +292,180 @@ class ProfileView extends GetView<ProfileController> {
                 ),
               )
             : SizedBox.shrink()),
+      ],
+    );
+  }
+
+  Widget _pickerField(
+    TextEditingController controller,
+    String hint, {
+    String? label,
+    VoidCallback? onTap,
+    String? Function(String?)? validator,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label ?? '',
+          style: AppTextStyles.labelStyle(),
+        ),
+        SizedBox(height: 8),
+        Obx(() => this.controller.isManualAddress.value
+            ? CustomTextField(
+                controller: controller,
+                focusNode: this.controller.addressFocusNode,
+                label: '',
+                hint: 'Enter address',
+                validator: validator,
+                showLabel: false,
+                textColor: AppColors.color0E1027,
+                suffixIcon: GestureDetector(
+                  onTap: onTap,
+                  child: Padding(
+                    padding: EdgeInsets.only(right: 15, left: 10),
+                    child: Icon(Icons.location_on, color: AppColors.color2FC4B2),
+                  ),
+                ),
+              )
+            : GestureDetector(
+                onTap: onTap,
+                child: Container(
+                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  decoration: BoxDecoration(
+                    color: AppColors.white,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: this.controller.addressError.value.isNotEmpty
+                          ? Colors.red
+                          : AppColors.lightGrey,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          this.controller.selectedAddress.value.isNotEmpty
+                              ? this.controller.selectedAddress.value
+                              : (controller.text.isNotEmpty
+                                  ? controller.text
+                                  : hint),
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: this.controller.selectedAddress.value.isNotEmpty || 
+                                   controller.text.isNotEmpty
+                                ? AppColors.black
+                                : AppColors.grey,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      Icon(Icons.location_on, color: AppColors.color2FC4B2),
+                    ],
+                  ),
+                ),
+              )),
+        Obx(() => this.controller.addressError.value.isNotEmpty
+            ? Padding(
+                padding: EdgeInsets.only(top: 8),
+                child: Text(
+                  this.controller.addressError.value,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.red,
+                  ),
+                ),
+              )
+            : SizedBox.shrink()),
+      ],
+    );
+  }
+
+  Widget _postcodeField(
+    TextEditingController controller, {
+    String hint = 'LS12AA',
+    VoidCallback? onManualPressed,
+    String? Function(String?)? validator,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              AppText.postcode,
+              style: AppTextStyles.labelStyle(),
+            ),
+            TextButton(
+              style: TextButton.styleFrom(
+                padding: EdgeInsets.zero,
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              onPressed: onManualPressed,
+              child: Text(
+                'Enter manually',
+                style: TextStyle(
+                  fontFamily: "Rubik",
+                  fontWeight: FontWeight.w400,
+                  fontSize: 14,
+                  color: AppColors.color2D2D2D,
+                ),
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: 8),
+        Obx(() => this.controller.isManualEntry.value
+            ? CustomTextField(
+                controller: controller,
+                focusNode: this.controller.postcodeFocusNode,
+                label: '',
+                hint: hint,
+                textCapitalization: TextCapitalization.characters,
+                validator: validator,
+                showLabel: false,
+                textColor: AppColors.color0E1027,
+                readOnly: true, // Keep read-only to prevent manual typing
+                onTap: () {
+                  // Always open address screen, even in manual mode
+                  this.controller.selectAddress();
+                },
+              )
+            : GestureDetector(
+                onTap: () {
+                  // Always open address screen
+                  this.controller.selectAddress();
+                },
+                child: Container(
+                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  decoration: BoxDecoration(
+                    color: AppColors.white,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: AppColors.lightGrey),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Obx(() => Text(
+                          this.controller.selectedPostcode.value.isEmpty
+                              ? hint
+                              : this.controller.selectedPostcode.value,
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: this.controller.selectedPostcode.value.isEmpty
+                                ? AppColors.grey
+                                : AppColors.black,
+                          ),
+                        )),
+                      ),
+                    ],
+                  ),
+                ),
+              )),
       ],
     );
   }
