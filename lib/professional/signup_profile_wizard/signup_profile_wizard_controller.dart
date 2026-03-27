@@ -174,6 +174,62 @@ class SignupProfileWizardController extends BaseController {
 
     // Get initial step from arguments if provided
     final args = Get.arguments as Map<String, dynamic>? ?? {};
+
+    // Populate initial personal details if passed
+    final initialFullName = args['fullName'] as String?;
+    final initialDob = args['dob'] as String?;
+    final initialGender = args['gender'] as String?;
+    final initialProfileImagePath = args['profileImagePath'] as String?;
+    final initialSocialProfileImageUrl = args['socialProfileImageUrl'] as String?;
+
+    if (initialFullName != null && initialFullName.isNotEmpty) {
+      fullNameController.text = initialFullName;
+    }
+    if (initialDob != null && initialDob.isNotEmpty) {
+      dobController.text = initialDob;
+      // Also parse and set selectedDob to avoid validation error
+      try {
+        final parts = initialDob.split('/');
+        if (parts.length == 3) {
+          final day = int.parse(parts[0]);
+          final month = int.parse(parts[1]);
+          final year = int.parse(parts[2]);
+          selectedDob.value = DateTime(year, month, day);
+        } else {
+          // Try ISO format as fallback
+          selectedDob.value = DateTime.parse(initialDob);
+        }
+      } catch (e) {
+        debugPrint('Error parsing initial DOB: $e');
+      }
+    }
+    if (initialGender != null && initialGender.isNotEmpty) {
+      selectedGender.value = _convertGenderFromApiFormat(initialGender);
+    }
+    // Note: If profileId is null, we can assume this is a new profile creation
+    // and potentially use initialProfileImagePath or initialSocialProfileImageUrl
+    // for the avatar if needed, but currently this controller doesn't seem to
+    // manage the avatar selection (Step 0) - it only manages the rest of the profile.
+
+    // Populate initial address details if passed
+    final initialPostcode = args['postcode'] as String?;
+    final initialAddress = args['address'] as String?;
+    final initialLatitude = args['latitude'] as double?;
+    final initialLongitude = args['longitude'] as double?;
+
+    if (initialPostcode != null && initialPostcode.isNotEmpty) {
+      postcodeController.text = initialPostcode;
+    }
+    if (initialAddress != null && initialAddress.isNotEmpty) {
+      addressController.text = initialAddress;
+    }
+    if (initialLatitude != null) {
+      selectedLatitude.value = initialLatitude;
+    }
+    if (initialLongitude != null) {
+      selectedLongitude.value = initialLongitude;
+    }
+
     final initialStepArg = args['initialStep'] as int?;
     if (initialStepArg != null &&
         initialStepArg >= 0 &&
@@ -622,6 +678,14 @@ class SignupProfileWizardController extends BaseController {
       await Future.delayed(const Duration(milliseconds: 50));
     }
 
+    // If profile details are already set (e.g. passed from arguments), skip initial API call
+    if (fullNameController.text.isNotEmpty &&
+        dobController.text.isNotEmpty &&
+        selectedGender.value.isNotEmpty) {
+      debugPrint('Profile details already set from arguments, skipping initial API call');
+      return;
+    }
+
     await callDataService<ApiResponse<dynamic>>(
       _userApiService.getCreateProfileDetails(),
       showLoader: true,
@@ -745,6 +809,13 @@ class SignupProfileWizardController extends BaseController {
 
   /// Load create address details from API
   Future<void> _loadCreateAddressDetails() async {
+    // If address is already set (e.g. passed from arguments), skip initial API call
+    if (postcodeController.text.isNotEmpty &&
+        addressController.text.isNotEmpty) {
+      debugPrint('Address already set from arguments, skipping initial API call');
+      return;
+    }
+
     await callDataService<ApiResponse<dynamic>>(
       _userApiService.getCreateAddressDetails(),
       showLoader: true,

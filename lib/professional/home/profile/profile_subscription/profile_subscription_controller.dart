@@ -19,6 +19,8 @@ class ProfileSubscriptionController extends BaseController {
   final carouselController = CarouselSliderController();
   final currentPageIndex = 0.obs;
   final plans = <SubscriptionPlan>[].obs;
+  final isInitialFetchDone = false.obs;
+
   int get initialPage {
     final currentPlanIndex = plans.indexWhere((plan) => plan.isCurrentPlan);
     return currentPlanIndex >= 0 ? currentPlanIndex : 0;
@@ -55,6 +57,7 @@ class ProfileSubscriptionController extends BaseController {
         setError(errorMsg);
       },
       onComplete: () {
+        isInitialFetchDone.value = true;
         resetState();
       },
     );
@@ -64,7 +67,7 @@ class ProfileSubscriptionController extends BaseController {
   Future<void> fetchSubscriptionDetails() async {
     await callDataService<ApiResponse<dynamic>>(
       _userApiService.getSubscriptionDetails(),
-      showLoader: false, // Don't show loader for details, plans will show it
+      showLoader: true, // Don't show loader for details, plans will show it
       onSuccess: (response) {
         if (response.success && response.data != null) {
           _parseSubscriptionDetails(response.data);
@@ -212,6 +215,7 @@ class ProfileSubscriptionController extends BaseController {
       arguments: {
         'planId': plan.id!,
         'planName': plan.name ?? '',
+        'isFromSignup': false,
       },
     );
   }

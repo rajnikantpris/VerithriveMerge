@@ -1,9 +1,11 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../api/api_response.dart';
 import '../../api/user_api_service.dart';
 import '../../common/base_controller.dart';
 import '../../enduser/screens/message/socket_service.dart';
+import '../../models/login_response_model.dart';
 import '../../routes/app_routes.dart';
 import '../../services/storage_service.dart';
 import '../../services/social_auth_service.dart';
@@ -27,6 +29,43 @@ class ProfileController extends BaseController {
 
   final UserApiService _userApiService;
   final SocialAuthService _socialAuthService = SocialAuthService();
+  final StorageService? _storageService =
+      Get.isRegistered<StorageService>() ? Get.find<StorageService>() : null;
+
+  final Rxn<UserModel> userProfile = Rxn<UserModel>();
+
+  @override
+  void onInit() {
+    super.onInit();
+    fetchProfileDetails();
+  }
+
+  /// Fetch user profile details from API
+  Future<void> fetchProfileDetails() async {
+    await callDataService<ApiResponse<dynamic>>(
+      _userApiService.getProfileDetails(),
+      onSuccess: (response) {
+        if (response.success && response.data != null) {
+          final data = response.data as Map<String, dynamic>;
+          userProfile.value = UserModel.fromJson(data);
+          
+          // Optionally update storage with the latest user data
+          if (_storageService != null) {
+            // StorageService uses specific typed methods. 
+            // Encode the map to JSON string before saving via writeString.
+            _storageService!.writeString('user_data', jsonEncode(data));
+            
+            // Also update notification status in storage for consistency across the app
+            if (data.containsKey('is_notification')) {
+              _storageService!.writeBool('is_notification', data['is_notification'] as bool);
+            }
+          }
+          debugPrint('Profile details fetched successfully');
+        }
+      },
+      showLoader: userProfile.value == null, // Show loader only on first fetch
+    );
+  }
 
   /// Static list representing the profile menu options.
   final List<ProfileItem> items = const [

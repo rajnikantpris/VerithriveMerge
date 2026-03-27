@@ -8,6 +8,7 @@ class ProcessingPaymentController extends BaseController {
   Timer? _timer;
   final selectedPlanId = ''.obs;
   final selectedtitle = ''.obs;
+  bool isFromSignup = false;
 
   @override
   void onInit() {
@@ -19,6 +20,9 @@ class ProcessingPaymentController extends BaseController {
       }
       if (args['planTitle'] is String) {
         selectedtitle.value = args['planTitle'] as String;
+      }
+      if (args['isFromSignup'] is bool) {
+        isFromSignup = args['isFromSignup'] as bool;
       }
     }
     _startTimer();
@@ -32,7 +36,11 @@ class ProcessingPaymentController extends BaseController {
 
   void _startTimer() {
     _timer = Timer(const Duration(seconds: 5), () {
-      Get.offAllNamed(Routes.verification);
+      if (isFromSignup) {
+        Get.offAllNamed(Routes.verification);
+      } else {
+        Get.offAllNamed(Routes.home);
+      }
     });
   }
 }

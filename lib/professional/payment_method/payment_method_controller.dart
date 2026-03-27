@@ -67,6 +67,7 @@ class PaymentMethodController extends BaseController {
   final isConfirming = false.obs;
   String selectedPlanId = '';
   String selectedPlanName = '';
+  bool isFromSignup = false;
 
   @override
   void onInit() {
@@ -78,6 +79,9 @@ class PaymentMethodController extends BaseController {
       }
       if (args['planName'] is String) {
         selectedPlanName = args['planName'] as String;
+      }
+      if (args['isFromSignup'] is bool) {
+        isFromSignup = args['isFromSignup'] as bool;
       }
     }
   }
@@ -130,6 +134,7 @@ class PaymentMethodController extends BaseController {
             arguments: {
               'planId': selectedPlanId,
               'planTitle': selectedPlanName,
+              'isFromSignup': isFromSignup,
             },
           );
         } else {

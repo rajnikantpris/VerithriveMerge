@@ -9,13 +9,21 @@ import 'profile_controller.dart';
 class HomeBinding extends Bindings {
   @override
   void dependencies() {
-    Get.lazyPut(() => HomeController(Get.find()));
-    Get.lazyPut(() => CalendarController(Get.find<UserApiService>()));
-    Get.lazyPut(() => MessagesController(Get.find<UserApiService>()));
-    Get.lazyPut(() => ProfileController(
-          Get.isRegistered<UserApiService>()
-              ? Get.find<UserApiService>()
-              : null,
-        ));
+
+// Get.lazyPut(() => HomeController(Get.find()));
+//     Get.lazyPut(() => CalendarController(Get.find<UserApiService>()));
+//     Get.lazyPut(() => MessagesController(Get.find<UserApiService>()));
+//     Get.lazyPut(() => ProfileController(
+//           Get.isRegistered<UserApiService>()
+//               ? Get.find<UserApiService>()
+//               : null,
+//         ));
+
+    Get.put(HomeController(Get.find()));
+    Get.put(CalendarController(Get.find<UserApiService>()));
+    Get.put(MessagesController(Get.find<UserApiService>()));
+    Get.put(ProfileController(
+      Get.isRegistered<UserApiService>() ? Get.find<UserApiService>() : null,
+    ));
   }
 }

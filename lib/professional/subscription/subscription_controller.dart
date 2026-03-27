@@ -219,6 +219,7 @@ class SubscriptionController extends BaseController {
       arguments: {
         'planId': selectedPlanId.value,
         'planName': selectedPlan.title,
+        'isFromSignup': true,
       },
     );
   }

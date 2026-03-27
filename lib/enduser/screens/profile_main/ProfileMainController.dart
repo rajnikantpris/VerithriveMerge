@@ -17,7 +17,8 @@ import '../message/socket_service.dart';
 
 class ProfileMainController extends BaseController {
   final StorageService _storageService = Get.find<StorageService>();
-  final ProjectRepository _repository = Get.find(tag: (ProjectRepository).toString());
+  final ProjectRepository _repository =
+      Get.find(tag: (ProjectRepository).toString());
   final SocialAuthService _socialAuthService = SocialAuthService();
   final isLoading = false.obs;
 
@@ -54,7 +55,7 @@ class ProfileMainController extends BaseController {
       final Map<String, dynamic> data = <String, dynamic>{};
       return data; // Empty object for logout API
     }
-    
+
     var service = _repository.sendPostApiRequest(
       toJson,
       logout,
@@ -74,8 +75,8 @@ class ProfileMainController extends BaseController {
       // Parse the response - baseResponse is a Dio Response object
       Map<String, dynamic> responseData;
       if (baseResponse != null && baseResponse.data != null) {
-        responseData = baseResponse.data is Map<String, dynamic> 
-            ? baseResponse.data 
+        responseData = baseResponse.data is Map<String, dynamic>
+            ? baseResponse.data
             : baseResponse.data as Map<String, dynamic>;
       } else if (baseResponse is Map<String, dynamic>) {
         responseData = baseResponse;
@@ -87,17 +88,18 @@ class ProfileMainController extends BaseController {
       String message = responseData['message'] ?? 'Logout successful';
 
       if (success == true) {
+        await performLogout();
         // Show success dialog with API message
-        showResponseDialog(
-          message: message,
-          title: 'Success',
-          isError: false,
-          showButton: true,
-          onOkPressed: () async {
-            // Execute current logout code on OK button click
-            await performLogout();
-          },
-        );
+        // showResponseDialog(
+        //   message: message,
+        //   title: 'Success',
+        //   isError: false,
+        //   showButton: true,
+        //   onOkPressed: () async {
+        //     // Execute current logout code on OK button click
+        //     await performLogout();
+        //   },
+        // );
       } else {
         // Show error message if API returns success: false
         showResponseDialog(
@@ -149,7 +151,7 @@ class ProfileMainController extends BaseController {
         Get.delete<EndUserSocketService>();
         print('EndUserSocketService disconnected and removed');
       }
-      
+
       if (Get.isRegistered<prof_socket.SocketService>()) {
         final professionalSocket = Get.find<prof_socket.SocketService>();
         professionalSocket.disconnect();

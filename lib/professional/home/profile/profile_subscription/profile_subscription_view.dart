@@ -72,16 +72,20 @@ class ProfileSubscriptionView extends BaseView<ProfileSubscriptionController> {
         child: Center(
           child: Obx(() {
             if (controller.plans.isEmpty) {
-              return Center(
-                child: Text(
-                  'No subscription plans available',
-                  style: TextStyle(
-                    fontFamily: AppFonts.rubikRegular,
-                    fontSize: FontSizes.setFontValue_14,
-                    color: AppColor.color_9D9D9D,
+              if (controller.isInitialFetchDone.value) {
+                return Center(
+                  child: Text(
+                    'No subscription plans available',
+                    style: TextStyle(
+                      fontFamily: AppFonts.rubikRegular,
+                      fontSize: FontSizes.setFontValue_14,
+                      color: AppColor.color_9D9D9D,
+                    ),
                   ),
-                ),
-              );
+                );
+              } else {
+                return const SizedBox.shrink();
+              }
             }
 
             return LayoutBuilder(

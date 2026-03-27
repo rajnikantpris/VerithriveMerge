@@ -6,6 +6,7 @@ import '../../../../api/user_api_service.dart';
 import '../../../../common/base_controller.dart';
 import '../../../../services/storage_service.dart';
 import '../../../../widgets/response_dialog.dart';
+import '../../profile_controller.dart';
 
 class NotificationSettingsController extends BaseController {
   final UserApiService _userApiService;
@@ -41,31 +42,38 @@ class NotificationSettingsController extends BaseController {
       onSuccess: (response) {
         if (response.success) {
           // Update storage with new value
-          if (_storageService != null) {
-            _storageService!.writeBool('is_notification', value);
+          // if (_storageService != null) {
+          //   _storageService!.writeBool('is_notification', value);
+          // }
+          //
+          // // Extract and save user data from response if available
+          // if (response.data is Map<String, dynamic>) {
+          //   final data = response.data as Map<String, dynamic>;
+          //   if (data['user'] is Map<String, dynamic>) {
+          //     final user = data['user'] as Map<String, dynamic>;
+          //     final isNotification = user['is_notification'] as bool?;
+          //     if (isNotification != null && _storageService != null) {
+          //       _storageService!.writeBool('is_notification', isNotification);
+          //       notificationsEnabled.value = isNotification;
+          //     }
+          //   }
+          // }
+
+          // Call profile API to refresh profile details
+          if (Get.isRegistered<ProfileController>()) {
+            Get.find<ProfileController>().fetchProfileDetails();
           }
 
-          // Extract and save user data from response if available
-          if (response.data is Map<String, dynamic>) {
-            final data = response.data as Map<String, dynamic>;
-            if (data['user'] is Map<String, dynamic>) {
-              final user = data['user'] as Map<String, dynamic>;
-              final isNotification = user['is_notification'] as bool?;
-              if (isNotification != null && _storageService != null) {
-                _storageService!.writeBool('is_notification', isNotification);
-                notificationsEnabled.value = isNotification;
-              }
-            }
-          }
-
-          debugPrint('Notifications ${value ? "enabled" : "disabled"} successfully');
+          debugPrint(
+              'Notifications ${value ? "enabled" : "disabled"} successfully');
         } else {
           // Revert on failure
           final previousValue = !value;
           notificationsEnabled.value = previousValue;
           showResponseDialog(
             title: 'Error',
-            message: response.message ?? 'Failed to update notification settings',
+            message:
+                response.message ?? 'Failed to update notification settings',
             isError: true,
           );
         }
@@ -83,4 +91,3 @@ class NotificationSettingsController extends BaseController {
     );
   }
 }
-
