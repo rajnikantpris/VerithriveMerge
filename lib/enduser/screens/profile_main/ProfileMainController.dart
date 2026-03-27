@@ -12,6 +12,7 @@ import '../../utils/auth_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:verithrive_dev/services/storage_service.dart';
 import 'package:verithrive_dev/services/social_auth_service.dart';
+import 'package:verithrive_dev/services/socket_service.dart' as prof_socket;
 import '../message/socket_service.dart';
 
 class ProfileMainController extends BaseController {
@@ -141,10 +142,20 @@ class ProfileMainController extends BaseController {
   // Current logout code - clears only end-user data, preserving all remember me credentials
   Future<void> performLogout() async {
     try {
-      // Reset socket service first - create a temporary instance to reset
-      final socketService = SocketService();
-      socketService.resetConnection();
-      print('Socket service reset during logout');
+      // Properly disconnect and remove socket services during logout
+      if (Get.isRegistered<EndUserSocketService>()) {
+        final endUserSocket = Get.find<EndUserSocketService>();
+        endUserSocket.disconnect();
+        Get.delete<EndUserSocketService>();
+        print('EndUserSocketService disconnected and removed');
+      }
+      
+      if (Get.isRegistered<prof_socket.SocketService>()) {
+        final professionalSocket = Get.find<prof_socket.SocketService>();
+        professionalSocket.disconnect();
+        Get.delete<prof_socket.SocketService>();
+        print('Professional SocketService disconnected and removed');
+      }
 
       // Sign out from social providers first
       await _socialAuthService.signOutSocialProviders();

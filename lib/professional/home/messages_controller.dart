@@ -34,13 +34,21 @@ class MessagesController extends BaseController {
   @override
   void onInit() {
     super.onInit();
-    // fetchChatInbox();
+    
+    // 1. Explicitly clear messages on initialization
+    messages.clear();
+    
+    print("MessagesController onInit - messages cleared. Count: ${messages.length}");
 
-    print("Call ON init message controller ---");
     if (!_isGuestUser()) {
+      // 2. Force a completely fresh SocketService for the new user
       if (Get.isRegistered<SocketService>()) {
+        final socket = Get.find<SocketService>();
+        socket.disconnect();
         Get.delete<SocketService>();
+        print("Existing SocketService deleted in MessagesController onInit");
       }
+      
       checkAndReconnectSocket();
     }
   }
@@ -61,14 +69,14 @@ class MessagesController extends BaseController {
         _socketService = Get.put(SocketService());
       }
 
-      // Check if socket is connected
-      if (!_socketService!.connected) {
-        // Socket not connected, reconnect it
-        final currentUserId = await _getCurrentUserId();
-        logInfo(
-            'Message UserID:----- ${currentUserId.toString()}' );
-        await _socketService!.connect(userId: currentUserId);
-      }
+      // 3. Always call connect with current credentials to ensure fresh session
+      final currentUserId = await _getCurrentUserId();
+      final currentToken = await _getCurrentToken();
+      
+      logInfo('MessagesController: Connecting socket for UserID: $currentUserId');
+      
+      // We pass both ID and Token to ensure SocketService uses the LATEST credentials
+      await _socketService!.connect(userId: currentUserId, token: currentToken);
 
       // Setup message listeners
       _setupSocketListeners();
@@ -78,7 +86,7 @@ class MessagesController extends BaseController {
         _socketService!.getInbox();
       }
     } catch (e) {
-      // Error checking socket, but still setup listeners
+      logError('Error in checkAndReconnectSocket', error: e);
       _setupSocketListeners();
     }
   }
@@ -90,12 +98,20 @@ class MessagesController extends BaseController {
     return storage.readString('user_id');
   }
 
+  /// Get current token from storage
+  Future<String?> _getCurrentToken() async {
+    if (!Get.isRegistered<StorageService>()) return null;
+    final storage = Get.find<StorageService>();
+    return storage.readString('access_token');
+  }
+
   /// Setup Socket.IO event listeners for inbox_data
   void _setupSocketListeners() {
     if (_socketService == null) return;
 
     // Listen for inbox data - inbox_data event
     _socketService!.onInboxData((data) {
+      logInfo('MessagesController: Received inbox_data event');
       _handleInboxData(data);
     });
   }
@@ -111,7 +127,7 @@ class MessagesController extends BaseController {
       // Parse the inbox data and update messages list
       _parseApiResponse(data);
     } catch (e) {
-      // Handle parsing errors - keep existing data or clear
+      logError('Error handling inbox data', error: e);
       messages.clear();
     }
   }
@@ -131,13 +147,10 @@ class MessagesController extends BaseController {
         if (response.success && response.data != null) {
           _parseApiResponse(response.data);
         } else {
-          // If API fails, keep empty list or show error
           messages.clear();
         }
       },
       onError: (error, stack) {
-        // Error is already handled by callDataService
-        // Keep empty list on error
         messages.clear();
       },
       onComplete: () {
@@ -149,13 +162,11 @@ class MessagesController extends BaseController {
   /// Parse API response and update messages list
   void _parseApiResponse(dynamic data) {
     try {
-      // Handle different response structures
       List<dynamic>? messagesList;
 
       if (data is List) {
         messagesList = data;
       } else if (data is Map<String, dynamic>) {
-        // Check if data is nested under 'data' key
         if (data['data'] is List) {
           messagesList = data['data'] as List;
         } else if (data['inbox'] is List) {
@@ -180,11 +191,9 @@ class MessagesController extends BaseController {
 
         messages.value = parsedMessages;
       } else {
-        // If no messages found, clear the list
         messages.clear();
       }
     } catch (e) {
-      // Handle parsing errors - keep existing data or clear
       messages.clear();
     }
   }
@@ -198,7 +207,6 @@ class MessagesController extends BaseController {
         userObj = item['user'] as Map<String, dynamic>;
       }
 
-      // Extract name - check nested user object first, then root level
       final name = userObj?['full_name']?.toString() ??
           userObj?['fullName']?.toString() ??
           userObj?['name']?.toString() ??
@@ -210,7 +218,6 @@ class MessagesController extends BaseController {
           item['contact_name']?.toString() ??
           'Unknown';
 
-      // Extract last message - try multiple possible field names
       final lastMessage = item['last_message']?.toString() ??
           item['lastMessage']?.toString() ??
           item['message']?.toString() ??
@@ -218,7 +225,6 @@ class MessagesController extends BaseController {
           item['content']?.toString() ??
           '';
 
-      // Extract time label - try multiple possible field names
       String timeLabel = '';
       if (item['last_message_at'] != null) {
         timeLabel = _formatTimestamp(item['last_message_at']);
@@ -228,25 +234,13 @@ class MessagesController extends BaseController {
         timeLabel = _formatTimestamp(item['updated_at']);
       } else if (item['updatedAt'] != null) {
         timeLabel = _formatTimestamp(item['updatedAt']);
-      } else if (item['last_message_time'] != null) {
-        timeLabel = _formatTimestamp(item['last_message_time']);
-      } else if (item['lastMessageTime'] != null) {
-        timeLabel = _formatTimestamp(item['lastMessageTime']);
-      } else if (item['timestamp'] != null) {
-        timeLabel = _formatTimestamp(item['timestamp']);
-      } else if (item['time'] != null) {
-        timeLabel = item['time'].toString();
-      } else if (item['timeLabel'] != null) {
-        timeLabel = item['timeLabel'].toString();
       }
 
-      // Extract unread count
       final unreadCount = item['unread_count'] as int? ??
           item['unreadCount'] as int? ??
           item['unread'] as int? ??
           0;
 
-      // Extract online status - check nested user object first, then root level
       bool? isOnlineFromUser;
       if (userObj != null) {
         isOnlineFromUser = userObj['is_online'] as bool? ??
@@ -260,13 +254,11 @@ class MessagesController extends BaseController {
           item['online'] as bool? ??
           false;
 
-      // Extract highlight (e.g., if unread)
       final highlight = unreadCount > 0 ||
           (item['highlight'] as bool? ?? false) ||
           (item['is_pinned'] as bool? ?? false);
 
-      // Extract avatar - check nested user object first, then root level
-      String avatarAsset = AppImages.user; // Default to user image
+      String avatarAsset = AppImages.user;
       final profilePicturePath = userObj?['profile_picture']?.toString() ??
           userObj?['profilePicture']?.toString() ??
           item['avatar']?.toString() ??
@@ -276,29 +268,23 @@ class MessagesController extends BaseController {
           item['profilePicture']?.toString();
 
       if (profilePicturePath != null && profilePicturePath.isNotEmpty) {
-        // Construct full URL if it's a relative path
         if (profilePicturePath.startsWith('http://') ||
             profilePicturePath.startsWith('https://')) {
           avatarAsset = profilePicturePath;
         } else {
-          // Construct full URL from base URL
-          // Extract server base URL (protocol + host + port) from UserApiService
           final serverBaseUrl = UserApiService.socketBaseUrl;
-          // Remove leading 'public/' if present, or use as-is
           final imagePath = profilePicturePath.startsWith('public/')
-              ? profilePicturePath.substring(7) // Remove 'public/'
+              ? profilePicturePath.substring(7)
               : profilePicturePath;
           avatarAsset = '$serverBaseUrl/$imagePath';
         }
       }
 
-      // Extract show delivered tick
       final showDeliveredTick = item['show_delivered_tick'] as bool? ??
           item['showDeliveredTick'] as bool? ??
           item['delivered'] as bool? ??
           false;
 
-      // Extract user ID - check nested user object first
       final userId = userObj?['_id']?.toString() ??
           userObj?['id']?.toString() ??
           item['user_id']?.toString() ??
@@ -306,7 +292,6 @@ class MessagesController extends BaseController {
           item['_id']?.toString() ??
           item['id']?.toString();
 
-      // Extract chat ID - check room_id first (from API response)
       final chatId = item['room_id']?.toString() ??
           item['roomId']?.toString() ??
           item['chat_id']?.toString() ??
@@ -331,37 +316,30 @@ class MessagesController extends BaseController {
     }
   }
 
-  /// Format timestamp to time label (converts UTC to local time)
   String _formatTimestamp(dynamic timestamp) {
     try {
       DateTime? dateTime;
 
       if (timestamp is String) {
-        // Try parsing ISO format or common date formats
         if (timestamp.contains('T')) {
           final dateTimeUtc = DateTime.parse(timestamp);
-          // Convert UTC to local time
           dateTime = dateTimeUtc.isUtc ? dateTimeUtc.toLocal() : dateTimeUtc;
         } else {
-          // Try other formats
           try {
             dateTime = DateFormat('yyyy-MM-dd HH:mm:ss').parse(timestamp);
           } catch (e) {
             try {
               dateTime = DateFormat('yyyy-MM-dd').parse(timestamp);
             } catch (e2) {
-              return timestamp; // Return as-is if can't parse
+              return timestamp;
             }
           }
         }
       } else if (timestamp is int) {
-        // Assume Unix timestamp (seconds or milliseconds)
         if (timestamp > 1000000000000) {
-          // Milliseconds
           dateTime = DateTime.fromMillisecondsSinceEpoch(timestamp, isUtc: true)
               .toLocal();
         } else {
-          // Seconds
           dateTime =
               DateTime.fromMillisecondsSinceEpoch(timestamp * 1000, isUtc: true)
                   .toLocal();
@@ -373,18 +351,13 @@ class MessagesController extends BaseController {
       final now = DateTime.now();
       final difference = now.difference(dateTime);
 
-      // Format based on time difference
       if (difference.inDays == 0) {
-        // Today - show time
         return DateFormat('HH.mm').format(dateTime);
       } else if (difference.inDays == 1) {
-        // Yesterday
         return 'Yesterday';
       } else if (difference.inDays < 7) {
-        // This week - show day name
         return DateFormat('EEEE').format(dateTime);
       } else {
-        // Older - show date
         return DateFormat('dd/MM/yyyy').format(dateTime);
       }
     } catch (e) {

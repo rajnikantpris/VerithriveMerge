@@ -25,7 +25,7 @@ class MessagesController extends BaseController {
   var isInitialLoading = false.obs; // Track initial loading separately
   bool _isRefreshing = false;
 
-  SocketService? _socketService;
+  EndUserSocketService? _socketService;
 
   @override
   void onInit() {
@@ -426,7 +426,7 @@ class MessagesController extends BaseController {
 
       // Get or create local SocketService
       if (_socketService == null) {
-        _socketService = SocketService();
+        _socketService = EndUserSocketService();
       }
 
       // Get current user ID for debugging

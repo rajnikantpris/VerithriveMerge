@@ -6,13 +6,13 @@ import '../../core/values/sharePrefrenceConst.dart';
 
 class MainTabController extends GetxController {
   final RxInt currentIndex = 0.obs;
-  SocketService? _socketService;
+  EndUserSocketService? _socketService;
 
   @override
   void onInit() {
     super.onInit();
     // Initialize local socket service
-    _socketService = SocketService();
+    _socketService = EndUserSocketService();
     // Connect socket for authenticated users
     _connectSocket();
   }
@@ -38,15 +38,9 @@ class MainTabController extends GetxController {
     if (Get.isRegistered<StorageService>()) {
       final storage = Get.find<StorageService>();
       // Try end-user specific keys first
-      userId = storage.readString(SharePreferenceConst.id) ?? // End-user uses 'id' key
-          storage.readString('id') ??
-          storage.readString('_id') ??
-          storage.readString('userId') ??
-          storage.readString('user_id'); // Fallback to professional key
+      userId = storage.readString(SharePreferenceConst.id); // Fallback to professional key
           
-      token = storage.readString('access_token') ??
-          storage.readString('accessToken') ??
-          storage.readString('token');
+      token = storage.readString('access_token') ;
     }
 
     print('MainTabController - Connecting socket with User ID: $userId');

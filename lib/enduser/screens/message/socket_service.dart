@@ -8,8 +8,8 @@ import '../../utils/api_services.dart';
 import '../../core/values/sharePrefrenceConst.dart';
 import 'package:verithrive_dev/services/storage_service.dart';
 
-/// Socket.IO service for managing real-time chat communication
-class SocketService extends GetxService {
+/// Socket.IO service for managing real-time chat communication (End User version)
+class EndUserSocketService extends GetxService {
   IO.Socket? _socket;
   bool _isConnected = false;
   String? _currentUserId;
@@ -31,16 +31,17 @@ class SocketService extends GetxService {
 
   /// Initialize and connect to Socket.IO server
   Future<void> connect({String? userId, String? token}) async {
-    if (_isConnected && _socket != null) {
-      log('Socket already connected');
-      return;
-    }
-
-    // If socket exists but not connected, dispose it first
-    if (_socket != null && !_isConnected) {
+    // If socket exists, disconnect and dispose to ensure a fresh connection
+    // Especially important when switching users
+    if (_socket != null) {
+      log('Disposing previous socket before new connection attempt');
+      _socket!.disconnect();
       _socket!.dispose();
       _socket = null;
     }
+
+    _isConnected = false;
+    isConnected.value = false;
 
     try {
       // Get user ID from storage if not provided
@@ -66,66 +67,46 @@ class SocketService extends GetxService {
         return;
       }
 
+      // Get user type for identification
+      final userType = await _getUserType();
+      log('Connecting End-User Socket - UserID: $userId, Type: $userType');
+
       final baseUrl = socketBaseUrl;
       log('Connecting to Socket.IO: $baseUrl');
-      log('User ID: $userId');
-      log('Token available: true');
-      log('Token length: ${token.length}');
-      log(
-          'Token (first 20 chars): ${token.substring(0, token.length > 20 ? 20 : token.length)}...');
-      log(
-          'Token (last 10 chars): ...${token.substring(token.length > 10 ? token.length - 10 : 0)}');
-      log('Full token: $token');
+
+      // Log partial token for verification without exposing full credential
+      if (token.length > 10) {
+        log('Token verified: ...${token.substring(token.length - 8)}');
+      }
 
       // Socket.IO options
-      // Note: Socket.IO client automatically adds /socket.io path by default
-      // Build query parameters with userId and token (server expects token in query)
-      // final queryParams = <String, dynamic>{
-      //   'userId': userId,
-      //   'token': token, // Token is guaranteed to be non-null here
-      // };
-
       final options = IO.OptionBuilder()
-          .setTransports(['websocket', 'polling']) // Try both transports
-          .disableAutoConnect() // Disable auto-connect to control connection manually
+          .setTransports(['websocket', 'polling'])
+          .disableAutoConnect()
+          .enableForceNew() // Force a new connection to avoid session bleeding
           .setExtraHeaders({
-            'auth': token, // Token is guaranteed to be non-null here
+            'auth': token,
+            'userType': userType ?? 'normal',
             'Content-Type': 'application/json',
             'Accept': 'application/json',
-            // iOS-specific headers
             if (Platform.isIOS) ...{
               'User-Agent': 'iOS-Verithrive-App',
               'Connection': 'keep-alive',
             },
-          }) // Add userId and token as query parameters
-          .setPath('/socket.io') // Explicitly set Socket.IO path
-          // iOS-specific configurations
-          .enableReconnection() // Enable automatic reconnection
-          .setReconnectionAttempts(5) // Limit reconnection attempts
-          .setReconnectionDelay(1000) // 1 second delay between reconnections
-          .setTimeout(30000) // 30 seconds timeout
+          })
+          .setPath('/socket.io')
+          .enableReconnection()
+          .setReconnectionAttempts(5)
+          .setReconnectionDelay(1000)
+          .setTimeout(30000)
           .build();
 
-      log(
-          'Socket.IO options configured: path=/socket.io, transports=[websocket, polling]');
-      log('Query params: userId=$userId, token=***');
-
-      log('Creating socket with options...');
+      log('Creating fresh socket instance...');
       _socket = IO.io(baseUrl, options);
-      log('Socket instance created');
-
-      // Check socket state immediately after creation
-      log(
-          'Socket state after creation: connected=${_socket?.connected}, id=${_socket?.id}');
-
-      // Log socket URL being used
-      log('Socket URL: $baseUrl');
 
       _setupEventListeners();
-      log('Calling socket.connect()...');
       _socket!.connect();
-      log('socket.connect() called, waiting for connection...');
-      
+
       // Add connection timeout for iOS
       if (Platform.isIOS) {
         _connectionTimeout = Timer(Duration(seconds: 30), () {
@@ -139,36 +120,17 @@ class SocketService extends GetxService {
       log('Error connecting to Socket.IO: $e');
       _isConnected = false;
       isConnected.value = false;
-      
-      // iOS-specific error handling
-      if (Platform.isIOS) {
-        log('iOS socket connection error: $e');
-        if (e.toString().contains('Network') || e.toString().contains('Connection')) {
-          log('iOS network connection issue - check network settings');
-        } else if (e.toString().contains('WebSocket') || e.toString().contains('websocket')) {
-          log('iOS WebSocket issue - attempting polling fallback');
-          _fallbackToPolling();
-        }
-      }
     }
   }
 
   /// Setup Socket.IO event listeners
   void _setupEventListeners() {
-    if (_socket == null) {
-      log('Cannot setup listeners: Socket is null');
-      return;
-    }
-
-    log('Setting up socket event listeners...');
+    if (_socket == null) return;
 
     _socket!.onConnect((_) {
       _isConnected = true;
       isConnected.value = true;
-      log('✅ Socket.IO connected successfully!');
-      log('Socket ID: ${_socket?.id}');
-      
-      // Clear connection timeout if connected
+      log('✅ End-User Socket.IO connected successfully! ID: ${_socket?.id}');
       _connectionTimeout?.cancel();
       _connectionTimeout = null;
     });
@@ -176,68 +138,22 @@ class SocketService extends GetxService {
     _socket!.onDisconnect((reason) {
       _isConnected = false;
       isConnected.value = false;
-      log('❌ Socket.IO disconnected. Reason: $reason');
+      log('❌ End-User Socket.IO disconnected. Reason: $reason');
     });
 
     _socket!.onConnectError((error) {
       _isConnected = false;
       isConnected.value = false;
-      log('❌ Socket.IO connection error: $error');
-      log('Error type: ${error.runtimeType}');
-      log('Error details: ${error.toString()}');
+      log('❌ End-User Socket.IO connection error: $error');
       
-      // iOS-specific error handling
-      if (Platform.isIOS) {
-        log('iOS-specific socket error detected');
-        if (error.toString().contains('websocket')) {
-          log('WebSocket error on iOS, falling back to polling');
-          // Try to reconnect with polling only
-          _fallbackToPolling();
-        }
+      if (Platform.isIOS && error.toString().contains('websocket')) {
+        _fallbackToPolling();
       }
     });
 
-    _socket!.onError((error) {
-      log('❌ Socket.IO error: $error');
-      log('Error details: ${error.toString()}');
-      
-      // iOS-specific error handling
-      if (Platform.isIOS) {
-        log('iOS socket error: $error');
-        if (error.toString().contains('network') || error.toString().contains('connection')) {
-          log('Network connection error on iOS, check network availability');
-        }
-      }
-    });
-
-    _socket!.on('connect_error', (error) {
-      log('❌ Socket connect_error event: $error');
-      log('Error details: ${error.toString()}');
-      _isConnected = false;
-      isConnected.value = false;
-      
-      // iOS-specific error handling
-      if (Platform.isIOS) {
-        log('iOS connect_error: $error');
-      }
-    });
-
-    // Handle authentication errors
-    _socket!.on('error', (error) {
-      log('❌ Socket error event: $error');
-      if (error is Map && error['message'] == 'NO_TOKEN') {
-        log('⚠️ Authentication error: Token not accepted by server');
-        _isConnected = false;
-        isConnected.value = false;
-      }
-    });
-
-    // Listen for any socket events for debugging
     _socket!.onAny((event, data) {
-      log('📡 Socket event received: $event, data: $data');
+      log('📡 End-User Socket event: $event');
     });
-
-    log('Socket event listeners setup complete');
   }
 
   /// Send a message via Socket.IO - send_message event
@@ -268,13 +184,8 @@ class SocketService extends GetxService {
 
   /// Listen for incoming messages - receive_message event
   void onReceiveMessage(Function(Map<String, dynamic>) callback) {
-    if (_socket == null) {
-      log('Cannot listen for messages: Socket not initialized');
-      return;
-    }
-
+    if (_socket == null) return;
     _socket!.on('receive_message', (data) {
-      log('Received message via Socket.IO: $data');
       if (data is Map<String, dynamic>) {
         callback(data);
       }
@@ -291,18 +202,12 @@ class SocketService extends GetxService {
     required String roomId,
     List<String>? messageIds,
   }) {
-    if (_socket == null || !_isConnected) {
-      log('Cannot mark read: Socket not connected');
-      return;
-    }
-
+    if (_socket == null || !_isConnected) return;
     final readData = {
       'room_id': roomId,
       if (messageIds != null) 'messageIds': messageIds,
     };
-
     _socket!.emit('mark_read', readData);
-    log('Marked messages as read: $readData');
   }
 
   /// Get inbox data - get_inbox event
@@ -311,20 +216,19 @@ class SocketService extends GetxService {
       log('Cannot get inbox: Socket not connected');
       return;
     }
-
     _socket!.emit('get_inbox');
     log('Requested inbox data via Socket.IO');
   }
 
   /// Listen for inbox data - inbox_data event
   void onInboxData(Function(Map<String, dynamic>) callback) {
-    if (_socket == null) {
-      log('Cannot listen for inbox data: Socket not initialized');
-      return;
-    }
-
+    if (_socket == null) return;
+    _socket!.on('inbox_data', (data) {
+      if (data is Map<String, dynamic>) {
+        callback(data);
+      }
+    });
     _socket!.on('get_inbox', (data) {
-      log('Received inbox data via Socket.IO End user Client: $data');
       if (data is Map<String, dynamic>) {
         callback(data);
       }
@@ -333,18 +237,14 @@ class SocketService extends GetxService {
 
   /// Remove inbox_data listener
   void offInboxData() {
+    _socket?.off('inbox_data');
     _socket?.off('get_inbox');
   }
 
   /// Listen for user connection status updates - user_connection_status event
   void onUserConnectionStatus(Function(Map<String, dynamic>) callback) {
-    if (_socket == null) {
-      log('Cannot listen for user connection status: Socket not initialized');
-      return;
-    }
-
+    if (_socket == null) return;
     _socket!.on('user_connection_status', (data) {
-      log('Received user connection status via Socket.IO: $data');
       if (data is Map<String, dynamic>) {
         callback(data);
       }
@@ -358,219 +258,94 @@ class SocketService extends GetxService {
 
   /// Disconnect from Socket.IO server
   void disconnect() {
-    // Clear connection timeout
     _connectionTimeout?.cancel();
     _connectionTimeout = null;
     
     if (_socket != null) {
+      log('Disconnecting and disposing socket...');
       _socket!.disconnect();
       _socket!.dispose();
       _socket = null;
       _isConnected = false;
       isConnected.value = false;
       _currentUserId = null;
-      log('Socket.IO disconnected and disposed');
     }
   }
 
   /// Reset connection completely - used for logout/login scenarios
   void resetConnection() {
     log('Resetting socket connection');
-    
-    // Clear connection timeout
-    _connectionTimeout?.cancel();
-    _connectionTimeout = null;
-    
     disconnect();
-    
-    // Force a complete reset by creating a new instance
-    _isConnected = false;
-    isConnected.value = false;
-    _currentUserId = null;
-    _socket = null;
-    
-    log('Socket connection reset complete');
   }
 
   /// Fallback to polling transport for iOS WebSocket issues
   Future<void> _fallbackToPolling() async {
     try {
       log('Attempting to reconnect with polling transport only...');
-      
-      // Wait a bit before reconnecting
       await Future.delayed(Duration(seconds: 2));
       
-      // Get user credentials again
       final userId = await _getUserId();
       final token = await _getAccessToken();
+      final userType = await _getUserType();
+
+      if (userId == null || token == null) return;
       
-      if (userId == null || token == null) {
-        log('Cannot fallback: User credentials not available');
-        return;
-      }
-      
-      // Create new options with polling only
-      final pollingOptions = IO.OptionBuilder()
-          .setTransports(['polling']) // Use polling only
-          .disableAutoConnect()
+      disconnect();
+
+      final baseUrl = socketBaseUrl;
+      final options = IO.OptionBuilder()
+          .setTransports(['polling'])
+          .enableForceNew()
           .setExtraHeaders({
             'auth': token,
+            'userType': userType ?? 'normal',
             'Content-Type': 'application/json',
             'Accept': 'application/json',
-            if (Platform.isIOS) ...{
-              'User-Agent': 'iOS-Verithrive-App-Polling',
-              'Connection': 'keep-alive',
-            },
           })
           .setPath('/socket.io')
-          .enableReconnection()
-          .setReconnectionAttempts(3)
-          .setReconnectionDelay(2000)
-          .setTimeout(30000)
           .build();
-      
-      // Dispose old socket
-      _socket?.dispose();
-      
-      // Create new socket with polling options
-      _socket = IO.io(socketBaseUrl, pollingOptions);
-      
-      // Setup listeners and connect
+
+      _socket = IO.io(baseUrl, options);
       _setupEventListeners();
       _socket!.connect();
-      
-      log('Polling fallback connection initiated');
     } catch (e) {
-      log('Error in polling fallback: $e');
+      log('Error during polling fallback: $e');
     }
   }
 
-  /// Get user ID from storage (matching login screen implementation)
+  /// Get user ID from storage
   Future<String?> _getUserId() async {
-    try {
-      if (!Get.isRegistered<StorageService>()) return null;
-      final storage = Get.find<StorageService>();
-
-      final userId = storage.readString(SharePreferenceConst.id);
-      if (userId != null && userId.isNotEmpty) {
-        return userId;
-      }
-      
-      log('User ID not found in storage');
-      return null;
-    } catch (e) {
-      log('Error getting user ID from storage: $e');
-      return null;
-    }
+    if (!Get.isRegistered<StorageService>()) return null;
+    final storage = Get.find<StorageService>();
+    return storage.readString(SharePreferenceConst.id) ??
+        storage.readString('id') ??
+        storage.readString('_id');
   }
 
   /// Get access token from storage
   Future<String?> _getAccessToken() async {
+    if (!Get.isRegistered<StorageService>()) return null;
+    final storage = Get.find<StorageService>();
+    return storage.readString('access_token');
+  }
+
+  /// Get user type from storage
+  Future<String?> _getUserType() async {
     try {
       if (!Get.isRegistered<StorageService>()) return null;
       final storage = Get.find<StorageService>();
-
-      final token =
-          storage.readString(SharePreferenceConst.access_token) ??
-              storage.readString(StorageService.keyToken);
-      if (token != null && token.isNotEmpty) {
-        return token;
-      }
-
-      log('Access token not found in storage');
-      return null;
+      return storage.readString('userType') ??
+             storage.readString('user_type') ??
+             storage.readString(SharePreferenceConst.userType) ??
+             'normal';
     } catch (e) {
-      log('Error getting access token from storage: $e');
-      return null;
+      return 'normal';
     }
   }
 
   /// Check if socket is connected
   bool get connected {
     if (_socket == null) return false;
-    // Check both our internal flag and socket's native connected property
     return _isConnected && _socket!.connected;
-  }
-
-  /// Wait for socket connection with timeout
-  Future<bool> waitForConnection(
-      {Duration timeout = const Duration(seconds: 10)}) async {
-    if (connected) {
-      log('Socket already connected');
-      return true;
-    }
-
-    final completer = Completer<bool>();
-    Timer? timer;
-    StreamSubscription? subscription;
-    Timer? periodicTimer;
-
-    timer = Timer(timeout, () {
-      if (!completer.isCompleted) {
-        log('Socket connection timeout after ${timeout.inSeconds} seconds');
-        subscription?.cancel();
-        periodicTimer?.cancel();
-        completer.complete(false);
-      }
-    });
-
-    subscription = isConnected.listen((connected) {
-      if (connected && !completer.isCompleted) {
-        log('Socket connected successfully');
-        timer?.cancel();
-        subscription?.cancel();
-        periodicTimer?.cancel();
-        completer.complete(true);
-      }
-    });
-
-    // Also check connection status periodically as fallback
-    periodicTimer =
-        Timer.periodic(const Duration(milliseconds: 200), (checkTimer) {
-      if (completer.isCompleted) {
-        checkTimer.cancel();
-        return;
-      }
-      // Check socket's native connected property
-      if (_socket != null && _socket!.connected) {
-        // Update our internal state if socket is connected
-        if (!_isConnected) {
-          _isConnected = true;
-          isConnected.value = true;
-        }
-        log('Socket connected (checked via periodic check)');
-        timer?.cancel();
-        subscription?.cancel();
-        checkTimer.cancel();
-        if (!completer.isCompleted) {
-          completer.complete(true);
-        }
-      }
-    });
-
-    final result = await completer.future;
-    return result;
-  }
-
-  void forceDisconnect() {
-    if (_socket != null) {
-      try {
-        // Clear all event listeners by removing the socket itself
-        // Socket.IO doesn't have offAll(), so we remove the socket instance
-        _socket!.disconnect();
-        _socket!.dispose();
-        _socket = null;
-
-        logInfo('Socket.IO force disconnected and disposed');
-      } catch (e) {
-        logInfo('Error during force disconnect: $e');
-        _socket = null;
-      }
-    }
-
-    // Reset all state
-    _isConnected = false;
-    isConnected.value = false;
-    _currentUserId = null;
   }
 }

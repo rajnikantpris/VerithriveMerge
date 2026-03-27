@@ -346,7 +346,7 @@ class LoginController extends BaseController {
           // Save token
           await storage.writeString(
               SharePreferenceConst.access_token, loginData.token);
-          await storage.writeString('token', loginData.token);
+          // await storage.writeString('token', loginData.token);
 
           // Save remember me data if checkbox is checked
           if (rememberMe.value) {

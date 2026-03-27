@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import '../../api/api_response.dart';
 import '../../api/user_api_service.dart';
 import '../../common/base_controller.dart';
+import '../../enduser/screens/message/socket_service.dart';
 import '../../routes/app_routes.dart';
 import '../../services/storage_service.dart';
 import '../../services/social_auth_service.dart';
@@ -13,6 +14,9 @@ import '../../theme/font_sizes.dart';
 import '../../theme/hight_width_sizes.dart';
 import '../../theme/image_paths.dart';
 import '../../widgets/response_dialog.dart';
+import 'messages_controller.dart';
+import 'home_controller.dart';
+import 'calendar_controller.dart';
 
 class ProfileController extends BaseController {
   ProfileController([UserApiService? userApiService])
@@ -114,21 +118,45 @@ class ProfileController extends BaseController {
   }
 
   Future<void> _clearLocalDataAndNavigate() async {
-    // Reset socket service first
-    if (Get.isRegistered<SocketService>()) {
-      final socketService = Get.find<SocketService>();
-      socketService.disconnect();
-      debugPrint('Socket service reset during logout');
+    // 1. Reset socket services first (IMPORTANT: Disconnect before deleting)
+    if (Get.isRegistered<EndUserSocketService>()) {
+      final endUserSocket = Get.find<EndUserSocketService>();
+      endUserSocket.disconnect();
+      Get.delete<EndUserSocketService>();
+      print('EndUserSocketService disconnected and removed');
     }
 
-    // Sign out from social providers first
+    if (Get.isRegistered<SocketService>()) {
+      final professionalSocket = Get.find<SocketService>();
+      professionalSocket.disconnect();
+      Get.delete<SocketService>();
+      print('Professional SocketService disconnected and removed');
+    }
+
+    // 2. Explicitly delete ALL professional controllers to clear their memory state
+    if (Get.isRegistered<MessagesController>()) {
+      Get.delete<MessagesController>();
+      print('MessagesController deleted');
+    }
+    
+    if (Get.isRegistered<HomeController>()) {
+      Get.delete<HomeController>();
+      print('HomeController deleted');
+    }
+
+    if (Get.isRegistered<CalendarController>()) {
+      Get.delete<CalendarController>();
+      print('CalendarController deleted');
+    }
+
+    // 3. Sign out from social providers
     try {
       await _socialAuthService.signOutSocialProviders();
     } catch (e) {
       debugPrint('Error signing out from social providers: $e');
     }
 
-    // Clear stored data except remember me credentials
+    // 4. Clear stored data except remember me credentials
     if (Get.isRegistered<StorageService>()) {
       final storage = Get.find<StorageService>();
 
@@ -138,14 +166,15 @@ class ProfileController extends BaseController {
         'professional_saved_email',
         'professional_saved_password',
         'rememberMe', // End-user key
-        'savedEmail',   // End-user key
-        'savedPassword',// End-user key
+        'savedEmail', // End-user key
+        'savedPassword', // End-user key
       ];
 
       await storage.clearAllExcept(keysToKeep);
     }
 
-    // Navigate to select user page
+    // 5. Final cleanup: reset current route and navigate
+    // Use offAllNamed to ensure a fresh start on the login screen
     Get.offAllNamed(Routes.selectUser);
   }
 }

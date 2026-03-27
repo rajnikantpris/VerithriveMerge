@@ -21,8 +21,8 @@ class ChatDetailController extends BaseController {
   
   final messages = <ChatMessage>[].obs;
   var isLoading = false.obs;
-  
-  SocketService? _socketService;
+
+  EndUserSocketService? _socketService;
   String? _currentUserId;
   String? _chatId;
   String? _receiverUserId;
@@ -95,10 +95,10 @@ class ChatDetailController extends BaseController {
   Future<void> _initializeSocket() async {
     try {
       // Get or create SocketService
-      if (Get.isRegistered<SocketService>()) {
-        _socketService = Get.find<SocketService>();
+      if (Get.isRegistered<EndUserSocketService>()) {
+        _socketService = Get.find<EndUserSocketService>();
       } else {
-        _socketService = Get.put(SocketService());
+        _socketService = Get.put(EndUserSocketService());
       }
 
       // Get current user ID
@@ -295,18 +295,18 @@ class ChatDetailController extends BaseController {
       debugPrint('Attempting to connect socket...');
       await _socketService!.connect(userId: _currentUserId);
 
-      debugPrint('Waiting for socket connection...');
-      final connected = await _socketService!.waitForConnection(
-        timeout: const Duration(seconds: 10),
-      );
-
-      if (!connected) {
-        debugPrint('Failed to connect socket within timeout');
-        // Still try to send - socket might be connecting
-        debugPrint('Attempting to send message anyway...');
-      } else {
-        debugPrint('Socket connected successfully');
-      }
+      // debugPrint('Waiting for socket connection...');
+      // final connected = await _socketService!.waitForConnection(
+      //   timeout: const Duration(seconds: 10),
+      // );
+      //
+      // if (!connected) {
+      //   debugPrint('Failed to connect socket within timeout');
+      //   // Still try to send - socket might be connecting
+      //   debugPrint('Attempting to send message anyway...');
+      // } else {
+      //   debugPrint('Socket connected successfully');
+      // }
     }
 
     // Check if chat ID is available
