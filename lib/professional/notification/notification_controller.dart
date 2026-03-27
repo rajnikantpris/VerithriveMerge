@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
@@ -18,29 +19,22 @@ class NotificationItem {
   final String dateLabel;
 
   factory NotificationItem.fromJson(Map<String, dynamic> json) {
-    // Parse date from API response and format it
     String dateLabel = '';
-    if (json['created_at'] != null ||
-        json['date'] != null ||
-        json['createdAt'] != null) {
+    if (json['created_at'] != null || json['sent_at'] != null) {
       try {
-        final dateStr = json['created_at'] ?? json['date'] ?? json['createdAt'];
+        final dateStr = json['created_at'] ?? json['sent_at'];
         if (dateStr is String) {
           final date = DateTime.parse(dateStr);
           dateLabel = DateFormat('dd/MM/yyyy').format(date);
         }
       } catch (e) {
-        // If parsing fails, use the string as is or empty
-        dateLabel = json['date']?.toString() ?? '';
+        dateLabel = '';
       }
     }
 
     return NotificationItem(
-      title: json['title']?.toString() ?? json['heading']?.toString() ?? '',
-      description: json['description']?.toString() ??
-          json['message']?.toString() ??
-          json['body']?.toString() ??
-          '',
+      title: json['title']?.toString() ?? '',
+      description: json['message']?.toString() ?? json['description']?.toString() ?? '',
       dateLabel: dateLabel,
     );
   }
@@ -52,7 +46,14 @@ class NotificationController extends BaseController {
   final UserApiService _userApiService;
   final notifications = <NotificationItem>[].obs;
 
-  // Get NotificationService if available
+  // Pagination state
+  final currentPage = 1.obs;
+  final totalPages = 1.obs;
+  final hasNextPage = false.obs;
+  final isLoadingMore = false.obs;
+  
+  final ScrollController scrollController = ScrollController();
+
   NotificationService? get _notificationService =>
       Get.isRegistered<NotificationService>()
           ? Get.find<NotificationService>()
@@ -61,71 +62,126 @@ class NotificationController extends BaseController {
   @override
   void onInit() {
     super.onInit();
-    // Refresh notification count when screen opens
     _notificationService?.fetchNotificationCount();
+    
+    // Add scroll listener for pagination
+    scrollController.addListener(_scrollListener);
+    
     fetchNotifications();
   }
 
+  @override
+  void onClose() {
+    scrollController.removeListener(_scrollListener);
+    scrollController.dispose();
+    super.onClose();
+  }
+
+  void _scrollListener() {
+    // Load more when user scrolls to bottom (with 200px threshold)
+    if (scrollController.position.pixels >=
+        scrollController.position.maxScrollExtent - 200) {
+      loadMoreNotifications();
+    }
+  }
+
   /// Fetch notifications from API
-  /// [showLoader] - Whether to show the loading indicator (default: true)
-  Future<void> fetchNotifications({bool showLoader = true}) async {
+  Future<void> fetchNotifications({bool showLoader = true, bool isRefresh = true}) async {
+    if (isRefresh) {
+      currentPage.value = 1;
+    }
+
     await callDataService(
-      _userApiService.getNotificationsList(),
+      _userApiService.getNotificationsList(
+        body: {
+          'page': currentPage.value,
+          'per_page': 20,
+        },
+      ),
       showLoader: showLoader,
       onSuccess: (ApiResponse<dynamic> response) {
         if (response.success && response.data != null) {
-          _parseApiResponse(response.data);
-        } else {
-          // If API fails, clear list
+          _parseApiResponse(response.data, isRefresh: isRefresh);
+        } else if (isRefresh) {
           notifications.clear();
         }
       },
       onError: (error, stack) {
-        // Error is already handled by callDataService
-        // Clear list on error
-        notifications.clear();
+        if (isRefresh) {
+          notifications.clear();
+        }
       },
     );
   }
 
-  /// Parse API response and update notifications list
-  void _parseApiResponse(dynamic data) {
-    try {
-      // Handle different response structures
-      List<dynamic>? notificationsList;
+  /// Load more notifications (next page)
+  Future<void> loadMoreNotifications() async {
+    if (isLoadingMore.value || !hasNextPage.value) return;
 
-      if (data is List) {
-        notificationsList = data;
-      } else if (data is Map<String, dynamic>) {
-        // Check if data is nested under common keys
-        if (data['data'] is List) {
-          notificationsList = data['data'] as List;
-        } else if (data['notifications'] is List) {
-          notificationsList = data['notifications'] as List;
-        } else if (data['list'] is List) {
-          notificationsList = data['list'] as List;
-        } else if (data['items'] is List) {
-          notificationsList = data['items'] as List;
+    isLoadingMore.value = true;
+    currentPage.value++;
+
+    final response = await _userApiService.getNotificationsList(
+      body: {
+        'page': currentPage.value,
+        'per_page': 20,
+      },
+    );
+
+    if (response.success && response.data != null) {
+      _parseApiResponse(response.data, isRefresh: false);
+    } else {
+      currentPage.value--;
+    }
+    
+    isLoadingMore.value = false;
+  }
+
+  /// Parse API response and update notifications list
+  void _parseApiResponse(dynamic data, {required bool isRefresh}) {
+    try {
+      List<dynamic>? notificationsList;
+      Map<String, dynamic>? paginationData;
+
+      if (data is Map<String, dynamic>) {
+        // Handle case where data is the full response or the nested 'data' object
+        final innerData = data.containsKey('data') && data['data'] is Map<String, dynamic> 
+            ? data['data'] as Map<String, dynamic> 
+            : data;
+
+        if (innerData['notifications'] is List) {
+          notificationsList = innerData['notifications'] as List;
+        }
+        if (innerData['pagination'] is Map<String, dynamic>) {
+          paginationData = innerData['pagination'] as Map<String, dynamic>;
         }
       }
 
+      // Update pagination state
+      if (paginationData != null) {
+        currentPage.value = paginationData['current_page'] ?? currentPage.value;
+        totalPages.value = paginationData['total_pages'] ?? 1;
+        hasNextPage.value = paginationData['has_next_page'] ?? false;
+      } else {
+        hasNextPage.value = false;
+      }
+
       if (notificationsList != null && notificationsList.isNotEmpty) {
-        notifications.value = notificationsList
-            .map((item) {
-              if (item is Map<String, dynamic>) {
-                return NotificationItem.fromJson(item);
-              }
-              return null;
-            })
+        final newItems = notificationsList
+            .map((item) => item is Map<String, dynamic> ? NotificationItem.fromJson(item) : null)
             .whereType<NotificationItem>()
             .toList();
-      } else {
-        // Empty list
+
+        if (isRefresh) {
+          notifications.assignAll(newItems);
+        } else {
+          notifications.addAll(newItems);
+        }
+      } else if (isRefresh) {
         notifications.clear();
       }
     } catch (e) {
-      // If parsing fails, clear list
-      notifications.clear();
+      if (isRefresh) notifications.clear();
     }
   }
 }

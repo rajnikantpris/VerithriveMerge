@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:flutter/services.dart';
 
 import '../../common/base_view.dart';
+import '../../common/base_controller.dart';
 import '../../theme/colors.dart';
 import '../../theme/font_sizes.dart';
 import '../../theme/fonts.dart';
@@ -63,7 +64,9 @@ class NotificationView extends BaseView<NotificationController> {
           height: constraints.maxHeight,
           color: AppColor.color_F5F7F8,
           child: Obx(() {
-            if (controller.notifications.isEmpty) {
+            final isLoading = controller.pageState.value == PageState.loading;
+            
+            if (controller.notifications.isEmpty && !isLoading) {
               return RefreshIndicator(
                 onRefresh: () =>
                     controller.fetchNotifications(showLoader: false),
@@ -93,17 +96,35 @@ class NotificationView extends BaseView<NotificationController> {
             return RefreshIndicator(
               onRefresh: () => controller.fetchNotifications(showLoader: false),
               child: ListView.separated(
+                controller: controller.scrollController,
+                physics: const AlwaysScrollableScrollPhysics(),
                 padding: EdgeInsets.symmetric(
                   horizontal: HightWidthSizes.setValue_16,
                   vertical: HightWidthSizes.setValue_16,
                 ),
                 itemBuilder: (_, index) {
-                  final item = controller.notifications[index];
-                  return _NotificationCard(item: item);
+                  if (index < controller.notifications.length) {
+                    final item = controller.notifications[index];
+                    return _NotificationCard(item: item);
+                  } else {
+                    return  Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(8.0),
+                        child: CircularProgressIndicator(
+                          color: AppColor.color_0076B1,
+                        ),
+                      ),
+                    );
+                  }
                 },
-                separatorBuilder: (_, __) =>
-                    SizedBox(height: HightWidthSizes.setValue_12),
-                itemCount: controller.notifications.length,
+                separatorBuilder: (_, index) {
+                  if (index < controller.notifications.length - 1) {
+                    return SizedBox(height: HightWidthSizes.setValue_12);
+                  }
+                  return const SizedBox.shrink();
+                },
+                itemCount: controller.notifications.length +
+                    (controller.hasNextPage.value ? 1 : 0),
               ),
             );
           }),
