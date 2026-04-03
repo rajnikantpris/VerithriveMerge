@@ -57,27 +57,19 @@ class SubscriptionController extends BaseController {
     try {
       final List<PlanOption> parsedPlans = [];
 
-      // Handle API response structure: {success: true, data: [...]}
-      // The response.data is the array directly
+      // Handle API response structure: {success: true, data: {plans: [...]}}
+      // Based on logs, 'data' passed here is the Map containing 'plans'
       List<dynamic>? subscriptionsList;
-      if (data is List) {
-        // Direct array response
-        subscriptionsList = data;
-      } else if (data is Map<String, dynamic>) {
-        // Check for nested structures
-        if (data['data'] is List) {
+      if (data is Map<String, dynamic>) {
+        if (data['plans'] is List) {
+          subscriptionsList = data['plans'] as List;
+        } else if (data['data'] is List) {
           subscriptionsList = data['data'] as List;
         } else if (data['items'] is List) {
           subscriptionsList = data['items'] as List;
-        } else if (data['subscriptions'] is List) {
-          subscriptionsList = data['subscriptions'] as List;
-        } else if (data['data'] is Map<String, dynamic>) {
-          // Handle nested data.items structure
-          final dataMap = data['data'] as Map<String, dynamic>;
-          if (dataMap['items'] is List) {
-            subscriptionsList = dataMap['items'] as List;
-          }
         }
+      } else if (data is List) {
+        subscriptionsList = data;
       }
 
       if (subscriptionsList != null && subscriptionsList.isNotEmpty) {
@@ -93,13 +85,21 @@ class SubscriptionController extends BaseController {
 
       // If no plans from API, use fallback hardcoded plans
       if (parsedPlans.isEmpty) {
-        plans.value = _getDefaultPlans();
+        // plans.value = _getDefaultPlans();
       } else {
         plans.value = parsedPlans;
       }
+
+      // Auto-select first plan by default if nothing selected
+      if (selectedPlanId.value.isEmpty && plans.isNotEmpty) {
+        selectedPlanId.value = plans.first.id;
+      }
     } catch (e) {
       // On error, use fallback plans
-      plans.value = _getDefaultPlans();
+      // plans.value = _getDefaultPlans();
+      if (selectedPlanId.value.isEmpty && plans.isNotEmpty) {
+        selectedPlanId.value = plans.first.id;
+      }
     }
   }
 
@@ -109,7 +109,6 @@ class SubscriptionController extends BaseController {
       final id = item['_id']?.toString() ?? item['id']?.toString() ?? '';
       final planName = item['plan_name']?.toString() ?? '';
       final highlightLabel = item['highlight_label']?.toString() ?? '';
-      final description = item['description']?.toString() ?? '';
       final billingCycle = item['billing_cycle']?.toString() ?? '';
 
       if (id.isEmpty || planName.isEmpty) return null;
@@ -117,22 +116,31 @@ class SubscriptionController extends BaseController {
       // Use highlight_label as the main price label (e.g., "£565/year", "£159/quarter", "£59/month")
       final priceLabel = highlightLabel.isNotEmpty ? highlightLabel : '';
 
-      // Determine plan type from plan name first (more reliable), then billing cycle
+      // Determine plan type
       final planNameLower = planName.toLowerCase();
       final billingCycleLower = billingCycle.toLowerCase();
 
-      // Check plan name first as it's more reliable than billing_cycle
       final isYearly =
-          planNameLower.contains('year') || billingCycleLower.contains('year');
+          planNameLower.contains('year') || billingCycleLower.contains('yearly') || billingCycleLower.contains('year');
       final isQuarterly = planNameLower.contains('quarter') ||
-          (billingCycleLower == 'quarterly' && !isYearly);
+          (billingCycleLower.contains('quarterly') && !isYearly);
       final isMonthly = planNameLower.contains('month') ||
-          (billingCycleLower == 'monthly' && !isYearly && !isQuarterly);
+          (billingCycleLower.contains('monthly') && !isYearly && !isQuarterly);
 
-      // Use description as perMonthLabel if available (e.g., "£47/month", "£53/month")
-      // For monthly plans, description might be empty, so perMonthLabel should be null
-      final perMonthLabel =
-          description.isNotEmpty && !isMonthly ? description : null;
+      // Determine perMonthLabel (e.g., "£47/month", "£53/month")
+      String? perMonthLabel;
+      if (!isMonthly) {
+        final priceAmount = double.tryParse(item['price_amount']?.toString() ?? '');
+        if (priceAmount != null) {
+          int months = isYearly ? 12 : (isQuarterly ? 3 : 1);
+          if (months > 1) {
+            final monthlyPrice = (priceAmount / months).round();
+            // Default to GBP if not specified or different
+            final currency = item['currency_code']?.toString() == 'GBP' ? '£' : '£';
+            perMonthLabel = '$currency$monthlyPrice/month';
+          }
+        }
+      }
 
       // Determine accent color based on plan type
       Color accentColor;
@@ -144,7 +152,7 @@ class SubscriptionController extends BaseController {
         accentColor = const Color(0xFFA2A2A2);
       }
 
-      // Determine asset path based on plan type (check yearly first to avoid conflicts)
+      // Determine asset path based on plan type
       String? assetPath;
       if (isYearly) {
         assetPath = AppImages.yearly;

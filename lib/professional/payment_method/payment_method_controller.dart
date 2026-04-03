@@ -9,6 +9,8 @@ import '../../routes/app_routes.dart';
 import '../../services/storage_service.dart';
 import '../../theme/image_paths.dart';
 import '../../widgets/response_dialog.dart';
+import '../payment_view/payment_webview_screen.dart';
+import '../signup_terms_conditions/professional_webview_screen.dart';
 
 class PaymentMethodOption {
   PaymentMethodOption({
@@ -55,12 +57,6 @@ class PaymentMethodController extends BaseController {
       title: 'Apple Pay',
       assetPath: AppImages.iphonepayPng,
     ),
-/*    PaymentMethodOption(
-      id: 'paypal',
-      title: 'PayPal',
-      assetPath: AppImages.paypal,
-      accentColor: const Color(0xFF003087),
-    ),*/
   ];
 
   final selectedMethodId = ''.obs;
@@ -106,46 +102,40 @@ class PaymentMethodController extends BaseController {
       showLoader: true,
       onSuccess: (response) async {
         if (response.success) {
-          // Extract and save user data from LoginResponseModel
-          if (response.data != null) {
-            final loginData = response.data!;
+          final data = response.rawResponse?.data;
+          if (data is Map<String, dynamic> && data['data'] != null) {
+            final paymentData = data['data'] as Map<String, dynamic>;
+            final checkoutUrl = paymentData['checkout_url']?.toString();
 
-            // Extract and save token if present
-            final token = loginData.token;
-            if (token != null && token.isNotEmpty) {
-              await _storageService?.writeString('access_token', token);
-            }
-
-            // Extract user flags from user model
-            final userFlags = _extractUserFlagsFromModel(loginData.user);
-
-            // Save flags to storage
-            final storage = _storageService;
-            if (storage != null) {
-              for (final entry in userFlags.entries) {
-                await storage.writeBool(entry.key, entry.value);
+            if (checkoutUrl != null && checkoutUrl.isNotEmpty) {
+              // Open Stripe Checkout in WebView
+              final result = await Get.to(() => PaymentWebViewScreen(url: checkoutUrl));
+              
+              // When returning from WebView, check result and navigate if successful
+              if (result == 'success') {
+                await _checkPaymentStatusAndNavigate(response.data?.user);
+              } else if (result == 'failed') {
+                showResponseDialog(
+                  message: 'Payment failed. Please try again.',
+                  title: 'Payment Failed',
+                  isError: true,
+                  showButton: true,
+                  onOkPressed: () {},
+                );
               }
+            } else {
+              await _handleLegacySuccess(response);
             }
+          } else {
+            await _handleLegacySuccess(response);
           }
-
-          // Navigate to processing payment screen, which will auto-navigate to verification after 5 seconds
-          Get.offAllNamed(
-            Routes.processingPayment,
-            arguments: {
-              'planId': selectedPlanId,
-              'planTitle': selectedPlanName,
-              'isFromSignup': isFromSignup,
-            },
-          );
         } else {
           showResponseDialog(
             message: response.errorMessage,
             title: 'Payment Failed',
             isError: true,
             showButton: true,
-            onOkPressed: () {
-              // Stay on payment page to retry
-            },
+            onOkPressed: () {},
           );
         }
       },
@@ -158,34 +148,63 @@ class PaymentMethodController extends BaseController {
           title: 'Error',
           isError: true,
           showButton: true,
-          onOkPressed: () {
-            // Stay on payment page to retry
-          },
+          onOkPressed: () {},
         );
       },
       onComplete: () {
         isConfirming.value = false;
+        setSuccess(); // Explicitly set state to success (or idle) to hide loader
       },
     );
   }
 
-  /// Extract user flags from UserModel
-  Map<String, bool> _extractUserFlagsFromModel(UserModel? user) {
-    final flags = <String, bool>{};
+  Future<void> _checkPaymentStatusAndNavigate(UserModel? user) async {
+    // Extract user flags and ensure is_payment is true
+    final userFlags = _extractUserFlagsFromModel(user);
+    userFlags['is_payment'] = true;
 
-    if (user == null) {
-      return flags;
+    // Save flags to storage
+    final storage = _storageService;
+    if (storage != null) {
+      for (final entry in userFlags.entries) {
+        await storage.writeBool(entry.key, entry.value);
+      }
     }
 
-    // Extract all user flags from model with default value false
+    // Navigate to processing payment screen
+    Get.offAllNamed(
+      Routes.processingPayment,
+      arguments: {
+        'planId': selectedPlanId,
+        'planTitle': selectedPlanName,
+        'isFromSignup': isFromSignup,
+      },
+    );
+  }
+
+  Future<void> _handleLegacySuccess(ApiResponse<LoginResponseModel> response) async {
+    if (response.data != null) {
+      final loginData = response.data!;
+      final token = loginData.token;
+      if (token != null && token.isNotEmpty) {
+        await _storageService?.writeString('access_token', token);
+      }
+    }
+    
+    await _checkPaymentStatusAndNavigate(response.data?.user);
+  }
+
+  Map<String, bool> _extractUserFlagsFromModel(UserModel? user) {
+    final flags = <String, bool>{};
+    if (user == null) return flags;
+
     flags['is_personal_details'] = user.isPersonalDetails ?? false;
     flags['is_term_condition'] = user.isTermCondition ?? false;
     flags['is_profile_created'] = user.isProfileCreated ?? false;
     flags['is_work_full'] = user.isWorkFull ?? false;
     flags['is_professional_services'] = user.isProfessionalServices ?? false;
     flags['is_qualification'] = user.isQualification ?? false;
-    flags['is_personal_identification'] =
-        user.isPersonalIdentification ?? false;
+    flags['is_personal_identification'] = user.isPersonalIdentification ?? false;
     flags['is_about_you'] = user.isAboutYou ?? false;
     flags['is_payment'] = user.isPayment ?? false;
 

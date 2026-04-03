@@ -269,16 +269,48 @@ class _SubscriptionPlanCard extends StatelessWidget {
           if (plan.isCurrentPlan)
             Padding(
               padding: EdgeInsets.only(bottom: HightWidthSizes.setValue_12),
-              child: Center(
-                  child: Text(
-                'Current plan',
-                style: TextStyle(
-                  fontFamily: AppFonts.rubikRegular,
-                  fontWeight: FontWeight.w400,
-                  fontSize: FontSizes.setFontValue_18,
-                  color: AppColor.color_2FC4B2,
-                ),
-              )),
+              child: Column(
+                children: [
+                  Center(
+                      child: Text(
+                    'Current plan',
+                    style: TextStyle(
+                      fontFamily: AppFonts.rubikRegular,
+                      fontWeight: FontWeight.w400,
+                      fontSize: FontSizes.setFontValue_18,
+                      color: AppColor.color_2FC4B2,
+                    ),
+                  )),
+                  SizedBox(height: HightWidthSizes.setValue_10),
+                  Center(
+                      child: ElevatedButton(
+                    onPressed: () {},
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColor.color_E64646,
+                      foregroundColor: AppColor.white,
+                      elevation: 0,
+                      padding: EdgeInsets.symmetric(
+                        vertical: HightWidthSizes.setValue_10,
+                        horizontal: HightWidthSizes.setValue_30,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(
+                          HightWidthSizes.setValue_10,
+                        ),
+                      ),
+                    ),
+                    child: Text(
+                      'Cancel Plan',
+                      style: TextStyle(
+                        fontFamily: AppFonts.rubikMedium,
+                        fontWeight: FontWeight.w500,
+                        fontSize: FontSizes.setFontValue_16,
+                        color: AppColor.white,
+                      ),
+                    ),
+                  ))
+                ],
+              ),
             ),
 
           // Buy Now button (only for non-current plans)

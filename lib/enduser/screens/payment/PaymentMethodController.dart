@@ -7,6 +7,7 @@ import 'package:get/get_core/src/get_main.dart';
 import 'package:get/get_navigation/src/snackbar/snackbar.dart';
 import 'package:get/get_rx/src/rx_types/rx_types.dart';
 import 'package:intl/intl.dart';
+import 'package:verithrive_dev/enduser/screens/payment/payment_end_webview_screen.dart';
 import 'package:verithrive_dev/enduser/screens/payment_success/PaymentSuccessBinding.dart';
 import 'package:verithrive_dev/enduser/screens/payment_success/PaymentSuccessScreen.dart';
 import '../../core/base/base_controller.dart';
@@ -52,6 +53,20 @@ class PaymentMethodController extends BaseController {
   void onInit() {
     super.onInit();
     _receiveArguments();
+
+    // Add listeners to update observables when text changes to trigger reactivity in Obx
+    cardNumberController.addListener(() {
+      cardNumber.value = cardNumberController.text;
+    });
+    expiryDateController.addListener(() {
+      expiryDate.value = expiryDateController.text;
+    });
+    cvvController.addListener(() {
+      cvv.value = cvvController.text;
+    });
+    cardHolderNameController.addListener(() {
+      cardHolderName.value = cardHolderNameController.text;
+    });
   }
   
   void _receiveArguments() {
@@ -80,7 +95,7 @@ class PaymentMethodController extends BaseController {
         professionalId.value = arguments['professional_id'] as String;
       }
       if (arguments['service_format_id'] != null) {
-        // Store service_format_id for reference (not used in create-booking API)
+        // Store service_format_id for reference (not used in API)
         serviceFormatId.value = arguments['service_format_id'] as String;
       }
       if (arguments['professional_service_format_id'] != null) {
@@ -131,6 +146,12 @@ class PaymentMethodController extends BaseController {
     cvvController.clear();
     cardHolderNameController.clear();
     saveCardDetails.value = false;
+    
+    // Also clear the observables
+    cardNumber.value = '';
+    expiryDate.value = '';
+    cvv.value = '';
+    cardHolderName.value = '';
   }
 
   // Toggle save card details
@@ -141,10 +162,10 @@ class PaymentMethodController extends BaseController {
   // Check if continue button should be enabled
   bool get isContinueEnabled {
     if (selectedPaymentMethod.value == PaymentMethodType.creditCard) {
-      return cardNumber.value.isNotEmpty &&
-          expiryDate.value.isNotEmpty &&
-          cvv.value.isNotEmpty &&
-          cardHolderName.value.isNotEmpty;
+      return cardNumber.value.trim().isNotEmpty &&
+          expiryDate.value.trim().isNotEmpty &&
+          cvv.value.trim().isNotEmpty &&
+          cardHolderName.value.trim().isNotEmpty;
     }
     return selectedPaymentMethod.value != null;
   }
@@ -256,7 +277,7 @@ class PaymentMethodController extends BaseController {
       service,
       onSuccess: _handleCreateBookingSuccess,
       onError: _handleCreateBookingError,
-      isShowLoading: false, // We'll show custom loading UI
+      isShowLoading: true, // We'll show custom loading UI
     );
   }
   
@@ -269,7 +290,6 @@ class PaymentMethodController extends BaseController {
       if (baseResponse != null && baseResponse.data != null) {
         responseData = baseResponse.data is Map<String, dynamic>
             ? baseResponse.data
-
             : baseResponse.data as Map<String, dynamic>;
       } else if (baseResponse is Map<String, dynamic>) {
         responseData = baseResponse;
@@ -281,11 +301,31 @@ class PaymentMethodController extends BaseController {
       String message = responseData['message'] ?? 'Booking created successfully';
       
       if (success == true) {
-        // Navigate directly to payment success screen without dialog
-        Get.offAll(
-          () => PaymentSuccessScreen(),
-          binding: PaymentSuccessBinding(),
-        );
+        String? checkoutUrl;
+        if (responseData['data'] != null && 
+            responseData['data']['payment_link'] != null) {
+          checkoutUrl = responseData['data']['payment_link']['checkout_url'];
+        }
+
+        if (checkoutUrl != null && checkoutUrl.isNotEmpty) {
+          // Navigate to WebView
+          final result = await Get.to(() => PaymentEndWebViewScreen(url: checkoutUrl!));
+          
+          if (result == 'success') {
+            Get.offAll(
+              () => PaymentSuccessScreen(),
+              binding: PaymentSuccessBinding(),
+            );
+          } else if (result == 'failed') {
+            showResponseDialog(
+              message: 'Payment failed or was cancelled.',
+              title: 'Payment Error',
+              isError: true,
+              showButton: true,
+              onOkPressed: () {},
+            );
+          }
+        }
       } else {
         showResponseDialog(
           message: message,

@@ -463,29 +463,33 @@ class PaymentMethodScreen extends StatelessWidget {
   }
 
   Widget _buildBottomButton() {
-    return Container(
-      width: double.infinity,
-      margin: EdgeInsets.all(20),
-      padding: EdgeInsets.symmetric(vertical: 10),
-      child: ElevatedButton(
-        onPressed: controller.continuePayment,
-        style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.primaryColor,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+    return Obx(() {
+      bool isEnabled = controller.isContinueEnabled;
+      return Container(
+        width: double.infinity,
+        margin: EdgeInsets.all(20),
+        padding: EdgeInsets.symmetric(vertical: 10),
+        child: ElevatedButton(
+          onPressed: isEnabled ? controller.continuePayment : null,
+          style: ElevatedButton.styleFrom(
+              backgroundColor: isEnabled ? AppColors.primaryColor : Colors.grey.shade400,
+              disabledBackgroundColor: Colors.grey.shade300,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              elevation: 0,
+              padding: EdgeInsets.symmetric(vertical: 15)
+          ),
+          child: Text(
+            AppText.continueText,
+            style: AppTextStyles.mediumTextStyle(
+              fontSize: 16,
+              color: AppColors.white,
             ),
-            elevation: 0,
-            padding: EdgeInsets.symmetric(vertical: 15)
-        ),
-        child: Text(
-          AppText.continueText,
-          style: AppTextStyles.mediumTextStyle(
-            fontSize: 16,
-            color: AppColors.white,
           ),
         ),
-      ),
-    );
+      );
+    });
   }
 }
 
