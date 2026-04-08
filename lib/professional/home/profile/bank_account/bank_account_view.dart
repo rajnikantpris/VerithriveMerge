@@ -68,24 +68,26 @@ class BankAccountView extends BaseView<BankAccountController> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Account holder name field
-              CustomTextField(
-                label: 'Account holder name',
-                hintText: 'Enter name',
-                controller: controller.accountHolderNameController,
-                validator: (value) =>
-                    controller.validateNotEmpty(value, 'account holder name'),
-                onChanged: (_) => controller.onFieldChanged(),
-              ),
-              SizedBox(height: HightWidthSizes.setValue_16),
+              // CustomTextField(
+              //   label: 'Account holder name',
+              //   hintText: 'Enter name',
+              //   controller: controller.accountHolderNameController,
+              //   validator: (value) =>
+              //       controller.validateNotEmpty(value, 'account holder name'),
+              //   onChanged: (_) => controller.onFieldChanged(),
+              // ),
+              // SizedBox(height: HightWidthSizes.setValue_16),
 
               // Account number field
               CustomTextField(
                 label: 'Account number',
                 hintText: 'Enter account number',
+                autofocus: false,
+                readOnly: true,
                 controller: controller.accountNumberController,
                 keyboardType: TextInputType.number,
                 inputFormatters: [
-                  FilteringTextInputFormatter.digitsOnly,
+                  // Removed digitsOnly to allow masked display (****-****-1234)
                 ],
                 validator: (value) =>
                     controller.validateNotEmpty(value, 'account number'),
@@ -97,8 +99,10 @@ class BankAccountView extends BaseView<BankAccountController> {
               CustomTextField(
                 label: 'Sort code',
                 hintText: '00-00-00',
+                autofocus: false,
                 controller: controller.sortCodeController,
                 keyboardType: TextInputType.number,
+                readOnly: true,
                 inputFormatters: [
                   FilteringTextInputFormatter.digitsOnly,
                   LengthLimitingTextInputFormatter(6),

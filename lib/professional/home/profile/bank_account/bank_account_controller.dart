@@ -5,6 +5,7 @@ import '../../../../api/api_response.dart';
 import '../../../../api/user_api_service.dart';
 import '../../../../common/base_controller.dart';
 import '../../../../widgets/response_dialog.dart';
+import '../../../signup_terms_conditions/professional_webview_screen.dart';
 
 class BankAccountController extends BaseController {
   final UserApiService _userApiService;
@@ -22,6 +23,13 @@ class BankAccountController extends BaseController {
 
   // Track if bank details already exist
   final hasBankDetails = false.obs;
+  final bankName = RxnString();
+  final last4 = RxnString();
+  final routingNumber = RxnString();
+  final status = RxnString();
+  final currency = RxnString();
+  final country = RxnString();
+  final loginLink = RxnString();
 
   @override
   void onInit() {
@@ -144,17 +152,34 @@ class BankAccountController extends BaseController {
               }
 
               // Populate account number
-              if (data['account_number'] != null &&
-                  data['account_number'].toString().isNotEmpty) {
+              if (data['last4'] != null &&
+                  data['last4'].toString().isNotEmpty) {
                 accountNumberController.text =
-                    data['account_number'].toString();
+                    '•••• •••• ${data['last4']}';
                 hasData = true;
               }
 
               // Populate sort code
-              if (data['sort_code'] != null &&
-                  data['sort_code'].toString().isNotEmpty) {
-                sortCodeController.text = data['sort_code'].toString();
+              if (data['routing_number'] != null &&
+                  data['routing_number'].toString().isNotEmpty) {
+                sortCodeController.text = data['routing_number'].toString();
+                hasData = true;
+              }
+
+              bankName.value = data['bank_name']?.toString();
+              last4.value = data['last4']?.toString();
+              routingNumber.value = data['routing_number']?.toString();
+              status.value = data['status']?.toString();
+              currency.value = data['currency']?.toString();
+              country.value = data['country']?.toString();
+              loginLink.value = data['loginLink']?.toString();
+              if (bankName.value != null ||
+                  last4.value != null ||
+                  routingNumber.value != null ||
+                  status.value != null ||
+                  currency.value != null ||
+                  country.value != null ||
+                  loginLink.value != null) {
                 hasData = true;
               }
 
@@ -172,5 +197,11 @@ class BankAccountController extends BaseController {
         }
       },
     );
+  }
+
+  void openStripeDashboard() {
+    final url = loginLink.value;
+    if (url == null || url.isEmpty) return;
+    Get.to(() => ProfessionalWebViewScreen(url: url));
   }
 }

@@ -48,6 +48,8 @@ import 'package:verithrive_dev/enduser/screens/trainer_preference/TrainerPrefere
 import 'package:verithrive_dev/professional/forgot_password/forgot_password_binding.dart';
 import 'package:verithrive_dev/professional/forgot_password/forgot_password_view.dart';
 import '../screens/cart/CartBinding.dart';
+import '../screens/transaction_summary/TransactionSummaryBinding.dart';
+import '../screens/transaction_summary/TransactionSummaryScreen.dart';
 import '../screens/select_address/SelectAddressMapBinding.dart';
 import '../screens/select_address/SelectAddressMapView.dart';
 import '../screens/summary/SummaryScreen.dart';
@@ -352,6 +354,15 @@ class AppPages {
       name: AppRoutes.chat_detail,
       page: () => ChatDetailScreen(),
       binding: ChatDetailBinding(),
+      transition: Transition.rightToLeft,
+      transitionDuration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    ),
+
+    GetPage(
+      name: AppRoutes.transaction_summary,
+      page: () => const TransactionSummaryScreen(),
+      binding: TransactionSummaryBinding(),
       transition: Transition.rightToLeft,
       transitionDuration: const Duration(milliseconds: 300),
       curve: Curves.easeInOut,

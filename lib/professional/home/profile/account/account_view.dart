@@ -255,7 +255,7 @@ class AccountView extends BaseView<AccountController> {
                 children: [
                   // Title
                   Text(
-                    'Deactivate my account?',
+                    'Delete my account?',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontFamily: AppFonts.rubikMedium,
@@ -329,7 +329,7 @@ class AccountView extends BaseView<AccountController> {
                         ),
                       ),
                       child: Text(
-                        'Yes, deactivate',
+                        'Yes, delete',
                         style: TextStyle(
                           fontFamily: AppFonts.rubikRegular,
                           fontWeight: FontWeight.w400,

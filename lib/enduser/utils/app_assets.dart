@@ -72,6 +72,7 @@ class AppAssets {
   static const String availability = 'assets/availability.svg';
   static const String service_provider = 'assets/service_provider.svg';
   static const String sort_item = 'assets/sort_item.svg';
+  static const String transaction = 'assets/transaction.svg';
   static const String check = 'assets/check.svg';
   static const String uncheck = 'assets/uncheck.svg';
   static const String loader1 = 'assets/loader1.svg';

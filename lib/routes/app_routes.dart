@@ -38,4 +38,5 @@ abstract class Routes {
   static const createAvailability = '/create-availability';
   static const editAvailability = '/edit-availability';
   static const selectAddressMap = '/select-address-map';
+  static const transactionSummary = '/transaction-summary';
 }

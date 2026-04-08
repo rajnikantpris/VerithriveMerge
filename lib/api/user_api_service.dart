@@ -19,12 +19,12 @@ class UserApiService extends GetxService {
   final SocialAuthService _socialAuthService = SocialAuthService();
 
   // Base URL for the API
-   // static const String baseUrl = 'http://192.168.0.51:4142/api/v2/professional/';
+  //  static const String baseUrl = 'http://192.168.0.126:4142/api/v3/professional/';
   //static const String socketUrl = 'http://192.168.0.51:4142';
   static const String socketUrl = 'https://adminportal.verithrive.co.uk';
-  static const String baseUrl = 'https://adminportal.verithrive.co.uk/api/api/v2/professional/';
+  static const String baseUrl = 'https://adminportal.verithrive.co.uk/api/api/v3/professional/';
   //static const String baseUrl = 'http://18.135.255.93:4142/api/v2/professional/';
-  // static const String baseUrl = 'http://27.54.168.101:4142/api/v1/professional/';
+  // static const String baseUrl = 'http://27.54.168.101:4142/api/v3/professional/';
 
   /// Get the socket base URL (same server, different port/path)
   /// Extracts the protocol, host, and port from the API baseUrl
@@ -93,6 +93,7 @@ class UserApiService extends GetxService {
   static const String _chatInboxPath = 'chat/inbox';
   static const String _chatRoomPath = 'chat/room';
   static const String _chatMessagesPath = 'chat/messages';
+  static const String _transactionHistoryPath = 'transactions/history';
 
   static const String check_promo_code = 'check-promo-code';
 
@@ -103,9 +104,12 @@ class UserApiService extends GetxService {
     try {
       final fullUrl = '$baseUrl$_subscriptionsListPath';
 
-      final response = await _dioClient.getRequest<dynamic>(
+      final response = await _dioClient.postRequest<dynamic>(
         fullUrl,
         withAuth: true,
+        body: {
+          'promo_code': '',
+        },
       );
 
       return ApiResponse.fromDioResponse(response);
@@ -2191,6 +2195,45 @@ class UserApiService extends GetxService {
         body: {
           'promo_code': promoCode,
           'email': email,
+        },
+      );
+
+      return ApiResponse.fromDioResponse(response);
+    } on dio.DioException catch (e) {
+      return ApiResponse.fromDioException(e);
+    } catch (e) {
+      return ApiResponse.failure(
+        error: e.toString(),
+        message: 'An unexpected error occurred',
+      );
+    }
+  }
+
+  /// Get transaction history
+  ///
+  /// [page] - Page number for pagination
+  /// [limit] - Number of items per page
+  /// [startDate] - Start date for filter (YYYY-MM-DD)
+  /// [endDate] - End date for filter (YYYY-MM-DD)
+  ///
+  /// Returns the API response wrapped in ApiResponse
+  Future<ApiResponse<dynamic>> getTransactionHistory({
+    required int page,
+    required int limit,
+    required String startDate,
+    required String endDate,
+  }) async {
+    try {
+      final fullUrl = '$baseUrl$_transactionHistoryPath';
+
+      final response = await _dioClient.postRequest<dynamic>(
+        fullUrl,
+        withAuth: true,
+        body: {
+          'page': page,
+          'limit': limit,
+          'start_date': startDate,
+          'end_date': endDate,
         },
       );
 

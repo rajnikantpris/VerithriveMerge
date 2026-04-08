@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../common/base_view.dart';
 import '../../routes/app_routes.dart';
 import '../../theme/colors.dart';
 import '../../theme/fonts.dart';
@@ -10,13 +11,81 @@ import '../../theme/image_paths.dart';
 import 'messages_controller.dart';
 
 /// Messages tab UI.
-class MessagesTab extends StatelessWidget {
+class MessagesTab extends BaseView<MessagesController> {
   const MessagesTab({super.key, required this.controller});
 
   final MessagesController controller;
 
+  // @override
+  // Widget build(BuildContext context) {
+  //   return Container(
+  //     color: AppColor.white,
+  //     child: Column(
+  //       children: [
+  //         Padding(
+  //           padding: EdgeInsets.fromLTRB(
+  //             HightWidthSizes.setValue_16,
+  //             HightWidthSizes.setValue_16,
+  //             HightWidthSizes.setValue_16,
+  //             HightWidthSizes.setValue_10,
+  //           ),
+  //           child: _SearchField(
+  //             onChanged: controller.updateSearch,
+  //             onClear: () => controller.updateSearch(''),
+  //           ),
+  //         ),
+  //         Expanded(
+  //           child: Obx(() {
+  //             final items = controller.filteredMessages;
+  //             if (items.isEmpty) {
+  //               return RefreshIndicator(
+  //                 onRefresh: () => controller.checkAndReconnectSocket(),
+  //                 child: SingleChildScrollView(
+  //                   physics: const AlwaysScrollableScrollPhysics(),
+  //                   child: SizedBox(
+  //                     height: MediaQuery.of(context).size.height * 0.6,
+  //                     child: Center(
+  //                       child: Text(
+  //                         'No Message found',
+  //                         style: TextStyle(
+  //                           fontFamily: AppFonts.rubikRegular,
+  //                           fontSize: FontSizes.setFontValue_16,
+  //                           fontWeight: FontWeight.w400,
+  //                           color: AppColor.color_7F7F7F,
+  //                         ),
+  //                       ),
+  //                     ),
+  //                   ),
+  //                 ),
+  //               );
+  //             }
+  //             return RefreshIndicator(
+  //               onRefresh: () => controller.checkAndReconnectSocket(),
+  //               child: ListView.separated(
+  //                 padding: EdgeInsets.only(
+  //                   left: HightWidthSizes.setValue_16,
+  //                   right: HightWidthSizes.setValue_16,
+  //                   bottom: HightWidthSizes.setValue_16,
+  //                 ),
+  //                 itemBuilder: (context, index) {
+  //                   final item = items[index];
+  //                   return _MessageTile(item: item);
+  //                 },
+  //                 separatorBuilder: (_, __) => SizedBox(
+  //                   height: HightWidthSizes.setValue_10,
+  //                 ),
+  //                 itemCount: items.length,
+  //               ),
+  //             );
+  //           }),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
+
   @override
-  Widget build(BuildContext context) {
+  Widget buildView(BuildContext context) {
     return Container(
       color: AppColor.white,
       child: Column(

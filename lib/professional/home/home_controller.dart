@@ -2,6 +2,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:verithrive_dev/enduser/screens/filter/professional/ProfessionalController.dart';
+import 'package:verithrive_dev/professional/home/profile_controller.dart';
 
 import '../../api/dio_client.dart';
 import '../../api/user_api_service.dart';
@@ -13,11 +15,17 @@ import '../../services/foreground_notification_service.dart';
 import '../../services/notification_permission_service.dart';
 import '../../services/notification_service.dart';
 import '../../services/socket_service.dart';
+import '../../theme/colors.dart';
+import '../../theme/font_sizes.dart';
+import '../../theme/fonts.dart';
 import '../../theme/hight_width_sizes.dart';
 import '../../utils/device_info_helper.dart';
 import '../../utils/logger.dart';
 import '../../models/bookings_list_model.dart';
 import '../../models/profile_details_model.dart';
+import '../../widgets/response_dialog.dart';
+import '../signup_terms_conditions/professional_webview_screen.dart';
+import '../strip_account_create/strip_account_create_webview.dart';
 import 'home_model.dart';
 import 'messages_controller.dart';
 
@@ -57,6 +65,9 @@ class HomeController extends BaseController {
 
   // Profile details
   final profileDetails = Rxn<ProfileDetailsModel>();
+  bool _stripeOnboardingDialogShown = false;
+  bool _didAuthenticatedStartup = false;
+  bool _scheduledAuthStartupRetry = false;
 
   // Get notification count from shared service
   int get notificationCount =>
@@ -69,20 +80,7 @@ class HomeController extends BaseController {
   @override
   void onInit() {
     super.onInit();
-    // Check if user is authenticated before making API calls
-    if (!_isGuestUser()) {
-
-      // Update device token on initialization
-      updateDeviceToken();
-      // Load bookings for current date by default
-      loadBookingsList();
-      // Load notification count from shared service (only if authenticated)
-      _notificationService?.fetchNotificationCount();
-      // Load user profile details
-      loadProfileDetails();
-      // Connect Socket.IO for authenticated users
-      _connectSocket();
-    }
+    _maybeStartAuthenticatedFlows();
     // Clear all sessions initially
     upcomingSessions.clear();
     cancelledSessions.clear();
@@ -105,10 +103,35 @@ class HomeController extends BaseController {
   @override
   void onReady() {
     super.onReady();
+    _maybeStartAuthenticatedFlows();
     _ensureNotificationPermission();
     // Handle pending notification if app was opened from terminated state via notification
     // This ensures proper navigation stack: Splash -> Home -> Chat
     _handlePendingNotification();
+  }
+
+  void _maybeStartAuthenticatedFlows() {
+    if (_didAuthenticatedStartup) return;
+    if (!Get.isRegistered<StorageService>()) {
+      if (!_scheduledAuthStartupRetry) {
+        _scheduledAuthStartupRetry = true;
+        Future.delayed(
+          const Duration(milliseconds: 200),
+          _maybeStartAuthenticatedFlows,
+        );
+      }
+      return;
+    }
+
+    if (_isGuestUser()) return;
+
+    _didAuthenticatedStartup = true;
+
+    loadProfileDetails(showStripeDialog: true);
+    updateDeviceToken();
+    loadBookingsList();
+    _notificationService?.fetchNotificationCount();
+    _connectSocket();
   }
 
   /// Handle pending notification from app launch (terminated state)
@@ -229,6 +252,11 @@ class HomeController extends BaseController {
   }
 
   void onTabSelected(int index) {
+    // If the tab is already selected, don't do anything to avoid redundant API calls and loaders
+    if (currentIndex.value == index) {
+      return;
+    }
+
     // Check if user is a guest
     final isGuest = _isGuestUser();
 
@@ -250,12 +278,20 @@ class HomeController extends BaseController {
         print('Messages tab selected - Get.isRegistered<MessagesController>');
       }
     }
-    
+
     currentIndex(index);
-    
+
     // Only load profile details if not a guest
     if (!isGuest) {
-      loadProfileDetails();
+      if (index == 3) {
+        if (Get.isRegistered<ProfileController>()) {
+          final profileController = Get.find<ProfileController>();
+          profileController.fetchProfileDetails(showStripeDialog: true);
+        }
+      } else if (index == 0) {
+        // Only refresh profile details when switching to Home tab
+        loadProfileDetails();
+      }
     }
   }
 
@@ -723,19 +759,19 @@ class HomeController extends BaseController {
     if (Get.isRegistered<StorageService>()) {
       final storage = Get.find<StorageService>();
       userId = storage.readString('user_id');
-      token= storage.readString('access_token');
+      token = storage.readString('access_token');
     }
 
     print('HomeController - Connecting socket with User ID: $userId');
 
     // Connect socket with user ID
-    await _socketService!.connect(userId: userId,token: token);
+    await _socketService!.connect(userId: userId, token: token);
   }
 
   /// Load user profile details
   ///
   /// Fetches user profile details from the API
-  Future<void> loadProfileDetails() async {
+  Future<void> loadProfileDetails({bool showStripeDialog = false}) async {
     final apiService = _userApiService;
     if (apiService == null) {
       logError('UserApiService not available');
@@ -744,7 +780,7 @@ class HomeController extends BaseController {
 
     await callDataService(
       apiService.getProfileDetails(),
-      showLoader: false,
+      showLoader: true,
       onSuccess: (response) {
         if (response.success && response.data != null) {
           try {
@@ -755,6 +791,11 @@ class HomeController extends BaseController {
               profileDetails.value = profile;
               logInfo('Profile details loaded successfully');
               logInfo('User: ${profile.fullName}, Email: ${profile.email}');
+              if (showStripeDialog) {
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  _maybeShowStripeOnboardingDialog(profile);
+                });
+              }
             } else {
               logError('Profile data is null');
             }
@@ -773,59 +814,223 @@ class HomeController extends BaseController {
     );
   }
 
-  // Future<void> loadItems() async {
-  //   await callDataService(
-  //     _api.getRequest<dynamic>('/home'),
-  //     onSuccess: (response) {
-  //       final raw = response.data;
-  //
-  //       // Support both wrapped (BaseModel) and raw list responses.
-  //       final map = raw is Map<String, dynamic> ? raw : null;
-  //
-  //       if (map != null) {
-  //         final base = BaseModel.fromJson(map);
-  //         if ((base.message ?? '').isNotEmpty) {
-  //           message(base.message!);
-  //         }
-  //
-  //         final dynamic data =
-  //             map['items'] ??
-  //             ((map['data'] as Map<String, dynamic>?)?['items']);
-  //
-  //         if (data is List) {
-  //           items.assignAll(
-  //             data
-  //                 .whereType<Map<String, dynamic>>()
-  //                 .map(HomeItem.fromJson)
-  //                 .toList(),
-  //           );
-  //           return;
-  //         }
-  //       }
-  //
-  //       if (raw is List) {
-  //         items.assignAll(
-  //           raw
-  //               .whereType<Map<String, dynamic>>()
-  //               .map(HomeItem.fromJson)
-  //               .toList(),
-  //         );
-  //       }
-  //     },
-  //     onError: (error, stack) {
-  //       logError('Failed to load home items', error: error, stackTrace: stack);
-  //       items.assignAll(const [
-  //         HomeItem(
-  //           title: 'Offline example',
-  //           subtitle: 'Showing fallback data while API is unavailable',
-  //         ),
-  //       ]);
-  //       setError('Could not reach the server. Showing cached sample data.');
-  //     },
-  //     mapErrorMessage: (_) =>
-  //         'Could not reach the server. Showing cached sample data.',
-  //   );
-  // }
+  Future<void> _maybeShowStripeOnboardingDialog(
+      ProfileDetailsModel profile) async {
+    if (_stripeOnboardingDialogShown) return;
+    if (_isGuestUser()) return;
+    if (Get.context == null) return;
+    if (Get.isDialogOpen == true) return;
+
+    final connectStatusRaw =
+        (profile.stripeDetailsConnectStatus ?? profile.stripeConnectStatus)
+            ?.trim()
+            .toLowerCase();
+    final onboardingUrl =
+        (profile.stripeDetailsOnboardingLink ?? profile.onboardingLink)?.trim();
+
+    if (connectStatusRaw == 'completed') return;
+    if (onboardingUrl == null || onboardingUrl.isEmpty) return;
+
+    _stripeOnboardingDialogShown = true;
+
+    await showDialog(
+      context: Get.context!,
+      barrierDismissible: false,
+      barrierColor: Colors.black.withOpacity(0.5),
+      builder: (BuildContext context) {
+        return PopScope(
+          canPop: false,
+          child: Dialog(
+            backgroundColor: Colors.transparent,
+            insetPadding: EdgeInsets.symmetric(
+              horizontal: HightWidthSizes.setValue_16,
+            ),
+            child: Container(
+              decoration: BoxDecoration(
+                color: AppColor.white,
+                borderRadius:
+                    BorderRadius.circular(HightWidthSizes.setValue_10),
+                boxShadow: [
+                  BoxShadow(
+                    color: Color(0x1A000000),
+                    blurRadius: HightWidthSizes.setValue_10,
+                    offset: Offset(0, 4),
+                  ),
+                ],
+              ),
+              padding: EdgeInsets.all(HightWidthSizes.setValue_24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Text(
+                    'Get Started with Stripe',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontFamily: AppFonts.rubikMedium,
+                      fontWeight: FontWeight.w500,
+                      fontSize: FontSizes.setFontValue_20,
+                      color: AppColor.color_2D3648,
+                    ),
+                  ),
+                  SizedBox(height: HightWidthSizes.setValue_16),
+                  Text(
+                    'Create your account here to enable charges and payouts',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontFamily: AppFonts.rubikRegular,
+                      fontWeight: FontWeight.w400,
+                      fontSize: FontSizes.setFontValue_14,
+                      color: AppColor.color_2D2D2D,
+                    ),
+                  ),
+                  SizedBox(height: HightWidthSizes.setValue_24),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        Navigator.of(context).pop();
+                        final result = await Get.to(
+                            () => StripAccountWebViewScreen(url: onboardingUrl));
+
+                        // When returning from WebView, check result and navigate if successful
+                        if (result == 'success') {
+                          loadProfileDetails(showStripeDialog: true);
+                            showResponseDialog(
+                              message: 'Stripe account created successfully.',
+                              title: 'Stripe Account Created',
+                              showButton: true,
+                              onOkPressed: () =>
+                                  Get.toNamed(Routes.bankAccount),
+                            );
+                        } else if (result == 'failed') {
+                          loadProfileDetails(showStripeDialog: true);
+                          showResponseDialog(
+                            message:
+                                'Stripe account create failed. Please try again.',
+                            title: 'Stripe Account Create Failed',
+                            isError: true,
+                            showButton: true,
+                            onOkPressed: () {},
+                          );
+                          // await Get.to(
+                          //   () => ProfessionalWebViewScreen(url: onboardingUrl),
+                          // );
+                          // await loadProfileDetails(showStripeDialog: true);
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColor.color_2FC4B2,
+                        foregroundColor: AppColor.white,
+                        elevation: 0,
+                        padding: EdgeInsets.symmetric(
+                          vertical: HightWidthSizes.setValue_14,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(
+                            HightWidthSizes.setValue_10,
+                          ),
+                        ),
+                      ),
+                      child: Text(
+                        'Create Account',
+                        style: TextStyle(
+                          fontFamily: AppFonts.rubikMedium,
+                          fontWeight: FontWeight.w500,
+                          fontSize: FontSizes.setFontValue_16,
+                          color: AppColor.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: HightWidthSizes.setValue_12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: TextButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      style: TextButton.styleFrom(
+                        padding: EdgeInsets.symmetric(
+                          vertical: HightWidthSizes.setValue_14,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(
+                            HightWidthSizes.setValue_10,
+                          ),
+                        ),
+                      ),
+                      child: Text(
+                        'Later',
+                        style: TextStyle(
+                          fontFamily: AppFonts.rubikRegular,
+                          fontWeight: FontWeight.w400,
+                          fontSize: FontSizes.setFontValue_16,
+                          color: AppColor.color_B53232,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+// Future<void> loadItems() async {
+//   await callDataService(
+//     _api.getRequest<dynamic>('/home'),
+//     onSuccess: (response) {
+//       final raw = response.data;
+//
+//       // Support both wrapped (BaseModel) and raw list responses.
+//       final map = raw is Map<String, dynamic> ? raw : null;
+//
+//       if (map != null) {
+//         final base = BaseModel.fromJson(map);
+//         if ((base.message ?? '').isNotEmpty) {
+//           message(base.message!);
+//         }
+//
+//         final dynamic data =
+//             map['items'] ??
+//             ((map['data'] as Map<String, dynamic>?)?['items']);
+//
+//         if (data is List) {
+//           items.assignAll(
+//             data
+//                 .whereType<Map<String, dynamic>>()
+//                 .map(HomeItem.fromJson)
+//                 .toList(),
+//           );
+//           return;
+//         }
+//       }
+//
+//       if (raw is List) {
+//         items.assignAll(
+//           raw
+//               .whereType<Map<String, dynamic>>()
+//               .map(HomeItem.fromJson)
+//               .toList(),
+//         );
+//       }
+//     },
+//     onError: (error, stack) {
+//       logError('Failed to load home items', error: error, stackTrace: stack);
+//       items.assignAll(const [
+//         HomeItem(
+//           title: 'Offline example',
+//           subtitle: 'Showing fallback data while API is unavailable',
+//         ),
+//       ]);
+//       setError('Could not reach the server. Showing cached sample data.');
+//     },
+//     mapErrorMessage: (_) =>
+//         'Could not reach the server. Showing cached sample data.',
+//   );
+// }
 }
 
 class SessionData {

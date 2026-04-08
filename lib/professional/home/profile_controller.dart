@@ -16,6 +16,8 @@ import '../../theme/font_sizes.dart';
 import '../../theme/hight_width_sizes.dart';
 import '../../theme/image_paths.dart';
 import '../../widgets/response_dialog.dart';
+import '../signup_terms_conditions/professional_webview_screen.dart';
+import '../strip_account_create/strip_account_create_webview.dart';
 import 'messages_controller.dart';
 import 'home_controller.dart';
 import 'calendar_controller.dart';
@@ -34,14 +36,8 @@ class ProfileController extends BaseController {
 
   final Rxn<UserModel> userProfile = Rxn<UserModel>();
 
-  @override
-  void onInit() {
-    super.onInit();
-    fetchProfileDetails();
-  }
-
   /// Fetch user profile details from API
-  Future<void> fetchProfileDetails() async {
+  Future<void> fetchProfileDetails({bool? showStripeDialog}) async {
     await callDataService<ApiResponse<dynamic>>(
       _userApiService.getProfileDetails(),
       onSuccess: (response) {
@@ -63,7 +59,7 @@ class ProfileController extends BaseController {
           debugPrint('Profile details fetched successfully');
         }
       },
-      showLoader: userProfile.value == null, // Show loader only on first fetch
+      showLoader: showStripeDialog ?? false, // Show loader only on first fetch
     );
   }
 
@@ -72,21 +68,24 @@ class ProfileController extends BaseController {
     ProfileItem(title: 'Your profile', asset: AppImages.profileUser),
     ProfileItem(title: 'Bank details', asset: AppImages.profileBank),
     ProfileItem(title: 'Subscription', asset: AppImages.profileTicket),
+    ProfileItem(title: 'Transaction Summary', asset: AppImages.transactionSummary),
     ProfileItem(title: 'Notification', asset: AppImages.profileNotification),
     ProfileItem(title: 'Account', asset: AppImages.profileSettings),
     ProfileItem(title: 'Log out', asset: AppImages.profileLogout),
   ];
 
-  void onItemTap(ProfileItem item) {
+  void onItemTap(ProfileItem item) async {
     // Hook for future navigation or actions per item.
     debugPrint('Tapped on ${item.title}');
 
     if (item.title == 'Your profile') {
       Get.toNamed(Routes.yourProfile);
     } else if (item.title == 'Bank details') {
-      Get.toNamed(Routes.bankAccount);
+      await _handleBankDetailsTap();
     } else if (item.title == 'Subscription') {
       Get.toNamed(Routes.profileSubscription);
+    } else if (item.title == 'Transaction Summary') {
+      Get.toNamed(Routes.transactionSummary);
     } else if (item.title == 'Notification') {
       Get.toNamed(Routes.notificationSettings);
     } else if (item.title == 'Account') {
@@ -94,6 +93,225 @@ class ProfileController extends BaseController {
     } else if (item.title == 'Log out') {
       showLogoutDialog(onLogout);
     }
+  }
+
+  Future<void> _handleBankDetailsTap() async {
+    String? cleanString(dynamic value) {
+      if (value == null) return null;
+      final raw = value.toString().trim();
+      if (raw.length >= 2 &&
+          ((raw.startsWith('"') && raw.endsWith('"')) ||
+              (raw.startsWith("'") && raw.endsWith("'")))) {
+        return raw.substring(1, raw.length - 1).trim();
+      }
+      return raw;
+    }
+
+    Map<String, dynamic>? readProfileMap() {
+      final raw = _storageService?.readString('user_data');
+      if (raw == null || raw.trim().isEmpty) return null;
+      try {
+        final decoded = jsonDecode(raw);
+        if (decoded is Map<String, dynamic>) return decoded;
+        return null;
+      } catch (_) {
+        return null;
+      }
+    }
+
+    Map<String, dynamic>? profile = readProfileMap();
+    final stripeDetails = profile?['stripeDetails'];
+
+    String? connectStatus = cleanString(
+      stripeDetails is Map<String, dynamic>
+          ? stripeDetails['stripe_connect_status']
+          : null,
+    );
+    connectStatus ??= cleanString(profile?['stripe_connect_status']);
+
+    String? onboardingUrl = cleanString(
+      stripeDetails is Map<String, dynamic> ? stripeDetails['onboarding_link'] : null,
+    );
+    onboardingUrl ??= cleanString(profile?['onboarding_link']);
+
+    final connectStatusRaw = connectStatus?.toLowerCase();
+
+    if (connectStatusRaw != 'completed' &&
+        onboardingUrl != null &&
+        onboardingUrl.isNotEmpty) {
+      final String url = onboardingUrl;
+
+      await showDialog(
+        context: Get.context!,
+        barrierDismissible: false,
+        barrierColor: Colors.black.withOpacity(0.5),
+        builder: (BuildContext context) {
+          return PopScope(
+            canPop: false,
+            child: Dialog(
+              backgroundColor: Colors.transparent,
+              insetPadding: EdgeInsets.symmetric(
+                horizontal: HightWidthSizes.setValue_16,
+              ),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: AppColor.white,
+                  borderRadius:
+                      BorderRadius.circular(HightWidthSizes.setValue_10),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Color(0x1A000000),
+                      blurRadius: HightWidthSizes.setValue_10,
+                      offset: Offset(0, 4),
+                    ),
+                  ],
+                ),
+                padding: EdgeInsets.all(HightWidthSizes.setValue_24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Text(
+                      'New Stripe account created',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontFamily: AppFonts.rubikMedium,
+                        fontWeight: FontWeight.w500,
+                        fontSize: FontSizes.setFontValue_20,
+                        color: AppColor.color_2D3648,
+                      ),
+                    ),
+                    SizedBox(height: HightWidthSizes.setValue_16),
+                    Text(
+                      'Please complete your Stripe onboarding to enable charges and payouts.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontFamily: AppFonts.rubikRegular,
+                        fontWeight: FontWeight.w400,
+                        fontSize: FontSizes.setFontValue_14,
+                        color: AppColor.color_2D2D2D,
+                      ),
+                    ),
+                    SizedBox(height: HightWidthSizes.setValue_24),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          Navigator.of(context).pop();
+
+
+              final result = await Get.to(() => StripAccountWebViewScreen(url: url));
+              
+              // When returning from WebView, check result and navigate if successful
+              if (result == 'success') {
+                await fetchProfileDetails(showStripeDialog: true);
+                  showResponseDialog(
+                    message: 'Stripe account created successfully.',
+                    title: 'Stripe Account Created',
+                    showButton: true,
+                    onOkPressed: () => Get.toNamed(Routes.bankAccount),
+                  );
+
+              } else if (result == 'failed') {
+                await fetchProfileDetails(showStripeDialog: true);
+                showResponseDialog(
+                  message: 'Stripe account create failed. Please try again.',
+                  title: 'Stripe Account Create Failed',
+                  isError: true,
+                  showButton: true,
+                  onOkPressed: () {},
+                );
+              }
+
+                          // await Get.to(
+                          //   () => ProfessionalWebViewScreen(url: url),
+                          // );
+
+                          // await fetchProfileDetails(showStripeDialog: true);
+                          // profile = readProfileMap();
+                          // final refreshedStripeDetails = profile?['stripeDetails'];
+
+                          // String? refreshedStatus = cleanString(
+                          //   refreshedStripeDetails is Map<String, dynamic>
+                          //       ? refreshedStripeDetails['stripe_connect_status']
+                          //       : null,
+                          // );
+                          // refreshedStatus ??=
+                          //     cleanString(profile?['stripe_connect_status']);
+
+                          // if (refreshedStatus?.toLowerCase() == 'completed') {
+                          //   Get.toNamed(Routes.bankAccount);
+                          // } else {
+                          //   showResponseDialog(
+                          //     title: 'Stripe onboarding',
+                          //     message:
+                          //         'Please complete your Stripe onboarding to access bank details.',
+                          //     isError: true,
+                          //     showButton: true,
+                          //   );
+                          // }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColor.color_2FC4B2,
+                          foregroundColor: AppColor.white,
+                          elevation: 0,
+                          padding: EdgeInsets.symmetric(
+                            vertical: HightWidthSizes.setValue_14,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(
+                              HightWidthSizes.setValue_10,
+                            ),
+                          ),
+                        ),
+                        child: Text(
+                          'Continue',
+                          style: TextStyle(
+                            fontFamily: AppFonts.rubikMedium,
+                            fontWeight: FontWeight.w500,
+                            fontSize: FontSizes.setFontValue_16,
+                            color: AppColor.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: HightWidthSizes.setValue_12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: TextButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        style: TextButton.styleFrom(
+                          padding: EdgeInsets.symmetric(
+                            vertical: HightWidthSizes.setValue_14,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(
+                              HightWidthSizes.setValue_10,
+                            ),
+                          ),
+                        ),
+                        child: Text(
+                          'Later',
+                          style: TextStyle(
+                            fontFamily: AppFonts.rubikRegular,
+                            fontWeight: FontWeight.w400,
+                            fontSize: FontSizes.setFontValue_16,
+                            color: AppColor.color_B53232,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      );
+      return;
+    }
+
+    Get.toNamed(Routes.bankAccount);
   }
 
   Future<void> onLogout() async {

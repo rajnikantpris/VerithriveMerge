@@ -33,6 +33,7 @@ class AppRoutes {
   static const String orderDetail = '/order_detail';
   static const String selectAddressMap = '/select_address_map';
   static const String chat_detail = '/chat_detail';
+  static const String transaction_summary = '/transaction_summary';
 
   // Alias for compatibility with notification code
   static const String ORDERDETAIL = orderDetail;

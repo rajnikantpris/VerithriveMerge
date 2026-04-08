@@ -607,10 +607,10 @@ class SignupPersonDetailsController extends BaseController {
       selectedLongitude.value = position.longitude;
 
       // Reverse geocode to get address and postcode
-      await _reverseGeocodeAndFillFields(
-        position.latitude,
-        position.longitude,
-      );
+      // await _reverseGeocodeAndFillFields(
+      //   position.latitude,
+      //   position.longitude,
+      // );
     } on TimeoutException catch (e) {
       debugPrint('Timeout getting current location: $e');
       Get.snackbar(
@@ -711,19 +711,5 @@ class SignupPersonDetailsController extends BaseController {
     }
   }
 
-  /// Navigate to manual address entry screen
-  Future<void> navigateToManualAddressScreen() async {
-    final result = await Get.toNamed(Routes.selectAddressMap);
-    if (result != null && result is Map<String, dynamic>) {
-      selectedLatitude.value = result['latitude'] as double?;
-      selectedLongitude.value = result['longitude'] as double?;
-      addressController.text = result['address'] as String? ?? '';
 
-      // Auto-fill postcode if available
-      if (result['postcode'] != null &&
-          result['postcode'].toString().isNotEmpty) {
-        postcodeController.text = (result['postcode'] as String?)!;
-      }
-    }
-  }
 }

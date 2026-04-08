@@ -57,6 +57,8 @@ import '../professional/home/profile/change_password/change_password_binding.dar
 import '../professional/home/profile/change_password/change_password_view.dart';
 import '../professional/home/profile/profile_subscription/profile_subscription_binding.dart';
 import '../professional/home/profile/profile_subscription/profile_subscription_view.dart';
+import '../professional/home/profile/transaction_summary/transaction_summary_binding.dart';
+import '../professional/home/profile/transaction_summary/transaction_summary_screen.dart';
 import '../professional/home/reschedule_session/reschedule_session_binding.dart';
 import '../professional/home/reschedule_session/reschedule_session_view.dart';
 import '../professional/home/service_format/service_format_binding.dart';
@@ -281,6 +283,11 @@ class AppPages {
       name: Routes.selectAddressMap,
       page: () => const SelectAddressMapView(),
       binding: SelectAddressMapBinding(),
+    ),
+    GetPage<TransactionSummaryBinding>(
+      name: Routes.transactionSummary,
+      page: () => const TransactionSummaryScreen(),
+      binding: TransactionSummaryBinding(),
     ),
   ];
 }

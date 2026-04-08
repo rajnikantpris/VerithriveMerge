@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../common/base_view.dart';
 import '../../theme/colors.dart';
 import '../../theme/fonts.dart';
 import '../../theme/hight_width_sizes.dart';
@@ -153,11 +154,11 @@ class DashboardTab extends StatelessWidget {
                             Row(
                               children: [
                                 Obx(
-                                  () => Theme(
+                                      () => Theme(
                                     data: Theme.of(context).copyWith(
                                       checkboxTheme: CheckboxThemeData(
                                         materialTapTargetSize:
-                                            MaterialTapTargetSize.shrinkWrap,
+                                        MaterialTapTargetSize.shrinkWrap,
                                         visualDensity: VisualDensity.compact,
                                         shape: RoundedRectangleBorder(
                                           borderRadius: BorderRadius.circular(
@@ -176,7 +177,7 @@ class DashboardTab extends StatelessWidget {
                                       child: Checkbox(
                                         value: controller.addToCalendar.value,
                                         onChanged:
-                                            controller.toggleAddToCalendar,
+                                        controller.toggleAddToCalendar,
                                       ),
                                     ),
                                   ),
@@ -206,15 +207,15 @@ class DashboardTab extends StatelessWidget {
                             children: controller.upcomingSessions
                                 .map(
                                   (session) => Padding(
-                                    padding: EdgeInsets.only(
-                                      bottom: HightWidthSizes.setValue_12,
-                                    ),
-                                    child: _SessionCard(
-                                      session: session,
-                                      controller: controller,
-                                    ),
-                                  ),
-                                )
+                                padding: EdgeInsets.only(
+                                  bottom: HightWidthSizes.setValue_12,
+                                ),
+                                child: _SessionCard(
+                                  session: session,
+                                  controller: controller,
+                                ),
+                              ),
+                            )
                                 .toList(),
                           ),
                         )
@@ -282,15 +283,15 @@ class DashboardTab extends StatelessWidget {
                             children: controller.cancelledSessions
                                 .map(
                                   (session) => Padding(
-                                    padding: EdgeInsets.only(
-                                      bottom: HightWidthSizes.setValue_12,
-                                    ),
-                                    child: _SessionCard(
-                                      session: session,
-                                      controller: controller,
-                                    ),
-                                  ),
-                                )
+                                padding: EdgeInsets.only(
+                                  bottom: HightWidthSizes.setValue_12,
+                                ),
+                                child: _SessionCard(
+                                  session: session,
+                                  controller: controller,
+                                ),
+                              ),
+                            )
                                 .toList(),
                           ),
                         )
@@ -359,15 +360,15 @@ class DashboardTab extends StatelessWidget {
                             children: controller.pastSessions
                                 .map(
                                   (session) => Padding(
-                                    padding: EdgeInsets.only(
-                                      bottom: HightWidthSizes.setValue_12,
-                                    ),
-                                    child: _SessionCard(
-                                      session: session,
-                                      controller: controller,
-                                    ),
-                                  ),
-                                )
+                                padding: EdgeInsets.only(
+                                  bottom: HightWidthSizes.setValue_12,
+                                ),
+                                child: _SessionCard(
+                                  session: session,
+                                  controller: controller,
+                                ),
+                              ),
+                            )
                                 .toList(),
                           ),
                         )

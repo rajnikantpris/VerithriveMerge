@@ -66,6 +66,7 @@ class AppImages {
   static const String availabilityClock = 'assets/images/availability_clock.svg';
   static const String availabilityCalender = 'assets/images/availability_calender.svg';
   static const String bxsOffer = 'assets/images/bxs_offer.svg';
+  static const String transactionSummary = 'assets/images/transaction.svg';
 
   /// Convenience for loading the splash logo image.
 
@@ -617,6 +618,21 @@ class AppImages {
   }) {
     return svg(
       bxsOffer,
+      width: width,
+      height: height,
+      fit: fit,
+      color: color,
+    );
+  }
+
+  static Widget transaction_summary_svg({
+    double? width,
+    double? height,
+    BoxFit fit = BoxFit.contain,
+    Color? color,
+  }) {
+    return svg(
+      transactionSummary,
       width: width,
       height: height,
       fit: fit,

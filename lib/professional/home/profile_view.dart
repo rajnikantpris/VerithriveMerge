@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../common/base_view.dart';
 import '../../theme/colors.dart';
 import '../../theme/font_sizes.dart';
 import '../../theme/fonts.dart';
@@ -7,13 +8,13 @@ import '../../theme/hight_width_sizes.dart';
 import '../../theme/image_paths.dart';
 import 'profile_controller.dart';
 
-class ProfileTab extends StatelessWidget {
+class ProfileTab extends BaseView<ProfileController> {
   const ProfileTab({super.key, required this.controller});
 
   final ProfileController controller;
 
   @override
-  Widget build(BuildContext context) {
+  Widget buildView(BuildContext context) {
     return Container(
       color: AppColor.white,
       child: ListView.separated(

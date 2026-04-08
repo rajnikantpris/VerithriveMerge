@@ -12,6 +12,8 @@ import '../notifications/NotificationsScreen.dart';
 import '../notifications/NotificationsBinding.dart';
 import '../update_profile/UpdateProfileScreen.dart';
 import '../update_profile/UpdateProfileBinding.dart';
+import '../transaction_summary/TransactionSummaryScreen.dart';
+import '../transaction_summary/TransactionSummaryBinding.dart';
 import 'ProfileMainController.dart';
 
 class ProfileMainScreen extends StatelessWidget {
@@ -60,6 +62,12 @@ class ProfileMainScreen extends StatelessWidget {
                     icon: AppAssets.notification,
                     title: 'Notifications',
                     onTap: () => Get.to(() => NotificationsScreen(), binding: NotificationsBinding()),
+                  ),
+                  Divider(height: 1, color: AppColors.lightGrey),
+                  _buildProfileOption(
+                    icon: AppAssets.transaction, // Using sort_item for transaction summary
+                    title: 'Transaction Summary',
+                    onTap: () => Get.to(() => TransactionSummaryScreen(), binding: TransactionSummaryBinding()),
                   ),
                   Divider(height: 1, color: AppColors.lightGrey),
                   _buildProfileOption(

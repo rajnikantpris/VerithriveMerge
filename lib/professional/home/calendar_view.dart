@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../common/base_view.dart';
 import '../../routes/app_routes.dart';
 import '../../theme/colors.dart';
 import '../../theme/fonts.dart';
@@ -12,13 +13,138 @@ import 'calendar_controller.dart';
 import 'home_controller.dart';
 
 /// Calendar tab extracted from HomeView so it can be reused and kept lean.
-class CalendarTab extends StatelessWidget {
+class CalendarTab extends BaseView<CalendarController> {
   const CalendarTab({super.key, required this.controller});
 
   final CalendarController controller;
 
+  // @override
+  // Widget build(BuildContext context) {
+  //   return Column(
+  //     crossAxisAlignment: CrossAxisAlignment.start,
+  //     children: [
+  //       Expanded(
+  //         child: SingleChildScrollView(
+  //           child: Column(
+  //             crossAxisAlignment: CrossAxisAlignment.start,
+  //             children: [
+  //               Container(
+  //                 margin: EdgeInsets.only(
+  //                   left: HightWidthSizes.setValue_10,
+  //                   right: HightWidthSizes.setValue_10,
+  //                   top: HightWidthSizes.setValue_10,
+  //                   bottom: HightWidthSizes.setValue_10,
+  //                 ),
+  //                 padding: EdgeInsets.only(
+  //                   top: HightWidthSizes.setValue_10,
+  //                   bottom: HightWidthSizes.setValue_10,
+  //                 ),
+  //                 decoration: BoxDecoration(
+  //                   color: Colors.white,
+  //                   borderRadius: BorderRadius.circular(
+  //                     HightWidthSizes.setValue_14,
+  //                   ),
+  //                   boxShadow: [
+  //                     BoxShadow(
+  //                       color: Colors.black12,
+  //                       blurRadius: HightWidthSizes.setValue_8,
+  //                       offset: const Offset(0, 4),
+  //                     ),
+  //                   ],
+  //                 ),
+  //                 child: Obx(() {
+  //                   final showMonth = controller.showMonthView.value;
+  //                   return Column(
+  //                     crossAxisAlignment: CrossAxisAlignment.start,
+  //                     children: [
+  //                       SizedBox(height: HightWidthSizes.setValue_5),
+  //                       Row(
+  //                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  //                         children: [
+  //                           GestureDetector(
+  //                             onTap: controller.goToPreviousMonth,
+  //                             child: Container(
+  //                               margin: EdgeInsets.only(
+  //                                 left: HightWidthSizes.setValue_10,
+  //                               ),
+  //                               child: const Icon(Icons.chevron_left,
+  //                                   color: AppColor.color_32435F),
+  //                             ),
+  //                           ),
+  //                           Text(
+  //                             controller.getMonthYearText(),
+  //                             style: TextStyle(
+  //                               fontFamily: AppFonts.rubikBold,
+  //                               fontWeight: FontWeight.w600,
+  //                               color: AppColor.color_32435F,
+  //                               fontSize: FontSizes.setFontValue_16,
+  //                             ),
+  //                           ),
+  //                           GestureDetector(
+  //                             onTap: controller.goToNextMonth,
+  //                             child: Container(
+  //                               margin: EdgeInsets.only(
+  //                                 right: HightWidthSizes.setValue_10,
+  //                               ),
+  //                               child: const Icon(Icons.chevron_right,
+  //                                   color: AppColor.color_32435F),
+  //                             ),
+  //                           ),
+  //                         ],
+  //                       ),
+  //                       SizedBox(height: HightWidthSizes.setValue_12),
+  //                       AnimatedCrossFade(
+  //                         duration: const Duration(milliseconds: 200),
+  //                         firstChild: _WeekCalendar(controller: controller),
+  //                         secondChild: _MonthCalendar(controller: controller),
+  //                         crossFadeState: showMonth
+  //                             ? CrossFadeState.showSecond
+  //                             : CrossFadeState.showFirst,
+  //                       ),
+  //                       SizedBox(height: HightWidthSizes.setValue_10),
+  //                       GestureDetector(
+  //                         behavior: HitTestBehavior.opaque,
+  //                         onTap: controller.toggleCalendarView,
+  //                         child: SizedBox(
+  //                           height: HightWidthSizes.setValue_15,
+  //                           child: Center(
+  //                             child: Container(
+  //                               width: HightWidthSizes.setValue_50,
+  //                               height: HightWidthSizes.setValue_4,
+  //                               decoration: BoxDecoration(
+  //                                 color: Colors.grey.shade400,
+  //                                 borderRadius: BorderRadius.circular(
+  //                                   HightWidthSizes.setValue_20,
+  //                                 ),
+  //                               ),
+  //                             ),
+  //                           ),
+  //                         ),
+  //                       ),
+  //                     ],
+  //                   );
+  //                 }),
+  //               ),
+  //               SizedBox(height: HightWidthSizes.setValue_16),
+  //               _ServiceFormatSection(controller: controller),
+  //               SizedBox(height: HightWidthSizes.setValue_12),
+  //               _AvailabilitySection(controller: controller),
+  //               SizedBox(height: HightWidthSizes.setValue_12),
+  //               _EmptyStateSection(
+  //                 title: 'Booked slots',
+  //                 placeholder: 'No slots booked yet',
+  //                 onAdd: () {},
+  //               ),
+  //             ],
+  //           ),
+  //         ),
+  //       ),
+  //     ],
+  //   );
+  // }
+
   @override
-  Widget build(BuildContext context) {
+  Widget buildView(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

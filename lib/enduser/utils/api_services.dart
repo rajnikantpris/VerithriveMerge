@@ -1,8 +1,8 @@
-//var bareUrl = 'http://192.168.0.51:4142/api/v2/user/';
+// var bareUrl = 'http://192.168.0.126:4142/api/v3/user/';
 //var socketUrl = 'http://192.168.0.51:4142';
-//var bareUrl = 'http://27.54.168.101:4142/api/v1/user/';
+// var bareUrl = 'http://27.54.168.101:4142/api/v3/user/';
 
-var bareUrl = 'https://adminportal.verithrive.co.uk/api/api/v2/user/';
+var bareUrl = 'https://adminportal.verithrive.co.uk/api/api/v3/user/';
 var socketUrl = 'https://adminportal.verithrive.co.uk';
 
 //var bareUrl = 'http://18.135.255.93:4142/api/v2/user/';
@@ -62,3 +62,4 @@ const update_device_token = "update-device-token";
 const social_signin = "/social/signin";
 const professionals_rate_review = "/professionals/rate-review";
 const notifications_count = "/notifications/count";
+const transactions_history = "transactions/history";
