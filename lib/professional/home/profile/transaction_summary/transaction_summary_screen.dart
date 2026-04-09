@@ -80,11 +80,7 @@ class TransactionSummaryScreen extends BaseView<TransactionSummaryController> {
             controller: controller.scrollController,
             padding: EdgeInsets.all(HightWidthSizes.setValue_16),
             itemCount: controller.transactions.length + (controller.hasMoreData.value ? 1 : 0),
-            separatorBuilder: (_, __) =>
-                Divider(
-                  height: HightWidthSizes.setValue_1,
-                  color: AppColor.color_ECECEC,
-                ),
+            separatorBuilder: (_, __) => SizedBox(height: HightWidthSizes.setValue_12),
             itemBuilder: (context, index) {
               if (index == controller.transactions.length) {
                 return Obx(() {
@@ -96,12 +92,140 @@ class TransactionSummaryScreen extends BaseView<TransactionSummaryController> {
                 });
               }
               final transaction = controller.transactions[index];
+              
+              final isSuccess = transaction.status.toLowerCase() == 'success' || transaction.status.toLowerCase() == 'paid';
+              final isPending = transaction.status.toLowerCase() == 'pending';
+              
+              Color statusColor = AppColor.color_9D9D9D;
+              Color statusBgColor = AppColor.color_ECECEC.withOpacity(0.2);
+              
+              if (isSuccess) {
+                statusColor = AppColor.color_2FC4B2;
+                statusBgColor = AppColor.color_2FC4B2.withOpacity(0.1);
+              } else if (isPending) {
+                statusColor = const Color(0xFFF59300); // Orange color for pending
+                statusBgColor = const Color(0xFFF59300).withOpacity(0.1);
+              } else if (transaction.status.toLowerCase() == 'failed' || transaction.status.toLowerCase() == 'error') {
+                statusColor = AppColor.color_E64646;
+                statusBgColor = AppColor.color_E64646.withOpacity(0.1);
+              }
 
-              return ListTile(
-                title: Text(transaction.title),
-                subtitle: Text(transaction.formattedDate),
-                trailing: Text(
-                    transaction.formattedAmount, style: TextStyle(fontWeight: FontWeight.bold)),
+              return Container(
+                padding: EdgeInsets.all(HightWidthSizes.setValue_16),
+                decoration: BoxDecoration(
+                  color: AppColor.white,
+                  borderRadius: BorderRadius.circular(HightWidthSizes.setValue_12),
+                  border: Border.all(color: AppColor.color_ECECEC),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColor.color000000.withOpacity(0.05),
+                      blurRadius: HightWidthSizes.setValue_10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                transaction.title,
+                                style: TextStyle(
+                                  fontFamily: AppFonts.rubikMedium,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: FontSizes.setFontValue_16,
+                                  color: AppColor.color_2D3648,
+                                ),
+                              ),
+                              if (transaction.transactionReference.isNotEmpty) ...[
+                                SizedBox(height: HightWidthSizes.setValue_4),
+                                Text(
+                                  'Ref: ${transaction.transactionReference}',
+                                  style: TextStyle(
+                                    fontFamily: AppFonts.rubikRegular,
+                                    fontWeight: FontWeight.w400,
+                                    fontSize: FontSizes.setFontValue_12,
+                                    color: AppColor.color_9D9D9D,
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                        Text(
+                          transaction.formattedAmount,
+                          style: TextStyle(
+                            fontFamily: AppFonts.rubikMedium,
+                            fontWeight: FontWeight.w600,
+                            fontSize: FontSizes.setFontValue_16,
+                            color: AppColor.color_2D3648,
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: HightWidthSizes.setValue_12),
+                    CustomPaint(
+                      size: const Size(double.infinity, 1),
+                      painter: DashedLinePainter(),
+                    ),
+                    SizedBox(height: HightWidthSizes.setValue_12),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Date & Time',
+                              style: TextStyle(
+                                fontFamily: AppFonts.rubikRegular,
+                                fontWeight: FontWeight.w400,
+                                fontSize: FontSizes.setFontValue_12,
+                                color: AppColor.color_9D9D9D,
+                              ),
+                            ),
+                            SizedBox(height: HightWidthSizes.setValue_4),
+                            Text(
+                              transaction.formattedDate,
+                              style: TextStyle(
+                                fontFamily: AppFonts.rubikRegular,
+                                fontWeight: FontWeight.w400,
+                                fontSize: FontSizes.setFontValue_14,
+                                color: AppColor.color_2D2D2D,
+                              ),
+                            ),
+                          ],
+                        ),
+                        if (transaction.status.isNotEmpty)
+                          Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: HightWidthSizes.setValue_10,
+                              vertical: HightWidthSizes.setValue_4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: statusBgColor,
+                              borderRadius: BorderRadius.circular(HightWidthSizes.setValue_20),
+                            ),
+                            child: Text(
+                              transaction.status.capitalizeFirst ?? transaction.status,
+                              style: TextStyle(
+                                fontFamily: AppFonts.rubikMedium,
+                                fontWeight: FontWeight.w600,
+                                fontSize: FontSizes.setFontValue_12,
+                                color: statusColor,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
               );
             },
           );
@@ -109,4 +233,29 @@ class TransactionSummaryScreen extends BaseView<TransactionSummaryController> {
       ),
     );
   }
+}
+
+class DashedLinePainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = AppColor.color_ECECEC
+      ..strokeWidth = 1;
+
+    const dashWidth = 5;
+    const dashSpace = 3;
+    double startX = 0;
+
+    while (startX < size.width) {
+      canvas.drawLine(
+        Offset(startX, 0),
+        Offset(startX + dashWidth, 0),
+        paint,
+      );
+      startX += dashWidth + dashSpace;
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

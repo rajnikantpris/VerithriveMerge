@@ -148,7 +148,9 @@ class PaymentMethodScreen extends StatelessWidget {
                 color: AppColors.white,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: AppColors.grey,
+                  color: isSelected
+                      ? AppColors.black
+                      : Colors.grey.shade400,
                   width: 1,
                 ),
               ),
@@ -196,10 +198,10 @@ class PaymentMethodScreen extends StatelessWidget {
           ),
 
           // Card Details Form (only for Credit Card)
-          if (isCreditCard && isSelected) ...[
-            SizedBox(height: 16),
-            _buildCardDetailsForm(),
-          ],
+          // if (isCreditCard && isSelected) ...[
+          //   SizedBox(height: 16),
+          //   _buildCardDetailsForm(),
+          // ],
         ],
       );
     });

@@ -122,12 +122,33 @@ class TransactionSummaryScreen extends GetView<TransactionSummaryController> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Expanded(
-                        child: Text(
-                          tx.title.isNotEmpty ? tx.title : 'Transaction #${index + 1}',
-                          style: AppTextStyles.popinSemiboldTextStyle(
-                            fontSize: 16,
-                            color: AppColors.black,
-                          ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              tx.title.isNotEmpty ? tx.title : 'Transaction #${index + 1}',
+                              style: AppTextStyles.popinSemiboldTextStyle(
+                                fontSize: 16,
+                                color: AppColors.black,
+                              ),
+                            ),
+                            if (tx.id.isNotEmpty)
+                              Text(
+                                'Transaction ID: ${tx.id}',
+                                style: AppTextStyles.popinRegularTextStyle(
+                                  fontSize: 10,
+                                  color: AppColors.grey,
+                                ),
+                              ),
+                            if (tx.bookingId.isNotEmpty)
+                              Text(
+                                'Booking ID: ${tx.bookingId}',
+                                style: AppTextStyles.popinRegularTextStyle(
+                                  fontSize: 10,
+                                  color: AppColors.grey,
+                                ),
+                              ),
+                          ],
                         ),
                       ),
                       Text(

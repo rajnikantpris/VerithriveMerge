@@ -161,12 +161,6 @@ class PaymentMethodController extends BaseController {
 
   // Check if continue button should be enabled
   bool get isContinueEnabled {
-    if (selectedPaymentMethod.value == PaymentMethodType.creditCard) {
-      return cardNumber.value.trim().isNotEmpty &&
-          expiryDate.value.trim().isNotEmpty &&
-          cvv.value.trim().isNotEmpty &&
-          cardHolderName.value.trim().isNotEmpty;
-    }
     return selectedPaymentMethod.value != null;
   }
 

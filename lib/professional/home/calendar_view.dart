@@ -751,8 +751,11 @@ class _ServiceFormatSection extends StatelessWidget {
                 final homeController = Get.isRegistered<HomeController>()
                     ? Get.find<HomeController>()
                     : null;
-                final isApproved =
-                    homeController?.profileDetails.value?.isApproved ?? false;
+                
+                // Reactive access to profile details
+                final profile = homeController?.profileDetails.value;
+                final isApproved = profile?.isApproved ?? false;
+                final isGuest = homeController?.isGuestUser() ?? true;
                 
                 if (isPastDate) {
                   return SizedBox(
@@ -762,19 +765,34 @@ class _ServiceFormatSection extends StatelessWidget {
                 
                 return ElevatedButton.icon(
                   onPressed: () {
-                    // Check if user is approved
+                    // 1. Check if user is a guest
+                    if (isGuest) {
+                      if (Get.currentRoute != Routes.login) {
+                        Get.toNamed(Routes.login);
+                      }
+                      return;
+                    }
+
+                    // 2. Check if user is approved
                     if (!isApproved) {
+                      // Customize message based on profile status
+                      String title = 'Application Under Review';
+                      String message = 'Your professional application has been successfully submitted. Please wait while we review your application. Once it is approved, you will be able to access and use our services.';
+                      bool isError = false;
+
+                     
+
                       // Show dialog if not approved
                       showResponseDialog(
-                        title: 'Application Under Review',
-                        message:
-                            'Your professional application has been successfully submitted. Please wait while we review your application. Once it is approved, you will be able to access and use our services.',
-                        isError: false,
+                        title: title,
+                        message: message,
+                        isError: isError,
                         showButton: true,
                       );
                       return;
                     }
-                    // Navigate if approved
+                    
+                    // 3. Navigate if approved
                     Get.toNamed(
                       Routes.serviceFormat,
                       arguments: controller.selectedDate.value,

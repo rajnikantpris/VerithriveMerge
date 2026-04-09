@@ -8,6 +8,7 @@ import '../../utils/auth_service.dart';
 
 class TransactionHistoryItem {
   final String id;
+  final String bookingId;
   final String title;
   final DateTime date;
   final double amount;
@@ -16,6 +17,7 @@ class TransactionHistoryItem {
 
   const TransactionHistoryItem({
     required this.id,
+    required this.bookingId,
     required this.title,
     required this.date,
     required this.amount,
@@ -25,6 +27,7 @@ class TransactionHistoryItem {
 
   factory TransactionHistoryItem.fromJson(Map<String, dynamic> json) {
     final id = (json['transaction_id'] ?? json['_id'] ?? json['id'] ?? '').toString();
+    final bookingId = (json['booking_id'] ?? json['bookingId'] ?? '').toString();
     
     // Title from service format name or professional full name
     String title = 'Transaction';
@@ -96,6 +99,7 @@ class TransactionHistoryItem {
 
     return TransactionHistoryItem(
       id: id,
+      bookingId: bookingId,
       title: title,
       date: date,
       amount: amount,

@@ -11,6 +11,7 @@ class TransactionHistoryItem {
   final double amount;
   final String currencySymbol;
   final String status;
+  final String transactionReference;
 
   const TransactionHistoryItem({
     required this.id,
@@ -19,11 +20,13 @@ class TransactionHistoryItem {
     required this.amount,
     required this.currencySymbol,
     required this.status,
+    required this.transactionReference,
   });
 
   factory TransactionHistoryItem.fromJson(Map<String, dynamic> json) {
     final id = (json['_id'] ?? json['id'] ?? json['transaction_id'] ?? '').toString();
-    final title = (json['title'] ??
+    final title = (json['plan_name'] ??
+        json['title'] ??
         json['description'] ??
         json['service_name'] ??
         json['serviceFormatName'] ??
@@ -36,9 +39,9 @@ class TransactionHistoryItem {
         .toString();
 
     DateTime date = DateTime.now();
-    final rawDate = json['date'] ??
+    final rawDate = json['created_at'] ??
+        json['date'] ??
         json['transaction_date'] ??
-        json['created_at'] ??
         json['createdAt'] ??
         json['paid_at'] ??
         json['paidAt'];
@@ -82,6 +85,12 @@ class TransactionHistoryItem {
         '')
         .toString();
 
+    final transactionReference = (json['transaction_reference'] ??
+        json['transactionReference'] ??
+        json['reference'] ??
+        '')
+        .toString();
+
     return TransactionHistoryItem(
       id: id,
       title: title,
@@ -89,6 +98,7 @@ class TransactionHistoryItem {
       amount: amount,
       currencySymbol: currencySymbol,
       status: status,
+      transactionReference: transactionReference,
     );
   }
 
@@ -149,8 +159,6 @@ class TransactionSummaryController extends BaseController {
       _userApiService.getTransactionHistory(
         page: currentPage,
         limit: 10,
-        startDate: '2024-01-01',
-        endDate: '2024-12-31',
       ),
       onStart: () {},
       onSuccess: (response) {
@@ -180,14 +188,22 @@ class TransactionSummaryController extends BaseController {
 
           if (pagination != null) {
             final totalPages = pagination['total_pages'] as int? ?? 1;
-            if (currentPage < totalPages) {
-              currentPage++;
+            final currPage = pagination['current_page'] as int? ?? currentPage;
+            
+            if (currPage < totalPages) {
+              currentPage = currPage + 1;
               hasMoreData(true);
             } else {
               hasMoreData(false);
             }
           } else {
-            hasMoreData(false);
+            // Fallback if no pagination object
+            if (parsed.length < 10) {
+              hasMoreData(false);
+            } else {
+              currentPage++;
+              hasMoreData(true);
+            }
           }
         }
       },

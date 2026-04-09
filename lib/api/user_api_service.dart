@@ -81,6 +81,7 @@ class UserApiService extends GetxService {
   static const String _subscriptionsListPath = 'subscriptions/plans';
   static const String _subscriptionsDetailsPath = 'subscriptions/details';
   static const String _buySubscriptionPath = 'subscriptions/buy';
+  static const String _cancelSubscriptionPath = 'subscriptions/cancel';
   static const String _serviceFormatsAllPath = 'service-formats/all';
   static const String _serviceFormatsPath = 'service-formats';
   static const String _availabilityPath = 'availability';
@@ -93,7 +94,7 @@ class UserApiService extends GetxService {
   static const String _chatInboxPath = 'chat/inbox';
   static const String _chatRoomPath = 'chat/room';
   static const String _chatMessagesPath = 'chat/messages';
-  static const String _transactionHistoryPath = 'transactions/history';
+  static const String _transactionHistoryPath = 'transaction-history';
 
   static const String check_promo_code = 'check-promo-code';
 
@@ -291,6 +292,36 @@ class UserApiService extends GetxService {
           rawResponse: response,
         );
       }
+    } on dio.DioException catch (e) {
+      return ApiResponse.fromDioException(e);
+    } catch (e) {
+      return ApiResponse.failure(
+        error: e.toString(),
+        message: 'An unexpected error occurred',
+      );
+    }
+  }
+
+  /// Cancel subscription
+  ///
+  /// [subscriptionId] - The subscription ID to cancel
+  ///
+  /// Returns the API response wrapped in ApiResponse
+  Future<ApiResponse<dynamic>> cancelSubscription({
+    required String subscriptionId,
+  }) async {
+    try {
+      final fullUrl = '$baseUrl$_cancelSubscriptionPath';
+
+      final response = await _dioClient.postRequest<dynamic>(
+        fullUrl,
+        withAuth: true,
+        body: {
+          'subscription_id': subscriptionId,
+        },
+      );
+
+      return ApiResponse.fromDioResponse(response);
     } on dio.DioException catch (e) {
       return ApiResponse.fromDioException(e);
     } catch (e) {
@@ -2220,8 +2251,7 @@ class UserApiService extends GetxService {
   Future<ApiResponse<dynamic>> getTransactionHistory({
     required int page,
     required int limit,
-    required String startDate,
-    required String endDate,
+
   }) async {
     try {
       final fullUrl = '$baseUrl$_transactionHistoryPath';
@@ -2232,8 +2262,7 @@ class UserApiService extends GetxService {
         body: {
           'page': page,
           'limit': limit,
-          'start_date': startDate,
-          'end_date': endDate,
+
         },
       );
 

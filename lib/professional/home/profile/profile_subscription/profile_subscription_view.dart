@@ -106,6 +106,8 @@ class ProfileSubscriptionView extends BaseView<ProfileSubscriptionController> {
                       height: cardHeight,
                       child: _SubscriptionPlanCard(
                         plan: plan,
+                        activeUntilDate: controller.activeUntilDate.value,
+                        isCancelled: controller.isCancelled.value,
                       ),
                     );
                   },
@@ -134,9 +136,13 @@ class ProfileSubscriptionView extends BaseView<ProfileSubscriptionController> {
 class _SubscriptionPlanCard extends StatelessWidget {
   const _SubscriptionPlanCard({
     required this.plan,
+    required this.activeUntilDate,
+    required this.isCancelled,
   });
 
   final SubscriptionPlan plan;
+  final String activeUntilDate;
+  final bool isCancelled;
 
   @override
   Widget build(BuildContext context) {
@@ -268,47 +274,96 @@ class _SubscriptionPlanCard extends StatelessWidget {
           // Current plan indicator
           if (plan.isCurrentPlan)
             Padding(
-              padding: EdgeInsets.only(bottom: HightWidthSizes.setValue_12),
+              padding: EdgeInsets.only(bottom: HightWidthSizes.setValue_1),
               child: Column(
                 children: [
                   Center(
-                      child: Text(
-                    'Current plan',
-                    style: TextStyle(
-                      fontFamily: AppFonts.rubikRegular,
-                      fontWeight: FontWeight.w400,
-                      fontSize: FontSizes.setFontValue_18,
-                      color: AppColor.color_2FC4B2,
-                    ),
-                  )),
-                  SizedBox(height: HightWidthSizes.setValue_10),
-                  Center(
-                      child: ElevatedButton(
-                    onPressed: () {},
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColor.color_E64646,
-                      foregroundColor: AppColor.white,
-                      elevation: 0,
+                    child: Container(
                       padding: EdgeInsets.symmetric(
-                        vertical: HightWidthSizes.setValue_10,
-                        horizontal: HightWidthSizes.setValue_30,
+                        vertical: HightWidthSizes.setValue_6,
+                        horizontal: HightWidthSizes.setValue_12,
                       ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(
-                          HightWidthSizes.setValue_10,
+                      decoration: BoxDecoration(
+                        color: AppColor.color_2FC4B2.withOpacity(0.1),
+                        borderRadius:
+                            BorderRadius.circular(HightWidthSizes.setValue_20),
+                        border: Border.all(
+                          color: AppColor.color_2FC4B2,
+                          width: 1,
+                        ),
+                      ),
+                      child: Text(
+                        'Active Plan',
+                        style: TextStyle(
+                          fontFamily: AppFonts.rubikRegular,
+                          fontWeight: FontWeight.w500,
+                          fontSize: FontSizes.setFontValue_14,
+                          color: AppColor.color_2FC4B2,
                         ),
                       ),
                     ),
-                    child: Text(
-                      'Cancel Plan',
-                      style: TextStyle(
-                        fontFamily: AppFonts.rubikMedium,
-                        fontWeight: FontWeight.w500,
-                        fontSize: FontSizes.setFontValue_16,
-                        color: AppColor.white,
+                  ),
+                  if (activeUntilDate.isNotEmpty) ...[
+                    SizedBox(height: HightWidthSizes.setValue_4),
+                    Center(
+                      child: Text(
+                        'Active until $activeUntilDate',
+                        style: TextStyle(
+                          fontFamily: AppFonts.rubikRegular,
+                          fontWeight: FontWeight.w400,
+                          fontSize: FontSizes.setFontValue_14,
+                          color: AppColor.color_9D9D9D,
+                        ),
                       ),
                     ),
-                  ))
+                  ],
+               
+                  SizedBox(height: HightWidthSizes.setValue_10),
+                  if (isCancelled)
+                    Center(
+                      child: Text(
+                        'Your active plan has been canceled.',
+                        style: TextStyle(
+                          fontFamily: AppFonts.rubikMedium,
+                          fontWeight: FontWeight.w500,
+                          fontSize: FontSizes.setFontValue_10,
+                          color: AppColor.color_E64646,
+                        ),
+                      ),
+                    )
+                  else
+                    Center(
+                        child: ElevatedButton(
+                      onPressed: () {
+                        final controller =
+                            Get.find<ProfileSubscriptionController>();
+                        controller.onCancelSubscription();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColor.color_E64646,
+                        foregroundColor: AppColor.white,
+                        elevation: 0,
+                        padding: EdgeInsets.symmetric(
+                          vertical: HightWidthSizes.setValue_10,
+                          horizontal: HightWidthSizes.setValue_30,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(
+                            HightWidthSizes.setValue_10,
+                          ),
+                        ),
+                      ),
+                      child: Text(
+                        'Cancel Plan',
+                        style: TextStyle(
+                          fontFamily: AppFonts.rubikMedium,
+                          fontWeight: FontWeight.w500,
+                          fontSize: FontSizes.setFontValue_16,
+                          color: AppColor.white,
+                        ),
+                      ),
+                    ))
+               
                 ],
               ),
             ),
@@ -346,41 +401,6 @@ class _SubscriptionPlanCard extends StatelessWidget {
                 ),
               ),
             ),
-
-          // Cancel subscription button (only for current plan)
-          // if (plan.isCurrentPlan)
-          //   SizedBox(
-          //     width: double.infinity,
-          //     child: ElevatedButton(
-          //       onPressed: () {
-          //         final controller =
-          //             Get.find<ProfileSubscriptionController>();
-          //         controller.onCancelSubscription();
-          //       },
-          //       style: ElevatedButton.styleFrom(
-          //         backgroundColor: AppColor.color_B53232,
-          //         foregroundColor: AppColor.white,
-          //         elevation: 0,
-          //         padding: EdgeInsets.symmetric(
-          //           vertical: HightWidthSizes.setValue_14,
-          //         ),
-          //         shape: RoundedRectangleBorder(
-          //           borderRadius: BorderRadius.circular(
-          //             HightWidthSizes.setValue_10,
-          //           ),
-          //         ),
-          //       ),
-          //       child: Text(
-          //         'Cancel subscription',
-          //         style: TextStyle(
-          //           fontFamily: AppFonts.rubikMedium,
-          //           fontWeight: FontWeight.w500,
-          //           fontSize: FontSizes.setFontValue_16,
-          //           color: AppColor.white,
-          //         ),
-          //       ),
-          //     ),
-          //   ),
         ],
       ),
     );
