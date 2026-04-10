@@ -71,6 +71,8 @@ class SocketService extends GetxService {
           .enableForceNew()     // Force creation of a new connection
           .disableMultiplex()   // Prevent sharing connection with other instances
           .disableAutoConnect()
+          // Add this to ensure we don't try to use secure connection for HTTP URLs
+          .setQuery({'secure': baseUrl.startsWith('https') ? 'true' : 'false'})
           .build();
 
       _socket = IO.io(baseUrl, options);

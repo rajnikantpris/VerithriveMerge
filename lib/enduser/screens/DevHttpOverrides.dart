@@ -8,8 +8,8 @@ class DevHttpOverrides extends HttpOverrides {
     return super.createHttpClient(context)
       ..badCertificateCallback =
           (X509Certificate cert, String host, int port) {
-        // Allow only our specific dev server IP — reject everything else
-        return host == '18.135.255.93';
+        // Allow all hosts in development
+        return true;
       };
   }
 }

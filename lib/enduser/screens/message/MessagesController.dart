@@ -31,13 +31,17 @@ class MessagesController extends BaseController {
   void onInit() {
     super.onInit();
     // Initialize socket connection for real-time updates
+    // We only call this once here; fetchData will also be called by BaseController
+    // but checkAndReconnectSocket handles redundant calls
     checkAndReconnectSocket();
   }
 
   @override
   void onClose() {
     _cleanupSocketListeners();
-    // Disconnect and dispose local socket service
+    // We don't necessarily want to disconnect the socket service here 
+    // if it's a global service, but since it's a local instance in this controller,
+    // we should clean up.
     _socketService?.disconnect();
     _socketService = null;
     super.onClose();
@@ -45,13 +49,15 @@ class MessagesController extends BaseController {
 
   @override
   void fetchData() async {
-    print("Socket-based: Messages Loaded");
+    print("Socket-based: Messages fetchData called");
+    // BaseController calls fetchData. If we already connected in onInit, 
+    // checkAndReconnectSocket will handle it.
     _checkAuthAndFetchMessages();
   }
 
   // Refresh data method called by MainScreen - now socket-based
   void refreshData() {
-    isLoading.value = false;
+    print("Socket-based: Messages refreshData called");
     _checkAuthAndFetchMessages();
   }
 
@@ -59,7 +65,8 @@ class MessagesController extends BaseController {
   Future<void> _checkAuthAndFetchMessages() async {
     bool canAccess = await AuthService.requireAuth();
     if (canAccess) {
-      checkAndReconnectSocket();
+      // Use await to ensure connection is established before requesting inbox
+      await checkAndReconnectSocket();
     }
   }
 
@@ -82,7 +89,7 @@ class MessagesController extends BaseController {
       } else {
         // Try to reconnect and then get inbox
         await checkAndReconnectSocket();
-        // Try again after reconnection
+        // Request inbox after reconnection check
         if (_socketService != null && _socketService!.connected) {
           _socketService!.getInbox();
         }
@@ -234,7 +241,7 @@ class MessagesController extends BaseController {
           profileImageUrl = profilePicturePath;
         } else {
           // Construct full URL from base URL
-          final baseUrl = 'http://27.54.168.101:4142'; // From api_services.dart
+          final baseUrl = socketUrl; // Use from api_services.dart
           final imagePath = profilePicturePath.startsWith('public/')
               ? profilePicturePath.substring(7) // Remove 'public/'
               : profilePicturePath;
@@ -429,20 +436,25 @@ class MessagesController extends BaseController {
         _socketService = EndUserSocketService();
       }
 
+      // Setup message listeners - Call this BEFORE connecting to ensure we don't miss any events
+      // and call cleanup first to avoid duplicate listeners
+      _setupSocketListeners();
+
+      // Check if socket is already connected
+      if (_socketService!.connected) {
+        print('End-user socket already connected, requesting inbox data');
+        _socketService!.getInbox();
+        return;
+      }
+
       // Get current user ID for debugging
       final currentUserId = await _getCurrentUserId();
       final currentUserType = _getCurrentUserType();
-      print('End-user socket connection - User ID: $currentUserId, User Type: $currentUserType');
+      print('End-user socket connecting - User ID: $currentUserId, User Type: $currentUserType');
 
-      // Check if socket is connected
-      if (!_socketService!.connected) {
-        // Socket not connected, reconnect it
-        final token = await _getAccessToken();
-        await _socketService!.connect(userId: currentUserId, token: token);
-      }
-
-      // Setup message listeners
-      _setupSocketListeners();
+      // Socket not connected, connect it
+      final token = await _getAccessToken();
+      await _socketService!.connect(userId: currentUserId, token: token);
 
       // Request inbox data if connected
       if (_socketService!.connected) {
@@ -450,8 +462,6 @@ class MessagesController extends BaseController {
       }
     } catch (e) {
       print('Error checking socket: $e');
-      // Error checking socket, but still setup listeners
-      _setupSocketListeners();
     }
   }
 
@@ -486,6 +496,9 @@ class MessagesController extends BaseController {
   /// Setup Socket.IO event listeners for inbox_data and user_connection_status
   void _setupSocketListeners() {
     if (_socketService == null) return;
+
+    // Clean up existing listeners to avoid duplicates
+    _cleanupSocketListeners();
 
     // Listen for inbox data - inbox_data event
     _socketService!.onInboxData((data) {

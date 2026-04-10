@@ -69,6 +69,17 @@ class MessagesController extends BaseController {
         _socketService = Get.put(SocketService());
       }
 
+      // Setup message listeners - Call this BEFORE connecting to ensure we don't miss any events
+      // and call cleanup first to avoid duplicate listeners
+      _setupSocketListeners();
+
+      // Check if socket is already connected
+      if (_socketService!.connected) {
+        logInfo('MessagesController: Socket already connected, requesting inbox data');
+        _socketService!.getInbox();
+        return;
+      }
+
       // 3. Always call connect with current credentials to ensure fresh session
       final currentUserId = await _getCurrentUserId();
       final currentToken = await _getCurrentToken();
@@ -78,16 +89,12 @@ class MessagesController extends BaseController {
       // We pass both ID and Token to ensure SocketService uses the LATEST credentials
       await _socketService!.connect(userId: currentUserId, token: currentToken);
 
-      // Setup message listeners
-      _setupSocketListeners();
-
       // Request inbox data if connected
       if (_socketService!.connected) {
         _socketService!.getInbox();
       }
     } catch (e) {
       logError('Error in checkAndReconnectSocket', error: e);
-      _setupSocketListeners();
     }
   }
 
@@ -108,6 +115,9 @@ class MessagesController extends BaseController {
   /// Setup Socket.IO event listeners for inbox_data
   void _setupSocketListeners() {
     if (_socketService == null) return;
+
+    // Clean up existing listeners to avoid duplicates
+    _cleanupSocketListeners();
 
     // Listen for inbox data - inbox_data event
     _socketService!.onInboxData((data) {

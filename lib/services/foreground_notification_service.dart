@@ -223,14 +223,23 @@ class ForegroundNotificationService {
       // -----------------------------------------------------------------------
       _refreshNotificationCount();
 
+      bool shouldShowBanner = true;
+
       if (_isProfessionalUser()) {
-        await _handleProfessionalForegroundNotification(
+        shouldShowBanner = await _handleProfessionalForegroundNotification(
             message, notificationType);
       } else if (_isEndUser()) {
-        await _handleEndUserForegroundNotification(message, notificationType);
+        shouldShowBanner =
+            await _handleEndUserForegroundNotification(message, notificationType);
       } else {
         logInfo('Unknown user type, using default notification handling');
-        await _handleDefaultForegroundNotification(message, notificationType);
+        shouldShowBanner =
+            await _handleDefaultForegroundNotification(message, notificationType);
+      }
+
+      if (!shouldShowBanner) {
+        logInfo('Suppression rule matched — skipping local notification banner');
+        return;
       }
 
       // -----------------------------------------------------------------------
@@ -312,7 +321,7 @@ class ForegroundNotificationService {
   }
 
   /// Handle foreground notifications for professional users
-  static Future<void> _handleProfessionalForegroundNotification(
+  static Future<bool> _handleProfessionalForegroundNotification(
       RemoteMessage message,
       String? notificationType,
       ) async {
@@ -323,24 +332,28 @@ class ForegroundNotificationService {
 
       if (_shouldHideChatNotification(message)) {
         logInfo('Chat is open for same user - hiding notification');
-        return;
+        return false;
       }
+      return true;
     } else if (notificationType == 'new_booking' ||
         notificationType == 'booking_cancelled' ||
         notificationType == 'booking_updated') {
       logInfo(
           'Professional booking notification received (type: $notificationType) - refreshing calendar');
       _refreshCalendar();
+      return true;
     } else if (notificationType == 'application_approved') {
       logInfo(
           'Professional profile approval notification received - refreshing profile data');
       _refreshProfile();
       _refreshCalendar();
+      return true;
     }
+    return true;
   }
 
   /// Handle foreground notifications for end users
-  static Future<void> _handleEndUserForegroundNotification(
+  static Future<bool> _handleEndUserForegroundNotification(
       RemoteMessage message,
       String? notificationType,
       ) async {
@@ -351,14 +364,16 @@ class ForegroundNotificationService {
           'End user chat message notification received - refreshing inbox');
       _refreshEndUserMessagesInbox();
 
-      if (_isEndUserChatDetailActiveWithUser(
-        data['sender_id']?.toString(),
-        data['room_id']?.toString(),
-      )) {
+      // Robust extraction of sender and room IDs
+      final senderId = _extractSenderIdFromNotification(data);
+      final roomId = _extractRoomIdFromNotification(data);
+
+      if (_isEndUserChatDetailActiveWithUser(senderId, roomId)) {
         logInfo(
-            'End user chat detail screen is active with same user - skipping notification');
-        return;
+            'End user chat detail screen is active with same user/room - skipping notification');
+        return false;
       }
+      return true;
     } else if (_isEndUserBookingNotificationType(notificationType)) {
       logInfo(
           'End user booking notification received (type: $notificationType) - refreshing bookings');
@@ -370,20 +385,23 @@ class ForegroundNotificationService {
         logInfo('Handling $notificationType in foreground for end user');
         _openEndUserReviewDialog(data);
       }
+      return true;
     } else {
       logInfo(
           'End user notification received (type: $notificationType) - refreshing notification count');
       _refreshEndUserNotificationCount();
     }
+    return true;
   }
 
   /// Handle default foreground notifications when user type is unknown
-  static Future<void> _handleDefaultForegroundNotification(
+  static Future<bool> _handleDefaultForegroundNotification(
       RemoteMessage message,
       String? notificationType,
       ) async {
     _refreshNotificationCount();
     logInfo('Default notification handling for type: $notificationType');
+    return true;
   }
 
   // ---------------------------------------------------------------------------
@@ -935,21 +953,31 @@ class ForegroundNotificationService {
 
       final chatController = Get.find<ChatController>();
       final peerUserId = chatController.peer.value.userId;
+      final currentChatId = chatController.peer.value.chatId;
 
-      if (peerUserId == null || peerUserId.isEmpty) {
-        return false;
+      final senderId = _extractSenderIdFromNotification(message.data);
+      final roomId = _extractRoomIdFromNotification(message.data);
+
+      // Hide if either sender matches OR room matches
+      bool matchesUser = false;
+      if (senderId != null && senderId.isNotEmpty && 
+          peerUserId != null && peerUserId.isNotEmpty) {
+        matchesUser = senderId == peerUserId;
       }
 
-      final senderId =
-      _extractSenderIdFromNotification(message.data);
-
-      if (senderId == null || senderId.isEmpty) {
-        return false;
+      bool matchesRoom = false;
+      if (roomId != null && roomId.isNotEmpty && 
+          currentChatId != null && currentChatId.isNotEmpty) {
+        matchesRoom = roomId == currentChatId;
       }
 
-      final shouldHide = senderId == peerUserId;
+      final shouldHide = matchesUser || matchesRoom;
+      
       logInfo(
-          'Chat notification check - Peer: $peerUserId, Sender: $senderId, Hide: $shouldHide');
+          'Professional chat notification check - Peer: $peerUserId, Room: $currentChatId');
+      logInfo(
+          'Incoming Sender: $senderId, Incoming Room: $roomId, Hide: $shouldHide');
+      
       return shouldHide;
     } catch (e) {
       logError(
@@ -986,6 +1014,40 @@ class ForegroundNotificationService {
       return senderIdData.toString();
     } catch (e) {
       logError('Error extracting sender ID from notification',
+          error: e);
+      return null;
+    }
+  }
+
+  /// Extract room ID from notification data
+  static String? _extractRoomIdFromNotification(
+      Map<String, dynamic> data) {
+    try {
+      final roomIdData = data['room_id'] ??
+          data['roomId'] ??
+          data['chat_id'] ??
+          data['chatId'] ??
+          data['conversation_id'] ??
+          data['conversationId'] ??
+          data['id'] ??
+          data['_id'];
+
+      if (roomIdData == null) return null;
+
+      if (roomIdData is String) {
+        return roomIdData;
+      }
+
+      if (roomIdData is Map<String, dynamic>) {
+        return roomIdData['_id']?.toString() ??
+            roomIdData['id']?.toString() ??
+            roomIdData['room_id']?.toString() ??
+            roomIdData['chat_id']?.toString();
+      }
+
+      return roomIdData.toString();
+    } catch (e) {
+      logError('Error extracting room ID from notification',
           error: e);
       return null;
     }
@@ -1243,18 +1305,34 @@ class ForegroundNotificationService {
       }
 
       final chatController = Get.find<ChatDetailController>();
-      final currentConversation = chatController.conversation;
+      final currentConversation = chatController.conversation.value;
 
-      final isSameUser =
-          currentConversation.value!.userId == senderId ||
-              currentConversation.value!.id == roomId;
+      if (currentConversation == null) {
+        logInfo('End user current conversation is null');
+        return false;
+      }
 
-      logInfo(
-          'End user current chat user ID: ${currentConversation.value!.userId}');
-      logInfo(
-          'End user current chat room ID: ${currentConversation.value!.id}');
-      logInfo('End user incoming sender ID: $senderId');
-      logInfo('End user incoming room ID: $roomId');
+      final currentUserId = currentConversation.userId;
+      final currentRoomId = currentConversation.id;
+
+      // Logic: Hide if either sender matches OR room matches,
+      // but only if both values are not null/empty
+      bool matchesUser = false;
+      if (senderId != null && senderId.isNotEmpty && 
+          currentUserId != null && currentUserId.isNotEmpty) {
+        matchesUser = senderId == currentUserId;
+      }
+
+      bool matchesRoom = false;
+      if (roomId != null && roomId.isNotEmpty && 
+          currentRoomId != null && currentRoomId.isNotEmpty) {
+        matchesRoom = roomId == currentRoomId;
+      }
+
+      final isSameUser = matchesUser || matchesRoom;
+
+      logInfo('End user chat check - Current User: $currentUserId, Current Room: $currentRoomId');
+      logInfo('Incoming sender ID: $senderId, Incoming room ID: $roomId');
       logInfo('End user is same user: $isSameUser');
 
       return isSameUser;

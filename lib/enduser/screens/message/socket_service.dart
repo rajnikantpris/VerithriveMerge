@@ -31,18 +31,6 @@ class EndUserSocketService extends GetxService {
 
   /// Initialize and connect to Socket.IO server
   Future<void> connect({String? userId, String? token}) async {
-    // If socket exists, disconnect and dispose to ensure a fresh connection
-    // Especially important when switching users
-    if (_socket != null) {
-      log('Disposing previous socket before new connection attempt');
-      _socket!.disconnect();
-      _socket!.dispose();
-      _socket = null;
-    }
-
-    _isConnected = false;
-    isConnected.value = false;
-
     try {
       // Get user ID from storage if not provided
       if (userId == null) {
@@ -54,8 +42,6 @@ class EndUserSocketService extends GetxService {
         return;
       }
 
-      _currentUserId = userId;
-
       // Get token from storage if not provided
       if (token == null) {
         token = await _getAccessToken();
@@ -66,6 +52,24 @@ class EndUserSocketService extends GetxService {
         log('Cannot connect: Access token not available');
         return;
       }
+
+      // If socket exists and is connected to the same user, don't reconnect
+      if (_socket != null && _isConnected && _currentUserId == userId) {
+        log('Socket already connected for user: $userId. Skipping reconnection.');
+        return;
+      }
+
+      // If socket exists but connected to a DIFFERENT user, disconnect and dispose
+      if (_socket != null) {
+        log('Disposing previous socket (different user or disconnected) before new connection attempt');
+        _socket!.disconnect();
+        _socket!.dispose();
+        _socket = null;
+      }
+
+      _isConnected = false;
+      isConnected.value = false;
+      _currentUserId = userId;
 
       // Get user type for identification
       final userType = await _getUserType();
@@ -99,6 +103,8 @@ class EndUserSocketService extends GetxService {
           .setReconnectionAttempts(5)
           .setReconnectionDelay(1000)
           .setTimeout(30000)
+          // Add this to ensure we don't try to use secure connection for HTTP URLs
+          .setQuery({'secure': baseUrl.startsWith('https') ? 'true' : 'false'})
           .build();
 
       log('Creating fresh socket instance...');

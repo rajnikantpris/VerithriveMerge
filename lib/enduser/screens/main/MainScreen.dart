@@ -7,6 +7,7 @@ import 'package:verithrive_dev/enduser/screens/login/LoginBinding.dart';
 import 'package:verithrive_dev/enduser/screens/login/LoginView.dart';
 import 'package:verithrive_dev/enduser/utils/app_assets.dart';
 import 'package:verithrive_dev/enduser/utils/app_colors.dart';
+import 'package:verithrive_dev/services/foreground_notification_service.dart';
 import '../../utils/AppText.dart';
 import '../../utils/app_text_styles.dart';
 import '../../data/repository/project_repository.dart';
@@ -72,6 +73,10 @@ class _MainScreenState extends State<MainScreen> {
     // If MainScreen was opened with an initial tab request (e.g., notification),
     // switch tabs AFTER first frame so UI is mounted.
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      // Handle pending notification if app was opened from terminated state via notification
+      // This ensures proper navigation stack: Splash -> Main -> Chat
+      ForegroundNotificationService.handlePendingNotificationIfAny();
+
       final args = Get.arguments;
       if (args is Map && args['openTab'] is int) {
         final int openTab = args['openTab'] as int;
