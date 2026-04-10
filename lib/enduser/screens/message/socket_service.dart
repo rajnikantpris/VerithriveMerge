@@ -75,7 +75,7 @@ class EndUserSocketService extends GetxService {
       final userType = await _getUserType();
       log('Connecting End-User Socket - UserID: $userId, Type: $userType');
 
-      final baseUrl = socketBaseUrl;
+      final baseUrl = socketUrl;
       log('Connecting to Socket.IO: $baseUrl');
 
       // Log partial token for verification without exposing full credential
@@ -98,6 +98,8 @@ class EndUserSocketService extends GetxService {
               'Connection': 'keep-alive',
             },
           })
+          // Modern Socket.IO servers often prefer token in the auth object
+          .setAuth({'token': token})
           .setPath('/socket.io')
           .enableReconnection()
           .setReconnectionAttempts(5)
@@ -151,14 +153,18 @@ class EndUserSocketService extends GetxService {
       _isConnected = false;
       isConnected.value = false;
       log('❌ End-User Socket.IO connection error: $error');
-      
+
       if (Platform.isIOS && error.toString().contains('websocket')) {
         _fallbackToPolling();
       }
     });
 
+    _socket!.onError((data) {
+      log('❌ End-User Socket.IO error: $data');
+    });
+
     _socket!.onAny((event, data) {
-      log('📡 End-User Socket event: $event');
+      log('📡 End-User Socket event: $event, Data: $data');
     });
   }
 
@@ -266,7 +272,7 @@ class EndUserSocketService extends GetxService {
   void disconnect() {
     _connectionTimeout?.cancel();
     _connectionTimeout = null;
-    
+
     if (_socket != null) {
       log('Disconnecting and disposing socket...');
       _socket!.disconnect();
@@ -289,16 +295,16 @@ class EndUserSocketService extends GetxService {
     try {
       log('Attempting to reconnect with polling transport only...');
       await Future.delayed(Duration(seconds: 2));
-      
+
       final userId = await _getUserId();
       final token = await _getAccessToken();
       final userType = await _getUserType();
 
       if (userId == null || token == null) return;
-      
+
       disconnect();
 
-      final baseUrl = socketBaseUrl;
+      final baseUrl = socketUrl;
       final options = IO.OptionBuilder()
           .setTransports(['polling'])
           .enableForceNew()
@@ -341,9 +347,9 @@ class EndUserSocketService extends GetxService {
       if (!Get.isRegistered<StorageService>()) return null;
       final storage = Get.find<StorageService>();
       return storage.readString('userType') ??
-             storage.readString('user_type') ??
-             storage.readString(SharePreferenceConst.userType) ??
-             'normal';
+          storage.readString('user_type') ??
+          storage.readString(SharePreferenceConst.userType) ??
+          'normal';
     } catch (e) {
       return 'normal';
     }

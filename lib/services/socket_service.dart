@@ -54,7 +54,7 @@ class SocketService extends GetxService {
       _currentToken = token;
 
       final userType = await _getUserType();
-      final baseUrl = UserApiService.socketBaseUrl;
+      final baseUrl = UserApiService.socketUrl;
 
       logInfo('Connecting to Socket.IO: $baseUrl for User: $userId');
 

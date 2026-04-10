@@ -282,7 +282,7 @@ class MessagesController extends BaseController {
             profilePicturePath.startsWith('https://')) {
           avatarAsset = profilePicturePath;
         } else {
-          final serverBaseUrl = UserApiService.socketBaseUrl;
+          final serverBaseUrl = UserApiService.socketUrl;
           final imagePath = profilePicturePath.startsWith('public/')
               ? profilePicturePath.substring(7)
               : profilePicturePath;
