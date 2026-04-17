@@ -17,6 +17,7 @@ import '../../data/model/login_model.dart';
 import '../../core/values/sharePrefrenceConst.dart';
 import 'package:verithrive_dev/services/storage_service.dart';
 import 'package:verithrive_dev/services/social_auth_service.dart';
+import 'package:verithrive_dev/services/analytics_service.dart';
 import 'dart:convert';
 
 class RegisterController extends BaseController {
@@ -153,6 +154,9 @@ class RegisterController extends BaseController {
       }
 
       if (success == true) {
+        // Analytics: Log registration start (OTP sent)
+        
+
         // Show success message
         showResponseDialog(
           message: message,

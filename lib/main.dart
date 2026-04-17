@@ -17,6 +17,7 @@ import 'theme/app_theme.dart';
 import 'theme/colors.dart';
 import 'common/firebase_config.dart';
 import 'services/foreground_notification_service.dart';
+import 'services/analytics_service.dart';
 
 // lib/main.dart file
 
@@ -144,6 +145,9 @@ class _VerithriveAppState extends State<VerithriveApp>
         getPages: AppPages.routes,
         defaultTransition: Transition.fadeIn,
         debugShowCheckedModeBanner: false,
+        navigatorObservers: [
+          AnalyticsService.instance.observer,
+        ],
       ),
     );
   }

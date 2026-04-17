@@ -4,7 +4,9 @@ import 'package:get/get.dart';
 import 'package:verithrive_dev/enduser/utils/app_assets.dart';
 import 'package:verithrive_dev/enduser/utils/app_colors.dart';
 import 'package:verithrive_dev/enduser/utils/app_text_styles.dart';
+import '../booking/BookingsController.dart';
 import '../cart/DashedLinePainter.dart';
+import '../main/MainTabController.dart';
 import 'TransactionSummaryController.dart';
 
 class TransactionSummaryScreen extends GetView<TransactionSummaryController> {
@@ -30,188 +32,234 @@ class TransactionSummaryScreen extends GetView<TransactionSummaryController> {
         ),
         centerTitle: true,
       ),
-      body: Obx(() {
-        if (controller.isLoading.value) {
-          return const Center(child: CircularProgressIndicator());
-        }
-
-        if (controller.errorMessage.isNotEmpty) {
-          return Center(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Text(
-                controller.errorMessage,
-                textAlign: TextAlign.center,
-                style: AppTextStyles.regularTextStyle(
-                  fontSize: 16,
-                  color: AppColors.grey,
-                ),
-              ),
-            ),
-          );
-        }
-
-        if (controller.transactions.isEmpty) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+      body: RefreshIndicator(
+        onRefresh: () => controller.fetchTransactions(),
+        child: Obx(() {
+          if (controller.isLoading.value && controller.transactions.isEmpty) {
+            return ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
               children: [
-                Text(
-                  'No transactions found',
-                  style: AppTextStyles.regularTextStyle(
-                    fontSize: 16,
-                    color: AppColors.grey,
+                SizedBox(height: MediaQuery.of(context).size.height * 0.3),
+                const Center(child: CircularProgressIndicator()),
+              ],
+            );
+          }
+
+          if (controller.errorMessage.isNotEmpty && controller.transactions.isEmpty) {
+            return ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              children: [
+                SizedBox(height: MediaQuery.of(context).size.height * 0.3),
+                Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Text(
+                      controller.errorMessage,
+                      textAlign: TextAlign.center,
+                      style: AppTextStyles.regularTextStyle(
+                        fontSize: 16,
+                        color: AppColors.grey,
+                      ),
+                    ),
                   ),
                 ),
               ],
-            ),
-          );
-        }
+            );
+          }
 
-        return ListView.separated(
-          controller: controller.scrollController,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-          itemCount: controller.transactions.length + (controller.hasMoreData.value ? 1 : 0),
-          separatorBuilder: (context, index) => const SizedBox(height: 12),
-          itemBuilder: (context, index) {
-            if (index == controller.transactions.length) {
-              return Obx(() {
-                if (controller.isLoadingMore.value) {
-                  return const Center(child: CircularProgressIndicator());
-                } else {
-                  return const SizedBox.shrink();
-                }
-              });
-            }
-            final tx = controller.transactions[index];
-            final isSuccess = tx.status.toLowerCase() == 'success';
-            final isPending = tx.status.toLowerCase() == 'pending';
-            
-            Color statusColor = AppColors.grey;
-            Color statusBgColor = AppColors.lightGrey.withOpacity(0.2);
-            
-            if (isSuccess) {
-              statusColor = AppColors.greenText;
-              statusBgColor = AppColors.availableColor;
-            } else if (isPending) {
-              statusColor = AppColors.orangeDotColor;
-              statusBgColor = AppColors.colorFFB54D.withOpacity(0.2);
-            } else if (tx.status.toLowerCase() == 'failed' || tx.status.toLowerCase() == 'error') {
-              statusColor = AppColors.redDark;
-              statusBgColor = AppColors.unavailableColor;
-            }
-
-            return Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.lightGrey),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          if (controller.transactions.isEmpty) {
+            return ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              children: [
+                SizedBox(height: MediaQuery.of(context).size.height * 0.3),
+                Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              tx.title.isNotEmpty ? tx.title : 'Transaction #${index + 1}',
-                              style: AppTextStyles.popinSemiboldTextStyle(
-                                fontSize: 16,
-                                color: AppColors.black,
-                              ),
-                            ),
-                            if (tx.id.isNotEmpty)
-                              Text(
-                                'Transaction ID: ${tx.id}',
-                                style: AppTextStyles.popinRegularTextStyle(
-                                  fontSize: 10,
-                                  color: AppColors.grey,
-                                ),
-                              ),
-                            if (tx.bookingId.isNotEmpty)
-                              Text(
-                                'Booking ID: ${tx.bookingId}',
-                                style: AppTextStyles.popinRegularTextStyle(
-                                  fontSize: 10,
-                                  color: AppColors.grey,
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
                       Text(
-                        tx.formattedAmount,
-                        style: AppTextStyles.popinSemiboldTextStyle(
-                          fontSize: 18,
-                          color: AppColors.color2D3648,
+                        'No transactions found',
+                        style: AppTextStyles.regularTextStyle(
+                          fontSize: 16,
+                          color: AppColors.grey,
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
-                  CustomPaint(
-                    size: const Size(double.infinity, 1),
-                    painter: DashedLinePainter(),
+                ),
+              ],
+            );
+          }
+
+          return ListView.separated(
+            controller: controller.scrollController,
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+            itemCount: controller.transactions.length + (controller.hasMoreData.value ? 1 : 0),
+            separatorBuilder: (context, index) => const SizedBox(height: 12),
+            itemBuilder: (context, index) {
+              if (index == controller.transactions.length) {
+                return Obx(() {
+                  // Only show load more indicator if we are NOT currently doing a top refresh
+                  if (controller.isLoadingMore.value && !controller.isLoading.value) {
+                    return const Center(child: CircularProgressIndicator());
+                  } else {
+                    return const SizedBox.shrink();
+                  }
+                });
+              }
+              final tx = controller.transactions[index];
+              final statusLower = tx.status.toLowerCase();
+
+              String displayStatus = tx.status.capitalizeFirst ?? tx.status;
+              Color statusColor = AppColors.grey;
+              Color statusBgColor = AppColors.lightGrey.withOpacity(0.2);
+
+              if (statusLower == 'success') {
+                displayStatus = 'Completed';
+                statusColor = AppColors.greenText;
+                statusBgColor = AppColors.availableColor;
+              } else if (statusLower == 'pending') {
+                statusColor = AppColors.orangeDotColor;
+                statusBgColor = AppColors.colorFFB54D.withOpacity(0.2);
+              } else if (statusLower == 'partially_refunded') {
+                displayStatus = 'Partially Refund';
+                statusColor = AppColors.orangeDotColor;
+                statusBgColor = AppColors.colorFFB54D.withOpacity(0.2);
+              } else if (statusLower == 'failed' || statusLower == 'error') {
+                statusColor = AppColors.redDark;
+                statusBgColor = AppColors.unavailableColor;
+              }
+
+              return InkWell(
+                onTap: () {
+                  if (tx.bookingId.isNotEmpty) {
+                    // Navigate to Bookings Tab and scroll to this booking
+                    if (Get.isRegistered<MainTabController>()) {
+                      Get.find<MainTabController>().setTab(1); // Index 1 is Bookings
+                    }
+
+                    if (Get.isRegistered<BookingsController>(tag: 'bookings')) {
+                      final bookingsController = Get.find<BookingsController>(tag: 'bookings');
+                      bookingsController.scrollToBooking(tx.bookingId);
+                    }
+
+                    // Go back from Transaction Summary to MainScreen
+                    Get.back();
+                  }
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.lightGrey),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 12),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
-                            'Date & Time',
-                            style: AppTextStyles.popinRegularTextStyle(
-                              fontSize: 12,
-                              color: AppColors.color9D9D9D,
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  tx.title.isNotEmpty ? tx.title : 'Transaction #${index + 1}',
+                                  style: AppTextStyles.popinSemiboldTextStyle(
+                                    fontSize: 16,
+                                    color: AppColors.black,
+                                  ),
+                                ),
+                                if (tx.id.isNotEmpty)
+                                  Text(
+                                    'Transaction ID: ${tx.id}',
+                                    style: AppTextStyles.popinRegularTextStyle(
+                                      fontSize: 10,
+                                      color: AppColors.grey,
+                                    ),
+                                  ),
+                                if (tx.bookingId.isNotEmpty)
+                                  Text(
+                                    'Booking ID: ${tx.bookingId}',
+                                    style: AppTextStyles.popinRegularTextStyle(
+                                      fontSize: 10,
+                                      color: AppColors.grey,
+                                    ),
+                                  ),
+                              ],
                             ),
                           ),
-                          const SizedBox(height: 4),
                           Text(
-                            tx.formattedDate,
-                            style: AppTextStyles.regularTextStyle(
-                              fontSize: 14,
-                              color: AppColors.color2B2B2B,
+                            tx.formattedAmount,
+                            style: AppTextStyles.popinSemiboldTextStyle(
+                              fontSize: 18,
+                              color: AppColors.color2D3648,
                             ),
                           ),
                         ],
                       ),
-                      if (tx.status.isNotEmpty)
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: statusBgColor,
-                            borderRadius: BorderRadius.circular(20),
+                      const SizedBox(height: 12),
+                      CustomPaint(
+                        size: const Size(double.infinity, 1),
+                        painter: DashedLinePainter(),
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Date & Time',
+                                style: AppTextStyles.popinRegularTextStyle(
+                                  fontSize: 12,
+                                  color: AppColors.color9D9D9D,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                tx.formattedDate,
+                                style: AppTextStyles.regularTextStyle(
+                                  fontSize: 14,
+                                  color: AppColors.color2B2B2B,
+                                ),
+                              ),
+                            ],
                           ),
-                          child: Text(
-                            tx.status.capitalizeFirst ?? tx.status,
-                            style: AppTextStyles.popinSemiboldTextStyle(
-                              fontSize: 12,
-                              color: statusColor,
+                          if (tx.status.isNotEmpty)
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: statusBgColor,
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                displayStatus,
+                                style: AppTextStyles.popinSemiboldTextStyle(
+                                  fontSize: 12,
+                                  color: statusColor,
+                                ),
+                              ),
                             ),
-                          ),
-                        ),
+                        ],
+                      ),
                     ],
                   ),
-                ],
-              ),
-            );
-          },
-        );
-      }),
+                ),
+              );
+            },
+          );
+        }),
+      ),
     );
   }
 }

@@ -196,33 +196,62 @@ class SubscriptionView extends BaseView<SubscriptionController> {
                       ),
                     ),
                     SizedBox(height: HightWidthSizes.setValue_8),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.end,
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          plan.priceLabel,
-                          style: TextStyle(
-                            fontFamily: AppFonts.rubikMedium,
-                            fontWeight: FontWeight.w500,
-                            fontSize: FontSizes.setFontValue_16,
-                            color: AppColor.color_1E1E1E,
-                          ),
-                        ),
-                        if (plan.perMonthLabel != null)
-                          Padding(
-                            padding: EdgeInsets.only(
-                              left: HightWidthSizes.setValue_8,
-                            ),
-                            child: Text(
-                              '(${plan.perMonthLabel})',
+                        Wrap(
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          spacing: HightWidthSizes.setValue_6,
+                          children: [
+                            Text(
+                              plan.priceLabel,
                               style: TextStyle(
-                                fontFamily: AppFonts.rubikRegular,
-                                fontWeight: FontWeight.w400,
-                                fontSize: FontSizes.setFontValue_12,
-                                color: AppColor.color_32435F,
+                                fontFamily: AppFonts.rubikMedium,
+                                fontWeight: FontWeight.w500,
+                                fontSize: FontSizes.setFontValue_15,
+                                color: AppColor.color_1E1E1E,
                               ),
                             ),
-                          ),
+                            if (plan.promoLabel != null)
+                              Text(
+                                '(${plan.promoLabel!})',
+                                style: TextStyle(
+                                  fontFamily: AppFonts.rubikRegular,
+                                  fontWeight: FontWeight.w400,
+                                  fontSize: FontSizes.setFontValue_8,
+                                  color: AppColor.color_32435F,
+                                ),
+                              ),
+                          ],
+                        ),
+                        Wrap(
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          spacing: HightWidthSizes.setValue_8,
+                          children: [
+                            if (plan.cutPriceLabel != null)
+                              Text(
+                                plan.cutPriceLabel!,
+                                style: TextStyle(
+                                  fontFamily: AppFonts.rubikRegular,
+                                  fontWeight: FontWeight.w400,
+                                  fontSize: FontSizes.setFontValue_12,
+                                  color: AppColor.color_9D9D9D,
+                                  decoration: TextDecoration.lineThrough,
+                                  decorationThickness: 1.5,
+                                ),
+                              ),
+                            if (plan.perMonthLabel != null)
+                              Text(
+                                '(${plan.perMonthLabel})',
+                                style: TextStyle(
+                                  fontFamily: AppFonts.rubikRegular,
+                                  fontWeight: FontWeight.w400,
+                                  fontSize: FontSizes.setFontValue_12,
+                                  color: AppColor.color_32435F,
+                                ),
+                              ),
+                          ],
+                        ),
                       ],
                     ),
                   ],

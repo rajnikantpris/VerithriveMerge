@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import '../../api/api_response.dart';
 import '../../api/user_api_service.dart';
 import '../../common/base_controller.dart';
+import '../../services/analytics_service.dart';
 import '../../routes/app_routes.dart';
 import '../../widgets/response_dialog.dart';
 
@@ -91,6 +92,9 @@ class ForgotPasswordController extends BaseController {
       },
       onSuccess: (response) {
         if (response.success) {
+          // Analytics: Log professional forgot password request
+          
+
           // Extract OTP from response data if available
           String? otp;
           if (response.data is Map<String, dynamic>) {

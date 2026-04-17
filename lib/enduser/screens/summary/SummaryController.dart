@@ -6,6 +6,7 @@ import 'package:verithrive_dev/enduser/network/exceptions/not_found_exception.da
 import 'package:verithrive_dev/enduser/routes/app_routes.dart';
 import 'package:verithrive_dev/enduser/screens/payment/PaymentMethodBinding.dart';
 import 'package:verithrive_dev/enduser/screens/payment/PaymentMethodScreen.dart';
+import 'package:verithrive_dev/services/analytics_service.dart';
 import '../../core/base/base_controller.dart';
 import '../../data/repository/project_repository.dart';
 import '../../network/exceptions/app_exception.dart';
@@ -264,6 +265,9 @@ class SummaryController extends BaseController {
       String message = responseData['message'] ?? 'Booking validated successfully';
       
       if (success == true) {
+        // Analytics: Log beginning of checkout process
+        
+
         // Navigate to payment screen with all booking data
         Get.to(
           () => PaymentMethodScreen(),

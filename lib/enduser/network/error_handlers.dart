@@ -7,6 +7,7 @@ import 'package:verithrive_dev/routes/app_routes.dart';
 import 'package:verithrive_dev/services/storage_service.dart';
 import 'package:verithrive_dev/api/user_api_service.dart';
 import 'package:verithrive_dev/widgets/response_dialog.dart';
+import '../../services/analytics_service.dart';
 import 'exceptions/api_exception.dart';
 import 'exceptions/app_exception.dart';
 import 'exceptions/network_exception.dart';
@@ -56,7 +57,7 @@ Exception _parseDioErrorResponse(DioException dioError) {
         statusCode = dioError.response?.data["statusCode"] ?? statusCode;
       }
     }
-    
+
     if (dioError.response?.data is Map<String, dynamic>) {
       final data = dioError.response!.data as Map<String, dynamic>;
       status = data["status"] as String?;
@@ -80,7 +81,8 @@ Exception _parseDioErrorResponse(DioException dioError) {
         message: serverMessage ?? "Access forbidden",
       );
     case HttpStatus.notFound: // 404
-      return NotFoundException(serverMessage ?? "Resource not found", status ?? "");
+      return NotFoundException(
+          serverMessage ?? "Resource not found", status ?? "");
     case HttpStatus.internalServerError: // 500
       return ApiException(
         httpCode: statusCode,
@@ -99,16 +101,17 @@ Exception _parseDioErrorResponse(DioException dioError) {
 }
 
 /// Handle 401 unauthorized errors with automatic logout
-Exception _handleUnauthorizedError(DioException dioError, String? serverMessage) {
+Exception _handleUnauthorizedError(
+    DioException dioError, String? serverMessage) {
   final logger = BuildConfig.instance.config.logger;
   final requestPath = dioError.requestOptions.path;
-  
+
   // Check if this is a public endpoint that shouldn't trigger logout
   final isPublicEndpoint = _isPublicEndpoint(requestPath);
-  
+
   if (!isPublicEndpoint) {
     logger.w('401 Unauthorized error for protected endpoint: $requestPath');
-    
+
     // Check if it's an account status error (blocked, deleted, on hold, etc.)
     final isAccountStatusError = serverMessage != null &&
         (_isAccountBlocked(serverMessage) ||
@@ -129,9 +132,10 @@ Exception _handleUnauthorizedError(DioException dioError, String? serverMessage)
       }
     });
   } else {
-    logger.w('401 Unauthorized error for public endpoint: $requestPath - ignoring');
+    logger.w(
+        '401 Unauthorized error for public endpoint: $requestPath - ignoring');
   }
-  
+
   return ApiException(
     httpCode: 401,
     status: 'unauthorized',
@@ -143,10 +147,10 @@ Exception _handleUnauthorizedError(DioException dioError, String? serverMessage)
 Exception _handleBadRequestError(DioException dioError, String? serverMessage) {
   final logger = BuildConfig.instance.config.logger;
   final requestPath = dioError.requestOptions.path;
-  
+
   // Check if this is a public endpoint that shouldn't trigger logout
   final isPublicEndpoint = _isPublicEndpoint(requestPath);
-  
+
   if (!isPublicEndpoint) {
     // Check if it's an account status error (blocked, deleted, on hold, etc.)
     final isAccountStatusError = serverMessage != null &&
@@ -156,8 +160,9 @@ Exception _handleBadRequestError(DioException dioError, String? serverMessage) {
             _isAccountDeclined(serverMessage));
 
     if (isAccountStatusError) {
-      logger.w('400 Bad Request with account status error for protected endpoint: $requestPath');
-      
+      logger.w(
+          '400 Bad Request with account status error for protected endpoint: $requestPath');
+
       // Handle account status error asynchronously (don't block the error response)
       Future.microtask(() async {
         try {
@@ -167,12 +172,13 @@ Exception _handleBadRequestError(DioException dioError, String? serverMessage) {
         }
       });
     } else {
-      logger.w('400 Bad Request for protected endpoint: $requestPath - no account status error');
+      logger.w(
+          '400 Bad Request for protected endpoint: $requestPath - no account status error');
     }
   } else {
     logger.w('400 Bad Request for public endpoint: $requestPath - ignoring');
   }
-  
+
   return ApiException(
     httpCode: 400,
     status: 'bad_request',
@@ -251,17 +257,19 @@ Future<void> _handleAccountStatusError(String? errorMessage) async {
     defaultMessage = 'Your account has been deleted. Please contact support.';
   } else if (errorMessage != null && _isAccountOnHold(errorMessage)) {
     title = 'Account On Hold';
-    defaultMessage = 'Your account is currently on hold. Please contact support.';
+    defaultMessage =
+        'Your account is currently on hold. Please contact support.';
   } else if (errorMessage != null && _isAccountDeclined(errorMessage)) {
     title = 'Account Declined';
     defaultMessage = 'Your account has been declined. Please contact support.';
   } else {
     title = 'Account Status';
-    defaultMessage = errorMessage ?? 'Your account status has changed. Please contact support.';
+    defaultMessage = errorMessage ??
+        'Your account status has changed. Please contact support.';
   }
 
   // Show error dialog with the account status message
-   showResponseDialog(
+  showResponseDialog(
     message: errorMessage ?? defaultMessage,
     title: title,
     isError: true,
@@ -290,7 +298,7 @@ Future<void> _performLogout(String? errorMessage) async {
   _isLoggingOut = true;
 
   // Show dialog for unauthorized error
-   showResponseDialog(
+  showResponseDialog(
     message: errorMessage ?? 'Your session has expired. Please login again.',
     title: 'Session Expired',
     isError: true,
@@ -317,6 +325,7 @@ Future<void> _performLogout(String? errorMessage) async {
 Future<void> _callLogoutApi() async {
   if (!Get.isRegistered<UserApiService>()) return;
   try {
+    await AnalyticsService.instance.clearUser();
     await Get.find<UserApiService>().logout();
   } catch (e) {
     final logger = BuildConfig.instance.config.logger;

@@ -65,6 +65,8 @@ class ProfileDetailsModel {
   final String? stripeConnectAccountId;
   final String? onboardingLink;
   final String? stripeDetailsConnectStatus;
+  final String? profession_name;
+  final String? profession_sub_name;
   final bool? stripeDetailsConnectChargesEnabled;
   final bool? stripeDetailsConnectPayoutsEnabled;
   final String? stripeDetailsConnectAccountId;
@@ -107,6 +109,8 @@ class ProfileDetailsModel {
     this.isQualification,
     this.isNotification,
     this.isPayment,
+    this.profession_name,
+    this.profession_sub_name,
     this.reviewMilestones,
     this.isOnline,
     this.promoCodeUsedType,
@@ -193,6 +197,8 @@ class ProfileDetailsModel {
       promoCodeUsedType: data['promo_code_used_type'] as String?,
       promoCodeUsedAt: data['promo_code_used_at']?.toString(),
       promoCodeUsed: data['promo_code_used'] as String?,
+      profession_name: data['profession_name'] as String?,
+      profession_sub_name: data['profession_sub_name'] as String?,
       createdAt: data['createdAt']?.toString(),
       updatedAt: data['updatedAt']?.toString(),
       address: data['address'] as String?,

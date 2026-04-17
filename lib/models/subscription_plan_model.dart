@@ -6,9 +6,13 @@ class SubscriptionPlan {
   final String highlightLabel;
   final List<String> features;
   final String billingCycle;
+  final int billingCycleCount;
   final bool isCurrentPlan;
   final bool isFeatured;
   final String? description;
+  final String? cutPriceLabel;
+  final String? perMonthLabel;
+  final String? promoLabel;
 
   SubscriptionPlan({
     this.id,
@@ -18,9 +22,13 @@ class SubscriptionPlan {
     required this.highlightLabel,
     required this.features,
     required this.billingCycle,
+    this.billingCycleCount = 1,
     required this.isCurrentPlan,
     required this.isFeatured,
     this.description,
+    this.cutPriceLabel,
+    this.perMonthLabel,
+    this.promoLabel,
   });
 
   factory SubscriptionPlan.fromJson(Map<String, dynamic> json) {
@@ -63,6 +71,43 @@ class SubscriptionPlan {
     // Get billing cycle
     final billingCycleValue =
         json['billing_cycle'] as String? ?? 'monthly';
+    final billingCycleLower = billingCycleValue.toLowerCase();
+
+    // Get billing cycle count
+    final billingCycleCountValue = int.tryParse(json['billing_cycle_count']?.toString() ?? '1') ?? 1;
+
+    // Pricing labels logic
+    final currency = json['currency_code']?.toString() == 'GBP' ? '£' : '£';
+    final priceLabelValue = '$currency${priceValue.toInt()}/$billingCycleValue';
+    
+    String? cutPriceLabelValue;
+    if (equivalentMonthlyPriceValue > 0 && equivalentMonthlyPriceValue != priceValue) {
+      cutPriceLabelValue = '$currency${equivalentMonthlyPriceValue.toInt()}/$billingCycleValue';
+    }
+
+    // Calculate perMonthLabel
+    String? perMonthLabelValue;
+    int months;
+    if (billingCycleLower == 'monthly') {
+      months = billingCycleCountValue;
+    } else if (billingCycleLower == 'quarterly') {
+      months = billingCycleCountValue * 3;
+    } else if (billingCycleLower == 'yearly') {
+      months = billingCycleCountValue * 12;
+    } else {
+      months = billingCycleLower.contains('year') ? 12 : (billingCycleLower.contains('quarter') ? 3 : 1);
+    }
+
+    if (months > 1) {
+      final monthlyPrice = (priceValue / months).round();
+      perMonthLabelValue = '$currency$monthlyPrice/month';
+    }
+
+    // Promo label for yearly plans
+    String? promoLabelValue;
+    if (billingCycleLower.contains('year') || (json['plan_name']?.toString().toLowerCase().contains('year') ?? false)) {
+      promoLabelValue = 'or one month free!';
+    }
 
     // Check if this is the current plan (might come from user subscription data)
     final isCurrentPlanValue = json['is_current_plan'] as bool? ??
@@ -77,12 +122,16 @@ class SubscriptionPlan {
       name: json['plan_name'] as String? ?? json['name'] as String? ?? '',
       price: priceValue,
       equivalentMonthlyPrice: equivalentMonthlyPriceValue,
-      highlightLabel: highlightLabelValue,
+      highlightLabel: priceLabelValue, // Use our calculated price label
       features: featuresList,
       billingCycle: billingCycleValue,
+      billingCycleCount: billingCycleCountValue,
       isCurrentPlan: isCurrentPlanValue,
       isFeatured: isFeaturedValue,
       description: json['description'] as String?,
+      cutPriceLabel: cutPriceLabelValue,
+      perMonthLabel: perMonthLabelValue,
+      promoLabel: promoLabelValue,
     );
   }
 

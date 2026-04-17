@@ -7,6 +7,7 @@ import '../../utils/api_services.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/app_text_styles.dart';
 import 'NotificationModel.dart';
+import 'package:verithrive_dev/services/analytics_service.dart';
 
 class NotificationController extends BaseController {
   final ProjectRepository _repository = Get.find(tag: (ProjectRepository).toString());
@@ -105,6 +106,10 @@ class NotificationController extends BaseController {
       
       if (success == true && responseData['data'] != null) {
         Map<String, dynamic> dataMap = responseData['data'] as Map<String, dynamic>;
+
+        // Analytics: Log notifications loaded
+        
+        
         List<dynamic>? notificationsList = dataMap['notifications'] as List<dynamic>?;
         
         // Parse pagination information

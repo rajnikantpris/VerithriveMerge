@@ -11,6 +11,7 @@ import '../../utils/api_services.dart';
 import '../../core/values/sharePrefrenceConst.dart';
 import '../profile/ProfileController.dart';
 import 'package:verithrive_dev/services/storage_service.dart';
+import 'package:verithrive_dev/services/analytics_service.dart';
 
 class TermsController extends BaseController {
   final ProjectRepository _repository = Get.find(tag: (ProjectRepository).toString());
@@ -170,6 +171,9 @@ class TermsController extends BaseController {
       String message = responseData['message'] ?? 'Profile saved successfully';
       
       if (success == true) {
+        // Analytics: Log terms acceptance
+        
+
         // Update preferences
         await _storageService.writeBool(SharePreferenceConst.isTermCondition, true);
         await _storageService.writeBool(SharePreferenceConst.isPersonalDetails, true);

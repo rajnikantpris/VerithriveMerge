@@ -6,7 +6,9 @@ import '../../../../api/user_api_service.dart';
 import '../../../../common/base_controller.dart';
 import '../../../../models/address_details_model.dart';
 import '../../../../routes/app_routes.dart';
+import '../../../../services/analytics_service.dart';
 import '../../../../widgets/response_dialog.dart';
+import 'package:geocoding/geocoding.dart';
 
 class AddressController extends BaseController {
   final UserApiService _userApiService;
@@ -226,8 +228,16 @@ class AddressController extends BaseController {
         workAddress: workAddressList,
       ),
       showLoader: true,
-      onSuccess: (response) {
+      onSuccess: (response) async {
         if (response.success) {
+          // Track city in analytics when address is updated
+          final postcode = yourPostcodeController.text.trim();
+          if (postcode.isNotEmpty) {
+            AnalyticsService.instance.setUserProfile(
+              city: await getCityFromAddress(fullAddress.toString().toLowerCase()),
+            );
+          }
+          
           showResponseDialog(
             title: 'Success',
             message: response.message ?? 'Address updated successfully',
@@ -267,4 +277,28 @@ class AddressController extends BaseController {
     }
     return null;
   }
+
+  Future<String?> getCityFromAddress(String address) async {
+    try {
+      List<Location> locations = await locationFromAddress(address);
+
+      if (locations.isNotEmpty) {
+        double lat = locations.first.latitude;
+        double lng = locations.first.longitude;
+
+        List<Placemark> placemarks =
+        await placemarkFromCoordinates(lat, lng);
+
+        if (placemarks.isNotEmpty) {
+          return placemarks.first.locality!.toLowerCase(); // return city
+        }
+      }
+    } catch (e) {
+      print("Error: $e");
+    }
+
+    return null;
+  }
+
+
 }

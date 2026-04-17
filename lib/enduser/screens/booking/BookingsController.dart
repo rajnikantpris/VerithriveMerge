@@ -13,6 +13,7 @@ import '../../routes/app_routes.dart';
 import '../../utils/api_services.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/auth_service.dart';
+import 'package:verithrive_dev/services/analytics_service.dart';
 
 class BookingsController extends BaseController {
   final ProjectRepository _repository = Get.find(tag: (ProjectRepository).toString());
@@ -22,12 +23,73 @@ class BookingsController extends BaseController {
   var pastBookings = <Booking>[].obs;
   var showCancellationSuccess = false.obs;
   var isLoading = false.obs;
+  var targetBookingId = ''.obs;
+  var highlightedBookingId = ''.obs;
+  final ScrollController scrollController = ScrollController();
+  final Map<String, GlobalKey> bookingKeys = {};
 
   @override
   void onInit() {
     super.onInit();
-    // Don't check authentication on init - let user navigate first
-    // Authentication will be checked when data is actually loaded
+  }
+
+  @override
+  void onClose() {
+    scrollController.dispose();
+    super.onClose();
+  }
+
+  GlobalKey getOrCreateKey(String bookingId) {
+    if (!bookingKeys.containsKey(bookingId)) {
+      bookingKeys[bookingId] = GlobalKey();
+    }
+    return bookingKeys[bookingId]!;
+  }
+
+  void scrollToBooking(String bookingId) {
+    targetBookingId.value = bookingId;
+    if (bookingId.isNotEmpty) {
+      // Wait for UI to settle after navigation/refresh
+      Future.delayed(const Duration(milliseconds: 500), () {
+        _performScroll();
+      });
+    }
+  }
+
+  void _performScroll() {
+    if (targetBookingId.value.isEmpty) return;
+
+    final bookingId = targetBookingId.value;
+    final key = bookingKeys[bookingId];
+
+    if (key != null && key.currentContext != null) {
+      Scrollable.ensureVisible(
+        key.currentContext!,
+        duration: const Duration(milliseconds: 600),
+        curve: Curves.easeInOut,
+        alignment: 0.1, // Scroll to near the top
+      );
+
+      // Start highlight
+      highlightedBookingId.value = bookingId;
+      targetBookingId.value = ''; // Done with this target
+
+      // Remove highlight after 2 seconds
+      Future.delayed(const Duration(seconds: 2), () {
+        if (highlightedBookingId.value == bookingId) {
+          highlightedBookingId.value = '';
+        }
+      });
+    } else {
+      // If data is still loading or view not ready, retry in a bit
+      if (!isLoading.value) {
+        Future.delayed(const Duration(milliseconds: 300), () {
+          if (targetBookingId.value == bookingId) {
+            _performScroll();
+          }
+        });
+      }
+    }
   }
 
   @override
@@ -38,13 +100,11 @@ class BookingsController extends BaseController {
 
   // Refresh data method called by MainScreen
   void refreshData() {
-    // Check authentication before loading bookings
     _checkAuthAndLoadBookings();
   }
 
   // Refresh data method called by MainScreen
   void loadBookings() {
-    // Check authentication before loading bookings
     _checkAuthAndLoadBookings();
   }
 
@@ -60,17 +120,9 @@ class BookingsController extends BaseController {
     isLoading.value = true;
     
     Map<String, dynamic> toJson() {
-      final Map<String, dynamic> data = <String, dynamic>{};
-      
-      print('========================================');
-      print('Bookings List API Request (POST):');
-      print(data);
-      print('========================================');
-      
-      return data;
+      return <String, dynamic>{};
     }
     
-    // Using POST request
     var service = _repository.sendPostApiRequest(toJson, bookings_list, true);
     callDataService(
       service,
@@ -94,87 +146,59 @@ class BookingsController extends BaseController {
       }
 
       bool success = responseData['success'] ?? false;
-      String message = responseData['message'] ?? '';
-      
+
       if (success == true && responseData['data'] != null) {
         Map<String, dynamic> dataMap = responseData['data'] as Map<String, dynamic>;
-        
+
         // Parse my_bookings
         List<dynamic>? myBookingsList = dataMap['my_bookings'] as List<dynamic>?;
-        if (myBookingsList != null && myBookingsList.isNotEmpty) {
+        if (myBookingsList != null) {
           myBookings.value = myBookingsList.map((json) => _parseBooking(json, false)).toList();
-        } else {
-          myBookings.value = [];
         }
         
         // Parse past_bookings
         List<dynamic>? pastBookingsList = dataMap['past_bookings'] as List<dynamic>?;
-        if (pastBookingsList != null && pastBookingsList.isNotEmpty) {
+        if (pastBookingsList != null) {
           pastBookings.value = pastBookingsList.map((json) => _parseBooking(json, true)).toList();
-        } else {
-          pastBookings.value = [];
         }
-        
-        print('========================================');
-        print('Bookings List API Success:');
-        print('My Bookings: ${myBookings.length}');
-        print('Past Bookings: ${pastBookings.length}');
-        print('========================================');
-      } else {
-        print('Bookings List API Error: $message');
-        myBookings.value = [];
-        pastBookings.value = [];
+
+        // Trigger scroll if we have a target
+        if (targetBookingId.value.isNotEmpty) {
+          scrollToBooking(targetBookingId.value);
+        }
       }
       isLoading.value = false;
     } catch (e) {
-      print('Error parsing bookings list response: $e');
-      myBookings.value = [];
-      pastBookings.value = [];
       isLoading.value = false;
     }
   }
 
   void _handleBookingsListError(Exception exception) {
-    print('Bookings List API Error: $exception');
-    myBookings.value = [];
-    pastBookings.value = [];
     isLoading.value = false;
   }
 
   Booking _parseBooking(Map<String, dynamic> json, bool isPast) {
-    // Parse booking_time_range (format: "06/01/2026 05:00 PM - 06:00 PM")
     DateTime? bookingDateTime;
     try {
       String? timeRange = json['booking_time_range']?.toString();
       if (timeRange != null && timeRange.isNotEmpty) {
-        // Extract date and time from "06/01/2026 05:00 PM - 06:00 PM"
         List<String> parts = timeRange.split(' ');
         if (parts.length >= 3) {
-          String dateStr = parts[0]; // "06/01/2026"
-          String timeStr = parts[1] + ' ' + parts[2]; // "05:00 PM"
-          
-          // Parse date (DD/MM/YYYY)
+          String dateStr = parts[0];
+          String timeStr = parts[1] + ' ' + parts[2];
           List<String> dateParts = dateStr.split('/');
           if (dateParts.length == 3) {
             int day = int.parse(dateParts[0]);
             int month = int.parse(dateParts[1]);
             int year = int.parse(dateParts[2]);
-            
-            // Parse time (HH:mm AM/PM)
             List<String> timeParts = timeStr.split(':');
             if (timeParts.length == 2) {
               int hour = int.parse(timeParts[0]);
               String minuteAndPeriod = timeParts[1];
               int minute = int.parse(minuteAndPeriod.split(' ')[0]);
               String period = minuteAndPeriod.split(' ')[1].toUpperCase();
-              
-              // Convert to 24-hour format
-              if (period == 'PM' && hour != 12) {
-                hour += 12;
-              } else if (period == 'AM' && hour == 12) {
-                hour = 0;
-              }
-              
+              if (period == 'PM' && hour != 12) hour += 12;
+              else if (period == 'AM' && hour == 12) hour = 0;
               bookingDateTime = DateTime(year, month, day, hour, minute);
             }
           }
@@ -186,14 +210,14 @@ class BookingsController extends BaseController {
     }
 
     String? bookingDateTimeRange = json['booking_time_range']?.toString();
-    
+
     // Parse professional data
     Map<String, dynamic>? professional = json['professional'] as Map<String, dynamic>?;
     String therapistName = professional?['full_name']?.toString() ?? 'Unknown';
     String therapistTitle = professional?['profession_sub_type']?.toString() ?? '';
     String? therapistImageUrl = professional?['profile_picture']?.toString();
     String? professionalId = professional?['_id']?.toString();
-    
+
     // Parse price
     double price = 0.0;
     if (json['price'] != null) {
@@ -203,7 +227,7 @@ class BookingsController extends BaseController {
         price = double.tryParse(json['price']) ?? 0.0;
       }
     }
-    
+
     // Parse duration_minutes
     int? durationMinutes;
     if (json['duration_minutes'] != null) {
@@ -213,11 +237,23 @@ class BookingsController extends BaseController {
         durationMinutes = int.tryParse(json['duration_minutes']);
       }
     }
-    
+
+    // Parse price_breakdown
+    PriceBreakdown? priceBreakdown;
+    if (json['price_breakdown'] != null) {
+      Map<String, dynamic> pb = json['price_breakdown'] as Map<String, dynamic>;
+      priceBreakdown = PriceBreakdown(
+        serviceAmount: (pb['service_amount'] as num?)?.toDouble() ?? 0.0,
+        platformFee: (pb['platform_fee'] as num?)?.toDouble() ?? 0.0,
+        bookingFixDepositAmount: (pb['booking_fix_deposit_amount'] as num?)?.toDouble() ?? 0.0,
+        refundAmount: (pb['refund_amount'] as num?)?.toDouble() ?? 0.0,
+      );
+    }
+
     // Note: professional_service_format_id and service_format_id are not in booking list response
     // They will need to be retrieved from booking details API or stored when booking is created
     // For now, we'll extract what we can from the response
-    
+
     return Booking(
       id: json['_id']?.toString() ?? '',
       consultationType: json['service_format_name']?.toString() ?? 'Consultation - in person',
@@ -232,8 +268,12 @@ class BookingsController extends BaseController {
       durationMinutes: durationMinutes,
       dateTimeRange: bookingDateTimeRange,
       serviceFormatId: json['service_format_id']?.toString(),
-      professionalServiceFormatId: json['professional_service_format_id']?.toString()
-      // professional_service_format_id and service_format_id will be set when navigating to edit
+      professionalServiceFormatId: json['professional_service_format_id']?.toString(),
+      bookingStatus: json['status']?.toString(),
+      paymentStatus: json['payment_status']?.toString(),
+      priceBreakdown: priceBreakdown,
+      uniqueBookingId: json['unique_booking_id']?.toString(),
+      uniqueTransactionId: json['unique_transaction_id']?.toString(),
     );
   }
 
@@ -328,13 +368,13 @@ class BookingsController extends BaseController {
   void callCancelBookingAPI(String bookingId) {
     // Construct API endpoint with booking ID
     String apiEndpoint = 'bookings/$bookingId';
-    
+
     print('========================================');
     print('Cancel Booking API Request (DELETE):');
     print('Endpoint: $apiEndpoint');
     print('Booking ID: $bookingId');
     print('========================================');
-    
+
     var service = _repository.sendDeleteApiRequest(
       apiEndpoint,
       true, // isToken = true (requires authentication)
@@ -363,21 +403,24 @@ class BookingsController extends BaseController {
 
       bool success = responseData['success'] ?? false;
       String message = responseData['message'] ?? 'Booking cancelled successfully';
-      
+
       if (success == true) {
+        // Analytics: Log booking cancellation
+        
+
         // Remove booking from myBookings
         myBookings.removeWhere((booking) => booking.id == bookingId);
-        
+
         print('Booking $bookingId cancelled successfully');
-        
+
         // Show success screen
         showCancellationSuccess.value = true;
-        
+
         // Hide success screen after 2 seconds
         Future.delayed(Duration(seconds: 2), () {
           showCancellationSuccess.value = false;
         });
-        
+
         // Optionally reload bookings list to ensure consistency
         // loadBookings();
       } else {
@@ -420,7 +463,7 @@ class BookingsController extends BaseController {
     if (booking == null) {
       booking = pastBookings.firstWhereOrNull((b) => b.id == bookingId);
     }
-    
+
     if (booking == null) {
       print('Booking not found: $bookingId');
       Get.snackbar(
@@ -430,7 +473,7 @@ class BookingsController extends BaseController {
       );
       return;
     }
-    
+
     // Calculate duration from booking time range
     // Parse booking_time_range to get duration
     int durationMinutes = booking.durationMinutes ?? 30; // Default to 30 if not available

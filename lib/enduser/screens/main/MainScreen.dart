@@ -76,6 +76,12 @@ class _MainScreenState extends State<MainScreen> {
       // Handle pending notification if app was opened from terminated state via notification
       // This ensures proper navigation stack: Splash -> Main -> Chat
       ForegroundNotificationService.handlePendingNotificationIfAny();
+//// New Code
+      // Handle pending booking navigation from foreground notifications received during splash
+      ForegroundNotificationService.handlePendingBookingNavigationIfAny();
+
+      // Handle pending review dialog from foreground notifications received during splash
+      ForegroundNotificationService.handlePendingReviewDialogIfAny();
 
       final args = Get.arguments;
       if (args is Map && args['openTab'] is int) {

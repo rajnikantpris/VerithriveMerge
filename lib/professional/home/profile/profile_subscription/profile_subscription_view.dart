@@ -108,6 +108,9 @@ class ProfileSubscriptionView extends BaseView<ProfileSubscriptionController> {
                         plan: plan,
                         activeUntilDate: controller.activeUntilDate.value,
                         isCancelled: controller.isCancelled.value,
+                        isUpcoming: controller.isPlanUpcoming(plan.id),
+                        upcomingMessage:
+                            controller.upcomingPlanMessage(plan.id),
                       ),
                     );
                   },
@@ -138,11 +141,15 @@ class _SubscriptionPlanCard extends StatelessWidget {
     required this.plan,
     required this.activeUntilDate,
     required this.isCancelled,
+    required this.isUpcoming,
+    required this.upcomingMessage,
   });
 
   final SubscriptionPlan plan;
   final String activeUntilDate;
   final bool isCancelled;
+  final bool isUpcoming;
+  final String upcomingMessage;
 
   @override
   Widget build(BuildContext context) {
@@ -179,17 +186,66 @@ class _SubscriptionPlanCard extends StatelessWidget {
           ),
           SizedBox(height: HightWidthSizes.setValue_12),
 
-          // Price - Use highlight_label from API
-          Text(
-            plan.highlightLabel,
-            style: TextStyle(
-              fontFamily: AppFonts.rubikMedium,
-              fontWeight: FontWeight.w500,
-              fontSize: FontSizes.setFontValue_30,
-              color: plan.isCurrentPlan
-                  ? AppColor.color_2D3648
-                  : AppColor.color_1E1E1E.withOpacity(0.5),
-            ),
+          // Price - Main Price, Promo, Cut Price, Monthly Avg
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Wrap(
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: HightWidthSizes.setValue_6,
+                children: [
+                  Text(
+                    plan.highlightLabel,
+                    style: TextStyle(
+                      fontFamily: AppFonts.rubikMedium,
+                      fontWeight: FontWeight.w500,
+                      fontSize: FontSizes.setFontValue_28,
+                      color: plan.isCurrentPlan
+                          ? AppColor.color_2D3648
+                          : AppColor.color_1E1E1E.withOpacity(0.5),
+                    ),
+                  ),
+                  if (plan.promoLabel != null)
+                    Text(
+                      '(${plan.promoLabel!})',
+                      style: TextStyle(
+                        fontFamily: AppFonts.rubikRegular,
+                        fontWeight: FontWeight.w400,
+                        fontSize: FontSizes.setFontValue_10,
+                        color: AppColor.color_2FC4B2,
+                      ),
+                    ),
+                ],
+              ),
+              Wrap(
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: HightWidthSizes.setValue_8,
+                children: [
+                  if (plan.cutPriceLabel != null)
+                    Text(
+                      plan.cutPriceLabel!,
+                      style: TextStyle(
+                        fontFamily: AppFonts.rubikRegular,
+                        fontWeight: FontWeight.w400,
+                        fontSize: FontSizes.setFontValue_14,
+                        color: AppColor.color_9D9D9D,
+                        decoration: TextDecoration.lineThrough,
+                        decorationThickness: 1.5,
+                      ),
+                    ),
+                  if (plan.perMonthLabel != null)
+                    Text(
+                      '(${plan.perMonthLabel})',
+                      style: TextStyle(
+                        fontFamily: AppFonts.rubikRegular,
+                        fontWeight: FontWeight.w400,
+                        fontSize: FontSizes.setFontValue_12,
+                        color: AppColor.color_32435F,
+                      ),
+                    ),
+                ],
+              ),
+            ],
           ),
           SizedBox(height: HightWidthSizes.setValue_16),
 
@@ -307,7 +363,7 @@ class _SubscriptionPlanCard extends StatelessWidget {
                     SizedBox(height: HightWidthSizes.setValue_4),
                     Center(
                       child: Text(
-                        'Active until $activeUntilDate',
+                        'Expires on $activeUntilDate',
                         style: TextStyle(
                           fontFamily: AppFonts.rubikRegular,
                           fontWeight: FontWeight.w400,
@@ -317,7 +373,6 @@ class _SubscriptionPlanCard extends StatelessWidget {
                       ),
                     ),
                   ],
-               
                   SizedBox(height: HightWidthSizes.setValue_10),
                   if (isCancelled)
                     Center(
@@ -363,13 +418,58 @@ class _SubscriptionPlanCard extends StatelessWidget {
                         ),
                       ),
                     ))
-               
                 ],
               ),
             ),
 
-          // Buy Now button (only for non-current plans)
-          if (!plan.isCurrentPlan)
+          // Upcoming indicator (do not allow buy for upcoming status)
+          if (!plan.isCurrentPlan && isUpcoming)
+            Column(
+              children: [
+                Center(
+                  child: Container(
+                    padding: EdgeInsets.symmetric(
+                      vertical: HightWidthSizes.setValue_6,
+                      horizontal: HightWidthSizes.setValue_12,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColor.color_2D3648.withOpacity(0.08),
+                      borderRadius:
+                          BorderRadius.circular(HightWidthSizes.setValue_20),
+                      border: Border.all(
+                        color: AppColor.color_2D3648.withOpacity(0.5),
+                        width: 1,
+                      ),
+                    ),
+                    child: Text(
+                      'Upcoming Plan',
+                      style: TextStyle(
+                        fontFamily: AppFonts.rubikRegular,
+                        fontWeight: FontWeight.w500,
+                        fontSize: FontSizes.setFontValue_14,
+                        color: AppColor.color_2D3648,
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(height: HightWidthSizes.setValue_6),
+                Center(
+                  child: Text(
+                    upcomingMessage,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontFamily: AppFonts.rubikRegular,
+                      fontWeight: FontWeight.w400,
+                      fontSize: FontSizes.setFontValue_12,
+                      color: AppColor.color_9D9D9D,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+
+          // Buy Now button (only for non-current and non-upcoming plans)
+          if (!plan.isCurrentPlan && !isUpcoming)
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(

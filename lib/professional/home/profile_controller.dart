@@ -16,7 +16,7 @@ import '../../theme/font_sizes.dart';
 import '../../theme/hight_width_sizes.dart';
 import '../../theme/image_paths.dart';
 import '../../widgets/response_dialog.dart';
-import '../signup_terms_conditions/professional_webview_screen.dart';
+import '../../services/analytics_service.dart';
 import '../strip_account_create/strip_account_create_webview.dart';
 import 'messages_controller.dart';
 import 'home_controller.dart';
@@ -44,16 +44,19 @@ class ProfileController extends BaseController {
         if (response.success && response.data != null) {
           final data = response.data as Map<String, dynamic>;
           userProfile.value = UserModel.fromJson(data);
-          
+
           // Optionally update storage with the latest user data
           if (_storageService != null) {
-            // StorageService uses specific typed methods. 
+            // StorageService uses specific typed methods.
             // Encode the map to JSON string before saving via writeString.
-            _storageService!.writeString('user_data', jsonEncode(data));
-            
+            _storageService.writeString('user_data', jsonEncode(data));
+
             // Also update notification status in storage for consistency across the app
             if (data.containsKey('is_notification')) {
-              _storageService!.writeBool('is_notification', data['is_notification'] as bool);
+              _storageService.writeBool(
+                'is_notification',
+                data['is_notification'] as bool,
+              );
             }
           }
           debugPrint('Profile details fetched successfully');
@@ -68,7 +71,8 @@ class ProfileController extends BaseController {
     ProfileItem(title: 'Your profile', asset: AppImages.profileUser),
     ProfileItem(title: 'Bank details', asset: AppImages.profileBank),
     ProfileItem(title: 'Subscription', asset: AppImages.profileTicket),
-    ProfileItem(title: 'Transaction Summary', asset: AppImages.transactionSummary),
+    ProfileItem(
+        title: 'Transaction Summary', asset: AppImages.transactionSummary),
     ProfileItem(title: 'Notification', asset: AppImages.profileNotification),
     ProfileItem(title: 'Account', asset: AppImages.profileSettings),
     ProfileItem(title: 'Log out', asset: AppImages.profileLogout),
@@ -130,7 +134,9 @@ class ProfileController extends BaseController {
     connectStatus ??= cleanString(profile?['stripe_connect_status']);
 
     String? onboardingUrl = cleanString(
-      stripeDetails is Map<String, dynamic> ? stripeDetails['onboarding_link'] : null,
+      stripeDetails is Map<String, dynamic>
+          ? stripeDetails['onboarding_link']
+          : null,
     );
     onboardingUrl ??= cleanString(profile?['onboarding_link']);
 
@@ -199,29 +205,30 @@ class ProfileController extends BaseController {
                         onPressed: () async {
                           Navigator.of(context).pop();
 
+                          final result = await Get.to(
+                              () => StripAccountWebViewScreen(url: url));
 
-              final result = await Get.to(() => StripAccountWebViewScreen(url: url));
-              
-              // When returning from WebView, check result and navigate if successful
-              if (result == 'success') {
-                await fetchProfileDetails(showStripeDialog: true);
-                  showResponseDialog(
-                    message: 'Stripe account created successfully.',
-                    title: 'Stripe Account Created',
-                    showButton: true,
-                    onOkPressed: () => Get.toNamed(Routes.bankAccount),
-                  );
-
-              } else if (result == 'failed') {
-                await fetchProfileDetails(showStripeDialog: true);
-                showResponseDialog(
-                  message: 'Stripe account create failed. Please try again.',
-                  title: 'Stripe Account Create Failed',
-                  isError: true,
-                  showButton: true,
-                  onOkPressed: () {},
-                );
-              }
+                          // When returning from WebView, check result and navigate if successful
+                          if (result == 'success') {
+                            await fetchProfileDetails(showStripeDialog: true);
+                            showResponseDialog(
+                              message: 'Stripe account created successfully.',
+                              title: 'Stripe Account Created',
+                              showButton: true,
+                              onOkPressed: () =>
+                                  Get.toNamed(Routes.bankAccount),
+                            );
+                          } else if (result == 'failed') {
+                            await fetchProfileDetails(showStripeDialog: true);
+                            showResponseDialog(
+                              message:
+                                  'Stripe account create failed. Please try again.',
+                              title: 'Stripe Account Create Failed',
+                              isError: true,
+                              showButton: true,
+                              onOkPressed: () {},
+                            );
+                          }
 
                           // await Get.to(
                           //   () => ProfessionalWebViewScreen(url: url),
@@ -355,6 +362,10 @@ class ProfileController extends BaseController {
       },
       onSuccess: (response) async {
         if (response.success) {
+          // Analytics: Log logout event at the moment logout API succeeds.
+
+          await AnalyticsService.instance.clearUser();
+
           // Clear local storage and navigate
           await _clearLocalDataAndNavigate();
         } else {
@@ -395,7 +406,7 @@ class ProfileController extends BaseController {
       Get.delete<MessagesController>();
       print('MessagesController deleted');
     }
-    
+
     if (Get.isRegistered<HomeController>()) {
       Get.delete<HomeController>();
       print('HomeController deleted');

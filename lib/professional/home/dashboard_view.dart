@@ -808,6 +808,28 @@ class _SessionCard extends StatelessWidget {
                       ),
                     ),
                   ),
+                if (session.isInProgress)
+                  Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: HightWidthSizes.setValue_8,
+                      vertical: HightWidthSizes.setValue_4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColor.color_0045B5,
+                      borderRadius: BorderRadius.circular(
+                        HightWidthSizes.setValue_4,
+                      ),
+                    ),
+                    child: Text(
+                      'In Progress',
+                      style: TextStyle(
+                        fontFamily: AppFonts.rubikRegular,
+                        fontWeight: FontWeight.w400,
+                        color: AppColor.white,
+                        fontSize: FontSizes.setFontValue_12,
+                      ),
+                    ),
+                  ),
               ],
             ),
           ),
@@ -896,77 +918,101 @@ class _SessionCard extends StatelessWidget {
                 ),
               ),
             ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                _ActionButton(
-                  onTap: () {
-                    showCancelSessionDialog(context, session.id, controller);
-                  },
-                  icon: AppImages.delete_list_svg(
-                    width: HightWidthSizes.setValue_15,
-                    height: HightWidthSizes.setValue_15,
+            if (session.isInProgress)
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  _ActionButton(
+                    onTap: () {
+                      Get.toNamed(
+                        Routes.chat,
+                        arguments: {
+                          'userId': session.userId,
+                          'name': session.name,
+                        },
+                      );
+                    },
+                    icon: AppImages.chat_list_svg(
+                      width: HightWidthSizes.setValue_15,
+                      height: HightWidthSizes.setValue_15,
+                    ),
+                    label: 'Message',
+                    textColor: AppColor.color_2FC4B2,
                   ),
-                  label: 'Cancel',
-                  textColor: AppColor.color_B53232,
-                ),
-                Center(
-                  child: Container(
-                    width: HightWidthSizes.setValue_2,
-                    height: HightWidthSizes.setValue_25,
-                    decoration: BoxDecoration(
-                      color: AppColor.color000000.withOpacity(0.10),
-                      borderRadius: BorderRadius.circular(
-                        HightWidthSizes.setValue_20,
+                ],
+              )
+            else
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _ActionButton(
+                    onTap: () {
+                      showCancelSessionDialog(context, session.id, controller);
+                    },
+                    icon: AppImages.delete_list_svg(
+                      width: HightWidthSizes.setValue_15,
+                      height: HightWidthSizes.setValue_15,
+                    ),
+                    label: 'Cancel',
+                    textColor: AppColor.color_B53232,
+                  ),
+                  Center(
+                    child: Container(
+                      width: HightWidthSizes.setValue_2,
+                      height: HightWidthSizes.setValue_25,
+                      decoration: BoxDecoration(
+                        color: AppColor.color000000.withOpacity(0.10),
+                        borderRadius: BorderRadius.circular(
+                          HightWidthSizes.setValue_20,
+                        ),
                       ),
                     ),
                   ),
-                ),
-                _ActionButton(
-                  onTap: () {
-                    Get.toNamed(
-                      Routes.rescheduleSession,
-                      arguments: session,
-                    );
-                  },
-                  icon: AppImages.refresh_list_svg(
-                    width: HightWidthSizes.setValue_15,
-                    height: HightWidthSizes.setValue_15,
+                  _ActionButton(
+                    onTap: () {
+                      Get.toNamed(
+                        Routes.rescheduleSession,
+                        arguments: session,
+                      );
+                    },
+                    icon: AppImages.refresh_list_svg(
+                      width: HightWidthSizes.setValue_15,
+                      height: HightWidthSizes.setValue_15,
+                    ),
+                    label: 'Reschedule',
+                    textColor: AppColor.color_0045B5,
                   ),
-                  label: 'Reschedule',
-                  textColor: AppColor.color_0045B5,
-                ),
-                Center(
-                  child: Container(
-                    width: HightWidthSizes.setValue_2,
-                    height: HightWidthSizes.setValue_25,
-                    decoration: BoxDecoration(
-                      color: AppColor.color000000.withOpacity(0.10),
-                      borderRadius: BorderRadius.circular(
-                        HightWidthSizes.setValue_20,
+                  Center(
+                    child: Container(
+                      width: HightWidthSizes.setValue_2,
+                      height: HightWidthSizes.setValue_25,
+                      decoration: BoxDecoration(
+                        color: AppColor.color000000.withOpacity(0.10),
+                        borderRadius: BorderRadius.circular(
+                          HightWidthSizes.setValue_20,
+                        ),
                       ),
                     ),
                   ),
-                ),
-                _ActionButton(
-                  onTap: () {
-                    Get.toNamed(
-                      Routes.chat,
-                      arguments: {
-                        'userId': session.userId,
-                        'name': session.name,
-                      },
-                    );
-                  },
-                  icon: AppImages.chat_list_svg(
-                    width: HightWidthSizes.setValue_15,
-                    height: HightWidthSizes.setValue_15,
+                  _ActionButton(
+                    onTap: () {
+                      Get.toNamed(
+                        Routes.chat,
+                        arguments: {
+                          'userId': session.userId,
+                          'name': session.name,
+                        },
+                      );
+                    },
+                    icon: AppImages.chat_list_svg(
+                      width: HightWidthSizes.setValue_15,
+                      height: HightWidthSizes.setValue_15,
+                    ),
+                    label: 'Message',
+                    textColor: AppColor.color_2FC4B2,
                   ),
-                  label: 'Message',
-                  textColor: AppColor.color_2FC4B2,
-                ),
-              ],
-            ),
+                ],
+              ),
           ],
         ],
       ),

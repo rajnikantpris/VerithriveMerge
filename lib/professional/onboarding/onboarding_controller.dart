@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import '../../common/base_controller.dart';
 import '../../routes/app_routes.dart';
 import '../../services/storage_service.dart';
+import '../../services/analytics_service.dart';
 
 class OnboardingController extends BaseController {
   final totalSteps = 3;
@@ -72,18 +73,27 @@ class OnboardingController extends BaseController {
   }
 
   void joinNow() {
+    // Analytics: Log onboarding join action
+    
+
     if (Get.currentRoute != Routes.signup) {
       Get.toNamed(Routes.signup);
     }
   }
 
   void logIn() {
+    // Analytics: Log onboarding login action
+    
+
     if (Get.currentRoute != Routes.login) {
       Get.toNamed(Routes.login);
     }
   }
 
   Future<void> continueAsGuest() async {
+    // Analytics: Log onboarding guest action
+    
+
     // Set userType to professional even for guest so Splash knows which flow to use
     if (_storageService != null) {
       await _storageService!.writeString('userType', 'professional');

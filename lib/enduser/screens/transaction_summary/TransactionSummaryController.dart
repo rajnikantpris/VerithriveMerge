@@ -59,11 +59,11 @@ class TransactionHistoryItem {
     if (rawDate != null) {
       try {
         if (rawDate is String) {
-          date = DateTime.tryParse(rawDate) ?? date;
+          date = (DateTime.tryParse(rawDate) ?? date).toLocal();
         } else if (rawDate is int) {
-          date = DateTime.fromMillisecondsSinceEpoch(rawDate);
+          date = DateTime.fromMillisecondsSinceEpoch(rawDate).toLocal();
         } else if (rawDate is num) {
-          date = DateTime.fromMillisecondsSinceEpoch(rawDate.toInt());
+          date = DateTime.fromMillisecondsSinceEpoch(rawDate.toInt()).toLocal();
         }
       } catch (_) {}
     }
@@ -174,7 +174,7 @@ class TransactionSummaryController extends BaseController {
     }
 
     var service = _repository.sendPostApiRequest(toJson, transactions_history, true);
-    callDataService(
+    await callDataService(
       service,
       onSuccess: (response) => _handleTransactionHistorySuccess(response, isLoadMore),
       onError: _handleTransactionHistoryError,

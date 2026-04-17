@@ -638,6 +638,7 @@ class HomeController extends BaseController {
       dateLabel: dateLabel,
       isCancelled: isCancelled,
       isPasted: isPasted,
+      isInProgress: booking.status == 'in_progress',
       durationMinutes: durationMinutes,
       userId: userId,
     );
@@ -1042,6 +1043,7 @@ class SessionData {
     required this.dateLabel,
     this.isCancelled = false,
     this.isPasted = false,
+    this.isInProgress = false,
     this.durationMinutes,
     this.userId,
   });
@@ -1053,6 +1055,7 @@ class SessionData {
   final String dateLabel;
   final bool isCancelled;
   final bool isPasted;
+  final bool isInProgress;
   final int? durationMinutes;
   final String? userId;
 }

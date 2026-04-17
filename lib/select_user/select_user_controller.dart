@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:verithrive_dev/enduser/core/base/base_controller.dart';
 import 'package:verithrive_dev/professional/onboarding/onboarding_binding.dart'
     as professional_onboarding;
 import 'package:verithrive_dev/professional/onboarding/onboarding_view.dart';
@@ -7,7 +8,7 @@ import 'package:verithrive_dev/enduser/screens/onboarding/onboarding_binding.dar
     as enduser_onboarding;
 import 'package:verithrive_dev/enduser/screens/onboarding/onboarding_screen.dart';
 
-class SelectUserController extends GetxController {
+class SelectUserController extends BaseController {
   void openProfessional() {
     Get.to(
       () => const OnboardingView(),

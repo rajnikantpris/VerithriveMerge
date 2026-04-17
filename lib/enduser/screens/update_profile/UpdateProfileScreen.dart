@@ -6,6 +6,7 @@ import 'package:verithrive_dev/enduser/utils/app_colors.dart';
 import 'package:verithrive_dev/enduser/utils/app_text_styles.dart';
 import '../../utils/AppText.dart';
 import '../../utils/CustomTextField.dart';
+import '../../core/widget/animated_loader.dart';
 import 'UpdateProfileController.dart';
 
 class UpdateProfileScreen extends StatelessWidget {
@@ -38,14 +39,18 @@ class UpdateProfileScreen extends StatelessWidget {
         ),
         centerTitle: true,
       ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.symmetric(horizontal: 20),
-          child: Form(
-            key: controller.formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+      body: Stack(
+          children: [
+            Obx(() {
+              if (!controller.isDataLoading.value) {
+                return SafeArea(
+                  child: SingleChildScrollView(
+                    padding: EdgeInsets.symmetric(horizontal: 20),
+                    child: Form(
+                      key: controller.formKey,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
                 SizedBox(height: 20),
                 // Profile Picture
                 // Profile Picture
@@ -210,12 +215,27 @@ class UpdateProfileScreen extends StatelessWidget {
                   ),
                 )),
                 SizedBox(height: 32),
-              ],
-            ),
-          ),
+                  ],
+                ),
+              ),
+              ),
+            );
+              }
+              return SizedBox.shrink();
+            }),
+            Obx(() {
+              if (controller.isDataLoading.value) {
+                return Center(
+                  child: AnimatedLoader(
+                    assetPath: AppAssets.loader1,
+                  ),
+                );
+              }
+              return SizedBox.shrink();
+            }),
+          ],
         ),
-      ),
-    );
+      );
   }
 
   Widget _buildGenderField(UpdateProfileController controller) {

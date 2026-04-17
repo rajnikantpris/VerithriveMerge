@@ -32,6 +32,7 @@ import 'screens/main/MainTabController.dart';
 import 'routes/app_pages.dart';
 import 'routes/app_routes.dart' as routes;
 import 'bindings/initial_binding.dart';
+import '../services/analytics_service.dart';
 
 // end user main.dart file
 
@@ -1267,6 +1268,9 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
         ),
       ),
       debugShowCheckedModeBanner: false,
+      navigatorObservers: [
+        AnalyticsService.instance.observer,
+      ],
     );
   }
 

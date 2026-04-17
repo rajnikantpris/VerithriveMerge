@@ -26,6 +26,7 @@ import '../../routes/app_routes.dart';
 import '../../services/location_permission_service.dart';
 import '../../services/camera_storage_permission_service.dart';
 import '../../services/storage_service.dart';
+import '../../services/analytics_service.dart';
 import '../../widgets/response_dialog.dart';
 import '../../theme/colors.dart';
 import '../../theme/font_sizes.dart';
@@ -1269,6 +1270,8 @@ class SignupProfileWizardController extends BaseController {
           // Navigate to next step after successful API call
           if (currentStep.value < totalSteps - 1) {
             currentStep.value += 1;
+            // Analytics: Log step completion
+            
             // Reset validation state for next step
             hasValidated.value = false;
             addressHasValidated.value = false;
@@ -1456,6 +1459,8 @@ class SignupProfileWizardController extends BaseController {
           // Navigate to next step after successful API call
           if (currentStep.value < totalSteps - 1) {
             currentStep.value += 1;
+            // Analytics: Log step completion
+            
             // Reset validation state for next step
             hasValidated.value = false;
             addressHasValidated.value = false;
@@ -1566,6 +1571,9 @@ class SignupProfileWizardController extends BaseController {
       showLoader: true,
       onSuccess: (response) async {
         if (response.success) {
+          // Analytics: Log professional wizard completion
+          
+
           // Extract and save user flags from response (same as login controller)
           final storage = _storageService;
           if (response.data is Map<String, dynamic>) {
@@ -1607,6 +1615,8 @@ class SignupProfileWizardController extends BaseController {
           // Navigate to next step after successful API call
           if (currentStep.value < totalSteps - 1) {
             currentStep.value += 1;
+            // Analytics: Log step completion
+            
             // Reset validation state for next step
             hasValidated.value = false;
             addressHasValidated.value = false;
@@ -2163,6 +2173,9 @@ class SignupProfileWizardController extends BaseController {
         debugPrint('Success: ${response.success}');
         debugPrint('Error Message: ${response.errorMessage}');
         if (response.success) {
+          // Analytics: Log professional wizard completion
+          
+
           // Extract and save user flags from response (same as login controller)
           final storage = _storageService;
           if (response.data is Map<String, dynamic>) {
@@ -2199,6 +2212,8 @@ class SignupProfileWizardController extends BaseController {
           // Navigate to next step after successful API call
           if (currentStep.value < totalSteps - 1) {
             currentStep.value += 1;
+            // Analytics: Log step completion
+            
             // Reset validation state for next step
             hasValidated.value = false;
             addressHasValidated.value = false;
@@ -2393,6 +2408,8 @@ class SignupProfileWizardController extends BaseController {
           // Navigate to next step after successful API call
           if (currentStep.value < totalSteps - 1) {
             currentStep.value += 1;
+            // Analytics: Log step completion
+            
             // Reset validation state for next step
             hasValidated.value = false;
             addressHasValidated.value = false;

@@ -17,6 +17,7 @@ import '../../data/repository/project_repository.dart';
 import '../../core/values/sharePrefrenceConst.dart';
 import '../../utils/api_services.dart';
 import 'models/ProfessionTypeModel.dart';
+import 'package:verithrive_dev/services/analytics_service.dart';
 import 'package:verithrive_dev/services/storage_service.dart';
 
 // Holds one category (type + ordered sub_types) exactly as returned by the API
@@ -435,6 +436,10 @@ class HomeMainController extends BaseController with WidgetsBindingObserver {
     }
 
     bool success = responseData['success'] ?? false;
+    if (success) {
+      // Analytics: Log review submission
+      
+    }
     if (!success) throw Exception(responseData['message'] ?? 'Failed to submit review');
   }
 }

@@ -93,6 +93,23 @@ class User {
   final int? v;
   final bool? isOnline;
 
+  // Added missing fields from log
+  final String? promoCodeUsedType;
+  final String? promoCodeUsedAt;
+  final bool? promoCodeUsed;
+  final bool? optStatus;
+  final bool? stripeConnectChargesEnabled;
+  final bool? stripeConnectPayoutsEnabled;
+  final String? stripeConnectStatus;
+  final String? address;
+  final String? dob;
+  final String? gender;
+  final double? latitude;
+  final double? longitude;
+  final String? postcode;
+  final String? lastSeenAt;
+  final String? fcmToken;
+
   User({
     this.id,
     this.timezone,
@@ -135,6 +152,21 @@ class User {
     this.updatedAt,
     this.v,
     this.isOnline,
+    this.promoCodeUsedType,
+    this.promoCodeUsedAt,
+    this.promoCodeUsed,
+    this.optStatus,
+    this.stripeConnectChargesEnabled,
+    this.stripeConnectPayoutsEnabled,
+    this.stripeConnectStatus,
+    this.address,
+    this.dob,
+    this.gender,
+    this.latitude,
+    this.longitude,
+    this.postcode,
+    this.lastSeenAt,
+    this.fcmToken,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
@@ -145,41 +177,56 @@ class User {
       fullName: json['full_name']?.toString(),
       profilePicture: json['profile_picture']?.toString(),
       emailVerifiedAt: json['email_verified_at']?.toString(),
-      isEmailVerified: json['is_email_verified'] as bool?,
-      isEmailHidden: json['is_email_hidden'] as bool?,
+      isEmailVerified: _asBool(json['is_email_verified']),
+      isEmailHidden: _asBool(json['is_email_hidden']),
       mobileNumber: json['mobile_number']?.toString(),
       userType: json['user_type']?.toString(),
       totalExperience: json['total_experience'] as int?,
-      isOtpVerified: json['is_otp_verified'] as bool?,
-      isActive: json['is_active'] as bool?,
-      isApproved: json['is_approved'] as bool?,
-      isOnHold: json['is_on_hold'] as bool?,
-      isDeclined: json['is_declined'] as bool?,
-      isBlocked: json['is_blocked'] as bool?,
-      isSocialLogin: json['is_social_login'] as bool?,
+      isOtpVerified: _asBool(json['is_otp_verified']),
+      isActive: _asBool(json['is_active']),
+      isApproved: _asBool(json['is_approved']),
+      isOnHold: _asBool(json['is_on_hold']),
+      isDeclined: _asBool(json['is_declined']),
+      isBlocked: _asBool(json['is_blocked']),
+      isSocialLogin: _asBool(json['is_social_login']),
       socialType: json['social_type']?.toString(),
       socialId: json['social_id']?.toString(),
       registrationType: json['registration_type']?.toString(),
-      isDeleted: json['is_deleted'] as bool?,
+      isDeleted: _asBool(json['is_deleted']),
       lastLoginAt: json['last_login_at']?.toString(),
       lastLoginEmail: json['last_login_email']?.toString(),
       lastLoginType: json['last_login_type']?.toString(),
-      isPersonalDetails: json['is_personal_details'] as bool?,
-      isTermCondition: json['is_term_condition'] as bool?,
-      isProfileCreated: json['is_profile_created'] as bool?,
-      isWorkFull: json['is_work_full'] as bool?,
+      isPersonalDetails: _asBool(json['is_personal_details']),
+      isTermCondition: _asBool(json['is_term_condition']),
+      isProfileCreated: _asBool(json['is_profile_created']),
+      isWorkFull: _asBool(json['is_work_full']),
       tokenVersion: json['token_version'] as int?,
-      isPersonalIdentification: json['is_personal_identification'] as bool?,
-      isAboutYou: json['is_about_you'] as bool?,
-      isProfessionalServices: json['is_professional_services'] as bool?,
-      isQualification: json['is_qualification'] as bool?,
-      isNotification: json['is_notification'] as bool?,
-      isPayment: json['is_payment'] as bool?,
+      isPersonalIdentification: _asBool(json['is_personal_identification']),
+      isAboutYou: _asBool(json['is_about_you']),
+      isProfessionalServices: _asBool(json['is_professional_services']),
+      isQualification: _asBool(json['is_qualification']),
+      isNotification: _asBool(json['is_notification']),
+      isPayment: _asBool(json['is_payment']),
       reviewMilestones: json['review_milestones'] as List<dynamic>?,
       createdAt: json['createdAt']?.toString(),
       updatedAt: json['updatedAt']?.toString(),
       v: json['__v'] as int?,
-      isOnline: json['is_online'] as bool?,
+      isOnline: _asBool(json['is_online']),
+      promoCodeUsedType: json['promo_code_used_type']?.toString(),
+      promoCodeUsedAt: json['promo_code_used_at']?.toString(),
+      promoCodeUsed: _asBool(json['promo_code_used']),
+      optStatus: _asBool(json['opt_status']),
+      stripeConnectChargesEnabled: _asBool(json['stripe_connect_charges_enabled']),
+      stripeConnectPayoutsEnabled: _asBool(json['stripe_connect_payouts_enabled']),
+      stripeConnectStatus: json['stripe_connect_status']?.toString(),
+      address: json['address']?.toString(),
+      dob: json['dob']?.toString(),
+      gender: json['gender']?.toString(),
+      latitude: _asDouble(json['latitude']),
+      longitude: _asDouble(json['longitude']),
+      postcode: json['postcode']?.toString(),
+      lastSeenAt: json['last_seen_at']?.toString(),
+      fcmToken: (json['fcm_token'] ?? json['device_token'])?.toString(),
     );
   }
 
@@ -226,7 +273,37 @@ class User {
       'updatedAt': updatedAt,
       '__v': v,
       'is_online': isOnline,
+      'promo_code_used_type': promoCodeUsedType,
+      'promo_code_used_at': promoCodeUsedAt,
+      'promo_code_used': promoCodeUsed,
+      'opt_status': optStatus,
+      'stripe_connect_charges_enabled': stripeConnectChargesEnabled,
+      'stripe_connect_payouts_enabled': stripeConnectPayoutsEnabled,
+      'stripe_connect_status': stripeConnectStatus,
+      'address': address,
+      'dob': dob,
+      'gender': gender,
+      'latitude': latitude,
+      'longitude': longitude,
+      'postcode': postcode,
+      'last_seen_at': lastSeenAt,
+      'fcm_token': fcmToken,
     };
   }
 }
 
+double? _asDouble(dynamic value) {
+  if (value == null) return null;
+  if (value is num) return value.toDouble();
+  return double.tryParse(value.toString());
+}
+
+bool? _asBool(dynamic value) {
+  if (value == null) return null;
+  if (value is bool) return value;
+  if (value is num) return value != 0;
+  final normalized = value.toString().toLowerCase().trim();
+  if (normalized == 'true') return true;
+  if (normalized == 'false') return false;
+  return null;
+}

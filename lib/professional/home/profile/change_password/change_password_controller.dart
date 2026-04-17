@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import '../../../../api/api_response.dart';
 import '../../../../api/user_api_service.dart';
 import '../../../../common/base_controller.dart';
+import '../../../../services/analytics_service.dart';
 import '../../../../widgets/response_dialog.dart';
 
 class ChangePasswordController extends BaseController {
@@ -49,6 +50,9 @@ class ChangePasswordController extends BaseController {
       showLoader: true,
       onSuccess: (response) {
         if (response.success) {
+          // Analytics: Log password change
+          
+
           showResponseDialog(
             message: response.message ?? 'Password changed successfully',
             title: 'Success',

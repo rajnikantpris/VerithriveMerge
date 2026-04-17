@@ -11,6 +11,7 @@ import '../../data/repository/project_repository.dart';
 import '../../network/exceptions/base_exception.dart';
 import '../../utils/api_services.dart';
 import '../../utils/common_dialog.dart';
+import 'package:verithrive_dev/services/analytics_service.dart';
 import 'CardModel.dart';
 import 'CardNumberFormatter.dart';
 import 'ExpiryDateFormatter.dart';
@@ -68,6 +69,9 @@ class CardDetailsController extends BaseController {
       bool success = responseData['success'] ?? false;
       
       if (success == true && responseData['data'] != null) {
+        // Analytics: Log cards loaded
+        
+
         List<dynamic> cardsData = responseData['data'] as List<dynamic>;
         cards.value = cardsData.map((json) => CardModel.fromJson(json as Map<String, dynamic>)).toList();
         
@@ -1157,6 +1161,9 @@ class CardDetailsController extends BaseController {
       String message = responseData['message'] ?? 'Card added successfully';
 
       if (success == true && responseData['data'] != null) {
+        // Analytics: Log card added
+        
+
         // Add the new card to the list
         Map<String, dynamic> cardData = responseData['data'] as Map<String, dynamic>;
         CardModel newCard = CardModel.fromJson(cardData);
@@ -1317,6 +1324,9 @@ class CardDetailsController extends BaseController {
       String message = responseData['message'] ?? 'Card updated successfully';
 
       if (success == true) {
+        // Analytics: Log card updated
+        
+
         // Refresh cards list
         fetchCardsFromAPI();
         
@@ -1412,6 +1422,9 @@ class CardDetailsController extends BaseController {
       String message = responseData['message'] ?? 'Card deleted successfully';
 
       if (success == true) {
+        // Analytics: Log card deleted
+        
+
         // Remove card from list
         cards.removeAt(index);
         if (selectedCardIndex.value >= cards.length) {

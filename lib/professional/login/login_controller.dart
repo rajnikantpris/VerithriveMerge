@@ -9,7 +9,9 @@ import '../../routes/app_routes.dart';
 import '../../services/notification_permission_service.dart';
 import '../../services/social_auth_service.dart';
 import '../../services/storage_service.dart';
+import '../../services/analytics_service.dart';
 import '../../widgets/response_dialog.dart';
+import 'package:geocoding/geocoding.dart';
 
 class ProfessionalLoginController extends BaseController {
   ProfessionalLoginController(
@@ -256,6 +258,17 @@ class ProfessionalLoginController extends BaseController {
 
           // Extract user flags from user model
           final userFlags = _extractUserFlagsFromModel(loginData.user);
+
+          await AnalyticsService.instance.setUserProfile(
+            loginState: 'logged_in',
+            userId: loginData.user?.id,
+            city: await getCityFromAddress(loginData.user!.address.toString()),
+            persona: loginData.user?.profession_name?.toLowerCase(),
+            registrationType: loginData.user?.registrationType ??
+                ((loginData.user?.isSocialLogin ?? false)
+                    ? 'social'
+                    : 'regular'),
+          );
 
           // Save flags to storage
           final storage = _storageService;
@@ -601,6 +614,17 @@ class ProfessionalLoginController extends BaseController {
           // Extract user flags from user model
           final userFlags = _extractUserFlagsFromModel(loginData.user);
 
+          await AnalyticsService.instance.setUserProfile(
+            loginState: 'logged_in',
+            userId: loginData.user?.id,
+            city: await getCityFromAddress(loginData.user!.address.toString()),
+            persona: loginData.user?.profession_name?.toLowerCase(),
+            registrationType: loginData.user?.registrationType ??
+                ((loginData.user?.isSocialLogin ?? false)
+                    ? 'social'
+                    : 'regular'),
+          );
+
           // Save flags to storage
           final storage = _storageService;
           if (storage != null) {
@@ -633,6 +657,28 @@ class ProfessionalLoginController extends BaseController {
         }
       },
     );
+  }
+
+  Future<String?> getCityFromAddress(String address) async {
+    try {
+      List<Location> locations = await locationFromAddress(address);
+
+      if (locations.isNotEmpty) {
+        double lat = locations.first.latitude;
+        double lng = locations.first.longitude;
+
+        List<Placemark> placemarks =
+        await placemarkFromCoordinates(lat, lng);
+
+        if (placemarks.isNotEmpty) {
+          return placemarks.first.locality!.toLowerCase(); // return city
+        }
+      }
+    } catch (e) {
+      print("Error: $e");
+    }
+
+    return null;
   }
 
   void onCreateAccount() {

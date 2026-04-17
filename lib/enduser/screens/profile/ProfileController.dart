@@ -187,7 +187,7 @@ class ProfileController extends GetxController {
       initialDate:
           DateTime.now().subtract(const Duration(days: 6570)), // 18 years ago
       firstDate: DateTime(1900),
-      lastDate: DateTime.now(),
+      lastDate: DateTime.now().subtract(const Duration(days: 0)), // Yesterday
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(

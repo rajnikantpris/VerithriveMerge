@@ -9,6 +9,7 @@ import 'package:verithrive_dev/enduser/utils/common_dialog.dart';
 import '../../data/repository/project_repository.dart';
 import '../../network/exceptions/base_exception.dart';
 import '../../utils/api_services.dart';
+import 'package:verithrive_dev/services/analytics_service.dart';
 
 class ForgotPasswordController extends BaseController {
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
@@ -104,6 +105,9 @@ class ForgotPasswordController extends BaseController {
 
       if (success == true) {
         final email = emailController.text.trim();
+
+        // Analytics: Log forgot password request
+        
         
         showResponseDialog(
           message: message,

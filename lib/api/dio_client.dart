@@ -10,6 +10,7 @@ import '../common/image_model.dart';
 import '../api/user_api_service.dart';
 import '../routes/app_pages.dart';
 import '../routes/app_routes.dart';
+import '../services/analytics_service.dart';
 import '../services/storage_service.dart';
 import '../services/firebase_token_service.dart';
 import '../utils/logger.dart';
@@ -69,7 +70,6 @@ class DioClient extends GetxService {
               if (isAccountStatusError) {
                 // Show dialog for account status errors
                 await _handleAccountStatusError(errorMessage);
-
               } else {
                 // Handle regular unauthorized error
                 await _handleUnauthorized();
@@ -485,6 +485,7 @@ class DioClient extends GetxService {
   Future<void> _callLogoutApi() async {
     if (!Get.isRegistered<UserApiService>()) return;
     try {
+      await AnalyticsService.instance.clearUser();
       await Get.find<UserApiService>().logout();
     } catch (_) {
       // Ignore logout failures; we still proceed with local cleanup.

@@ -5,12 +5,10 @@ import '../../../../theme/colors.dart';
 import '../../../../theme/font_sizes.dart';
 import '../../../../theme/fonts.dart';
 import '../../../../theme/hight_width_sizes.dart';
-import '../../../../theme/image_paths.dart';
 import 'transaction_summary_controller.dart';
 
 class TransactionSummaryScreen extends BaseView<TransactionSummaryController> {
   const TransactionSummaryScreen({super.key});
-
 
   @override
   PreferredSizeWidget? appBar(BuildContext context) {
@@ -52,7 +50,6 @@ class TransactionSummaryScreen extends BaseView<TransactionSummaryController> {
     );
   }
 
-
   @override
   Widget buildView(BuildContext context) {
     return Container(
@@ -64,170 +61,198 @@ class TransactionSummaryScreen extends BaseView<TransactionSummaryController> {
           }
 
           if (controller.transactions.isEmpty) {
-            return Center(
-              child: Text(
-                'No transactions found',
-                style: TextStyle(
-                  fontFamily: AppFonts.rubikRegular,
-                  fontSize: FontSizes.setFontValue_16,
-                  color: AppColor.color_9D9D9D,
-                ),
+            return RefreshIndicator(
+              onRefresh: () => controller.fetchTransactions(),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  return ListView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    children: [
+                      ConstrainedBox(
+                        constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                        child: Center(
+                          child: Text(
+                            'No transactions found',
+                            style: TextStyle(
+                              fontFamily: AppFonts.rubikRegular,
+                              fontSize: FontSizes.setFontValue_16,
+                              color: AppColor.color_9D9D9D,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                },
               ),
             );
           }
 
-          return ListView.separated(
-            controller: controller.scrollController,
-            padding: EdgeInsets.all(HightWidthSizes.setValue_16),
-            itemCount: controller.transactions.length + (controller.hasMoreData.value ? 1 : 0),
-            separatorBuilder: (_, __) => SizedBox(height: HightWidthSizes.setValue_12),
-            itemBuilder: (context, index) {
-              if (index == controller.transactions.length) {
-                return Obx(() {
-                  if (controller.isLoadingMore.value) {
-                    return const Center(child: CircularProgressIndicator());
-                  } else {
-                    return const SizedBox.shrink();
-                  }
-                });
-              }
-              final transaction = controller.transactions[index];
-              
-              final isSuccess = transaction.status.toLowerCase() == 'success' || transaction.status.toLowerCase() == 'paid';
-              final isPending = transaction.status.toLowerCase() == 'pending';
-              
-              Color statusColor = AppColor.color_9D9D9D;
-              Color statusBgColor = AppColor.color_ECECEC.withOpacity(0.2);
-              
-              if (isSuccess) {
-                statusColor = AppColor.color_2FC4B2;
-                statusBgColor = AppColor.color_2FC4B2.withOpacity(0.1);
-              } else if (isPending) {
-                statusColor = const Color(0xFFF59300); // Orange color for pending
-                statusBgColor = const Color(0xFFF59300).withOpacity(0.1);
-              } else if (transaction.status.toLowerCase() == 'failed' || transaction.status.toLowerCase() == 'error') {
-                statusColor = AppColor.color_E64646;
-                statusBgColor = AppColor.color_E64646.withOpacity(0.1);
-              }
+          return RefreshIndicator(
+            onRefresh: () => controller.fetchTransactions(),
+            child: ListView.separated(
+              controller: controller.scrollController,
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: EdgeInsets.all(HightWidthSizes.setValue_16),
+              itemCount: controller.transactions.length +
+                  (controller.hasMoreData.value ? 1 : 0),
+              separatorBuilder: (_, __) =>
+                  SizedBox(height: HightWidthSizes.setValue_12),
+              itemBuilder: (context, index) {
+                if (index == controller.transactions.length) {
+                  return Obx(() {
+                    if (controller.isLoadingMore.value) {
+                      return const Center(child: CircularProgressIndicator());
+                    } else {
+                      return const SizedBox.shrink();
+                    }
+                  });
+                }
+                final transaction = controller.transactions[index];
 
-              return Container(
-                padding: EdgeInsets.all(HightWidthSizes.setValue_16),
-                decoration: BoxDecoration(
-                  color: AppColor.white,
-                  borderRadius: BorderRadius.circular(HightWidthSizes.setValue_12),
-                  border: Border.all(color: AppColor.color_ECECEC),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColor.color000000.withOpacity(0.05),
-                      blurRadius: HightWidthSizes.setValue_10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(
-                          child: Column(
+                final isSuccess = transaction.status.toLowerCase() == 'success' ||
+                    transaction.status.toLowerCase() == 'paid';
+                final isPending = transaction.status.toLowerCase() == 'pending';
+
+                Color statusColor = AppColor.color_9D9D9D;
+                Color statusBgColor = AppColor.color_ECECEC.withOpacity(0.2);
+
+                if (isSuccess) {
+                  statusColor = AppColor.color_2FC4B2;
+                  statusBgColor = AppColor.color_2FC4B2.withOpacity(0.1);
+                } else if (isPending) {
+                  statusColor =
+                      const Color(0xFFF59300); // Orange color for pending
+                  statusBgColor = const Color(0xFFF59300).withOpacity(0.1);
+                } else if (transaction.status.toLowerCase() == 'failed' ||
+                    transaction.status.toLowerCase() == 'error') {
+                  statusColor = AppColor.color_E64646;
+                  statusBgColor = AppColor.color_E64646.withOpacity(0.1);
+                }
+
+                return Container(
+                  padding: EdgeInsets.all(HightWidthSizes.setValue_16),
+                  decoration: BoxDecoration(
+                    color: AppColor.white,
+                    borderRadius:
+                        BorderRadius.circular(HightWidthSizes.setValue_12),
+                    border: Border.all(color: AppColor.color_ECECEC),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColor.color000000.withOpacity(0.05),
+                        blurRadius: HightWidthSizes.setValue_10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  transaction.title,
+                                  style: TextStyle(
+                                    fontFamily: AppFonts.rubikMedium,
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: FontSizes.setFontValue_16,
+                                    color: AppColor.color_2D3648,
+                                  ),
+                                ),
+                                if (transaction
+                                    .transactionReference.isNotEmpty) ...[
+                                  SizedBox(height: HightWidthSizes.setValue_4),
+                                  Text(
+                                    'Ref: ${transaction.transactionReference}',
+                                    style: TextStyle(
+                                      fontFamily: AppFonts.rubikRegular,
+                                      fontWeight: FontWeight.w400,
+                                      fontSize: FontSizes.setFontValue_12,
+                                      color: AppColor.color_9D9D9D,
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                          Text(
+                            transaction.formattedAmount,
+                            style: TextStyle(
+                              fontFamily: AppFonts.rubikMedium,
+                              fontWeight: FontWeight.w600,
+                              fontSize: FontSizes.setFontValue_16,
+                              color: AppColor.color_2D3648,
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: HightWidthSizes.setValue_12),
+                      CustomPaint(
+                        size: const Size(double.infinity, 1),
+                        painter: DashedLinePainter(),
+                      ),
+                      SizedBox(height: HightWidthSizes.setValue_12),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                transaction.title,
+                                'Date & Time',
+                                style: TextStyle(
+                                  fontFamily: AppFonts.rubikRegular,
+                                  fontWeight: FontWeight.w400,
+                                  fontSize: FontSizes.setFontValue_12,
+                                  color: AppColor.color_9D9D9D,
+                                ),
+                              ),
+                              SizedBox(height: HightWidthSizes.setValue_4),
+                              Text(
+                                transaction.formattedDate,
+                                style: TextStyle(
+                                  fontFamily: AppFonts.rubikRegular,
+                                  fontWeight: FontWeight.w400,
+                                  fontSize: FontSizes.setFontValue_14,
+                                  color: AppColor.color_2D2D2D,
+                                ),
+                              ),
+                            ],
+                          ),
+                          if (transaction.status.isNotEmpty)
+                            Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: HightWidthSizes.setValue_10,
+                                vertical: HightWidthSizes.setValue_4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: statusBgColor,
+                                borderRadius: BorderRadius.circular(
+                                    HightWidthSizes.setValue_20),
+                              ),
+                              child: Text(
+                                transaction.status.capitalizeFirst ??
+                                    transaction.status,
                                 style: TextStyle(
                                   fontFamily: AppFonts.rubikMedium,
                                   fontWeight: FontWeight.w600,
-                                  fontSize: FontSizes.setFontValue_16,
-                                  color: AppColor.color_2D3648,
+                                  fontSize: FontSizes.setFontValue_12,
+                                  color: statusColor,
                                 ),
                               ),
-                              if (transaction.transactionReference.isNotEmpty) ...[
-                                SizedBox(height: HightWidthSizes.setValue_4),
-                                Text(
-                                  'Ref: ${transaction.transactionReference}',
-                                  style: TextStyle(
-                                    fontFamily: AppFonts.rubikRegular,
-                                    fontWeight: FontWeight.w400,
-                                    fontSize: FontSizes.setFontValue_12,
-                                    color: AppColor.color_9D9D9D,
-                                  ),
-                                ),
-                              ],
-                            ],
-                          ),
-                        ),
-                        Text(
-                          transaction.formattedAmount,
-                          style: TextStyle(
-                            fontFamily: AppFonts.rubikMedium,
-                            fontWeight: FontWeight.w600,
-                            fontSize: FontSizes.setFontValue_16,
-                            color: AppColor.color_2D3648,
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: HightWidthSizes.setValue_12),
-                    CustomPaint(
-                      size: const Size(double.infinity, 1),
-                      painter: DashedLinePainter(),
-                    ),
-                    SizedBox(height: HightWidthSizes.setValue_12),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Date & Time',
-                              style: TextStyle(
-                                fontFamily: AppFonts.rubikRegular,
-                                fontWeight: FontWeight.w400,
-                                fontSize: FontSizes.setFontValue_12,
-                                color: AppColor.color_9D9D9D,
-                              ),
                             ),
-                            SizedBox(height: HightWidthSizes.setValue_4),
-                            Text(
-                              transaction.formattedDate,
-                              style: TextStyle(
-                                fontFamily: AppFonts.rubikRegular,
-                                fontWeight: FontWeight.w400,
-                                fontSize: FontSizes.setFontValue_14,
-                                color: AppColor.color_2D2D2D,
-                              ),
-                            ),
-                          ],
-                        ),
-                        if (transaction.status.isNotEmpty)
-                          Container(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: HightWidthSizes.setValue_10,
-                              vertical: HightWidthSizes.setValue_4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: statusBgColor,
-                              borderRadius: BorderRadius.circular(HightWidthSizes.setValue_20),
-                            ),
-                            child: Text(
-                              transaction.status.capitalizeFirst ?? transaction.status,
-                              style: TextStyle(
-                                fontFamily: AppFonts.rubikMedium,
-                                fontWeight: FontWeight.w600,
-                                fontSize: FontSizes.setFontValue_12,
-                                color: statusColor,
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                  ],
-                ),
-              );
-            },
+                        ],
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
           );
         }),
       ),

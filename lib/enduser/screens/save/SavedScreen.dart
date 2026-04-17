@@ -50,20 +50,46 @@ class SavedScreen extends StatelessWidget {
                 onRefresh: () async {
                   controller.loadSavedTherapists();
                 },
-                child: SingleChildScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  child: SizedBox(
-                    height: MediaQuery.of(context).size.height * 0.6,
-                    child: Center(
-                      child: Text(
-                        'No saved items yet',
-                        style: AppTextStyles.regularTextStyle(
-                          fontSize: 16,
-                          color: AppColors.grey,
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    return SingleChildScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          minHeight: constraints.maxHeight,
+                        ),
+                        child: Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              SvgPicture.asset(
+                                AppAssets.wishlist,
+                                width: 64,
+                                height: 64,
+                                color: AppColors.grey.withOpacity(0.5),
+                              ),
+                              SizedBox(height: 16),
+                              Text(
+                                'No saved items yet',
+                                style: AppTextStyles.mediumTextStyle(
+                                  fontSize: 18,
+                                  color: AppColors.grey,
+                                ),
+                              ),
+                              SizedBox(height: 8),
+                              Text(
+                                'Your saved professionals will appear here',
+                                style: AppTextStyles.regularTextStyle(
+                                  fontSize: 14,
+                                  color: AppColors.greyText,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                    ),
-                  ),
+                    );
+                  },
                 ),
               )
             : RefreshIndicator(

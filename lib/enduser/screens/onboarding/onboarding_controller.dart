@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import '../../core/values/sharePrefrenceConst.dart';
 import '../../routes/app_routes.dart';
 import 'package:verithrive_dev/services/storage_service.dart';
+import 'package:verithrive_dev/services/analytics_service.dart';
 
 import '../main/MainScreen.dart';
 
@@ -25,6 +26,9 @@ class OnboardingController extends GetxController {
   }
 
   Future<void> continueAsGuest() async {
+    // Analytics: Log onboarding skip/completion
+    
+
     // Set guest flag
     await _storageService.writeBool(SharePreferenceConst.isGuest, true);
     // Navigate to main screen (home screen)

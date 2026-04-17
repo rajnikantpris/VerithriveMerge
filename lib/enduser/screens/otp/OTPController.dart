@@ -17,6 +17,7 @@ import '../../utils/api_services.dart';
 import '../../core/values/sharePrefrenceConst.dart';
 import '../../data/model/login_model.dart';
 import 'package:verithrive_dev/services/storage_service.dart';
+import 'package:verithrive_dev/services/analytics_service.dart';
 
 class OTPController extends BaseController {
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
@@ -245,6 +246,9 @@ class OTPController extends BaseController {
         LoginData loginData = response.data!;
         User? user = loginData.user;
 
+        // Analytics: Log successful sign up verification
+        
+
         final storage = _storageService;
 
         if (storage != null) {
@@ -459,6 +463,9 @@ class OTPController extends BaseController {
       String message = responseData['message'] ?? 'OTP verified successfully';
 
       if (success == true) {
+        // Analytics: Log successful forgot password OTP verification
+        
+
         // Show success message and navigate to create password screen
         showResponseDialog(
           message: message,

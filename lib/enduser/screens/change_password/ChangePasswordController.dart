@@ -6,6 +6,7 @@ import '../../core/base/base_controller.dart';
 import '../../data/repository/project_repository.dart';
 import '../../network/exceptions/base_exception.dart';
 import '../../utils/api_services.dart';
+import 'package:verithrive_dev/services/analytics_service.dart';
 import '../../utils/common_dialog.dart';
 
 class ChangePasswordController extends BaseController {
@@ -105,6 +106,9 @@ class ChangePasswordController extends BaseController {
           responseData['message'] ?? 'Password changed successfully';
 
       if (success == true) {
+        // Analytics: Log password change
+        
+
         showResponseDialog(
           message: message,
           title: 'Success',

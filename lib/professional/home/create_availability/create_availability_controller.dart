@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../../api/api_response.dart';
 import '../../../api/user_api_service.dart';
 import '../../../common/base_controller.dart';
+import '../../../services/analytics_service.dart';
 import '../../../utils/timezone_helper.dart';
 import '../../../widgets/response_dialog.dart';
 import '../../home/calendar_controller.dart';
@@ -460,6 +461,9 @@ class CreateAvailabilityController extends BaseController {
       showLoader: true,
       onSuccess: (ApiResponse<dynamic> response) {
         if (response.success) {
+          // Analytics: Log professional availability created
+          
+
           // Refresh calendar data if CalendarController is available
           _refreshCalendarData();
 

@@ -7,6 +7,7 @@ import '../../data/local/preference/preference_manager.dart';
 import '../../data/repository/project_repository.dart';
 import '../../utils/api_services.dart';
 import '../therapy_list/Therapist.dart';
+import 'package:verithrive_dev/services/analytics_service.dart';
 
 class TherapistDetailController extends BaseController
     with GetSingleTickerProviderStateMixin {
@@ -167,6 +168,9 @@ class TherapistDetailController extends BaseController
       if (success == true && responseData['data'] != null) {
         Map<String, dynamic> dataMap = responseData['data'] as Map<String, dynamic>;
 
+        // Analytics: Log professional profile view
+        
+        
         // Parse professional data
         if (dataMap['professional'] != null) {
           Map<String, dynamic> professional = dataMap['professional'] as Map<String, dynamic>;

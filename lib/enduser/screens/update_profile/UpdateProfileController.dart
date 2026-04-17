@@ -14,6 +14,7 @@ import '../../data/repository/project_repository.dart';
 import '../../network/exceptions/base_exception.dart';
 import '../../utils/api_services.dart';
 import '../../utils/common_dialog.dart';
+import 'package:verithrive_dev/services/analytics_service.dart';
 import 'package:verithrive_dev/enduser/utils/camera_storage_permission_service.dart';
 import 'package:verithrive_dev/enduser/utils/location_permission_service.dart';
 import '../../core/values/sharePrefrenceConst.dart';
@@ -40,6 +41,7 @@ class UpdateProfileController extends BaseController {
   final profileImageUrl = RxString('');
   final isProfilePictureRemoved = false.obs;
   final isLoading = false.obs;
+  final isDataLoading = true.obs;
   final latitude = 0.0.obs;
   final longitude = 0.0.obs;
 
@@ -185,6 +187,7 @@ class UpdateProfileController extends BaseController {
 
         if (data['address'] != null) {
           selectedAddress.value = data['address'].toString();
+          addressController.text = data['address'].toString();
         }
 
         if (data['latitude'] != null) {
@@ -217,7 +220,9 @@ class UpdateProfileController extends BaseController {
           isProfilePictureRemoved.value = false;
         }
       }
+      isDataLoading.value = false;
     } catch (e) {
+      isDataLoading.value = false;
       showResponseDialog(
         message: "Error loading profile data: $e",
         title: 'Error',
@@ -276,11 +281,11 @@ class UpdateProfileController extends BaseController {
       initialDate:
       DateTime.now().subtract(const Duration(days: 6570)), // 18 years ago
       firstDate: DateTime(1900),
-      lastDate: DateTime.now(),
+      lastDate: DateTime.now().subtract(const Duration(days: 0)), // Yesterday
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
+            colorScheme: const ColorScheme.light(
               primary: AppColors.primaryColor,
               onPrimary: Colors.white,
               onSurface: Colors.black,
@@ -783,6 +788,13 @@ class UpdateProfileController extends BaseController {
           responseData['message'] ?? 'Profile updated successfully';
 
       if (success == true) {
+        // Analytics: Update user profile with address information
+        if (selectedAddress.value.isNotEmpty) {
+          await AnalyticsService.instance.setUserProfile(
+            city: await getCityFromAddress(selectedAddress.value.toString()),
+          );
+        }
+
         if (isProfilePictureRemoved.value) {
           profileImageUrl.value = '';
           isProfilePictureRemoved.value = false;
@@ -937,13 +949,34 @@ class UpdateProfileController extends BaseController {
 
         // Auto-fill address
         final fullAddress = addressParts.join(', ');
-        addressController.text = fullAddress;
-        selectedAddress.value = fullAddress;
+        // addressController.text = fullAddress;
+        // selectedAddress.value = fullAddress;
         addressError.value = ''; // Clear error when address is filled
       }
     } catch (e) {
       debugPrint('Error reverse geocoding: $e');
     }
+  }
+
+  Future<String?> getCityFromAddress(String address) async {
+    try {
+      List<Location> locations = await locationFromAddress(address);
+
+      if (locations.isNotEmpty) {
+        double lat = locations.first.latitude;
+        double lng = locations.first.longitude;
+
+        List<Placemark> placemarks = await placemarkFromCoordinates(lat, lng);
+
+        if (placemarks.isNotEmpty) {
+          return placemarks.first.locality!.toLowerCase(); // return city
+        }
+      }
+    } catch (e) {
+      print("Error: $e");
+    }
+
+    return null;
   }
 
   @override

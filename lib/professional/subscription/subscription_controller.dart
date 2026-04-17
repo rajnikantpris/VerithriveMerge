@@ -5,6 +5,7 @@ import '../../api/api_response.dart';
 import '../../api/user_api_service.dart';
 import '../../common/base_controller.dart';
 import '../../routes/app_routes.dart';
+import '../../services/analytics_service.dart';
 import '../../theme/image_paths.dart';
 
 class PlanOption {
@@ -12,7 +13,9 @@ class PlanOption {
     required this.id,
     required this.title,
     required this.priceLabel,
+    this.cutPriceLabel,
     this.perMonthLabel,
+    this.promoLabel,
     this.assetPath,
     required this.accentColor,
   });
@@ -20,7 +23,9 @@ class PlanOption {
   final String id;
   final String title;
   final String priceLabel;
+  final String? cutPriceLabel;
   final String? perMonthLabel;
+  final String? promoLabel;
   final String? assetPath;
   final Color accentColor;
 }
@@ -108,13 +113,22 @@ class SubscriptionController extends BaseController {
     try {
       final id = item['_id']?.toString() ?? item['id']?.toString() ?? '';
       final planName = item['plan_name']?.toString() ?? '';
-      final highlightLabel = item['highlight_label']?.toString() ?? '';
       final billingCycle = item['billing_cycle']?.toString() ?? '';
+      final currency = item['currency_code']?.toString() == 'GBP' ? '£' : '£';
 
       if (id.isEmpty || planName.isEmpty) return null;
 
-      // Use highlight_label as the main price label (e.g., "£565/year", "£159/quarter", "£59/month")
-      final priceLabel = highlightLabel.isNotEmpty ? highlightLabel : '';
+      // New pricing logic based on user request:
+      // Main Price: price_amount/billing_cycle
+      // Cut Price: equivalent_monthly_price/billing_cycle
+      final priceAmount = item['price_amount'];
+      final equivalentPrice = item['equivalent_monthly_price'];
+
+      final priceLabel = '$currency$priceAmount/$billingCycle';
+      String? cutPriceLabel;
+      if (equivalentPrice != null && equivalentPrice != priceAmount) {
+        cutPriceLabel = '$currency$equivalentPrice/$billingCycle';
+      }
 
       // Determine plan type
       final planNameLower = planName.toLowerCase();
@@ -127,19 +141,33 @@ class SubscriptionController extends BaseController {
       final isMonthly = planNameLower.contains('month') ||
           (billingCycleLower.contains('monthly') && !isYearly && !isQuarterly);
 
-      // Determine perMonthLabel (e.g., "£47/month", "£53/month")
+      // Determine perMonthLabel (e.g., "£41/month", "£45/month")
       String? perMonthLabel;
-      if (!isMonthly) {
-        final priceAmount = double.tryParse(item['price_amount']?.toString() ?? '');
-        if (priceAmount != null) {
-          int months = isYearly ? 12 : (isQuarterly ? 3 : 1);
-          if (months > 1) {
-            final monthlyPrice = (priceAmount / months).round();
-            // Default to GBP if not specified or different
-            final currency = item['currency_code']?.toString() == 'GBP' ? '£' : '£';
-            perMonthLabel = '$currency$monthlyPrice/month';
-          }
+      String? promoLabel;
+
+      final billingCycleCount = int.tryParse(item['billing_cycle_count']?.toString() ?? '1') ?? 1;
+      int months;
+      if (billingCycleLower == 'monthly') {
+        months = billingCycleCount;
+      } else if (billingCycleLower == 'quarterly') {
+        months = billingCycleCount * 3;
+      } else if (billingCycleLower == 'yearly') {
+        months = billingCycleCount * 12;
+      } else {
+        // Fallback to previous logic if billing_cycle is something else
+        months = isYearly ? 12 : (isQuarterly ? 3 : 1);
+      }
+
+      if (months > 1) {
+        final amount = double.tryParse(priceAmount?.toString() ?? '');
+        if (amount != null) {
+          final monthlyPrice = (amount / months).round();
+          perMonthLabel = '$currency$monthlyPrice/month';
         }
+      }
+
+      if (isYearly) {
+        promoLabel = 'or one month free!';
       }
 
       // Determine accent color based on plan type
@@ -166,7 +194,9 @@ class SubscriptionController extends BaseController {
         id: id,
         title: planName,
         priceLabel: priceLabel,
+        cutPriceLabel: cutPriceLabel,
         perMonthLabel: perMonthLabel,
+        promoLabel: promoLabel,
         assetPath: assetPath,
         accentColor: accentColor,
       );
@@ -181,7 +211,8 @@ class SubscriptionController extends BaseController {
       PlanOption(
         id: 'monthly',
         title: 'Monthly plan',
-        priceLabel: '£59/month',
+        priceLabel: '£49/monthly',
+        cutPriceLabel: '£59/monthly',
         perMonthLabel: null,
         assetPath: AppImages.monthly,
         accentColor: const Color(0xFF2FC4B2),
@@ -189,16 +220,18 @@ class SubscriptionController extends BaseController {
       PlanOption(
         id: 'quarterly',
         title: 'Quarterly plan',
-        priceLabel: '£159/quarter',
-        perMonthLabel: '£53/month',
+        priceLabel: '£137/quarterly',
+        cutPriceLabel: '£159/quarterly',
+        perMonthLabel: '£45/month',
         assetPath: AppImages.quarterly,
         accentColor: const Color(0xFFFF9100),
       ),
       PlanOption(
         id: 'yearly',
         title: 'Yearly plan',
-        priceLabel: '£565/year',
-        perMonthLabel: '£47/month',
+        priceLabel: '£539/monthly',
+        cutPriceLabel: '£565/monthly',
+        perMonthLabel: '£44/month',
         assetPath: AppImages.yearly,
         accentColor: const Color(0xFFA2A2A2),
       ),
@@ -221,6 +254,9 @@ class SubscriptionController extends BaseController {
         accentColor: Colors.transparent,
       ),
     );
+
+    // Analytics: Log professional subscription plan selected
+    
 
     Get.toNamed(
       Routes.paymentMethod,

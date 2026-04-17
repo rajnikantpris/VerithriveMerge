@@ -47,6 +47,23 @@ class ProfileSubscriptionController extends BaseController {
 
   String? _currentSubscriptionPlanId;
   String? _activeSubscriptionId;
+  final Set<String> _upcomingSubscriptionPlanIds = <String>{};
+  final Map<String, String> _upcomingPlanStartDateByPlanId = {};
+  String? _selectedSubscriptionStatus;
+
+  bool isPlanUpcoming(String? planId) {
+    if (planId == null || planId.isEmpty) return false;
+    return _upcomingSubscriptionPlanIds.contains(planId);
+  }
+
+  String upcomingPlanMessage(String? planId) {
+    if (!isPlanUpcoming(planId)) return '';
+    final startDate = planId == null ? null : _upcomingPlanStartDateByPlanId[planId];
+    if (startDate != null && startDate.isNotEmpty) {
+      return 'Next plan starts on $startDate';
+    }
+    return 'This plan will start in the next billing cycle';
+  }
 
   @override
   void onInit() {
@@ -106,21 +123,63 @@ class ProfileSubscriptionController extends BaseController {
       String? planId;
       String? expiryDate;
       String? cancelDate;
+      String? selectedStatus;
 
       if (data is Map<String, dynamic>) {
-        // Check for subscription object first
-        if (data['subscription'] is Map<String, dynamic>) {
-          final subscription = data['subscription'] as Map<String, dynamic>;
-          // Get active subscription record ID (_id) for cancellation
-          _activeSubscriptionId = subscription['_id'] as String?;
-          // Get subscription_id for plan highlighting in UI
-          planId = subscription['subscription_id'] as String?;
-          
-          expiryDate = subscription['expiry_date'] as String? ??
-              subscription['end_date'] as String? ??
-              subscription['expires_at'] as String?;
+        Map<String, dynamic>? selectedSubscription;
+        _upcomingSubscriptionPlanIds.clear();
+        _upcomingPlanStartDateByPlanId.clear();
 
-          cancelDate = subscription['cancel_date'] as String?;
+        // API may return a list of subscriptions; pick the best one.
+        if (data['subscriptions'] is List) {
+          final subscriptions = (data['subscriptions'] as List)
+              .whereType<Map<String, dynamic>>()
+              .toList();
+
+          for (final subscription in subscriptions) {
+            final status =
+                (subscription['status'] as String? ?? '').toLowerCase().trim();
+            if (status == 'upcoming' || status == 'pending') {
+              final upcomingPlanId =
+                  subscription['subscription_id'] as String?;
+              if (upcomingPlanId != null && upcomingPlanId.isNotEmpty) {
+                _upcomingSubscriptionPlanIds.add(upcomingPlanId);
+                final rawUpcomingStartDate = subscription['start_date'] as String? ??
+                    subscription['starts_at'] as String? ??
+                    subscription['next_billing_date'] as String? ??
+                    subscription['activation_date'] as String?;
+                if (rawUpcomingStartDate != null &&
+                    rawUpcomingStartDate.isNotEmpty) {
+                  try {
+                    final parsedDate = DateTime.parse(rawUpcomingStartDate);
+                    _upcomingPlanStartDateByPlanId[upcomingPlanId] =
+                        DateFormat('dd MMM yyyy').format(parsedDate);
+                  } catch (_) {}
+                }
+              }
+            }
+          }
+          selectedSubscription = _selectCurrentSubscription(subscriptions);
+        }
+
+        // Check for subscription object first
+        if (selectedSubscription == null &&
+            data['subscription'] is Map<String, dynamic>) {
+          selectedSubscription = data['subscription'] as Map<String, dynamic>;
+        }
+
+        if (selectedSubscription != null) {
+          // Get active subscription record ID (_id) for cancellation
+          _activeSubscriptionId = selectedSubscription['_id'] as String?;
+          // Get subscription_id for plan highlighting in UI
+          planId = selectedSubscription['subscription_id'] as String?;
+          selectedStatus = selectedSubscription['status'] as String?;
+
+          expiryDate = selectedSubscription['expiry_date'] as String? ??
+              selectedSubscription['end_date'] as String? ??
+              selectedSubscription['expires_at'] as String?;
+
+          cancelDate = selectedSubscription['cancel_date'] as String?;
         }
 
         // If not found, try plan object
@@ -157,7 +216,17 @@ class ProfileSubscriptionController extends BaseController {
       }
 
       _currentSubscriptionPlanId = planId;
-      isCancelled.value = cancelDate != null && cancelDate.isNotEmpty;
+      final normalizedStatus = selectedStatus?.toLowerCase().trim();
+      _selectedSubscriptionStatus = normalizedStatus;
+      if ((normalizedStatus == 'upcoming' || normalizedStatus == 'pending') &&
+          planId != null &&
+          planId.isNotEmpty) {
+        _upcomingSubscriptionPlanIds.add(planId);
+      }
+      final isStatusCancelled =
+          normalizedStatus == 'cancelled' || normalizedStatus == 'canceled';
+      isCancelled.value =
+          (cancelDate != null && cancelDate.isNotEmpty) || isStatusCancelled;
 
       if (expiryDate != null && expiryDate.isNotEmpty) {
         try {
@@ -173,10 +242,61 @@ class ProfileSubscriptionController extends BaseController {
 
       debugPrint('Active subscription ID (_id): $_activeSubscriptionId');
       debugPrint('Current plan ID: $_currentSubscriptionPlanId');
+      debugPrint('Selected subscription status: $selectedStatus');
+      debugPrint('Upcoming plan IDs: $_upcomingSubscriptionPlanIds');
+      debugPrint(
+          'Upcoming plan dates: $_upcomingPlanStartDateByPlanId');
       debugPrint('Active until date: ${activeUntilDate.value}');
     } catch (e) {
       debugPrint('Error parsing subscription details: $e');
     }
+  }
+
+  /// Pick the most relevant subscription for current-state UI:
+  /// active/trialing > upcoming/pending > latest record fallback.
+  Map<String, dynamic>? _selectCurrentSubscription(
+      List<Map<String, dynamic>> subscriptions) {
+    if (subscriptions.isEmpty) return null;
+
+    int score(Map<String, dynamic> sub) {
+      final status = (sub['status'] as String? ?? '').toLowerCase().trim();
+      switch (status) {
+        case 'active':
+        case 'trialing':
+          return 3;
+        case 'upcoming':
+        case 'pending':
+          return 2;
+        case 'cancelled':
+        case 'canceled':
+        case 'expired':
+          return 1;
+        default:
+          return 0;
+      }
+    }
+
+    int compareDateDesc(Map<String, dynamic> a, Map<String, dynamic> b) {
+      final aDateRaw =
+          a['updatedAt'] ?? a['createdAt'] ?? a['start_date'] ?? a['end_date'];
+      final bDateRaw =
+          b['updatedAt'] ?? b['createdAt'] ?? b['start_date'] ?? b['end_date'];
+      final aDate = DateTime.tryParse(aDateRaw?.toString() ?? '');
+      final bDate = DateTime.tryParse(bDateRaw?.toString() ?? '');
+      if (aDate == null && bDate == null) return 0;
+      if (aDate == null) return 1;
+      if (bDate == null) return -1;
+      return bDate.compareTo(aDate);
+    }
+
+    final sorted = [...subscriptions];
+    sorted.sort((a, b) {
+      final scoreCompare = score(b).compareTo(score(a));
+      if (scoreCompare != 0) return scoreCompare;
+      return compareDateDesc(a, b);
+    });
+
+    return sorted.first;
   }
 
   /// Parse subscription plans from API response
@@ -212,8 +332,11 @@ class ProfileSubscriptionController extends BaseController {
       }
 
       if (parsedPlans.isNotEmpty) {
-        // Mark current plan based on subscription details
-        if (_currentSubscriptionPlanId != null) {
+        // Mark active/trialing plan as current based on subscription details.
+        final shouldMarkAsCurrentPlan =
+            _selectedSubscriptionStatus == 'active' ||
+                _selectedSubscriptionStatus == 'trialing';
+        if (shouldMarkAsCurrentPlan && _currentSubscriptionPlanId != null) {
           for (var plan in parsedPlans) {
             if (plan.id == _currentSubscriptionPlanId) {
               // Create a new plan with isCurrentPlan = true
@@ -273,6 +396,12 @@ class ProfileSubscriptionController extends BaseController {
       return;
     }
 
+    // Do not allow buying a plan that is already marked as upcoming.
+    if (isPlanUpcoming(plan.id)) {
+      debugPrint('Plan is already upcoming');
+      return;
+    }
+
     // Check for downgrade restriction
     final current = currentPlan;
     if (current != null) {
@@ -298,7 +427,7 @@ class ProfileSubscriptionController extends BaseController {
       Routes.paymentMethod,
       arguments: {
         'planId': plan.id!,
-        'planName': plan.name ?? '',
+        'planName': plan.name,
         'isFromSignup': false,
       },
     );

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:verithrive_dev/services/analytics_service.dart';
 import '../../core/base/base_controller.dart';
 import '../../data/repository/project_repository.dart';
 import '../../models/Conversation.dart';
@@ -395,20 +396,10 @@ class ChatDetailController extends BaseController {
 
       debugPrint('Attempting to connect socket...');
       await _socketService!.connect(userId: _currentUserId);
-
-      // debugPrint('Waiting for socket connection...');
-      // final connected = await _socketService!.waitForConnection(
-      //   timeout: const Duration(seconds: 10),
-      // );
-      //
-      // if (!connected) {
-      //   debugPrint('Failed to connect socket within timeout');
-      //   // Still try to send - socket might be connecting
-      //   debugPrint('Attempting to send message anyway...');
-      // } else {
-      //   debugPrint('Socket connected successfully');
-      // }
     }
+
+    // Analytics: Log message sent event
+    
 
     // Check if chat ID is available
     if (_chatId == null || _chatId!.isEmpty) {

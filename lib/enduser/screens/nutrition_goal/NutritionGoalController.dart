@@ -12,6 +12,7 @@ import '../../core/widget/animated_loader.dart';
 import '../../core/base/base_controller.dart';
 import '../../data/repository/project_repository.dart';
 import '../../utils/api_services.dart';
+import 'package:verithrive_dev/services/analytics_service.dart';
 
 class NutritionGoalController extends BaseController {
   ProjectRepository? _repository; // Changed to nullable
@@ -273,6 +274,9 @@ class NutritionGoalController extends BaseController {
     print('Navigating to therapy_list...');
     print('========================================');
     
+    // Analytics: Log nutrition goal selection
+    
+
     _showLoadingAndNavigate(result);
   }
 

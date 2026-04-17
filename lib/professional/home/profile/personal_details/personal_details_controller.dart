@@ -12,6 +12,7 @@ import '../../../../common/base_controller.dart';
 import '../../../../models/profile_details_model.dart';
 import '../../../../models/profession_sub_type_model.dart';
 import '../../../../models/profession_type_model.dart';
+import '../../../../services/analytics_service.dart';
 import '../../../../services/camera_storage_permission_service.dart';
 import '../../../../theme/colors.dart';
 import '../../../../theme/fonts.dart';
@@ -534,6 +535,12 @@ class PersonalDetailsController extends BaseController {
       onSuccess: (response) {
         if (response.success) {
           _refreshProfile();
+          // Track persona in analytics when profile is updated
+          if (selectedProfessionType.value != null) {
+            AnalyticsService.instance.setUserProfile(
+              persona: selectedProfessionType.value!.toLowerCase(),
+            );
+          }
           showResponseDialog(
             message: response.message ?? 'Profile updated successfully',
             title: 'Success',

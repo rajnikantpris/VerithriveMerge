@@ -20,8 +20,10 @@ import '../main/MainScreen.dart';
 import '../profile/ProfileBinding.dart';
 import '../profile/ProfileView.dart';
 import 'dart:convert';
+import 'package:geocoding/geocoding.dart';
 
 import '../therapy_details/TherapistDetailController.dart';
+import '../../../services/analytics_service.dart';
 
 class LoginController extends BaseController {
   late final formKey = GlobalKey<FormState>();
@@ -512,6 +514,16 @@ class LoginController extends BaseController {
           );
         }
 
+        await AnalyticsService.instance.setUserProfile(
+          loginState: 'logged_in',
+          userId: user?.id,
+          persona: 'end_user',
+          city: await getCityFromAddress(user!.address.toString()),
+          plan: 'null',
+          registrationType: user.registrationType ??
+              ((user.isSocialLogin ?? false) ? 'social' : 'regular'),
+        );
+
         if(guestUser.isNotEmpty && guestUser == "guest"){
           final TherapistDetailController controller = Get.put(TherapistDetailController());
           controller.getPreferenceDetails();
@@ -563,6 +575,28 @@ class LoginController extends BaseController {
         },
       );
     }
+  }
+
+  Future<String?> getCityFromAddress(String address) async {
+    try {
+      List<Location> locations = await locationFromAddress(address);
+
+      if (locations.isNotEmpty) {
+        double lat = locations.first.latitude;
+        double lng = locations.first.longitude;
+
+        List<Placemark> placemarks =
+        await placemarkFromCoordinates(lat, lng);
+
+        if (placemarks.isNotEmpty) {
+          return placemarks.first.locality!.toLowerCase(); // return city
+        }
+      }
+    } catch (e) {
+      print("Error: $e");
+    }
+
+    return null;
   }
 
   void handleOnError(dynamic e) {

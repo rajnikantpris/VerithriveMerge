@@ -1,5 +1,6 @@
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:verithrive_dev/services/analytics_service.dart';
 import '../../core/base/base_controller.dart';
 import '../../data/repository/project_repository.dart';
 import '../../utils/api_services.dart';
@@ -385,6 +386,10 @@ class TherapistController extends BaseController {
       
       if (success == true && responseData['data'] != null) {
         Map<String, dynamic> dataMap = responseData['data'] as Map<String, dynamic>;
+
+        // Analytics: Log search results
+        
+
         List<dynamic>? itemsList = dataMap['items'] as List<dynamic>?;
         
         if (itemsList != null && itemsList.isNotEmpty) {
@@ -569,6 +574,9 @@ class TherapistController extends BaseController {
     final therapist = therapists[therapistIndex];
     final currentFavoriteStatus = therapist.isFavorite;
     
+    // Analytics: Log favorite toggle
+    
+
     // Optimistically update UI (will revert if API fails)
     _updateTherapistFavoriteStatus(id, !currentFavoriteStatus);
     

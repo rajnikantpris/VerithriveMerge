@@ -7,6 +7,7 @@ import '../../common/base_controller.dart';
 import '../../models/login_response_model.dart';
 import '../../routes/app_routes.dart';
 import '../../services/storage_service.dart';
+import '../../services/analytics_service.dart';
 import '../../theme/image_paths.dart';
 import '../../widgets/response_dialog.dart';
 import '../payment_view/payment_webview_screen.dart';
@@ -109,8 +110,9 @@ class PaymentMethodController extends BaseController {
 
             if (checkoutUrl != null && checkoutUrl.isNotEmpty) {
               // Open Stripe Checkout in WebView
-              final result = await Get.to(() => PaymentWebViewScreen(url: checkoutUrl));
-              
+              final result =
+                  await Get.to(() => PaymentWebViewScreen(url: checkoutUrl));
+
               // When returning from WebView, check result and navigate if successful
               if (result == 'success') {
                 await _checkPaymentStatusAndNavigate(response.data?.user);
@@ -159,6 +161,7 @@ class PaymentMethodController extends BaseController {
   }
 
   Future<void> _checkPaymentStatusAndNavigate(UserModel? user) async {
+
     // Extract user flags and ensure is_payment is true
     final userFlags = _extractUserFlagsFromModel(user);
     userFlags['is_payment'] = true;
@@ -182,7 +185,8 @@ class PaymentMethodController extends BaseController {
     );
   }
 
-  Future<void> _handleLegacySuccess(ApiResponse<LoginResponseModel> response) async {
+  Future<void> _handleLegacySuccess(
+      ApiResponse<LoginResponseModel> response) async {
     if (response.data != null) {
       final loginData = response.data!;
       final token = loginData.token;
@@ -190,7 +194,7 @@ class PaymentMethodController extends BaseController {
         await _storageService?.writeString('access_token', token);
       }
     }
-    
+
     await _checkPaymentStatusAndNavigate(response.data?.user);
   }
 
@@ -204,7 +208,8 @@ class PaymentMethodController extends BaseController {
     flags['is_work_full'] = user.isWorkFull ?? false;
     flags['is_professional_services'] = user.isProfessionalServices ?? false;
     flags['is_qualification'] = user.isQualification ?? false;
-    flags['is_personal_identification'] = user.isPersonalIdentification ?? false;
+    flags['is_personal_identification'] =
+        user.isPersonalIdentification ?? false;
     flags['is_about_you'] = user.isAboutYou ?? false;
     flags['is_payment'] = user.isPayment ?? false;
 

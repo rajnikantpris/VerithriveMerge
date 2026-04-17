@@ -54,6 +54,12 @@ class ForegroundNotificationService {
 
   /// Stores pending notification data when app is opened from terminated state
   static RemoteMessage? _pendingNotification;
+//New Code
+  /// Stores pending booking tab navigation when app is at splash screen
+  static int? _pendingBookingNavigation;
+//New Code
+  /// Stores pending review dialog data when app is at splash screen
+  static Map<String, String>? _pendingReviewDialogData;
 
   /// Track the last handled notification message ID to prevent duplicate handling
   static String? _lastHandledNotificationId;
@@ -109,6 +115,50 @@ class ForegroundNotificationService {
       logInfo(
           'Handling pending notification after Home loaded: ${message.messageId}');
       _handleNotificationTap(message);
+    }
+  }
+//New Code
+  /// Handle pending booking navigation - call this from Main after it's ready
+  static void handlePendingBookingNavigationIfAny() {
+    if (_pendingBookingNavigation != null) {
+      final tabIndex = _pendingBookingNavigation!;
+      _pendingBookingNavigation = null;
+      logInfo(
+          'Handling pending booking navigation after Main loaded: tab $tabIndex');
+      if (Get.isRegistered<MainTabController>()) {
+        final controller = Get.find<MainTabController>();
+        controller.setTab(tabIndex);
+        logInfo(
+            'End user switched to tab $tabIndex via MainTabController (pending)');
+        if (tabIndex == 1 &&
+            Get.isRegistered<BookingsController>(tag: 'bookings')) {
+          try {
+            final bookingsController =
+                Get.find<BookingsController>(tag: 'bookings');
+            bookingsController.refreshData();
+            logInfo(
+                'End user refreshed bookings data after pending navigation');
+          } catch (e) {
+            logError(
+                'Error refreshing end user bookings after pending navigation: $e');
+          }
+        }
+      }
+    }
+  }
+//New Code
+  /// Handle pending review dialog - call this from Main after it's ready
+  static void handlePendingReviewDialogIfAny() {
+    if (_pendingReviewDialogData != null) {
+      final data = _pendingReviewDialogData!;
+      _pendingReviewDialogData = null;
+      logInfo(
+          'Handling pending review dialog after Main loaded: ${data['professionalName']}');
+      _showEndUserReviewDialogWithRetry(
+        data['professionalName'] ?? 'Professional',
+        data['professionalId'] ?? '',
+        data['bookingId'] ?? '',
+      );
     }
   }
 
@@ -1420,6 +1470,10 @@ class ForegroundNotificationService {
                 'Error refreshing end user bookings after switching tab: $e');
           }
         }
+      } else if (Get.currentRoute == enduser_routes.AppRoutes.splash) {
+        logInfo(
+            'App still at splash screen, storing pending navigation to Bookings tab');
+        _pendingBookingNavigation = 1;
       } else {
         Get.toNamed(enduser_routes.AppRoutes.main,
             arguments: {'openTab': 1});
@@ -1452,11 +1506,29 @@ class ForegroundNotificationService {
 
       logInfo(
           'Opening end user review dialog for professional: $professionalName, ID: $professionalId, Booking: $bookingId');
+//New Code
+      if (Get.currentRoute == enduser_routes.AppRoutes.splash) {
+        logInfo(
+            'App still at splash screen, storing pending review dialog');
+        _pendingReviewDialogData = {
+          'professionalName': professionalName,
+          'professionalId': professionalId,
+          'bookingId': bookingId,
+        };
+        return;
+      }
 
-      await Get.toNamed(
-        enduser_routes.AppRoutes.main,
-        arguments: {'openTab': 0},
-      );
+      if (Get.isRegistered<MainTabController>()) {
+        final controller = Get.find<MainTabController>();
+        controller.setTab(0);
+        logInfo(
+            'End user switched to Home tab via MainTabController');
+      } else {
+        await Get.toNamed(
+          enduser_routes.AppRoutes.main,
+          arguments: {'openTab': 0},
+        );
+      }
 
       _showEndUserReviewDialogWithRetry(
           professionalName, professionalId, bookingId);

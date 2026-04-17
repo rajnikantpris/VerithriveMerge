@@ -6,6 +6,7 @@ import 'package:verithrive_dev/enduser/screens/therapy_list/TherapistListingScre
 import 'package:verithrive_dev/enduser/screens/therapy_list/TherapyBinding.dart';
 import '../../utils/location_service.dart';
 import '../../utils/AppText.dart';
+import '../../../services/analytics_service.dart';
 
 class AppointmentController extends GetxController {
   var isLastMinute = false.obs;
@@ -128,7 +129,10 @@ class AppointmentController extends GetxController {
     // Add location
     args['latitude'] = location['latitude'];
     args['longitude'] = location['longitude'];
+
+    // Analytics: Log search event
     
+
     // Log what we're passing
     print('========================================');
     print('APPOINTMENT CONTROLLER - PASSING ARGUMENTS');

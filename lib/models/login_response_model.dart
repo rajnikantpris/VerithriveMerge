@@ -1,21 +1,40 @@
 class LoginResponseModel {
+  final bool? success;
+  final String? message;
   final String? token;
   final UserModel? user;
 
   const LoginResponseModel({
+    this.success,
+    this.message,
     this.token,
     this.user,
   });
 
-  factory LoginResponseModel.fromJson(Map<String, dynamic> json) =>
-      LoginResponseModel(
-        token: json['token'] as String?,
-        user: json['user'] is Map<String, dynamic>
-            ? UserModel.fromJson(json['user'] as Map<String, dynamic>)
-            : null,
-      );
+  factory LoginResponseModel.fromJson(Map<String, dynamic> json) {
+    // Your API returns:
+    // { success, message, data: { token, user: {...} } }
+    // But some callers may still pass { token, user } directly.
+    final dataNode = json['data'];
+    final Map<String, dynamic>? dataMap =
+        dataNode is Map<String, dynamic> ? dataNode : null;
+
+    final dynamic tokenNode = dataMap?['token'] ?? json['token'];
+    final dynamic userNode = dataMap?['user'] ?? json['user'];
+
+    return LoginResponseModel(
+      success: json['success'] as bool?,
+      message: json['message'] as String?,
+      token: tokenNode is String ? tokenNode : null,
+      user: userNode is Map<String, dynamic>
+          ? UserModel.fromJson(userNode)
+          : null,
+    );
+  }
 
   Map<String, dynamic> toJson() => <String, dynamic>{
+        if (success != null) 'success': success,
+        if (message != null) 'message': message,
         if (token != null) 'token': token,
         if (user != null) 'user': user!.toJson(),
       };
@@ -57,9 +76,45 @@ class UserModel {
   final bool? isPayment;
   final String? mobileNumber;
   final String? createdAt;
+  final String? profession_name;
+  final String? profession_sub_name;
   final String? updatedAt;
   final String? lastLoginEmail;
   final String? lastLoginType;
+
+  // Extra fields present in the latest login payload
+  final String? promoCodeUsedType;
+  final String? promoCodeUsedAt;
+  final bool? promoCodeUsed;
+
+  final String? fcmToken;
+  final bool? isOnline;
+  final String? lastSeenAt;
+
+  final String? address;
+  final String? dob;
+  final String? gender;
+  final String? postcode;
+  final double? latitude;
+  final double? longitude;
+
+  final bool? optStatus;
+
+  final bool? stripeConnectChargesEnabled;
+  final bool? stripeConnectPayoutsEnabled;
+  final String? stripeConnectStatus;
+  final String? stripeConnectAccountId;
+  final String? stripeCustomerId;
+
+  final List<dynamic>? reviewMilestones;
+
+  final String? description;
+  final String? approvedAt;
+
+  final String? lastProfessionalQualificationNotificationAt;
+  final String? lastProfessionalCompletionMilestoneNotificationAt;
+  final String? lastProfessionalOnboardingNotificationAt;
+  final String? lastProfessionalAvailabilityNotificationAt;
 
   const UserModel({
     this.id,
@@ -87,6 +142,8 @@ class UserModel {
     this.tokenVersion,
     this.isPersonalDetails,
     this.isTermCondition,
+    this.profession_sub_name,
+    this.profession_name,
     this.isProfileCreated,
     this.isWorkFull,
     this.isProfessionalServices,
@@ -100,6 +157,31 @@ class UserModel {
     this.updatedAt,
     this.lastLoginEmail,
     this.lastLoginType,
+    this.promoCodeUsedType,
+    this.promoCodeUsedAt,
+    this.promoCodeUsed,
+    this.fcmToken,
+    this.isOnline,
+    this.lastSeenAt,
+    this.address,
+    this.dob,
+    this.gender,
+    this.postcode,
+    this.latitude,
+    this.longitude,
+    this.optStatus,
+    this.stripeConnectChargesEnabled,
+    this.stripeConnectPayoutsEnabled,
+    this.stripeConnectStatus,
+    this.stripeConnectAccountId,
+    this.stripeCustomerId,
+    this.reviewMilestones,
+    this.description,
+    this.approvedAt,
+    this.lastProfessionalQualificationNotificationAt,
+    this.lastProfessionalCompletionMilestoneNotificationAt,
+    this.lastProfessionalOnboardingNotificationAt,
+    this.lastProfessionalAvailabilityNotificationAt,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) => UserModel(
@@ -141,6 +223,41 @@ class UserModel {
         updatedAt: json['updatedAt'] as String?,
         lastLoginEmail: json['last_login_email'] as String?,
         lastLoginType: json['last_login_type'] as String?,
+    profession_name: json['profession_name'] as String?,
+    profession_sub_name: json['profession_sub_name'] as String?,
+        promoCodeUsedType: json['promo_code_used_type'] as String?,
+        promoCodeUsedAt: json['promo_code_used_at'] as String?,
+        promoCodeUsed: _asBool(json['promo_code_used']),
+        fcmToken: json['fcm_token'] as String?,
+        isOnline: _asBool(json['is_online']),
+        lastSeenAt: json['last_seen_at'] as String?,
+        address: json['address'] as String?,
+        dob: json['dob'] as String?,
+        gender: json['gender'] as String?,
+        postcode: json['postcode'] as String?,
+        latitude: _asDouble(json['latitude']),
+        longitude: _asDouble(json['longitude']),
+        optStatus: _asBool(json['opt_status']),
+        stripeConnectChargesEnabled:
+            _asBool(json['stripe_connect_charges_enabled']),
+        stripeConnectPayoutsEnabled:
+            _asBool(json['stripe_connect_payouts_enabled']),
+        stripeConnectStatus: json['stripe_connect_status'] as String?,
+        stripeConnectAccountId: json['stripe_connect_account_id'] as String?,
+        stripeCustomerId: json['stripe_customer_id'] as String?,
+        reviewMilestones: json['review_milestones'] as List<dynamic>?,
+        description: json['description'] as String?,
+        approvedAt: json['approved_at'] as String?,
+        lastProfessionalQualificationNotificationAt:
+            json['last_professional_qualification_notification_at']
+                as String?,
+        lastProfessionalCompletionMilestoneNotificationAt:
+            json['last_professional_completion_milestone_notification_at']
+                as String?,
+        lastProfessionalOnboardingNotificationAt:
+            json['last_professional_onboarding_notification_at'] as String?,
+        lastProfessionalAvailabilityNotificationAt:
+            json['last_professional_availability_notification_at'] as String?,
       );
 
   Map<String, dynamic> toJson() => <String, dynamic>{
@@ -184,5 +301,57 @@ class UserModel {
         if (updatedAt != null) 'updatedAt': updatedAt,
         if (lastLoginEmail != null) 'last_login_email': lastLoginEmail,
         if (lastLoginType != null) 'last_login_type': lastLoginType,
+        if (promoCodeUsedType != null) 'promo_code_used_type': promoCodeUsedType,
+        if (promoCodeUsedAt != null) 'promo_code_used_at': promoCodeUsedAt,
+        if (promoCodeUsed != null) 'promo_code_used': promoCodeUsed,
+        if (fcmToken != null) 'fcm_token': fcmToken,
+        if (isOnline != null) 'is_online': isOnline,
+        if (lastSeenAt != null) 'last_seen_at': lastSeenAt,
+        if (address != null) 'address': address,
+        if (dob != null) 'dob': dob,
+        if (gender != null) 'gender': gender,
+        if (postcode != null) 'postcode': postcode,
+        if (latitude != null) 'latitude': latitude,
+        if (longitude != null) 'longitude': longitude,
+        if (optStatus != null) 'opt_status': optStatus,
+        if (stripeConnectChargesEnabled != null)
+          'stripe_connect_charges_enabled': stripeConnectChargesEnabled,
+        if (stripeConnectPayoutsEnabled != null)
+          'stripe_connect_payouts_enabled': stripeConnectPayoutsEnabled,
+        if (stripeConnectStatus != null) 'stripe_connect_status': stripeConnectStatus,
+        if (stripeConnectAccountId != null)
+          'stripe_connect_account_id': stripeConnectAccountId,
+        if (stripeCustomerId != null) 'stripe_customer_id': stripeCustomerId,
+        if (reviewMilestones != null) 'review_milestones': reviewMilestones,
+        if (description != null) 'description': description,
+        if (approvedAt != null) 'approved_at': approvedAt,
+        if (lastProfessionalQualificationNotificationAt != null)
+          'last_professional_qualification_notification_at':
+              lastProfessionalQualificationNotificationAt,
+        if (lastProfessionalCompletionMilestoneNotificationAt != null)
+          'last_professional_completion_milestone_notification_at':
+              lastProfessionalCompletionMilestoneNotificationAt,
+        if (lastProfessionalOnboardingNotificationAt != null)
+          'last_professional_onboarding_notification_at':
+              lastProfessionalOnboardingNotificationAt,
+        if (lastProfessionalAvailabilityNotificationAt != null)
+          'last_professional_availability_notification_at':
+              lastProfessionalAvailabilityNotificationAt,
       };
+}
+
+double? _asDouble(dynamic value) {
+  if (value == null) return null;
+  if (value is num) return value.toDouble();
+  return double.tryParse(value.toString());
+}
+
+bool? _asBool(dynamic value) {
+  if (value == null) return null;
+  if (value is bool) return value;
+  if (value is num) return value != 0;
+  final normalized = value.toString().toLowerCase().trim();
+  if (normalized == 'true') return true;
+  if (normalized == 'false') return false;
+  return null;
 }

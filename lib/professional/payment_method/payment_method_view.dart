@@ -55,7 +55,6 @@ class PaymentMethodView extends BaseView<PaymentMethodController> {
         child: Obx(
           () => SizedBox(
             width: double.infinity,
-
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColor.color_2FC4B2,
@@ -63,8 +62,7 @@ class PaymentMethodView extends BaseView<PaymentMethodController> {
                 foregroundColor: AppColor.white,
                 disabledForegroundColor: AppColor.white.withOpacity(0.9),
                 elevation: 0,
-                minimumSize:
-                Size(double.infinity, HightWidthSizes.setValue_45),
+                minimumSize: Size(double.infinity, HightWidthSizes.setValue_45),
                 padding: EdgeInsets.symmetric(
                     vertical: HightWidthSizes.setValue_12,
                     horizontal: HightWidthSizes.setValue_16),
@@ -74,8 +72,7 @@ class PaymentMethodView extends BaseView<PaymentMethodController> {
                   ),
                 ),
               ),
-              onPressed:
-                  controller.selectedMethodId.value.isEmpty ||
+              onPressed: controller.selectedMethodId.value.isEmpty ||
                       controller.isConfirming.value
                   ? null
                   : controller.confirmPayment,
@@ -145,9 +142,8 @@ class PaymentMethodView extends BaseView<PaymentMethodController> {
                 isSelected
                     ? Icons.radio_button_checked
                     : Icons.radio_button_off,
-                color: isSelected
-                    ? AppColor.color_2FC4B2
-                    : AppColor.color_9D9D9D,
+                color:
+                    isSelected ? AppColor.color_2FC4B2 : AppColor.color_9D9D9D,
               ),
             ],
           ),
@@ -160,7 +156,6 @@ class PaymentMethodView extends BaseView<PaymentMethodController> {
     return Container(
       height: HightWidthSizes.setValue_36,
       width: HightWidthSizes.setValue_36,
-
       child: Center(
         child: method.assetPath != null
             ? _assetIcon(method.assetPath!)

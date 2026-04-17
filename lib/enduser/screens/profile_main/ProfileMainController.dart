@@ -2,16 +2,15 @@ import 'package:get/get.dart';
 import 'package:verithrive_dev/select_user/select_user_binding.dart';
 import 'package:verithrive_dev/select_user/select_user_view.dart';
 import '../../core/values/sharePrefrenceConst.dart';
-import '../../routes/app_routes.dart';
 import '../../core/base/base_controller.dart';
 import '../../data/repository/project_repository.dart';
 import '../../network/exceptions/base_exception.dart';
 import '../../utils/api_services.dart';
 import '../../utils/common_dialog.dart';
 import '../../utils/auth_service.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:verithrive_dev/services/storage_service.dart';
 import 'package:verithrive_dev/services/social_auth_service.dart';
+import 'package:verithrive_dev/services/analytics_service.dart';
 import 'package:verithrive_dev/services/socket_service.dart' as prof_socket;
 import '../message/socket_service.dart';
 
@@ -88,6 +87,9 @@ class ProfileMainController extends BaseController {
       String message = responseData['message'] ?? 'Logout successful';
 
       if (success == true) {
+        
+        await AnalyticsService.instance.clearUser();
+
         await performLogout();
         // Show success dialog with API message
         // showResponseDialog(
