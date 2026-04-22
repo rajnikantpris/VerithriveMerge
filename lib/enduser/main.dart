@@ -456,7 +456,7 @@ void _openBookingsTab() {
 
 Future<void> main() async {
   EnvConfig prodConfig = EnvConfig(
-    appName: "VERITHRIVE",
+    appName: "VeriThrive",
     baseUrl: "",
     shouldCollectCrashLog: true,
   );

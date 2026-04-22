@@ -172,7 +172,132 @@ class HomeMainController extends BaseController with WidgetsBindingObserver {
           );
         }).toList();
 
-        professionCategories.value = categories;
+        // Reorder categories to: Fitness, Wellness, Food & Nutrition
+        final List<ProfessionCategory> reorderedCategories = [];
+        final List<ProfessionCategory> remainingCategories = List.from(categories);
+
+        // Add Fitness first with reordered sub-types
+        final fitnessCategory = remainingCategories.firstWhereOrNull(
+          (cat) => cat.type.toLowerCase().contains('fitness'),
+        );
+        if (fitnessCategory != null) {
+          // Reorder Fitness sub-types to: Personal trainer, Fitness coach, Fitness instructor
+          final List<SubTypeModel> reorderedSubTypes = [];
+          final List<SubTypeModel> remainingSubTypes = List.from(fitnessCategory.subTypes);
+
+          // Add Personal trainer first
+          final personalTrainer = remainingSubTypes.firstWhereOrNull(
+            (sub) => sub.subType.toLowerCase().contains('personal trainer'),
+          );
+          if (personalTrainer != null) {
+            reorderedSubTypes.add(personalTrainer);
+            remainingSubTypes.remove(personalTrainer);
+          }
+
+          // Add Fitness coach second
+          final fitnessCoach = remainingSubTypes.firstWhereOrNull(
+            (sub) => sub.subType.toLowerCase().contains('fitness coach'),
+          );
+          if (fitnessCoach != null) {
+            reorderedSubTypes.add(fitnessCoach);
+            remainingSubTypes.remove(fitnessCoach);
+          }
+
+          // Add Fitness instructor third
+          final fitnessInstructor = remainingSubTypes.firstWhereOrNull(
+            (sub) => sub.subType.toLowerCase().contains('fitness instructor'),
+          );
+          if (fitnessInstructor != null) {
+            reorderedSubTypes.add(fitnessInstructor);
+            remainingSubTypes.remove(fitnessInstructor);
+          }
+
+          // Add any remaining sub-types in their original order
+          reorderedSubTypes.addAll(remainingSubTypes);
+
+          // Create new category with reordered sub-types
+          final reorderedFitnessCategory = ProfessionCategory(
+            id: fitnessCategory.id,
+            type: fitnessCategory.type,
+            subTypes: reorderedSubTypes,
+          );
+          reorderedCategories.add(reorderedFitnessCategory);
+          remainingCategories.remove(fitnessCategory);
+        }
+
+        // Add Wellness second
+        final wellnessCategory = remainingCategories.firstWhereOrNull(
+          (cat) => cat.type.toLowerCase().contains('wellness'),
+        );
+        if (wellnessCategory != null) {
+          // Reorder Wellness sub-types to: Physiotherapist, Chiropractor, Osteopath, Sports therapist
+          final List<SubTypeModel> reorderedSubTypes = [];
+          final List<SubTypeModel> remainingSubTypes = List.from(wellnessCategory.subTypes);
+
+          // Add Physiotherapist first
+          final physiotherapist = remainingSubTypes.firstWhereOrNull(
+            (sub) => sub.subType.toLowerCase().contains('physiotherapist'),
+          );
+          if (physiotherapist != null) {
+            reorderedSubTypes.add(physiotherapist);
+            remainingSubTypes.remove(physiotherapist);
+          }
+
+          // Add Chiropractor second
+          final chiropractor = remainingSubTypes.firstWhereOrNull(
+            (sub) => sub.subType.toLowerCase().contains('chiropractor'),
+          );
+          if (chiropractor != null) {
+            reorderedSubTypes.add(chiropractor);
+            remainingSubTypes.remove(chiropractor);
+          }
+
+          // Add Osteopath third
+          final osteopath = remainingSubTypes.firstWhereOrNull(
+            (sub) => sub.subType.toLowerCase().contains('osteopath'),
+          );
+          if (osteopath != null) {
+            reorderedSubTypes.add(osteopath);
+            remainingSubTypes.remove(osteopath);
+          }
+
+          // Add Sports therapist fourth
+          final sportsTherapist = remainingSubTypes.firstWhereOrNull(
+            (sub) => sub.subType.toLowerCase().contains('sports therapist') ||
+                       sub.subType.toLowerCase().contains('sports therapy'),
+          );
+          if (sportsTherapist != null) {
+            reorderedSubTypes.add(sportsTherapist);
+            remainingSubTypes.remove(sportsTherapist);
+          }
+
+          // Add any remaining sub-types in their original order
+          reorderedSubTypes.addAll(remainingSubTypes);
+
+          // Create new category with reordered sub-types
+          final reorderedWellnessCategory = ProfessionCategory(
+            id: wellnessCategory.id,
+            type: wellnessCategory.type,
+            subTypes: reorderedSubTypes,
+          );
+          reorderedCategories.add(reorderedWellnessCategory);
+          remainingCategories.remove(wellnessCategory);
+        }
+
+        // Add Food & Nutrition third
+        final foodNutritionCategory = remainingCategories.firstWhereOrNull(
+          (cat) => cat.type.toLowerCase().contains('food') || 
+                   cat.type.toLowerCase().contains('nutrition'),
+        );
+        if (foodNutritionCategory != null) {
+          reorderedCategories.add(foodNutritionCategory);
+          remainingCategories.remove(foodNutritionCategory);
+        }
+
+        // Add any remaining categories in their original order
+        reorderedCategories.addAll(remainingCategories);
+
+        professionCategories.value = reorderedCategories;
       }
 
       isLoading.value = false;

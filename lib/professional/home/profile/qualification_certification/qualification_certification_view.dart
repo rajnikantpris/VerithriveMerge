@@ -77,22 +77,31 @@ class QualificationCertificationView
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                  /*  Text(
-                      'Qualification & certification',
-                      style: TextStyle(
-                        fontFamily: AppFonts.rubikMedium,
-                        fontWeight: FontWeight.w500,
-                        fontSize: FontSizes.setFontValue_16,
-                        color: AppColor.color_2D3648,
-                      ),
-                    ),*/
-                    Text(
-                      'Please add all relevant qualifications',
-                      style: TextStyle(
-                        fontFamily: AppFonts.rubikMedium,
-                        fontWeight: FontWeight.w500,
-                        fontSize: FontSizes.setFontValue_15,
-                        color: AppColor.color_2D3648,
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Please add all relevant qualifications',
+                            style: TextStyle(
+                              fontFamily: AppFonts.rubikMedium,
+                              fontWeight: FontWeight.w500,
+                              fontSize: FontSizes.setFontValue_15,
+                              color: AppColor.color_2D3648,
+                            ),
+                          ),
+                          SizedBox(height: HightWidthSizes.setValue_2),
+                          Text(
+                            '(Degrees, Professional Certifications, First Aid, Training)',
+                            style: TextStyle(
+                              fontFamily: AppFonts.rubikRegular,
+                              fontWeight: FontWeight.w400,
+                              fontSize: FontSizes.setFontValue_9,
+                              color: AppColor.color_2D2D2D,
+                              height: 1.4,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                     GestureDetector(
@@ -514,9 +523,12 @@ class QualificationCertificationView
         child: Obx(
             () => ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColor.color_2FC4B2,
+                backgroundColor: controller.hasValidData.value
+                    ? AppColor.color_2FC4B2
+                    : AppColor.color_2FC4B2.withOpacity(0.5),
                 foregroundColor: AppColor.white,
                 elevation: 0,
+                disabledBackgroundColor: AppColor.color_96E1D8,
                 minimumSize: Size(double.infinity, HightWidthSizes.setValue_45),
                 padding: EdgeInsets.symmetric(
                     vertical: HightWidthSizes.setValue_12,
@@ -527,7 +539,9 @@ class QualificationCertificationView
                   ),
                 ),
               ),
-              onPressed: controller.isLoading.value ? null : controller.onUpdateDetails,
+              onPressed: (controller.hasValidData.value && !controller.isLoading.value)
+                  ? controller.onUpdateDetails
+                  : null,
               child: controller.isLoading.value
                   ? Row(
                       mainAxisAlignment: MainAxisAlignment.center,

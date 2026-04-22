@@ -48,6 +48,7 @@ class QualificationCertificationController extends BaseController {
   final removedQualificationIds = <String>[].obs;
   final hasValidated = false.obs;
   final isLoading = false.obs;
+  final hasValidData = false.obs;
 
   QualificationCertificationController(this._userApiService);
 
@@ -55,6 +56,8 @@ class QualificationCertificationController extends BaseController {
   void onInit() {
     super.onInit();
     formKey = GlobalKey<FormState>();
+    // Add listener to years experience controller
+    yearsExperienceController.addListener(_checkHasValidData);
     _loadCollegesUniversities().then((_) {
       Future.delayed(const Duration(milliseconds: 300), () {
         _loadQualificationsDetails();
@@ -73,8 +76,15 @@ class QualificationCertificationController extends BaseController {
   }
 
   void addQualification() {
-    qualifications.add(QualificationItem.initial());
+    final newQualification = QualificationItem.initial();
+    // Add listeners to text controllers
+    newQualification.schoolController.addListener(_checkHasValidData);
+    newQualification.degreeController.addListener(_checkHasValidData);
+    newQualification.qualificationExpiryController.addListener(_checkHasValidData);
+    
+    qualifications.add(newQualification);
     qualifications.refresh();
+    _checkHasValidData();
 
     Future.delayed(const Duration(milliseconds: 150), () {
       if (scrollController.hasClients) {
@@ -95,6 +105,7 @@ class QualificationCertificationController extends BaseController {
     qualifications.remove(item);
     item.dispose();
     qualifications.refresh();
+    _checkHasValidData();
   }
 
   Future<void> pickDate(
@@ -314,31 +325,54 @@ class QualificationCertificationController extends BaseController {
                           certUrl.split('/').last;
                     }
 
+                    qualification.schoolController.addListener(_checkHasValidData);
+                    qualification.degreeController.addListener(_checkHasValidData);
+                    qualification.qualificationExpiryController.addListener(_checkHasValidData);
+                    
                     qualifications.add(qualification);
                   }
                 }
               } else {
                 if (qualifications.isEmpty) {
-                  qualifications.add(QualificationItem.initial());
+                  final initialQualification = QualificationItem.initial();
+                  initialQualification.schoolController.addListener(_checkHasValidData);
+                  initialQualification.degreeController.addListener(_checkHasValidData);
+                  initialQualification.qualificationExpiryController.addListener(_checkHasValidData);
+                  qualifications.add(initialQualification);
                 }
               }
             }
           } catch (e) {
             debugPrint('Error parsing qualifications: $e');
             if (qualifications.isEmpty) {
-              qualifications.add(QualificationItem.initial());
+              final initialQualification = QualificationItem.initial();
+              initialQualification.schoolController.addListener(_checkHasValidData);
+              initialQualification.degreeController.addListener(_checkHasValidData);
+              initialQualification.qualificationExpiryController.addListener(_checkHasValidData);
+              qualifications.add(initialQualification);
             }
           }
         } else {
           if (qualifications.isEmpty) {
-            qualifications.add(QualificationItem.initial());
+            final initialQualification = QualificationItem.initial();
+            initialQualification.schoolController.addListener(_checkHasValidData);
+            initialQualification.degreeController.addListener(_checkHasValidData);
+            initialQualification.qualificationExpiryController.addListener(_checkHasValidData);
+            qualifications.add(initialQualification);
           }
         }
       },
       onError: (error, stackTrace) {
         if (qualifications.isEmpty) {
-          qualifications.add(QualificationItem.initial());
+          final initialQualification = QualificationItem.initial();
+          initialQualification.schoolController.addListener(_checkHasValidData);
+          initialQualification.degreeController.addListener(_checkHasValidData);
+          initialQualification.qualificationExpiryController.addListener(_checkHasValidData);
+          qualifications.add(initialQualification);
         }
+      },
+      onComplete: () {
+        _checkHasValidData();
       },
     );
   }
@@ -586,6 +620,7 @@ class QualificationCertificationController extends BaseController {
     qualification.uploadCertificateController.text = pickedFile.name;
     qualification.certificateUrl = null;
     qualifications.refresh();
+    _checkHasValidData();
   }
 
   Future<void> _pickPDF(QualificationItem qualification, int index) async {
@@ -654,6 +689,7 @@ class QualificationCertificationController extends BaseController {
       qualification.uploadCertificateController.text = result.files.first.name;
       qualification.certificateUrl = null;
       qualifications.refresh();
+      _checkHasValidData();
     }
   }
 
@@ -719,6 +755,30 @@ class QualificationCertificationController extends BaseController {
         pickCertificateFile(context, item, index);
       }
     }
+  }
+
+  /// Check if there's any valid data in the form
+  void _checkHasValidData() {
+    bool hasData = false;
+    
+    // Check if years of experience has data
+    if (yearsExperienceController.text.trim().isNotEmpty) {
+      hasData = true;
+    }
+    
+    // Check if any qualification has data
+    for (final qualification in qualifications) {
+      if (qualification.schoolController.text.trim().isNotEmpty ||
+          qualification.degreeController.text.trim().isNotEmpty ||
+          qualification.qualificationExpiryController.text.trim().isNotEmpty ||
+          qualification.certificateFile != null ||
+          (qualification.certificateUrl != null && qualification.certificateUrl!.isNotEmpty)) {
+        hasData = true;
+        break;
+      }
+    }
+    
+    hasValidData.value = hasData;
   }
 
   Future<void> _saveQualifications() async {

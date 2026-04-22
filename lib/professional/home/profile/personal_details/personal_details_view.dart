@@ -254,7 +254,7 @@ class PersonalDetailsView extends BaseView<PersonalDetailsController> {
                         ),
                       ),
                       validator: (value) =>
-                          controller.validateNotEmpty(value, 'date of birth'),
+                          controller.validateAge(value),
                     ),
                     SizedBox(height: HightWidthSizes.setValue_16),
 

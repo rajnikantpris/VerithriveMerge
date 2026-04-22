@@ -706,22 +706,40 @@ class SignupProfileWizardView extends BaseView<SignupProfileWizardController> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // Text(
-                //   'Qualification & certification',
-                //   style: TextStyle(
-                //     fontFamily: AppFonts.rubikMedium,
-                //     fontWeight: FontWeight.w500,
-                //     fontSize: FontSizes.setFontValue_16,
-                //     color: AppColor.color_2D3648,
-                //   ),
-                // ),
-                Text(
-                  'Please add all relevant qualifications',
-                  style: TextStyle(
-                    fontFamily: AppFonts.rubikMedium,
-                    fontWeight: FontWeight.w500,
-                    fontSize: FontSizes.setFontValue_15,
-                    color: AppColor.color_2D3648,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Text(
+                      //   'Qualification & certification',
+                      //   style: TextStyle(
+                      //     fontFamily: AppFonts.rubikMedium,
+                      //     fontWeight: FontWeight.w500,
+                      //     fontSize: FontSizes.setFontValue_16,
+                      //     color: AppColor.color_2D3648,
+                      //   ),
+                      // ),
+                      Text(
+                        'Please add all relevant qualifications',
+                        style: TextStyle(
+                          fontFamily: AppFonts.rubikMedium,
+                          fontWeight: FontWeight.w500,
+                          fontSize: FontSizes.setFontValue_15,
+                          color: AppColor.color_2D3648,
+                        ),
+                      ),
+                      SizedBox(height: HightWidthSizes.setValue_2),
+                      Text(
+                        '(Degrees, Professional Certifications, First Aid, Training)',
+                        style: TextStyle(
+                          fontFamily: AppFonts.rubikRegular,
+                          fontWeight: FontWeight.w400,
+                          fontSize: FontSizes.setFontValue_9,
+                          color: AppColor.color_2D2D2D,
+                          height: 1.4,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
                 GestureDetector(

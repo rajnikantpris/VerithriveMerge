@@ -756,6 +756,7 @@ class _ServiceFormatSection extends StatelessWidget {
                 final profile = homeController?.profileDetails.value;
                 final isApproved = profile?.isApproved ?? false;
                 final isGuest = homeController?.isGuestUser() ?? true;
+                final isSubscription = profile?.isSubscription ?? false;
                 
                 if (isPastDate) {
                   return SizedBox(
@@ -773,14 +774,24 @@ class _ServiceFormatSection extends StatelessWidget {
                       return;
                     }
 
-                    // 2. Check if user is approved
+                    // 2. Check if user has active subscription
+                    if (!isSubscription) {
+                      // Show subscription dialog if not subscribed
+                      showResponseDialog(
+                        title: 'Subscription Required',
+                        message: 'You need an active subscription to add service formats. Please subscribe to access this feature.',
+                        isError: false,
+                        showButton: true,
+                      );
+                      return;
+                    }
+
+                    // 3. Check if user is approved
                     if (!isApproved) {
                       // Customize message based on profile status
                       String title = 'Application Under Review';
                       String message = 'Your professional application has been successfully submitted. Please wait while we review your application. Once it is approved, you will be able to access and use our services.';
                       bool isError = false;
-
-                     
 
                       // Show dialog if not approved
                       showResponseDialog(
@@ -792,7 +803,7 @@ class _ServiceFormatSection extends StatelessWidget {
                       return;
                     }
                     
-                    // 3. Navigate if approved
+                    // 4. Navigate if approved and has subscription
                     Get.toNamed(
                       Routes.serviceFormat,
                       arguments: controller.selectedDate.value,
@@ -1108,8 +1119,9 @@ class _AvailabilitySection extends StatelessWidget {
                 final homeController = Get.isRegistered<HomeController>()
                     ? Get.find<HomeController>()
                     : null;
-                final isApproved =
-                    homeController?.profileDetails.value?.isApproved ?? false;
+                final profile = homeController?.profileDetails.value;
+                final isApproved = profile?.isApproved ?? false;
+                final isSubscription = profile?.isSubscription ?? false;
                 
                 if (isPastDate) {
                   return SizedBox(
@@ -1119,7 +1131,19 @@ class _AvailabilitySection extends StatelessWidget {
                 
                 return ElevatedButton.icon(
                   onPressed: () {
-                    // Check if user is approved
+                    // 1. Check if user has active subscription
+                    if (!isSubscription) {
+                      // Show subscription dialog if not subscribed
+                      showResponseDialog(
+                        title: 'Subscription Required',
+                        message: 'You need an active subscription to add availability. Please subscribe to access this feature.',
+                        isError: false,
+                        showButton: true,
+                      );
+                      return;
+                    }
+
+                    // 2. Check if user is approved
                     if (!isApproved) {
                       // Show dialog if not approved
                       showResponseDialog(
@@ -1131,7 +1155,7 @@ class _AvailabilitySection extends StatelessWidget {
                       );
                       return;
                     }
-                    // Navigate if approved
+                    // Navigate if approved and has subscription
                     Get.toNamed(Routes.createAvailability);
                   },
                   icon: Icon(

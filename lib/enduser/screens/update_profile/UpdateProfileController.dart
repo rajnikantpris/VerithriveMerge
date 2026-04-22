@@ -37,6 +37,7 @@ class UpdateProfileController extends BaseController {
   final selectedGender = ''.obs;
   final selectedAddress = ''.obs;
   final selectedPostcode = ''.obs;
+  final selectedDob = Rxn<DateTime>();
   final profileImage = Rx<File?>(null);
   final profileImageUrl = RxString('');
   final isProfilePictureRemoved = false.obs;
@@ -154,6 +155,7 @@ class UpdateProfileController extends BaseController {
           String dobString = data['dob'].toString();
           try {
             DateTime dobDate = DateTime.parse(dobString);
+            selectedDob.value = dobDate;
             dobController.text =
             '${dobDate.day.toString().padLeft(2, '0')}/${dobDate.month.toString().padLeft(2, '0')}/${dobDate.year}';
           } catch (e) {
@@ -247,6 +249,36 @@ class UpdateProfileController extends BaseController {
     if (!RegExp(r'^\d{2}/\d{2}/\d{4}$').hasMatch(value)) {
       return 'Please enter date in DD/MM/YYYY format';
     }
+    
+    // Check if user is 18+ years old
+    if (selectedDob.value == null) {
+      // Parse date from controller if selectedDob is not set
+      try {
+        List<String> parts = value.split('/');
+        if (parts.length == 3) {
+          final day = int.parse(parts[0]);
+          final month = int.parse(parts[1]);
+          final year = int.parse(parts[2]);
+          selectedDob.value = DateTime(year, month, day);
+        }
+      } catch (e) {
+        return 'Invalid date format';
+      }
+    }
+    
+    if (selectedDob.value != null) {
+      final now = DateTime.now();
+      final age = now.year - selectedDob.value!.year;
+      final monthDiff = now.month - selectedDob.value!.month;
+      final dayDiff = now.day - selectedDob.value!.day;
+      
+      final actualAge = monthDiff < 0 || (monthDiff == 0 && dayDiff < 0) ? age - 1 : age;
+      
+      if (actualAge < 18) {
+        return 'You must be 18 years old to use this app.';
+      }
+    }
+    
     return null;
   }
 
@@ -282,6 +314,7 @@ class UpdateProfileController extends BaseController {
       DateTime.now().subtract(const Duration(days: 6570)), // 18 years ago
       firstDate: DateTime(1900),
       lastDate: DateTime.now().subtract(const Duration(days: 0)), // Yesterday
+      locale: const Locale('en', 'GB'), // UK locale for date picker
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
@@ -297,8 +330,11 @@ class UpdateProfileController extends BaseController {
     );
 
     if (picked != null) {
+      selectedDob.value = picked;
       dobController.text =
       '${picked.day.toString().padLeft(2, '0')}/${picked.month.toString().padLeft(2, '0')}/${picked.year}';
+      // Trigger validation to show age error immediately if needed
+      formKey.currentState?.validate();
     }
   }
 

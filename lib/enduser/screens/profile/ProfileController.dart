@@ -26,6 +26,7 @@ class ProfileController extends GetxController {
   final selectedGender = ''.obs;
   final selectedAddress = ''.obs;
   final selectedPostcode = ''.obs;
+  final selectedDob = Rxn<DateTime>();
   final profileImage = Rx<File?>(null);
   final profileImageUrl = RxString(''); // For network images from social login
   final isLoading = false.obs;
@@ -138,6 +139,36 @@ class ProfileController extends GetxController {
     if (!RegExp(r'^\d{2}/\d{2}/\d{4}$').hasMatch(value)) {
       return 'Please enter date in DD/MM/YYYY format';
     }
+    
+    // Check if user is 18+ years old
+    if (selectedDob.value == null) {
+      // Parse the date from the controller if selectedDob is not set
+      try {
+        List<String> parts = value.split('/');
+        if (parts.length == 3) {
+          final day = int.parse(parts[0]);
+          final month = int.parse(parts[1]);
+          final year = int.parse(parts[2]);
+          selectedDob.value = DateTime(year, month, day);
+        }
+      } catch (e) {
+        return 'Invalid date format';
+      }
+    }
+    
+    if (selectedDob.value != null) {
+      final now = DateTime.now();
+      final age = now.year - selectedDob.value!.year;
+      final monthDiff = now.month - selectedDob.value!.month;
+      final dayDiff = now.day - selectedDob.value!.day;
+      
+      final actualAge = monthDiff < 0 || (monthDiff == 0 && dayDiff < 0) ? age - 1 : age;
+      
+      if (actualAge < 18) {
+        return 'You must be 18 years old to use this app.';
+      }
+    }
+    
     return null;
   }
 
@@ -188,6 +219,7 @@ class ProfileController extends GetxController {
           DateTime.now().subtract(const Duration(days: 6570)), // 18 years ago
       firstDate: DateTime(1900),
       lastDate: DateTime.now().subtract(const Duration(days: 0)), // Yesterday
+      locale: const Locale('en', 'GB'), // UK locale for date picker
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
@@ -203,8 +235,11 @@ class ProfileController extends GetxController {
     );
 
     if (picked != null) {
+      selectedDob.value = picked;
       dobController.text =
           '${picked.day.toString().padLeft(2, '0')}/${picked.month.toString().padLeft(2, '0')}/${picked.year}';
+      // Trigger validation to show age error immediately if needed
+      formKey.currentState?.validate();
     }
   }
 
@@ -618,8 +653,8 @@ class ProfileController extends GetxController {
         if (placemark.postalCode != null && placemark.postalCode!.isNotEmpty) {
           // Auto-fill postcode only if not manually entered
           if (!isManualEntry.value) {
-            postcodeController.text = placemark.postalCode!;
-            selectedPostcode.value = placemark.postalCode!;
+            // postcodeController.text = placemark.postalCode!;
+            // selectedPostcode.value = placemark.postalCode!;
           }
           addressParts.add(placemark.postalCode!);
         }
@@ -629,8 +664,8 @@ class ProfileController extends GetxController {
 
         // Auto-fill address
         final fullAddress = addressParts.join(', ');
-        addressController.text = fullAddress;
-        selectedAddress.value = fullAddress;
+        // addressController.text = fullAddress;
+        // selectedAddress.value = fullAddress;
         addressError.value = ''; // Clear error when address is filled
       }
     } catch (e) {

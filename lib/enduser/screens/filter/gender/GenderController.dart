@@ -9,6 +9,7 @@ class GenderController extends GetxController {
   final List<String> genderOptions = const [
     'Male',
     'Female',
+    'No preference'
   ];
 
   @override
@@ -23,7 +24,7 @@ class GenderController extends GetxController {
       if (Get.isRegistered<FilterController>()) {
         final filterController = Get.find<FilterController>();
         if (filterController.selectedGender.value.isNotEmpty) {
-          selectedGender.value = filterController.selectedGender.value;
+          selectedGender.value = _capitalizeGender(filterController.selectedGender.value);
           print('GenderController: Loaded gender from FilterController: ${selectedGender.value}');
           return;
         }
@@ -31,6 +32,17 @@ class GenderController extends GetxController {
     } catch (e) {
       print('GenderController: Error loading initial gender: $e');
     }
+  }
+
+  String _capitalizeGender(String gender) {
+    // Convert gender from lowercase API format to proper UI format
+    if (gender.toLowerCase() == 'male') {
+      return 'Male';
+    } else if (gender.toLowerCase() == 'female') {
+      return 'Female';
+    }
+    // If already in proper format or unknown, return as is
+    return gender;
   }
 
   // Gender filter methods

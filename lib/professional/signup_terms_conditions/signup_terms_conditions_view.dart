@@ -68,9 +68,9 @@ class SignupTermsConditionsView
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildMarketingOptIn(),
-                  SizedBox(height: HightWidthSizes.setValue_12),
                   _buildTermsAndConditionsCheckbox(),
+                  SizedBox(height: HightWidthSizes.setValue_12),
+                  _buildMarketingOptIn(),
                   SizedBox(height: HightWidthSizes.setValue_12),
                   Obx(
                     () => SizedBox(

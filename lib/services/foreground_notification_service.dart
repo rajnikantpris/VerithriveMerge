@@ -7,11 +7,11 @@ import '../enduser/screens/message/ChatDetailBinding.dart';
 import '../enduser/screens/message/ChatDetailScreen.dart';
 import '../utils/logger.dart';
 import '../routes/app_routes.dart';
-import '../professional/home/messages_controller.dart' hide MessagesController;
+import '../professional/home/messages_controller.dart' as professional_messages;
 import '../professional/home/home_controller.dart';
 import '../professional/home/calendar_controller.dart';
 import '../professional/home/chat/chat_controller.dart';
-import '../enduser/screens/message/MessagesController.dart';
+import '../enduser/screens/message/MessagesController.dart' as enduser_messages;
 import '../enduser/screens/message/ChatDetailController.dart';
 import '../enduser/screens/booking/BookingsController.dart';
 import '../enduser/screens/home_main/HomeMainController.dart';
@@ -45,6 +45,20 @@ const List<String> _endUserBookingNotificationTypes = [
   'booking_completed_review',
   'review_reminder',
   'final_review_reminder',
+];
+
+/// Notification types that should refresh booking data for professional users
+const List<String> _professionalBookingNotificationTypes = [
+  'new_booking',
+  'booking_cancelled',
+  'booking_updated',
+  'booking_ended',
+  'booking_started',
+  'booking_start_reminder',
+  'booking_end_reminder',
+  'booking_one_hour_reminder',
+  'booking_one_day_reminder',
+  'booking_three_day_reminder',
 ];
 
 /// Service to handle foreground notifications for both user types
@@ -105,6 +119,12 @@ class ForegroundNotificationService {
   static bool _isEndUserBookingNotificationType(String? type) {
     if (type == null) return false;
     return _endUserBookingNotificationTypes.contains(type);
+  }
+
+  /// Check if notification type is booking-related for professional users
+  static bool _isProfessionalBookingNotificationType(String? type) {
+    if (type == null) return false;
+    return _professionalBookingNotificationTypes.contains(type);
   }
 
   /// Handle pending notification - call this from Home after it's ready
@@ -312,9 +332,21 @@ class ForegroundNotificationService {
         return;
       }
 
-      // Guard: nothing to show if both title and body are empty.
-      if (title.isEmpty && body.isEmpty) {
-        logError('Cannot show notification: both title and body are empty');
+      // Guard: nothing to show if notification has no meaningful content
+      bool hasMeaningfulContent = false;
+      
+      // Check if title is not just the default placeholder
+      if (title != 'Notification' && title.isNotEmpty) {
+        hasMeaningfulContent = true;
+      }
+      
+      // Check if body has actual content
+      if (body.isNotEmpty) {
+        hasMeaningfulContent = true;
+      }
+      
+      if (!hasMeaningfulContent) {
+        logInfo('Skipping notification: no meaningful content (title: "$title", body: "$body")');
         return;
       }
 
@@ -378,16 +410,14 @@ class ForegroundNotificationService {
     if (notificationType == 'chat_message') {
       logInfo(
           'Professional chat message notification received - refreshing inbox');
-      _refreshChatInbox();
+      _refreshProfessionalChatInbox();
 
       if (_shouldHideChatNotification(message)) {
         logInfo('Chat is open for same user - hiding notification');
         return false;
       }
       return true;
-    } else if (notificationType == 'new_booking' ||
-        notificationType == 'booking_cancelled' ||
-        notificationType == 'booking_updated') {
+    } else if (_isProfessionalBookingNotificationType(notificationType)) {
       logInfo(
           'Professional booking notification received (type: $notificationType) - refreshing calendar');
       _refreshCalendar();
@@ -444,7 +474,7 @@ class ForegroundNotificationService {
     return true;
   }
 
-  /// Handle default foreground notifications when user type is unknown
+  /// Handle default foreground notifica tions when user type is unknown
   static Future<bool> _handleDefaultForegroundNotification(
       RemoteMessage message,
       String? notificationType,
@@ -568,7 +598,14 @@ class ForegroundNotificationService {
       }
 
       _refreshNotificationCount();
-      _refreshChatInbox();
+      
+      // Refresh user-specific chat inbox
+      if (_isProfessionalUser()) {
+        _refreshProfessionalChatInbox();
+      } else if (_isEndUser()) {
+        _refreshEndUserMessagesInbox();
+      }
+      
       _refreshCalendar();
       _refreshProfile();
 
@@ -596,19 +633,19 @@ class ForegroundNotificationService {
     }
   }
 
-  /// Refresh chat inbox if MessagesController is available
-  static void _refreshChatInbox() {
+  /// Refresh professional chat inbox if MessagesController is available
+  static void _refreshProfessionalChatInbox() {
     try {
-      if (Get.isRegistered<MessagesController>()) {
-        final messagesController = Get.find<MessagesController>();
+      if (Get.isRegistered<professional_messages.MessagesController>()) {
+        final messagesController = Get.find<professional_messages.MessagesController>();
         messagesController.checkAndReconnectSocket();
-        logInfo('Chat inbox refresh triggered');
+        logInfo('Professional chat inbox refresh triggered');
       } else {
         logInfo(
-            'MessagesController not registered, skipping inbox refresh');
+            'Professional MessagesController not registered, skipping inbox refresh');
       }
     } catch (e, stackTrace) {
-      logError('Error refreshing chat inbox',
+      logError('Error refreshing professional chat inbox',
           error: e, stackTrace: stackTrace);
     }
   }
@@ -668,11 +705,9 @@ class ForegroundNotificationService {
   static void _handleProfessionalNotificationTap(
       RemoteMessage message, String? notificationType) {
     if (notificationType == 'chat_message') {
-      _refreshChatInbox();
+      _refreshProfessionalChatInbox();
       _navigateToChat(message);
-    } else if (notificationType == 'new_booking' ||
-        notificationType == 'booking_cancelled' ||
-        notificationType == 'booking_updated') {
+    } else if (_isProfessionalBookingNotificationType(notificationType)) {
       _refreshCalendar();
       if (Get.currentRoute != Routes.home) {
         Get.toNamed(Routes.home);
@@ -691,6 +726,13 @@ class ForegroundNotificationService {
       Get.toNamed(Routes.notifications);
       logInfo(
           'Navigated to notifications screen for application approval');
+    } else if (notificationType == 'settlement_payout' ||
+        notificationType == 'subscription_renewed' ||
+        notificationType == 'subscription_expired' ||
+        notificationType == 'subscription_activated') {
+      Get.toNamed(Routes.transactionSummary);
+      logInfo(
+          'Navigated to transaction summary screen for $notificationType');
     } else {
       logInfo(
           'Unknown notification type for professional: $notificationType');
@@ -720,6 +762,13 @@ class ForegroundNotificationService {
     if (notificationType == 'chat_message') {
       _refreshEndUserMessagesInbox();
       _navigateToEndUserChat(message);
+      return;
+    }
+
+    if (notificationType == 'settlement_refund') {
+      Get.toNamed(enduser_routes.AppRoutes.transaction_summary);
+      logInfo(
+          'Navigated to transaction summary screen for settlement_refund');
       return;
     }
 
@@ -818,14 +867,28 @@ class ForegroundNotificationService {
       String payload) {
     if (payload.contains('type: chat_message') ||
         payload.contains("'type': 'chat_message'")) {
-      _refreshChatInbox();
+      _refreshProfessionalChatInbox();
       _navigateToChatFromPayload(payload);
     } else if (payload.contains('type: new_booking') ||
         payload.contains("'type': 'new_booking'") ||
         payload.contains('type: booking_cancelled') ||
         payload.contains("'type': 'booking_cancelled'") ||
         payload.contains('type: booking_updated') ||
-        payload.contains("'type': 'booking_updated'")) {
+        payload.contains("'type': 'booking_updated'") ||
+        payload.contains('type: booking_ended') ||
+        payload.contains("'type': 'booking_ended'") ||
+        payload.contains('type: booking_started') ||
+        payload.contains("'type': 'booking_started'") ||
+        payload.contains('type: booking_start_reminder') ||
+        payload.contains("'type': 'booking_start_reminder'") ||
+        payload.contains('type: booking_end_reminder') ||
+        payload.contains("'type': 'booking_end_reminder'") ||
+        payload.contains('type: booking_one_hour_reminder') ||
+        payload.contains("'type': 'booking_one_hour_reminder'") ||
+        payload.contains('type: booking_one_day_reminder') ||
+        payload.contains("'type': 'booking_one_day_reminder'") ||
+        payload.contains('type: booking_three_day_reminder') ||
+        payload.contains("'type': 'booking_three_day_reminder'")) {
       _refreshCalendar();
       if (Get.currentRoute != Routes.home) {
         Get.toNamed(Routes.home);
@@ -845,6 +908,17 @@ class ForegroundNotificationService {
       Get.toNamed(Routes.notifications);
       logInfo(
           'Professional navigated to notifications screen from payload for application approval');
+    } else if (payload.contains('type: settlement_payout') ||
+        payload.contains("'type': 'settlement_payout'") ||
+        payload.contains('type: subscription_renewed') ||
+        payload.contains("'type': 'subscription_renewed'") ||
+        payload.contains('type: subscription_expired') ||
+        payload.contains("'type': 'subscription_expired'") ||
+        payload.contains('type: subscription_activated') ||
+        payload.contains("'type': 'subscription_activated'")) {
+      Get.toNamed(Routes.transactionSummary);
+      logInfo(
+          'Professional navigated to transaction summary screen from payload');
     }
   }
 
@@ -895,6 +969,14 @@ class ForegroundNotificationService {
       _navigateToEndUserChatFromPayload(payload);
       logInfo(
           'End user navigated to chat from chat message notification (local tap)');
+      return;
+    }
+
+    if (payload.contains('type: settlement_refund') ||
+        payload.contains("'type': 'settlement_refund'")) {
+      Get.toNamed(enduser_routes.AppRoutes.transaction_summary);
+      logInfo(
+          'End user navigated to transaction summary screen from settlement_refund notification (local tap)');
       return;
     }
 
@@ -1395,9 +1477,9 @@ class ForegroundNotificationService {
   /// Refresh end user messages inbox
   static void _refreshEndUserMessagesInbox() {
     try {
-      if (Get.isRegistered<MessagesController>(tag: 'messages')) {
+      if (Get.isRegistered<enduser_messages.MessagesController>(tag: 'messages')) {
         final messagesController =
-        Get.find<MessagesController>(tag: 'messages');
+        Get.find<enduser_messages.MessagesController>(tag: 'messages');
         messagesController.silentRefreshInbox();
         logInfo('End user messages inbox refresh triggered');
       } else {

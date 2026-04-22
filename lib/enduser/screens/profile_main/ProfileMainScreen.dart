@@ -51,12 +51,12 @@ class ProfileMainScreen extends StatelessWidget {
                     title: 'Your profile',
                     onTap: () => Get.to(() => UpdateProfileScreen(), binding: UpdateProfileBinding()),
                   ),
-                  Divider(height: 1, color: AppColors.lightGrey),
-                  _buildProfileOption(
-                    icon: AppAssets.card_details,
-                    title: 'Card details',
-                    onTap: () => Get.to(() => CardDetailsScreen(), binding: CardDetailsBinding()),
-                  ),
+                  // Divider(height: 1, color: AppColors.lightGrey),
+                  // _buildProfileOption(
+                  //   icon: AppAssets.card_details,
+                  //   title: 'Card details',
+                  //   onTap: () => Get.to(() => CardDetailsScreen(), binding: CardDetailsBinding()),
+                  // ),
                   Divider(height: 1, color: AppColors.lightGrey),
                   _buildProfileOption(
                     icon: AppAssets.notification,

@@ -130,11 +130,13 @@ class PersonalDetailsController extends BaseController {
       initialDate: initial.isAfter(now) ? now : initial,
       firstDate: DateTime(1900),
       lastDate: now,
+      locale: const Locale('en', 'GB'), // UK locale for date picker
     );
 
     if (picked != null) {
       selectedDob.value = picked;
       dobController.text = DateFormat('dd/MM/yyyy').format(picked);
+      formKey.currentState?.validate();
     }
   }
 
@@ -538,7 +540,7 @@ class PersonalDetailsController extends BaseController {
           // Track persona in analytics when profile is updated
           if (selectedProfessionType.value != null) {
             AnalyticsService.instance.setUserProfile(
-              persona: selectedProfessionType.value!.toLowerCase(),
+              persona: "professional_${selectedProfessionType.value!.toLowerCase()}",
             );
           }
           showResponseDialog(
@@ -587,6 +589,42 @@ class PersonalDetailsController extends BaseController {
     if (value == null || value.trim().isEmpty) {
       return 'Please enter $label';
     }
+    return null;
+  }
+
+  String? validateAge(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return 'Please enter your date of birth';
+    }
+    
+    if (selectedDob.value == null) {
+      // Parse date from controller if selectedDob is not set
+      try {
+        List<String> parts = value.split('/');
+        if (parts.length == 3) {
+          final day = int.parse(parts[0]);
+          final month = int.parse(parts[1]);
+          final year = int.parse(parts[2]);
+          selectedDob.value = DateTime(year, month, day);
+        }
+      } catch (e) {
+        return 'Invalid date format';
+      }
+    }
+    
+    if (selectedDob.value != null) {
+      final now = DateTime.now();
+      final age = now.year - selectedDob.value!.year;
+      final monthDiff = now.month - selectedDob.value!.month;
+      final dayDiff = now.day - selectedDob.value!.day;
+      
+      final actualAge = monthDiff < 0 || (monthDiff == 0 && dayDiff < 0) ? age - 1 : age;
+      
+      if (actualAge < 18) {
+        return 'You must be 18 years old to use this app.';
+      }
+    }
+    
     return null;
   }
 

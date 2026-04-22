@@ -59,7 +59,7 @@ class _StripAccountWebViewScreenState extends State<StripAccountWebViewScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: CustomAppBar(
-        appBarTitleText: 'Strip Account Create',
+        appBarTitleText: 'Create Stripe Account',
         titleColor: AppColor.color000000,
         titleFontSize: FontSizes.setFontValue_18,
         titlefontFamily: AppFonts.rubikMedium,

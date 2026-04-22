@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:get/get.dart';
 import 'package:logger/logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:verithrive_dev/enduser/routes/app_routes.dart';
 import '../../flavors/build_config.dart';
 import '../../network/exceptions/api_exception.dart';
 import '../../network/exceptions/app_exception.dart';
@@ -14,7 +13,7 @@ import '../../network/exceptions/unauthorize_exception.dart';
 import '../../routes/app_pages.dart';
 import '../model/page_state.dart';
 import '../values/sharePrefrenceConst.dart';
-
+import 'package:verithrive_dev/routes/app_routes.dart';
 
 abstract class BaseController extends GetxController {
 
@@ -131,7 +130,7 @@ abstract class BaseController extends GetxController {
   Future<void> unauthorized() async {
     SharedPreferences sharePref = await SharedPreferences.getInstance();
     sharePref.clear();
-    Get.offAllNamed(AppRoutes.login);
+    Get.offAllNamed(Routes.selectUser);
     update();
   }
 }

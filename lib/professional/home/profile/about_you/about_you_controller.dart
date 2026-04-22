@@ -18,6 +18,7 @@ class AboutYouController extends BaseController {
 
   final aboutYouController = TextEditingController();
   final aboutYouWordCount = 0.obs;
+  final hasValidData = false.obs;
 
   @override
   void onInit() {
@@ -38,10 +39,12 @@ class AboutYouController extends BaseController {
     final trimmed = value.trim();
     if (trimmed.isEmpty) {
       aboutYouWordCount.value = 0;
+      hasValidData.value = false;
       return;
     }
     final words = trimmed.split(RegExp(r'\s+'));
     aboutYouWordCount.value = words.length;
+    hasValidData.value = true;
   }
 
   void onUpdateDetails() {
@@ -74,12 +77,13 @@ class AboutYouController extends BaseController {
 
               if (description != null && description.isNotEmpty) {
                 aboutYouController.text = description;
-                // Update word count
+                // Update word count and valid data
                 onAboutYouChanged(description);
                 debugPrint(
                     'Loaded about you description: ${description.length} characters');
               } else {
                 debugPrint('No description found in API response');
+                hasValidData.value = false;
               }
             }
           } catch (e) {

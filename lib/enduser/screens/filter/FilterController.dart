@@ -86,13 +86,24 @@ class FilterController extends GetxController {
         if (therapistController.selectedGender != null &&
             therapistController.selectedGender!.isNotEmpty &&
             therapistController.selectedGender.value! != 'Male') {
-          selectedGender.value = therapistController.selectedGender.value!;
+          selectedGender.value = _capitalizeGender(therapistController.selectedGender.value!);
           print('FilterController: Loaded gender: ${selectedGender.value}');
         }
       }
     } catch (e) {
       print('FilterController: Error loading filter values: $e');
     }
+  }
+
+  String _capitalizeGender(String gender) {
+    // Convert gender from lowercase API format to proper UI format
+    if (gender.toLowerCase() == 'male') {
+      return 'Male';
+    } else if (gender.toLowerCase() == 'female') {
+      return 'Female';
+    }
+    // If already in proper format or unknown, return as is
+    return gender;
   }
 
   String _convertAvailabilityToUiFormat(String apiFormat) {

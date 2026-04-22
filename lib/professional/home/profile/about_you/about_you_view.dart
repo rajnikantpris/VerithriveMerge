@@ -153,29 +153,36 @@ class AboutYouView extends BaseView<AboutYouController> {
       child: SafeArea(
         child: SizedBox(
           width: double.infinity,
-          child: ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColor.color_2FC4B2,
-              foregroundColor: AppColor.white,
-              elevation: 0,
-              minimumSize: Size(double.infinity, HightWidthSizes.setValue_45),
-              padding: EdgeInsets.symmetric(
-                  vertical: HightWidthSizes.setValue_12,
-                  horizontal: HightWidthSizes.setValue_16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(
-                  HightWidthSizes.setValue_10,
+          child: Obx(
+            () => ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: controller.hasValidData.value
+                    ? AppColor.color_2FC4B2
+                    : AppColor.color_2FC4B2.withOpacity(0.5),
+                foregroundColor: AppColor.white,
+                elevation: 0,
+                disabledBackgroundColor: AppColor.color_96E1D8,
+                minimumSize: Size(double.infinity, HightWidthSizes.setValue_45),
+                padding: EdgeInsets.symmetric(
+                    vertical: HightWidthSizes.setValue_12,
+                    horizontal: HightWidthSizes.setValue_16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(
+                    HightWidthSizes.setValue_10,
+                  ),
                 ),
               ),
-            ),
-            onPressed: controller.onUpdateDetails,
-            child: Text(
-              'Update details',
-              style: TextStyle(
-                fontFamily: AppFonts.rubikMedium,
-                fontWeight: FontWeight.w500,
-                color: AppColor.white,
-                fontSize: FontSizes.setFontValue_16,
+              onPressed: controller.hasValidData.value
+                  ? controller.onUpdateDetails
+                  : null,
+              child: Text(
+                'Update details',
+                style: TextStyle(
+                  fontFamily: AppFonts.rubikMedium,
+                  fontWeight: FontWeight.w500,
+                  color: AppColor.white,
+                  fontSize: FontSizes.setFontValue_16,
+                ),
               ),
             ),
           ),

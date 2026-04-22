@@ -288,7 +288,7 @@ class HomeController extends BaseController {
           final profileController = Get.find<ProfileController>();
           profileController.fetchProfileDetails(showStripeDialog: true);
         }
-      } else if (index == 0) {
+      } else if (index == 0 || index==1) {
         // Only refresh profile details when switching to Home tab
         loadProfileDetails();
       }

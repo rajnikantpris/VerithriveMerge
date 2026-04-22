@@ -110,16 +110,33 @@ class TransactionSummaryScreen extends BaseView<TransactionSummaryController> {
                 }
                 final transaction = controller.transactions[index];
 
+                // Determine the display status based on transaction type and status
+                String displayStatus = transaction.status;
+                final status = transaction.status.toLowerCase();
+                
+                // Check if this is a transfer transaction and update status display
+                if (status == 'completed' && transaction.title.toLowerCase().contains('transfer')) {
+                  displayStatus = 'Fund Transfer';
+                } else if (status == 'failed' && transaction.title.toLowerCase().contains('transfer')) {
+                  displayStatus = 'Failed Transfer Fund';
+                }
+
                 final isSuccess = transaction.status.toLowerCase() == 'success' ||
-                    transaction.status.toLowerCase() == 'paid';
+                    transaction.status.toLowerCase() == 'paid' ||
+                    transaction.status.toLowerCase() == 'completed';
                 final isPending = transaction.status.toLowerCase() == 'pending';
 
                 Color statusColor = AppColor.color_9D9D9D;
                 Color statusBgColor = AppColor.color_ECECEC.withOpacity(0.2);
 
                 if (isSuccess) {
+                 if(transaction.status.toLowerCase() == 'completed') {
+                  statusColor = AppColor.greenText;
+                  statusBgColor = AppColor.greenText.withOpacity(0.1);
+                 }else{
                   statusColor = AppColor.color_2FC4B2;
-                  statusBgColor = AppColor.color_2FC4B2.withOpacity(0.1);
+                  statusBgColor = AppColor.color_2FC4B2.withOpacity(0.2);
+                 }
                 } else if (isPending) {
                   statusColor =
                       const Color(0xFFF59300); // Orange color for pending
@@ -236,8 +253,7 @@ class TransactionSummaryScreen extends BaseView<TransactionSummaryController> {
                                     HightWidthSizes.setValue_20),
                               ),
                               child: Text(
-                                transaction.status.capitalizeFirst ??
-                                    transaction.status,
+                                displayStatus,
                                 style: TextStyle(
                                   fontFamily: AppFonts.rubikMedium,
                                   fontWeight: FontWeight.w600,

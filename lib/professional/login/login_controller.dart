@@ -263,7 +263,7 @@ class ProfessionalLoginController extends BaseController {
             loginState: 'logged_in',
             userId: loginData.user?.id,
             city: await getCityFromAddress(loginData.user!.address.toString()),
-            persona: loginData.user?.profession_name?.toLowerCase(),
+            persona: "professional_${loginData.user?.profession_name?.toLowerCase()}",
             registrationType: loginData.user?.registrationType ??
                 ((loginData.user?.isSocialLogin ?? false)
                     ? 'social'
@@ -618,7 +618,7 @@ class ProfessionalLoginController extends BaseController {
             loginState: 'logged_in',
             userId: loginData.user?.id,
             city: await getCityFromAddress(loginData.user!.address.toString()),
-            persona: loginData.user?.profession_name?.toLowerCase(),
+            persona: "professional_${loginData.user?.profession_name?.toLowerCase()}",
             registrationType: loginData.user?.registrationType ??
                 ((loginData.user?.isSocialLogin ?? false)
                     ? 'social'

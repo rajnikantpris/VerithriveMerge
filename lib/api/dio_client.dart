@@ -34,6 +34,7 @@ class DioClient extends GetxService {
 
   final Dio _dio;
   bool _isLoggingOut = false;
+  bool _isShowingConnectionErrorDialog = false;
 
   @override
   void onInit() {
@@ -46,7 +47,7 @@ class DioClient extends GetxService {
               error.type == DioExceptionType.receiveTimeout ||
               error.type == DioExceptionType.sendTimeout ||
               error.type == DioExceptionType.connectionError) {
-            // await _handleConnectionTimeout();
+            await _handleConnectionError(error);
             // Mark error as already handled to prevent duplicate dialogs
             error.requestOptions.extra['error_handled'] = true;
             handler.next(error);
@@ -448,6 +449,51 @@ class DioClient extends GetxService {
         _isLoggingOut = false;
       },
     );
+  }
+
+  /// Handle connection errors (including socket connection errors) by showing dialog
+  Future<void> _handleConnectionError(DioException error) async {
+    // Prevent showing multiple dialogs for the same connection error
+    if (_isShowingConnectionErrorDialog) {
+      return;
+    }
+
+    _isShowingConnectionErrorDialog = true;
+    
+    String message = 'Please check your internet connection and try again';
+    String title = 'No Internet Connection';
+    
+    // Check specific error type for better messaging
+    if (error.type == DioExceptionType.connectionTimeout) {
+      message = 'Connection timeout. Please check your internet connection and try again.';
+      title = 'Connection Timeout';
+    } else if (error.type == DioExceptionType.receiveTimeout) {
+      message = 'Server response timeout. Please try again.';
+      title = 'Response Timeout';
+    } else if (error.type == DioExceptionType.sendTimeout) {
+      message = 'Request timeout. Please check your internet connection and try again.';
+      title = 'Request Timeout';
+    } else if (error.type == DioExceptionType.connectionError) {
+      message = 'Unable to connect to server. Please check your internet connection and try again.';
+      title = 'Connection Error';
+    }
+
+    // Show error dialog with the connection error message
+    showResponseDialog(
+      message: message,
+      title: title,
+      isError: true,
+      showButton: true,
+      onOkPressed: () {
+        // Reset flag when dialog is dismissed
+        _isShowingConnectionErrorDialog = false;
+      },
+    );
+
+    // Auto-reset flag after 5 seconds to handle edge cases
+    Future.delayed(const Duration(seconds: 5), () {
+      _isShowingConnectionErrorDialog = false;
+    });
   }
 
   /// Handle connection timeout errors by showing dialog

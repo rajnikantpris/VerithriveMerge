@@ -38,7 +38,7 @@ Future<void> _firebaseBackgroundMessageHandler(RemoteMessage message) async {
 Future<void> main() async {
   HttpOverrides.global = DevHttpOverrides();
   final enduser_env.EnvConfig enduserConfig = enduser_env.EnvConfig(
-    appName: "VERITHRIVE",
+    appName: "VeriThrive",
     baseUrl: "",
     shouldCollectCrashLog: true,
   );

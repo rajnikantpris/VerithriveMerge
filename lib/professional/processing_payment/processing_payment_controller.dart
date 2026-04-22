@@ -78,7 +78,7 @@ class ProcessingPaymentController extends BaseController {
                   loginState: 'logged_in',
                   userId: profile.id,
                   city: await getCityFromAddress(profile.address.toString()),
-                  persona: profile.profession_name?.toLowerCase(),
+                  persona: "professional_${profile.profession_name?.toLowerCase()}",
                   plan: _getTimePeriodFromPlan(selectedtitle.value),
                   registrationType: profile.userType ??
                       ((profile.isSocialLogin ?? false) ? 'social' : 'regular'),

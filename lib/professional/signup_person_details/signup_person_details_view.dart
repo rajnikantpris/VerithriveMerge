@@ -240,7 +240,7 @@ class SignupPersonDetailsView extends BaseView<SignupPersonDetailsController> {
         ),
       ),
       validator: (value) =>
-          controller.validateNotEmpty(value, 'your date of birth'),
+          controller.validateAge(value),
     );
   }
 

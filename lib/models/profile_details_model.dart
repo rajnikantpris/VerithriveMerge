@@ -73,6 +73,7 @@ class ProfileDetailsModel {
   final String? stripeDetailsOnboardingLink;
   final bool? hasServiceFormatToday;
   final bool? hasAvailabilityToday;
+  final bool? isSubscription;
 
   const ProfileDetailsModel({
     this.id,
@@ -147,6 +148,7 @@ class ProfileDetailsModel {
     this.stripeDetailsOnboardingLink,
     this.hasServiceFormatToday,
     this.hasAvailabilityToday,
+    this.isSubscription,
   });
 
   factory ProfileDetailsModel.fromJson(Map<String, dynamic> json) {
@@ -244,6 +246,7 @@ class ProfileDetailsModel {
           _cleanWrappedString(stripeDetails?['onboarding_link']),
       hasServiceFormatToday: data['has_service_format_today'] as bool?,
       hasAvailabilityToday: data['has_availability_today'] as bool?,
+      isSubscription: data['is_subscription'] as bool?,
     );
   }
 
@@ -320,5 +323,7 @@ class ProfileDetailsModel {
           'has_service_format_today': hasServiceFormatToday,
         if (hasAvailabilityToday != null)
           'has_availability_today': hasAvailabilityToday,
+        if (isSubscription != null)
+          'is_subscription': isSubscription,
       };
 }
