@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:verithrive_dev/enduser/utils/app_assets.dart';
 import 'package:verithrive_dev/enduser/utils/app_colors.dart';
 import 'package:verithrive_dev/enduser/utils/app_text_styles.dart';
+import '../../core/widget/animated_loader.dart';
 import '../booking/BookingsController.dart';
 import '../cart/DashedLinePainter.dart';
 import '../main/MainTabController.dart';
@@ -36,12 +37,10 @@ class TransactionSummaryScreen extends GetView<TransactionSummaryController> {
         onRefresh: () => controller.fetchTransactions(),
         child: Obx(() {
           if (controller.isLoading.value && controller.transactions.isEmpty) {
-            return ListView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              children: [
-                SizedBox(height: MediaQuery.of(context).size.height * 0.3),
-                const Center(child: CircularProgressIndicator()),
-              ],
+            return Center(
+              child: AnimatedLoader(
+                assetPath: AppAssets.loader1,
+              ),
             );
           }
 
@@ -68,25 +67,48 @@ class TransactionSummaryScreen extends GetView<TransactionSummaryController> {
           }
 
           if (controller.transactions.isEmpty) {
-            return ListView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              children: [
-                SizedBox(height: MediaQuery.of(context).size.height * 0.3),
-                Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        'No transactions found',
-                        style: AppTextStyles.regularTextStyle(
-                          fontSize: 16,
-                          color: AppColors.grey,
+            return LayoutBuilder(
+              builder: (context, constraints) {
+                return ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  children: [
+                    ConstrainedBox(
+                      constraints: BoxConstraints(
+                        minHeight: constraints.maxHeight,
+                      ),
+                      child: Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            SvgPicture.asset(
+                              AppAssets.card_details,
+                              width: 64,
+                              height: 64,
+                              color: AppColors.grey.withOpacity(0.5),
+                            ),
+                            SizedBox(height: 16),
+                            Text(
+                              'No transactions yet',
+                              style: AppTextStyles.mediumTextStyle(
+                                fontSize: 18,
+                                color: AppColors.grey,
+                              ),
+                            ),
+                            SizedBox(height: 8),
+                            Text(
+                              'Your transactions will appear here',
+                              style: AppTextStyles.regularTextStyle(
+                                fontSize: 14,
+                                color: AppColors.greyText,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                    ],
-                  ),
-                ),
-              ],
+                    ),
+                  ],
+                );
+              },
             );
           }
 

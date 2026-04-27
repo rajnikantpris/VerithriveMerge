@@ -108,22 +108,45 @@ class MessagesTab extends BaseView<MessagesController> {
               if (items.isEmpty) {
                 return RefreshIndicator(
                   onRefresh: () => controller.checkAndReconnectSocket(),
-                  child: SingleChildScrollView(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    child: SizedBox(
-                      height: MediaQuery.of(context).size.height * 0.6,
-                      child: Center(
-                        child: Text(
-                          'No Message found',
-                          style: TextStyle(
-                            fontFamily: AppFonts.rubikRegular,
-                            fontSize: FontSizes.setFontValue_16,
-                            fontWeight: FontWeight.w400,
-                            color: AppColor.color_7F7F7F,
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      return SingleChildScrollView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                          child: Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                AppImages.chat_list_svg(
+                                  width: 64,
+                                  height: 64,
+                                  color: AppColor.color_9D9D9D.withOpacity(0.5),
+                                ),
+                                SizedBox(height: HightWidthSizes.setValue_16),
+                                Text(
+                                  'No messages yet',
+                                  style: TextStyle(
+                                    fontFamily: AppFonts.rubikMedium,
+                                    fontSize: FontSizes.setFontValue_18,
+                                    color: AppColor.color_9D9D9D,
+                                  ),
+                                ),
+                                SizedBox(height: HightWidthSizes.setValue_8),
+                                Text(
+                                  'Your conversations will appear here',
+                                  style: TextStyle(
+                                    fontFamily: AppFonts.rubikRegular,
+                                    fontSize: FontSizes.setFontValue_14,
+                                    color: AppColor.color_9D9D9D,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
-                      ),
-                    ),
+                      );
+                    },
                   ),
                 );
               }

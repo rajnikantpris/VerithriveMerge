@@ -46,6 +46,7 @@ class ProfileSubscriptionController extends BaseController {
   }
 
   String? _currentSubscriptionPlanId;
+  String? _currentSubscriptionPlanKey;
   String? _activeSubscriptionId;
   final Set<String> _upcomingSubscriptionPlanIds = <String>{};
   final Map<String, String> _upcomingPlanStartDateByPlanId = {};
@@ -173,6 +174,8 @@ class ProfileSubscriptionController extends BaseController {
           _activeSubscriptionId = selectedSubscription['_id'] as String?;
           // Get subscription_id for plan highlighting in UI
           planId = selectedSubscription['subscription_id'] as String?;
+          // Get plan_key for proper plan matching
+          _currentSubscriptionPlanKey = selectedSubscription['plan_key_snapshot'] as String?;
           selectedStatus = selectedSubscription['status'] as String?;
 
           expiryDate = selectedSubscription['expiry_date'] as String? ??
@@ -336,13 +339,38 @@ class ProfileSubscriptionController extends BaseController {
         final shouldMarkAsCurrentPlan =
             _selectedSubscriptionStatus == 'active' ||
                 _selectedSubscriptionStatus == 'trialing';
-        if (shouldMarkAsCurrentPlan && _currentSubscriptionPlanId != null) {
+        if (shouldMarkAsCurrentPlan && _currentSubscriptionPlanKey != null) {
           for (var plan in parsedPlans) {
-            if (plan.id == _currentSubscriptionPlanId) {
+            bool isMatch = false;
+            
+            // Primary match: exact plan_key comparison
+            if (plan.planKey == _currentSubscriptionPlanKey) {
+              isMatch = true;
+            }
+            // Fallback match: partial key matching (e.g., 'yearly' matches 'yearly_plan')
+            else if (plan.planKey != null && _currentSubscriptionPlanKey != null) {
+              final planKeyLower = plan.planKey!.toLowerCase();
+              final currentKeyLower = _currentSubscriptionPlanKey!.toLowerCase();
+              
+              // Check if current key is contained in plan key or vice versa
+              if (planKeyLower.contains(currentKeyLower) || currentKeyLower.contains(planKeyLower)) {
+                isMatch = true;
+              }
+              // Check for common patterns
+              else if ((planKeyLower.contains('year') && currentKeyLower.contains('year')) ||
+                       (planKeyLower.contains('quarter') && currentKeyLower.contains('quarter')) ||
+                       (planKeyLower.contains('month') && currentKeyLower.contains('month')) ||
+                       (planKeyLower.contains('day') && currentKeyLower.contains('day'))) {
+                isMatch = true;
+              }
+            }
+            
+            if (isMatch) {
               // Create a new plan with isCurrentPlan = true
               final index = parsedPlans.indexOf(plan);
               parsedPlans[index] = SubscriptionPlan(
                 id: plan.id,
+                planKey: plan.planKey,
                 name: plan.name,
                 price: plan.price,
                 equivalentMonthlyPrice: plan.equivalentMonthlyPrice,

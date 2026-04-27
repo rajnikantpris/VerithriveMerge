@@ -124,7 +124,7 @@ class PersonalDetailsController extends BaseController {
   Future<void> pickDate(BuildContext context) async {
     final now = DateTime.now();
     final initial =
-        selectedDob.value ?? DateTime(now.year - 18, now.month, now.day);
+        selectedDob.value ?? DateTime(now.year, now.month, now.day);
     final picked = await showDatePicker(
       context: context,
       initialDate: initial.isAfter(now) ? now : initial,

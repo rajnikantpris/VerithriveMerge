@@ -1,5 +1,6 @@
 class SubscriptionPlan {
   final String? id;
+  final String? planKey;
   final String name;
   final double price;
   final double equivalentMonthlyPrice;
@@ -16,6 +17,7 @@ class SubscriptionPlan {
 
   SubscriptionPlan({
     this.id,
+    this.planKey,
     required this.name,
     required this.price,
     required this.equivalentMonthlyPrice,
@@ -119,6 +121,7 @@ class SubscriptionPlan {
 
     return SubscriptionPlan(
       id: json['_id'] as String? ?? json['id'] as String?,
+      planKey: json['plan_key'] as String?,
       name: json['plan_name'] as String? ?? json['name'] as String? ?? '',
       price: priceValue,
       equivalentMonthlyPrice: equivalentMonthlyPriceValue,
@@ -137,6 +140,7 @@ class SubscriptionPlan {
 
   Map<String, dynamic> toJson() => {
         if (id != null) '_id': id,
+        if (planKey != null) 'plan_key': planKey,
         'plan_name': name,
         'price_amount': price,
         'equivalent_monthly_price': equivalentMonthlyPrice,

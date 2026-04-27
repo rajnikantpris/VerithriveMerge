@@ -162,18 +162,39 @@ class BookingsScreen extends StatelessWidget {
   Widget _buildEmptyState() {
     return Container(
       width: double.infinity,
+      height: 300,
       padding: EdgeInsets.symmetric(vertical: 40),
       decoration: BoxDecoration(
         color: AppColors.lightGreyF5F7F8,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Center(
-        child: Text(
-          'No booking yet!',
-          style: AppTextStyles.regularTextStyle(
-            fontSize: 16,
-            color: AppColors.black,
-          ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            SvgPicture.asset(
+              AppAssets.booking,
+              width: 64,
+              height: 64,
+              color: AppColors.grey.withOpacity(0.5),
+            ),
+            SizedBox(height: 16),
+            Text(
+              'No bookings yet',
+              style: AppTextStyles.mediumTextStyle(
+                fontSize: 18,
+                color: AppColors.grey,
+              ),
+            ),
+            SizedBox(height: 8),
+            Text(
+              'Your bookings will appear here',
+              style: AppTextStyles.regularTextStyle(
+                fontSize: 14,
+                color: AppColors.greyText,
+              ),
+            ),
+          ],
         ),
       ),
     );

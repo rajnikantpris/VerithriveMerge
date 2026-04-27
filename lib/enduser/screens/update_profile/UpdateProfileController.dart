@@ -308,10 +308,14 @@ class UpdateProfileController extends BaseController {
   }
 
   Future<void> selectDateOfBirth(BuildContext context) async {
+    // Use selected DOB if available, otherwise use current date minus 18 years
+    final now = DateTime.now();
+    final DateTime initialDate = selectedDob.value ?? 
+       DateTime(now.year, now.month, now.day); // 18 years ago
+    
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate:
-      DateTime.now().subtract(const Duration(days: 6570)), // 18 years ago
+      initialDate: initialDate,
       firstDate: DateTime(1900),
       lastDate: DateTime.now().subtract(const Duration(days: 0)), // Yesterday
       locale: const Locale('en', 'GB'), // UK locale for date picker
@@ -495,7 +499,7 @@ class UpdateProfileController extends BaseController {
           result['postcode'].toString().isNotEmpty) {
         final postcode = result['postcode'] as String;
         postcodeController.text = postcode;
-        selectedPostcode.value = postcode;
+        // selectedPostcode.value = postcode;
       }
     }
   }
@@ -974,7 +978,7 @@ class UpdateProfileController extends BaseController {
         if (placemark.postalCode != null && placemark.postalCode!.isNotEmpty) {
           // Auto-fill postcode only if not manually entered
           if (!isManualEntry.value) {
-            postcodeController.text = placemark.postalCode!;
+            // postcodeController.text = placemark.postalCode!;
             selectedPostcode.value = placemark.postalCode!;
           }
           addressParts.add(placemark.postalCode!);

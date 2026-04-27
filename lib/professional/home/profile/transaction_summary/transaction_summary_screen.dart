@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:verithrive_dev/common/base_view.dart';
+import 'package:verithrive_dev/enduser/core/widget/animated_loader.dart';
 import '../../../../theme/colors.dart';
 import '../../../../theme/font_sizes.dart';
 import '../../../../theme/fonts.dart';
 import '../../../../theme/hight_width_sizes.dart';
+import '../../../../theme/image_paths.dart';
 import 'transaction_summary_controller.dart';
 
 class TransactionSummaryScreen extends BaseView<TransactionSummaryController> {
@@ -57,7 +59,11 @@ class TransactionSummaryScreen extends BaseView<TransactionSummaryController> {
       child: SafeArea(
         child: Obx(() {
           if (controller.isLoadingTransactions.value) {
-            return const Center(child: CircularProgressIndicator());
+            return Center(
+              child: AnimatedLoader(
+                assetPath: 'assets/loader1.svg',
+              ),
+            );
           }
 
           if (controller.transactions.isEmpty) {
@@ -71,13 +77,33 @@ class TransactionSummaryScreen extends BaseView<TransactionSummaryController> {
                       ConstrainedBox(
                         constraints: BoxConstraints(minHeight: constraints.maxHeight),
                         child: Center(
-                          child: Text(
-                            'No transactions found',
-                            style: TextStyle(
-                              fontFamily: AppFonts.rubikRegular,
-                              fontSize: FontSizes.setFontValue_16,
-                              color: AppColor.color_9D9D9D,
-                            ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              AppImages.transaction_summary_svg(
+                                width: 64,
+                                height: 64,
+                                color: AppColor.color_9D9D9D.withOpacity(0.5),
+                              ),
+                              SizedBox(height: HightWidthSizes.setValue_16),
+                              Text(
+                                'No transactions yet',
+                                style: TextStyle(
+                                  fontFamily: AppFonts.rubikMedium,
+                                  fontSize: FontSizes.setFontValue_18,
+                                  color: AppColor.color_9D9D9D,
+                                ),
+                              ),
+                              SizedBox(height: HightWidthSizes.setValue_8),
+                              Text(
+                                'Your transactions will appear here',
+                                style: TextStyle(
+                                  fontFamily: AppFonts.rubikRegular,
+                                  fontSize: FontSizes.setFontValue_14,
+                                  color: AppColor.color_9D9D9D,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
