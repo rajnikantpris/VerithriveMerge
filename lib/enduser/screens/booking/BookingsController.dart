@@ -12,8 +12,8 @@ import '../../models/Conversation.dart';
 import '../../routes/app_routes.dart';
 import '../../utils/api_services.dart';
 import '../../utils/app_colors.dart';
+import '../../../services/analytics_service.dart';
 import '../../utils/auth_service.dart';
-import 'package:verithrive_dev/services/analytics_service.dart';
 
 class BookingsController extends BaseController {
   final ProjectRepository _repository = Get.find(tag: (ProjectRepository).toString());
@@ -361,6 +361,18 @@ class BookingsController extends BaseController {
   }
 
   void cancelBooking(String bookingId) {
+    // Analytics: Log cancel booking tap event
+    AnalyticsService.instance.logEvent(
+      name: 'cancel_booking_tap',
+      parameters: {
+        'screen_name': 'BookingsScreen',
+        'screen_class': 'BookingsScreen',
+        'element_text': 'Cancel Booking',
+        'element_location': 'button_tap_cta',
+        'page_category': 'booking',
+      },
+    );
+    
     // Call cancel booking API
     callCancelBookingAPI(bookingId);
   }

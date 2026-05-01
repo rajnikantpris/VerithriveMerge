@@ -26,10 +26,16 @@ import '../enduser/utils/app_assets.dart';
 import '../enduser/utils/app_colors.dart';
 import '../enduser/utils/app_text_styles.dart';
 import '../enduser/utils/api_services.dart';
+import '../api/user_api_service.dart';
+import '../enduser/screens/message/socket_service.dart';
+import '../professional/home/messages_controller.dart';
+import '../services/socket_service.dart';
+import '../services/social_auth_service.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'notification_service.dart';
 import 'storage_service.dart';
+import 'analytics_service.dart';
 
 /// Notification types that should open the Bookings tab for end users
 const List<String> _endUserBookingNotificationTypes = [
@@ -428,6 +434,10 @@ class ForegroundNotificationService {
       _refreshProfile();
       _refreshCalendar();
       return true;
+    } else if (notificationType == 'session_timeout') {
+      logInfo('Professional session timeout notification received - logging out');
+      await _handleSessionTimeout();
+      return false; // Don't show notification banner for session timeout
     }
     return true;
   }
@@ -466,6 +476,10 @@ class ForegroundNotificationService {
         _openEndUserReviewDialog(data);
       }
       return true;
+    } else if (notificationType == 'session_timeout') {
+      logInfo('End user session timeout notification received - logging out');
+      await _handleSessionTimeout();
+      return false; // Don't show notification banner for session timeout
     } else {
       logInfo(
           'End user notification received (type: $notificationType) - refreshing notification count');
@@ -482,6 +496,125 @@ class ForegroundNotificationService {
     _refreshNotificationCount();
     logInfo('Default notification handling for type: $notificationType');
     return true;
+  }
+
+  /// Handle session timeout by logging out user and navigating to select user screen
+  static Future<void> _handleSessionTimeout() async {
+    try {
+      logInfo('Handling session timeout - logging out user');
+      
+      // Call logout API
+      await _callLogoutApi();
+      
+      // Perform comprehensive cleanup matching ProfileController pattern
+      await _clearLocalDataAndNavigate();
+      
+      logInfo('Session timeout handled - user logged out and redirected to select user');
+    } catch (e, stackTrace) {
+      logError('Error handling session timeout: $e');
+      // Even if logout API fails, proceed with local cleanup and navigation
+      try {
+        await _clearLocalDataAndNavigate();
+      } catch (navError) {
+        logError('Error navigating after session timeout failure: $navError');
+      }
+    }
+  }
+
+  /// Clear local data and navigate - matching ProfileController pattern
+  static Future<void> _clearLocalDataAndNavigate() async {
+    try {
+      // 1. Reset socket services first (IMPORTANT: Disconnect before deleting)
+      if (Get.isRegistered<EndUserSocketService>()) {
+        final endUserSocket = Get.find<EndUserSocketService>();
+        endUserSocket.disconnect();
+        Get.delete<EndUserSocketService>();
+        logInfo('EndUserSocketService disconnected and removed');
+      }
+
+      if (Get.isRegistered<SocketService>()) {
+        final socketService = Get.find<SocketService>();
+        socketService.disconnect();
+        Get.delete<SocketService>();
+        logInfo('Professional SocketService disconnected and removed');
+      }
+
+      // 2. Explicitly delete ALL professional controllers to clear their memory state
+      if (Get.isRegistered<MessagesController>()) {
+        Get.delete<MessagesController>();
+        logInfo('MessagesController deleted');
+      }
+
+      if (Get.isRegistered<HomeController>()) {
+        Get.delete<HomeController>();
+        logInfo('HomeController deleted');
+      }
+
+      if (Get.isRegistered<CalendarController>()) {
+        Get.delete<CalendarController>();
+        logInfo('CalendarController deleted');
+      }
+
+      if (Get.isRegistered<ChatController>()) {
+        Get.delete<ChatController>();
+        logInfo('ChatController deleted');
+      }
+
+      // 3. Sign out from social providers
+      try {
+        final socialAuthService = SocialAuthService();
+        await socialAuthService.signOutSocialProviders();
+        logInfo('Social providers signed out');
+      } catch (e) {
+        logError('Error signing out from social providers: $e');
+      }
+
+      // 4. Clear stored data except remember me credentials
+      if (Get.isRegistered<StorageService>()) {
+        final storage = Get.find<StorageService>();
+
+        // Define keys to keep (all remember me data)
+        final keysToKeep = [
+          'savedEmail', // Professional key
+          'savedPassword', // Professional key
+          'email', // End-user key
+          'password', // End-user key
+          'rememberMe', // End-user key
+          'savedPassword', // End-user key
+        ];
+
+        await storage.clearAllExcept(keysToKeep);
+        logInfo('Storage cleared except remember me data');
+      }
+
+      // 5. Final cleanup: reset current route and navigate
+      Get.offAllNamed('/select_user');
+      logInfo('Navigation to select user completed');
+    } catch (e) {
+      logError('Error in _clearLocalDataAndNavigate: $e');
+      // Fallback: basic cleanup and navigation
+      try {
+        if (Get.isRegistered<StorageService>()) {
+          final storage = Get.find<StorageService>();
+          storage.clear();
+        }
+        Get.offAllNamed('/select_user');
+      } catch (fallbackError) {
+        logError('Fallback cleanup failed: $fallbackError');
+      }
+    }
+  }
+
+  /// Call logout API
+  static Future<void> _callLogoutApi() async {
+    if (!Get.isRegistered<UserApiService>()) return;
+    try {
+      await AnalyticsService.instance.clearUser();
+      await Get.find<UserApiService>().logout();
+    } catch (e) {
+      logError('Logout API failed: $e');
+      // Ignore logout failures; we still proceed with local cleanup
+    }
   }
 
   // ---------------------------------------------------------------------------
@@ -1964,6 +2097,21 @@ class ForegroundNotificationService {
     }
 
     bool success = responseData['success'] ?? false;
+
+    if (success) {
+      // Analytics: Log review submission
+      AnalyticsService.instance.logEvent(
+        name: 'review_submit',
+        parameters: {
+          'screen_name': 'NotificationDialog',
+          'screen_class': 'NotificationDialog',
+          'element_text': review.toString(),
+          'element_location': 'notification_review_dialog',
+          'page_category': 'notification',
+          'element_class': rating.toString(),
+        },
+      );
+    }
 
     if (!success) {
       String message =

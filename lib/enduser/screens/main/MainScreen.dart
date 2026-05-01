@@ -27,6 +27,7 @@ import '../profile_main/ProfileMainController.dart';
 import '../profile_main/ProfileMainScreen.dart';
 import '../save/SavedController.dart';
 import '../save/SavedScreen.dart';
+import '../../../services/analytics_service.dart';
 import 'MainTabController.dart';
 
 class MainScreen extends StatefulWidget {
@@ -116,6 +117,40 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   Future<void> onTabTapped(int index) async {
+    // Analytics: Log global navigation tap event
+    String elementText = '';
+    switch (index) {
+      case 0:
+        elementText = 'Home';
+        break;
+      case 1:
+        elementText = 'Bookings';
+        break;
+      case 2:
+        elementText = 'Messages';
+        break;
+      case 3:
+        elementText = 'Saved';
+        break;
+      case 4:
+        elementText = 'Profile';
+        break;
+      default:
+        elementText = 'Unknown';
+        break;
+    }
+    
+    AnalyticsService.instance.logEvent(
+      name: 'global_nav_tap',
+      parameters: {
+        'screen_name': 'MainScreen',
+        'screen_class': 'MainScreen',
+        'element_text': elementText,
+        'element_location': 'nav',
+        'page_category': elementText,
+      },
+    );
+
     // Check if user is guest and trying to access restricted tabs
     // Only check on actual user tap, not during initial load
     if (_tabController.currentIndex.value != index) {

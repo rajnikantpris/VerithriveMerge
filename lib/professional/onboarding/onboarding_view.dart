@@ -14,7 +14,17 @@ class OnboardingView extends BaseView<OnboardingController> {
 
   @override
   Widget buildView(BuildContext context) {
-    // final textTheme = Theme.of(context).textTheme;
+    // Log screen view analytics
+    /*
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      AnalyticsService.instance.logScreenView(
+        screenName: 'ProfessionalOnboardingScreen',
+        screenClass: 'OnboardingView',
+        pageCategory: 'onboarding',
+        elementLocation: 'view',
+      );
+    });
+    */
 
     return SafeArea(
       child: Container(

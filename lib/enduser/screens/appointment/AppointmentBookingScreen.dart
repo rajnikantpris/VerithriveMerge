@@ -6,6 +6,7 @@ import 'package:verithrive_dev/enduser/utils/app_colors.dart';
 import 'package:verithrive_dev/enduser/utils/app_text_styles.dart';
 import '../../utils/AppText.dart';
 import '../../utils/app_assets.dart';
+import '../../../services/analytics_service.dart';
 import 'AppointmentController.dart';
 
 class AppointmentBookingScreen extends StatelessWidget {
@@ -13,6 +14,16 @@ class AppointmentBookingScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Log screen view analytics
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      AnalyticsService.instance.logScreenView(
+        screenName: 'AppointmentBookingScreen',
+        screenClass: 'AppointmentBookingScreen',
+        pageCategory: 'wellness',
+        elementLocation: 'view',
+      );
+    });
+
     return Scaffold(
       backgroundColor: AppColors.white,
       appBar: AppBar(
@@ -52,8 +63,20 @@ class AppointmentBookingScreen extends StatelessWidget {
                               child: _buildOptionButton(
                                 text: AppText.yes,
                                 isSelected: controller.isLastMinute.value,
-                                onTap: () =>
-                                    controller.toggleAppointmentType(true),
+                                onTap: () {
+                                  // Analytics: Log hurry tap event
+                                  AnalyticsService.instance.logEvent(
+                                    name: 'hurry_tap',
+                                    parameters: {
+                                      'screen_name': 'AppointmentBookingScreen',
+                                      'screen_class': 'AppointmentBookingScreen',
+                                      'element_text': 'hurry yes',
+                                      'element_location': 'button_tap_cta',
+                                      'page_category': 'wellness',
+                                    },
+                                  );
+                                  controller.toggleAppointmentType(true);
+                                },
                               ),
                             ),
                             SizedBox(width: 12),
@@ -61,8 +84,20 @@ class AppointmentBookingScreen extends StatelessWidget {
                               child: _buildOptionButton(
                                 text: AppText.no,
                                 isSelected: !controller.isLastMinute.value,
-                                onTap: () =>
-                                    controller.toggleAppointmentType(false),
+                                onTap: () {
+                                  // Analytics: Log non-hurry tap event
+                                  AnalyticsService.instance.logEvent(
+                                    name: 'hurry_tap',
+                                    parameters: {
+                                      'screen_name': 'AppointmentBookingScreen',
+                                      'screen_class': 'AppointmentBookingScreen',
+                                      'element_text': 'hurry no',
+                                      'element_location': 'button_tap_cta',
+                                      'page_category': 'wellness',
+                                    },
+                                  );
+                                  controller.toggleAppointmentType(false);
+                                },
                               ),
                             ),
                           ],
@@ -176,9 +211,35 @@ class AppointmentBookingScreen extends StatelessWidget {
                   width: double.infinity,
                   height: 50,
                   child: ElevatedButton(
-                    onPressed: controller.isLastMinute.value
-                        ? controller.search
-                        : controller.skip,
+                    onPressed: () {
+                      if (controller.isLastMinute.value) {
+                        // Analytics: Log search tap event
+                        AnalyticsService.instance.logEvent(
+                          name: 'search_tap',
+                          parameters: {
+                            'screen_name': 'AppointmentBookingScreen',
+                            'screen_class': 'AppointmentBookingScreen',
+                            'element_text': 'search',
+                            'element_location': 'button_tap_cta',
+                            'page_category': 'wellness',
+                          },
+                        );
+                        controller.search();
+                      } else {
+                        // Analytics: Log skip tap event
+                        AnalyticsService.instance.logEvent(
+                          name: 'hurry_tap',
+                          parameters: {
+                            'screen_name': 'AppointmentBookingScreen',
+                            'screen_class': 'AppointmentBookingScreen',
+                            'element_text': 'skip',
+                            'element_location': 'button_tap_cta',
+                            'page_category': 'wellness',
+                          },
+                        );
+                        controller.skip();
+                      }
+                    },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primaryColor,
                       shape: RoundedRectangleBorder(

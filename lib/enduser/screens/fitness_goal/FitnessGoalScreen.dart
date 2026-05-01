@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:verithrive_dev/enduser/utils/app_assets.dart';
 import 'package:verithrive_dev/enduser/utils/app_colors.dart';
 import 'package:verithrive_dev/enduser/utils/app_text_styles.dart';
+import '../../../services/analytics_service.dart';
 import 'FitnessGoalController.dart';
 
 class FitnessGoalScreen extends GetView<FitnessGoalController> {
@@ -11,6 +12,16 @@ class FitnessGoalScreen extends GetView<FitnessGoalController> {
 
   @override
   Widget build(BuildContext context) {
+    // Log screen view analytics
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      AnalyticsService.instance.logScreenView(
+        screenName: 'FitnessGoalScreen',
+        screenClass: 'FitnessGoalScreen',
+        pageCategory: 'fitness',
+        elementLocation: 'view',
+      );
+    });
+
     return Scaffold(
       backgroundColor: AppColors.white,
       appBar: AppBar(
@@ -100,7 +111,20 @@ class FitnessGoalScreen extends GetView<FitnessGoalController> {
                                 children: controller.preferences
                                     .map(
                                       (pref) => GestureDetector(
-                                        onTap: () => controller.selectPreference(pref),
+                                        onTap: () {
+                                          // Analytics: Log select_trainer_preference_tap event
+                                          AnalyticsService.instance.logEvent(
+                                            name: 'select_trainer_preference_tap',
+                                            parameters: {
+                                              'screen_name': 'FitnessGoalScreen',
+                                              'screen_class': 'FitnessGoalScreen',
+                                              'element_text': pref,
+                                              'element_location': 'option_tap',
+                                              'page_category': 'fitness',
+                                            },
+                                          );
+                                          controller.selectPreference(pref);
+                                        },
                                         child: Container(
                                           padding: const EdgeInsets.symmetric(
                                             horizontal: 16,
@@ -259,7 +283,20 @@ class FitnessGoalScreen extends GetView<FitnessGoalController> {
           GestureDetector(
             onTap: hasSubServices 
                 ? () => controller.toggleServiceExpansion(service.id) 
-                : () => controller.toggleServiceSelection(service.id),
+                : () {
+                    // Analytics: Log select_service_tap event
+                    AnalyticsService.instance.logEvent(
+                      name: 'select_service_tap',
+                      parameters: {
+                        'screen_name': 'FitnessGoalScreen',
+                        'screen_class': 'FitnessGoalScreen',
+                        'element_text': service.serviceName ?? '',
+                        'element_location': 'option_tap',
+                        'page_category': 'fitness',
+                      },
+                    );
+                    controller.toggleServiceSelection(service.id);
+                  },
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
               margin: const EdgeInsets.only(top: 8, bottom: 8),

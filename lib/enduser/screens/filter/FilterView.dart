@@ -15,13 +15,26 @@ import 'package:verithrive_dev/enduser/screens/filter/professional/ProfessionalF
 import 'package:verithrive_dev/enduser/utils/app_assets.dart';
 import 'package:verithrive_dev/enduser/utils/app_colors.dart';
 import 'package:verithrive_dev/enduser/utils/app_text_styles.dart';
+import '../../../services/analytics_service.dart';
 import 'FilterController.dart';
 
 class FilterView extends GetView<FilterController> {
-  const FilterView({Key? key}) : super(key: key);
+  const FilterView({Key? key, this.pageCategory = 'wellness'}) : super(key: key);
+  
+  final String pageCategory;
 
   @override
   Widget build(BuildContext context) {
+    // Log screen view analytics
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      AnalyticsService.instance.logScreenView(
+        screenName: 'FilterView',
+        screenClass: 'FilterView',
+        pageCategory: pageCategory,
+        elementLocation: 'view',
+      );
+    });
+
     return Scaffold(
       backgroundColor: AppColors.white,
       appBar: AppBar(
@@ -50,6 +63,17 @@ class FilterView extends GetView<FilterController> {
                   customIcon: SvgPicture.asset(AppAssets.professional),
                   title: 'Professional',
                   onTap: () async {
+                    // Analytics: Log filter tap event
+                    AnalyticsService.instance.logEvent(
+                      name: 'filter_tap',
+                      parameters: {
+                        'screen_name': 'FilterView',
+                        'screen_class': 'FilterView',
+                        'element_text': 'Professional',
+                        'element_location': 'filter_tap',
+                        'page_category': pageCategory,
+                      },
+                    );
                     final result = await Get.to(
                       () => ProfessionalFilterScreen(),
                       binding: ProfessionalBinding(),
@@ -70,6 +94,17 @@ class FilterView extends GetView<FilterController> {
                   imagePath: AppAssets.distance,
                   title: 'Distance',
                   onTap: () async {
+                    // Analytics: Log filter tap event
+                    AnalyticsService.instance.logEvent(
+                      name: 'filter_tap',
+                      parameters: {
+                        'screen_name': 'FilterView',
+                        'screen_class': 'FilterView',
+                        'element_text': 'Distance',
+                        'element_location': 'filter_tap',
+                        'page_category': pageCategory,
+                      },
+                    );
                     final result = await Get.to(
                       () => DistanceFilterScreen(),
                       binding: DistanceBinding(),
@@ -86,6 +121,17 @@ class FilterView extends GetView<FilterController> {
                   customIcon: _buildPriceIcon(),
                   title: 'Price',
                   onTap: () async {
+                    // Analytics: Log filter tap event
+                    AnalyticsService.instance.logEvent(
+                      name: 'filter_tap',
+                      parameters: {
+                        'screen_name': 'FilterView',
+                        'screen_class': 'FilterView',
+                        'element_text': 'Price',
+                        'element_location': 'filter_tap',
+                        'page_category': pageCategory,
+                      },
+                    );
                     final result = await Get.to(
                       () => PriceFilterScreen(),
                       binding: PriceBinding(),
@@ -105,6 +151,17 @@ class FilterView extends GetView<FilterController> {
                   imagePath: AppAssets.availability,
                   title: 'Availability',
                   onTap: () async {
+                    // Analytics: Log filter tap event
+                    AnalyticsService.instance.logEvent(
+                      name: 'filter_tap',
+                      parameters: {
+                        'screen_name': 'FilterView',
+                        'screen_class': 'FilterView',
+                        'element_text': 'Availability',
+                        'element_location': 'filter_tap',
+                        'page_category': pageCategory,
+                      },
+                    );
                     final result = await Get.to(
                       () => AvailabilityFilterScreen(),
                       binding: AvailabilityBinding(),
@@ -122,6 +179,17 @@ class FilterView extends GetView<FilterController> {
                   imagePath: AppAssets.service_provider,
                   title: 'Service provider gender',
                   onTap: () async {
+                    // Analytics: Log filter tap event
+                    AnalyticsService.instance.logEvent(
+                      name: 'filter_tap',
+                      parameters: {
+                        'screen_name': 'FilterView',
+                        'screen_class': 'FilterView',
+                        'element_text': 'Service provider gender',
+                        'element_location': 'filter_tap',
+                        'page_category': pageCategory,
+                      },
+                    );
                     final result = await Get.to(
                       () => GenderFilterScreen(),
                       binding: GenderBinding(),

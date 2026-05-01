@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:verithrive_dev/enduser/utils/app_assets.dart';
 import 'package:verithrive_dev/enduser/utils/app_colors.dart';
 import 'package:verithrive_dev/enduser/utils/app_text_styles.dart';
+import 'package:verithrive_dev/services/analytics_service.dart';
 import '../../core/widget/animated_loader.dart';
 import '../cart/DashedLinePainter.dart';
 import '../../models/Booking.dart';
@@ -17,6 +18,16 @@ class BookingsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     // Get controller - it should be initialized in MainScreen, but handle if not
     final controller = Get.find<BookingsController>(tag: 'bookings');
+
+    // Log screen view analytics
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      AnalyticsService.instance.logScreenView(
+        screenName: 'BookingsScreen',
+        screenClass: 'BookingsScreen',
+        pageCategory: 'booking',
+        elementLocation: 'view',
+      );
+    });
 
     return Scaffold(
       backgroundColor: Colors.white,

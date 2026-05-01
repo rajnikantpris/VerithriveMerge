@@ -13,6 +13,7 @@ import '../../utils/AppText.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/app_text_styles.dart';
 import '../../models/Conversation.dart';
+import '../../../services/analytics_service.dart';
 import 'TherapistDetailController.dart';
 
 class TherapistDetailScreen extends StatelessWidget {
@@ -23,6 +24,45 @@ class TherapistDetailScreen extends StatelessWidget {
     // Put controller and pass the therapist via arguments from listing screen
     final TherapistDetailController controller =
     Get.put(TherapistDetailController());
+
+    // Log screen view analytics
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final args = Get.arguments as Map<String, dynamic>?;
+      final category = args?['category'] as String? ?? 'wellness';
+      
+      AnalyticsService.instance.logScreenView(
+        screenName: 'TherapistDetailScreen',
+        screenClass: 'TherapistDetailScreen',
+        pageCategory: category,
+        elementLocation: 'view',
+      );
+    });
+
+    // Log view_item analytics when therapist details are displayed
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final args = Get.arguments as Map<String, dynamic>?;
+      if (args != null && args['therapist'] != null) {
+        final therapist = args['therapist'];
+        final category = args['category'] as String? ?? 'wellness';
+        
+        AnalyticsService.instance.logEvent(
+          name: 'view_item',
+          parameters: {
+            'screen_name': 'TherapistDetailScreen',
+            'screen_class': 'TherapistDetailScreen',
+            'page_category': category,
+            'item_id': therapist.id?.toString() ?? '',
+            'item_name': therapist.name ?? '',
+            'item_category': category,
+            'item_variant': therapist.specialty ?? '',
+            'item_brand': therapist.services?.isNotEmpty == true ? therapist.services.first : '',
+            'price': therapist.price?.toString() ?? '',
+            'quantity': 1,
+            'currency': 'GBP',
+          },
+        );
+      }
+    });
 
     return Scaffold(
       backgroundColor: AppColors.white,
@@ -372,6 +412,30 @@ class TherapistDetailScreen extends StatelessWidget {
                       const SizedBox(width: 12),
                       ElevatedButton(
                         onPressed: () {
+                          // Analytics: Log select_item event for booking option
+                          WidgetsBinding.instance.addPostFrameCallback((_) {
+                            final args = Get.arguments as Map<String, dynamic>?;
+                            final category = args?['category'] as String? ?? 'wellness';
+                            final therapist = args?['therapist'];
+                            
+                            AnalyticsService.instance.logEvent(
+                              name: 'select_item',
+                              parameters: {
+                                'screen_name': 'TherapistDetailScreen',
+                                'screen_class': 'TherapistDetailScreen',
+                                'page_category': category,
+                                'item_id': therapist?.id?.toString() ?? '',
+                                'item_name': therapist?.name ?? '',
+                                'item_category': category,
+                                'item_variant': package.title ?? '',
+                                'item_brand': therapist?.services?.isNotEmpty == true ? therapist.services.first : '',
+                                'price': package.price?.toString() ?? '',
+                                'quantity': 1,
+                                'currency': 'GBP',
+                              },
+                            );
+                          });
+
                           // Parse duration from string (e.g., "45" or "45 mins") to integer
                           int? durationMinutes;
                           try {
@@ -574,7 +638,23 @@ class TherapistDetailScreen extends StatelessWidget {
       ),
       child: ElevatedButton(
         onPressed: () {
-
+          // Analytics: Log chat tap event
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            final args = Get.arguments as Map<String, dynamic>?;
+            final category = args?['category'] as String? ?? 'wellness';
+            final therapist = Get.find<TherapistDetailController>().therapist.value;
+            
+            AnalyticsService.instance.logEvent(
+              name: 'chat_tap',
+              parameters: {
+                'screen_name': 'TherapistDetailScreen',
+                'screen_class': 'TherapistDetailScreen',
+                'element_text': therapist.name ?? '',
+                'element_location': 'button_tap_cta',
+                'page_category': category,
+              },
+            );
+          });
 
           final controller = Get.find<TherapistDetailController>();
 

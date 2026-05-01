@@ -6,6 +6,7 @@ import 'package:verithrive_dev/enduser/screens/login/LoginBinding.dart';
 import 'package:verithrive_dev/enduser/screens/login/LoginView.dart';
 import 'package:verithrive_dev/enduser/screens/register/RegisterView.dart';
 import 'package:verithrive_dev/enduser/screens/register/register_binding.dart';
+import 'package:verithrive_dev/services/analytics_service.dart';
 import '../../utils/AppText.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/app_text_styles.dart';
@@ -17,6 +18,17 @@ class OnboardingScreen extends GetView<OnboardingController> {
 
   @override
   Widget build(BuildContext context) {
+   
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      AnalyticsService.instance.logScreenView(
+        screenName: 'EndUserOnboardingScreen',
+        screenClass: 'OnboardingScreen',
+        pageCategory: 'onboarding',
+        elementLocation: 'view',
+      );
+    });
+
+   
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.dark.copyWith(
         statusBarColor: AppColors.white,
@@ -77,6 +89,17 @@ class OnboardingScreen extends GetView<OnboardingController> {
                         backgroundColor: AppColors.lightGreen,
                         textColor: AppColors.blueColor,
                         onPressed: () {
+                          // Analytics: Log join_tap event
+                          AnalyticsService.instance.logEvent(
+                            name: 'join_tap',
+                            parameters: {
+                              'screen_name': 'OnboardingScreen',
+                              'screen_class': 'OnboardingScreen',
+                              'element_text': 'Join now',
+                              'element_location': 'button_tap_cta',
+                              'page_category': 'register',
+                            },
+                          );
                           Get.to(
                             () => RegisterView(),
                             binding: RegisterBinding(),
@@ -91,6 +114,17 @@ class OnboardingScreen extends GetView<OnboardingController> {
                         backgroundColor: AppColors.primaryColor,
                         textColor: AppColors.white,
                         onPressed: () {
+                          // Analytics: Log login_tap event
+                          AnalyticsService.instance.logEvent(
+                            name: 'login_tap',
+                            parameters: {
+                              'screen_name': 'OnboardingScreen',
+                              'screen_class': 'OnboardingScreen',
+                              'element_text': 'Log in',
+                              'element_location': 'button_tap_cta',
+                              'page_category': 'onboarding',
+                            },
+                          );
                           Get.to(
                             () => const LoginView(),
                             binding: LoginBinding(),
@@ -104,6 +138,17 @@ class OnboardingScreen extends GetView<OnboardingController> {
 
                 GestureDetector(
                   onTap: () {
+                    // Analytics: Log continue_guest_tap event
+                    AnalyticsService.instance.logEvent(
+                      name: 'continue_guest_tap',
+                      parameters: {
+                        'screen_name': 'OnboardingScreen',
+                        'screen_class': 'OnboardingScreen',
+                        'element_text': 'Continue as a guest',
+                        'element_location': 'button_tap_cta',
+                        'page_category': 'onboarding',
+                      },
+                    );
                     controller.continueAsGuest();
                   },
                   child: Row(

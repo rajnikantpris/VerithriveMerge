@@ -342,6 +342,18 @@ class HomeMainController extends BaseController with WidgetsBindingObserver {
 
   // ── Card Tap ───────────────────────────────────────────────────────────────
   void onCardTap(String category, String label, String? subTypeId) {
+    // Analytics: Log product_card_tap event
+    AnalyticsService.instance.logEvent(
+      name: 'product_card_tap',
+      parameters: {
+        'screen_name': 'HomeMainScreen',
+        'screen_class': 'HomeMainScreen',
+        'element_text': label,
+        'element_location': 'card_tap',
+        'page_category': 'home',
+      },
+    );
+
     // Find the matching category from the dynamic list
     final matchedCategory = professionCategories.firstWhereOrNull(
           (c) => c.type.toLowerCase() == category.toLowerCase(),
@@ -562,8 +574,17 @@ class HomeMainController extends BaseController with WidgetsBindingObserver {
 
     bool success = responseData['success'] ?? false;
     if (success) {
-      // Analytics: Log review submission
-      
+      AnalyticsService.instance.logEvent(
+        name: 'review_submit',
+        parameters: {
+          'screen_name': 'HomeMainScreen',
+          'screen_class': 'HomeMainScreen',
+          'element_text': review.toString(),
+          'element_location': 'review_dialog',
+          'page_category': 'home',
+          'element_class': rating.toString(),
+        },
+      );
     }
     if (!success) throw Exception(responseData['message'] ?? 'Failed to submit review');
   }

@@ -947,6 +947,19 @@ class _SessionCard extends StatelessWidget {
                 children: [
                   _ActionButton(
                     onTap: () {
+                      // Analytics: Log cancel session tap event
+                      /*
+                      AnalyticsService.instance.logEvent(
+                        name: 'cancel_session_tap',
+                        parameters: {
+                          'screen_name': 'ProfessionalHomeScreen',
+                          'screen_class': 'DashboardView',
+                          'element_text': 'Cancel Session',
+                          'element_location': 'button_tap_cta',
+                          'page_category': 'home',
+                        },
+                      );
+                      */
                       showCancelSessionDialog(context, session.id, controller);
                     },
                     icon: AppImages.delete_list_svg(
@@ -1208,7 +1221,22 @@ void showCancelSessionDialog(
                 SizedBox(
                   width: double.infinity,
                   child: TextButton(
-                    onPressed: () => Navigator.of(context).pop(),
+                    onPressed: () {
+                      // Analytics: Log cancel session go back event
+                      /*
+                      AnalyticsService.instance.logEvent(
+                        name: 'cancel_session_tap',
+                        parameters: {
+                          'screen_name': 'ProfessionalHomeScreen',
+                          'screen_class': 'DashboardView',
+                          'element_text': 'go back',
+                          'element_location': 'button_tap_cta',
+                          'page_category': 'home',
+                        },
+                      );
+                      */
+                      Navigator.of(context).pop();
+                    },
                     style: TextButton.styleFrom(
                       padding: EdgeInsets.symmetric(
                         vertical: HightWidthSizes.setValue_14,

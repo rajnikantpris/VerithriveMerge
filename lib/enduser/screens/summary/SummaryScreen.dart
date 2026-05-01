@@ -5,6 +5,7 @@ import 'package:verithrive_dev/enduser/utils/app_assets.dart';
 import '../../utils/AppText.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/app_text_styles.dart';
+import '../../../services/analytics_service.dart';
 import 'SummaryController.dart';
 import '../cart/DashedLinePainter.dart';
 import '../cart/CartController.dart';
@@ -15,6 +16,47 @@ class SummaryScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Log screen view analytics
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final args = Get.arguments as Map<String, dynamic>?;
+      final category = args?['category'] as String? ?? 'wellness';
+      
+      AnalyticsService.instance.logScreenView(
+        screenName: 'SummaryScreen',
+        screenClass: 'SummaryScreen',
+        pageCategory: category,
+        elementLocation: 'view',
+      );
+    });
+
+    // Log view_cart analytics when cart is viewed
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final args = Get.arguments as Map<String, dynamic>?;
+      final category = args?['category'] as String? ?? 'wellness';
+      
+      // Create item from cart controller booking data
+      final item = {
+        'item_id': cartController.professionalId.value,
+        'item_name': cartController.serviceName.value,
+        'item_category': category,
+        'item_variant': cartController.consultationType.value,
+        'item_brand': cartController.professionalId.value, // Using professionalId as brand
+        'price': cartController.price.value.toString(),
+        'quantity': 1,
+        'currency': 'GBP',
+      };
+      
+      AnalyticsService.instance.logEvent(
+        name: 'view_cart',
+        parameters: {
+          'screen_name': 'SummaryScreen',
+          'screen_class': 'SummaryScreen',
+          'page_category': category,
+          'items': [item],
+        },
+      );
+    });
+
     return Scaffold(
       backgroundColor: AppColors.white,
       appBar: AppBar(

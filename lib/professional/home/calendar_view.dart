@@ -9,6 +9,7 @@ import '../../theme/hight_width_sizes.dart';
 import '../../theme/font_sizes.dart';
 import '../../theme/image_paths.dart';
 import '../../widgets/response_dialog.dart';
+import '../../../services/analytics_service.dart';
 import 'calendar_controller.dart';
 import 'home_controller.dart';
 
@@ -145,6 +146,16 @@ class CalendarTab extends BaseView<CalendarController> {
 
   @override
   Widget buildView(BuildContext context) {
+    // Log screen view analytics
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      AnalyticsService.instance.logScreenView(
+        screenName: 'ProfessionalCalendarScreen',
+        screenClass: 'CalendarTab',
+        pageCategory: 'calendar',
+        elementLocation: 'view',
+      );
+    });
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -965,7 +976,20 @@ class _ServiceFormatCard extends StatelessWidget {
                       ),
                     ),
                     GestureDetector(
-                      onTap: onDelete,
+                      onTap: () {
+                        // Analytics: Log delete service format tap event
+                        AnalyticsService.instance.logEvent(
+                          name: 'delete_service_format_tap',
+                          parameters: {
+                            'screen_name': 'ProfessionalCalendarScreen',
+                            'screen_class': 'CalendarTab',
+                            'element_text': 'delete',
+                            'element_location': 'button_tap_cta',
+                            'page_category': 'calendar',
+                          },
+                        );
+                        onDelete();
+                      },
                       child: Container(
                         padding: EdgeInsets.all(HightWidthSizes.setValue_8),
                         child: AppImages.delete_account_svg(

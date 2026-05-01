@@ -343,8 +343,21 @@ class FitnessGoalController extends BaseController {
     print('========================================');
     
     // Analytics: Log fitness goal selection
+    if (selectedGoals.isNotEmpty) {
+      for (String goal in selectedGoals) {
+        AnalyticsService.instance.logEvent(
+          name: 'select_goal_tap',
+          parameters: {
+            'screen_name': 'FitnessGoalScreen',
+            'screen_class': 'FitnessGoalScreen',
+            'element_text': goal,
+            'element_location': 'option_tap',
+            'page_category': 'fitness',
+          },
+        );
+      }
+    }
     
-
     _showLoadingAndNavigate(result);
   }
 

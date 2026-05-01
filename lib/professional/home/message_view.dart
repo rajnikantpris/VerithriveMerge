@@ -86,6 +86,18 @@ class MessagesTab extends BaseView<MessagesController> {
 
   @override
   Widget buildView(BuildContext context) {
+    // Log screen view analytics
+    /*
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      AnalyticsService.instance.logScreenView(
+        screenName: 'ProfessionalMessagesScreen',
+        screenClass: 'MessagesTab',
+        pageCategory: 'messaging',
+        elementLocation: 'view',
+      );
+    });
+    */
+
     return Container(
       color: AppColor.white,
       child: Column(

@@ -28,6 +28,18 @@ class LoginView extends BaseView<ProfessionalLoginController> {
 
   @override
   Widget buildView(BuildContext context) {
+    // Log screen view analytics
+    /*
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      AnalyticsService.instance.logScreenView(
+        screenName: 'ProfessionalLoginScreen',
+        screenClass: 'LoginView',
+        pageCategory: 'login',
+        elementLocation: 'view',
+      );
+    });
+    */
+
     return SafeArea(
       child: Container(
         color: AppColor.white,
@@ -136,7 +148,22 @@ class LoginView extends BaseView<ProfessionalLoginController> {
                           ),
                         ),
                       ),
-                      onPressed: controller.onLogin,
+                      onPressed: () {
+                        // Analytics: Log login tap event
+                        /*
+                        AnalyticsService.instance.logEvent(
+                          name: 'login_tap',
+                          parameters: {
+                            'screen_name': 'ProfessionalLoginScreen',
+                            'screen_class': 'LoginView',
+                            'element_text': 'Log in',
+                            'element_location': 'button_tap_cta',
+                            'page_category': 'login',
+                          },
+                        );
+                        */
+                        controller.onLogin();
+                      },
                       child: Text(
                         'Log in',
                         style: TextStyle(
@@ -188,7 +215,22 @@ class LoginView extends BaseView<ProfessionalLoginController> {
                   SizedBox(height: HightWidthSizes.setValue_22),
                   Center(
                     child: TextButton(
-                      onPressed: controller.onCreateAccount,
+                      onPressed: () {
+                        // Analytics: Log join tap event
+                        /*
+                        AnalyticsService.instance.logEvent(
+                          name: 'join_tap',
+                          parameters: {
+                            'screen_name': 'ProfessionalLoginScreen',
+                            'screen_class': 'LoginView',
+                            'element_text': 'join now',
+                            'element_location': 'button_tap_cta',
+                            'page_category': 'login',
+                          },
+                        );
+                        */
+                        controller.onCreateAccount();
+                      },
                       child: RichText(
                         text: TextSpan(
                           text: "Don't have an account yet? ",

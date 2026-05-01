@@ -514,16 +514,25 @@ class DioClient extends GetxService {
     if (_isLoggingOut) return;
     _isLoggingOut = true;
 
-    await _callLogoutApi();
+    // Show session expiration dialog
+    showResponseDialog(
+      message: 'Session expired. Please login again.',
+      title: 'Session Expired',
+      isError: true,
+      showButton: true,
+      onOkPressed: () async {
+        await _callLogoutApi();
 
-    // Clear stored token if available.
-    if (Get.isRegistered<StorageService>()) {
-      final storage = Get.find<StorageService>();
-      await storage.writeString(_accessTokenKey, '');
-    }
+        // Clear stored token if available.
+        if (Get.isRegistered<StorageService>()) {
+          final storage = Get.find<StorageService>();
+          await storage.writeString(_accessTokenKey, '');
+        }
 
-    // Navigate to the initial page (could be login/onboarding).
-    Get.offAllNamed(Routes.selectUser);
+        // Navigate to the initial page (could be login/onboarding).
+        Get.offAllNamed(Routes.selectUser);
+      },
+    );
 
     _isLoggingOut = false;
   }

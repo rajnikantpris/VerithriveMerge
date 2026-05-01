@@ -9,6 +9,7 @@ import '../../../theme/font_sizes.dart';
 import '../../../theme/hight_width_sizes.dart';
 import '../../../theme/image_paths.dart';
 import '../../../widgets/custom_text_field.dart';
+import '../../../../services/analytics_service.dart';
 import 'create_availability_controller.dart';
 
 class CreateAvailabilityView extends BaseView<CreateAvailabilityController> {
@@ -56,6 +57,16 @@ class CreateAvailabilityView extends BaseView<CreateAvailabilityController> {
 
   @override
   Widget buildView(BuildContext context) {
+    // Log screen view analytics
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      AnalyticsService.instance.logScreenView(
+        screenName: 'ProfessionalCreateAvailabilityScreen',
+        screenClass: 'CreateAvailabilityView',
+        pageCategory: 'calendar',
+        elementLocation: 'view',
+      );
+    });
+
     return Container(
       color: AppColor.white,
       child: SingleChildScrollView(
@@ -571,7 +582,20 @@ class CreateAvailabilityView extends BaseView<CreateAvailabilityController> {
                 ),
               ),
             ),
-            onPressed: controller.onAddAvailability,
+            onPressed: () {
+              // Analytics: Log add service availability tap event
+              AnalyticsService.instance.logEvent(
+                name: 'add_service_availability_tap',
+                parameters: {
+                  'screen_name': 'ProfessionalCreateAvailabilityScreen',
+                  'screen_class': 'CreateAvailabilityView',
+                  'element_text': 'add availability',
+                  'element_location': 'button_tap_cta',
+                  'page_category': 'calendar',
+                },
+              );
+              controller.onAddAvailability();
+            },
             child: Text(
               'Add availability',
               style: TextStyle(

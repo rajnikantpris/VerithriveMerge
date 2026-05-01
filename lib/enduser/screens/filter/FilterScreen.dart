@@ -3,11 +3,13 @@ import 'package:get/get.dart';
 import 'FilterView.dart';
 
 class FilterScreen extends GetView {
-  const FilterScreen({Key? key});
+  const FilterScreen({Key? key, this.pageCategory = 'wellness'});
+  
+  final String pageCategory;
 
   @override
   Widget build(BuildContext context) {
-    return const FilterView();
+    return FilterView(pageCategory: pageCategory);
   }
 }
 

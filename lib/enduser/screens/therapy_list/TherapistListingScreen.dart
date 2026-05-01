@@ -15,6 +15,7 @@ import '../../core/widget/animated_loader.dart';
 import '../../utils/AppText.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/app_text_styles.dart';
+import '../../../services/analytics_service.dart';
 import 'Therapist.dart';
 import 'TherapistController.dart';
 
@@ -23,6 +24,33 @@ class TherapistListingScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Log view_item_list analytics when therapist list is displayed
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (controller.filteredTherapists.isNotEmpty) {
+        final category = _getCategoryFromTitle() ?? 'wellness';
+        final items = controller.filteredTherapists.map((therapist) => {
+          'item_id': therapist.id,
+          'item_name': therapist.name,
+          'item_category': category,
+          'item_variant': therapist.specialty,
+          'item_brand': therapist.services.isNotEmpty ? therapist.services.first : '',
+          'price': therapist.price.toString(),
+          'quantity': 1,
+          'currency': 'GBP',
+        }).toList();
+        
+        AnalyticsService.instance.logEvent(
+          name: 'view_item_list',
+          parameters: {
+            'screen_name': 'TherapistListingScreen',
+            'screen_class': 'TherapistListingScreen',
+            'page_category': category,
+            'items': items,
+          },
+        );
+      }
+    });
+
     return Scaffold(
       backgroundColor: AppColors.white,
       appBar: AppBar(
@@ -101,8 +129,9 @@ class TherapistListingScreen extends StatelessWidget {
 
           InkWell(
             onTap: () async {
+              final category = _getCategoryFromTitle();
               await Get.to(
-                () => const FilterScreen(),
+                () => FilterScreen(pageCategory: category ?? 'wellness'),
                 binding: FilterBinding(),
               );
             },
@@ -412,7 +441,7 @@ class TherapistListingScreen extends StatelessWidget {
     final title = controller.screenTitle.value;
     if (title == 'Sport therapists') {
       return 'wellness';
-    } else if (title == 'Personal Trainer') {
+    } else if (title == 'Personal trainer') {
       return 'fitness';
     } else if (title == 'Nutritionists') {
       return 'food_nutrition';

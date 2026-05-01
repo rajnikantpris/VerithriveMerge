@@ -196,6 +196,33 @@ class SummaryController extends BaseController {
 
   // Remove booking
   void removeBooking() {
+    // Analytics: Log remove from cart event
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final args = Get.arguments as Map<String, dynamic>?;
+      final category = args?['category'] as String? ?? 'wellness';
+      
+      final item = {
+        'item_id': cartController.professionalId.value,
+        'item_name': cartController.serviceName.value,
+        'item_category': category,
+        'item_variant': cartController.consultationType.value,
+        'item_brand': cartController.professionalId.value,
+        'price': cartController.price.value.toString(),
+        'quantity': 1,
+        'currency': 'GBP',
+      };
+      
+      AnalyticsService.instance.logEvent(
+        name: 'remove_from_cart',
+        parameters: {
+          'screen_name': 'SummaryScreen',
+          'screen_class': 'SummaryScreen',
+          'page_category': category,
+          'items': [item],
+        },
+      );
+    });
+    
     // Cancel timer when removing booking
     _cancelTimer();
     // Implementation for removing booking

@@ -10,6 +10,7 @@ import 'package:intl/intl.dart';
 import 'package:verithrive_dev/enduser/screens/payment/payment_end_webview_screen.dart';
 import 'package:verithrive_dev/enduser/screens/payment_success/PaymentSuccessBinding.dart';
 import 'package:verithrive_dev/enduser/screens/payment_success/PaymentSuccessScreen.dart';
+import '../../../services/analytics_service.dart';
 import '../../core/base/base_controller.dart';
 import '../../data/repository/project_repository.dart';
 import '../../network/exceptions/base_exception.dart';
@@ -196,6 +197,33 @@ class PaymentMethodController extends BaseController {
       );
       return;
     }
+
+    // Analytics: Log continue button tap event
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final args = Get.arguments as Map<String, dynamic>?;
+      final category = args?['category'] as String? ?? 'wellness';
+      
+      final item = {
+        'item_id': professionalId.value,
+        'item_name': serviceName.value,
+        'item_category': category,
+        'item_variant': serviceName.value,
+        'item_brand': professionalId.value,
+        'price': price.value.toString(),
+        'quantity': 1,
+        'currency': 'GBP',
+      };
+      
+      AnalyticsService.instance.logEvent(
+        name: 'begin_checkout',
+        parameters: {
+          'screen_name': 'PaymentMethodScreen',
+          'screen_class': 'PaymentMethodScreen',
+          'page_category': category,
+          'items': [item],
+        },
+      );
+    });
 
     // Call create-booking API (edit mode is handled in SummaryController)
     callCreateBookingAPI();

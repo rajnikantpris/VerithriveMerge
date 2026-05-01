@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:verithrive_dev/enduser/utils/app_assets.dart';
 import 'package:verithrive_dev/enduser/utils/app_colors.dart';
 import 'package:verithrive_dev/enduser/utils/app_text_styles.dart';
+import '../../../services/analytics_service.dart';
 import '../../core/widget/animated_loader.dart';
 import '../../models/Conversation.dart';
 import '../../models/ChatMessage.dart';
@@ -18,6 +19,15 @@ class ChatDetailScreen extends StatelessWidget {
     // Get controller from binding
     final controller = Get.find<ChatDetailController>();
     final conversation = controller.conversation;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      AnalyticsService.instance.logScreenView(
+        screenName: 'ChatScreen',
+        screenClass: 'ChatDetailScreen',
+        pageCategory: 'chat',
+        elementLocation: 'view',
+      );
+    });
 
     return Scaffold(
       backgroundColor: Colors.white,

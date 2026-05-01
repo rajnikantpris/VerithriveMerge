@@ -5,6 +5,7 @@ import '../../../api/user_api_service.dart';
 import '../../../common/base_controller.dart';
 import '../../../services/socket_service.dart';
 import '../../../services/storage_service.dart';
+import '../../../services/analytics_service.dart';
 import '../messages_controller.dart';
 
 class ChatController extends BaseController {
@@ -206,6 +207,18 @@ class ChatController extends BaseController {
       message: text,
       receiverId: peer.value.userId ?? '',
       chatId: _chatId,
+    );
+
+    // Analytics: Log message sent tap event
+    AnalyticsService.instance.logEvent(
+      name: 'message_sent_tap',
+      parameters: {
+        'screen_name': 'ProfessionalChatScreen',
+        'screen_class': 'ChatView',
+        'element_text': text,
+        'element_location': 'button_tap_cta',
+        'page_category': 'messaging',
+      },
     );
 
     // Mark messages as read after sending

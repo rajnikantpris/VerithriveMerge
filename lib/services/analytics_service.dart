@@ -44,15 +44,30 @@ class AnalyticsService {
   Future<void> logScreenView({
     required String screenName,
     String? screenClass,
+    String? pageCategory,
+    String? elementLocation,
   }) async {
     try {
-      await _analytics.logScreenView(
-        screenName: screenName,
-        screenClass: screenClass,
+      final parameters = <String, Object>{};
+      if (pageCategory != null) parameters['page_category'] = pageCategory;
+      if (elementLocation != null) parameters['element_location'] = elementLocation;
+      
+      await _analytics.logEvent(
+        name: 'screen_view',
+        parameters: {
+          'screen_name': screenName,
+          if (screenClass != null) 'screen_class': screenClass,
+          ...parameters,
+        },
       );
       
       if (kDebugMode) {
-        print('Analytics: Logged screen view [$screenName]');
+        final allParameters = {
+          'screen_name': screenName,
+          if (screenClass != null) 'screen_class': screenClass,
+          ...parameters,
+        };
+        print('Analytics: Logged screen view [$screenName] with parameters ${allParameters.isEmpty ? '' : allParameters}');
       }
     } catch (e) {
       if (kDebugMode) {

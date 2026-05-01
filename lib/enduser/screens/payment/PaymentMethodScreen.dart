@@ -7,6 +7,7 @@ import '../../utils/AppText.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/app_text_styles.dart';
 import '../../core/widget/animated_loader.dart';
+import '../../../services/analytics_service.dart';
 import 'PaymentMethodController.dart';
 import 'PaymentMethodType.dart';
 
@@ -15,6 +16,19 @@ class PaymentMethodScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Log screen view analytics
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final args = Get.arguments as Map<String, dynamic>?;
+      final category = args?['category'] as String? ?? 'wellness';
+      
+      AnalyticsService.instance.logScreenView(
+        screenName: 'PaymentMethodScreen',
+        screenClass: 'PaymentMethodScreen',
+        pageCategory: category,
+        elementLocation: 'view',
+      );
+    });
+
     return Scaffold(
       backgroundColor: AppColors.white,
       appBar: AppBar(

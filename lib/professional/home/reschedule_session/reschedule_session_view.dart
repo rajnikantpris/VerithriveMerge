@@ -55,6 +55,18 @@ class RescheduleSessionView extends BaseView<RescheduleSessionController> {
 
   @override
   Widget buildView(BuildContext context) {
+    // Log screen view analytics
+    /*
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      AnalyticsService.instance.logScreenView(
+        screenName: 'ProfessionalRescheduleScreen',
+        screenClass: 'RescheduleSessionView',
+        pageCategory: 'home',
+        elementLocation: 'view',
+      );
+    });
+    */
+
     return Container(
       color: AppColor.white,
       child: SingleChildScrollView(
@@ -184,7 +196,22 @@ class RescheduleSessionView extends BaseView<RescheduleSessionController> {
                 ),
               ),
             ),
-            onPressed: controller.onReschedule,
+            onPressed: () {
+              // Analytics: Log reschedule session tap event
+              /*
+              AnalyticsService.instance.logEvent(
+                name: 'reschedule_session_tap',
+                parameters: {
+                  'screen_name': 'ProfessionalRescheduleScreen',
+                  'screen_class': 'RescheduleSessionView',
+                  'element_text': 'Reschedule Session',
+                  'element_location': 'button_tap_cta',
+                  'page_category': 'home',
+                },
+              );
+              */
+              controller.onReschedule();
+            },
             child: Text(
               'Reschedule session',
               style: TextStyle(

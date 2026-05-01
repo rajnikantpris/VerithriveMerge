@@ -5,6 +5,7 @@ import 'package:verithrive_dev/enduser/utils/app_assets.dart';
 import 'package:verithrive_dev/enduser/utils/app_colors.dart';
 import 'package:verithrive_dev/enduser/utils/app_text_styles.dart';
 import '../../utils/AppText.dart';
+import '../../../services/analytics_service.dart';
 import 'PaymentSuccessController.dart';
 
 class PaymentSuccessScreen extends StatelessWidget {
@@ -12,6 +13,34 @@ class PaymentSuccessScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Log purchase analytics when successful payment page is loaded
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final args = Get.arguments as Map<String, dynamic>?;
+      final category = args?['category'] as String? ?? 'wellness';
+      
+      // Create item from booking data
+      final item = {
+        'item_id': args?['professional_id']?.toString() ?? '',
+        'item_name': args?['service_name']?.toString() ?? '',
+        'item_category': category,
+        'item_variant': args?['service_name']?.toString() ?? '',
+        'item_brand': args?['professional_id']?.toString() ?? '',
+        'price': args?['price']?.toString() ?? '',
+        'quantity': 1,
+        'currency': 'GBP',
+      };
+      
+      AnalyticsService.instance.logEvent(
+        name: 'purchase',
+        parameters: {
+          'screen_name': 'PaymentSuccessScreen',
+          'screen_class': 'PaymentSuccessScreen',
+          'page_category': category,
+          'items': [item],
+        },
+      );
+    });
+
     return Scaffold(
       backgroundColor: AppColors.white,
       body: _buildSuccessScreen(),

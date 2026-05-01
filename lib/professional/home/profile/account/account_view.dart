@@ -55,6 +55,18 @@ class AccountView extends BaseView<AccountController> {
 
   @override
   Widget buildView(BuildContext context) {
+    // Log screen view analytics
+    /*
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      AnalyticsService.instance.logScreenView(
+        screenName: 'ProfessionalAccountScreen',
+        screenClass: 'AccountView',
+        pageCategory: 'profile',
+        elementLocation: 'view',
+      );
+    });
+    */
+
     return Container(
       color: AppColor.color_F5F5F5,
       child: SingleChildScrollView(
@@ -170,56 +182,56 @@ class AccountView extends BaseView<AccountController> {
     );
   }
 
-  @override
-  Widget? bottomNavigationBar(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: HightWidthSizes.setValue_16,
-        vertical: HightWidthSizes.setValue_16,
-      ),
-      decoration: BoxDecoration(
-        color: AppColor.white,
-        boxShadow: [
-          BoxShadow(
-            color: Color(0x1A000000),
-            blurRadius: HightWidthSizes.setValue_10,
-            offset: Offset(0, -4),
-          ),
-        ],
-      ),
-      child: SafeArea(
-        child: SizedBox(
-          width: double.infinity,
-          child: ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColor.color_2FC4B2,
-              foregroundColor: AppColor.white,
-              elevation: 0,
-              minimumSize: Size(double.infinity, HightWidthSizes.setValue_45),
-              padding: EdgeInsets.symmetric(
-                  vertical: HightWidthSizes.setValue_12,
-                  horizontal: HightWidthSizes.setValue_16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(
-                  HightWidthSizes.setValue_10,
-                ),
-              ),
-            ),
-            onPressed: controller.onUpdateInformation,
-            child: Text(
-              'Update information',
-              style: TextStyle(
-                fontFamily: AppFonts.rubikMedium,
-                fontWeight: FontWeight.w500,
-                color: AppColor.white,
-                fontSize: FontSizes.setFontValue_16,
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
+  // @override
+  // Widget? bottomNavigationBar(BuildContext context) {
+  //   return Container(
+  //     padding: EdgeInsets.symmetric(
+  //       horizontal: HightWidthSizes.setValue_16,
+  //       vertical: HightWidthSizes.setValue_16,
+  //     ),
+  //     decoration: BoxDecoration(
+  //       color: AppColor.white,
+  //       boxShadow: [
+  //         BoxShadow(
+  //           color: Color(0x1A000000),
+  //           blurRadius: HightWidthSizes.setValue_10,
+  //           offset: Offset(0, -4),
+  //         ),
+  //       ],
+  //     ),
+  //     child: SafeArea(
+  //       child: SizedBox(
+  //         width: double.infinity,
+  //         child: ElevatedButton(
+  //           style: ElevatedButton.styleFrom(
+  //             backgroundColor: AppColor.color_2FC4B2,
+  //             foregroundColor: AppColor.white,
+  //             elevation: 0,
+  //             minimumSize: Size(double.infinity, HightWidthSizes.setValue_45),
+  //             padding: EdgeInsets.symmetric(
+  //                 vertical: HightWidthSizes.setValue_12,
+  //                 horizontal: HightWidthSizes.setValue_16),
+  //             shape: RoundedRectangleBorder(
+  //               borderRadius: BorderRadius.circular(
+  //                 HightWidthSizes.setValue_10,
+  //               ),
+  //             ),
+  //           ),
+  //           onPressed: controller.onUpdateInformation,
+  //           child: Text(
+  //             'Update information',
+  //             style: TextStyle(
+  //               fontFamily: AppFonts.rubikMedium,
+  //               fontWeight: FontWeight.w500,
+  //               color: AppColor.white,
+  //               fontSize: FontSizes.setFontValue_16,
+  //             ),
+  //           ),
+  //         ),
+  //       ),
+  //     ),
+  //   );
+  // }
 
   void showDeactivateAccountDialog(
       BuildContext context, VoidCallback onConfirm) {
@@ -283,7 +295,22 @@ class AccountView extends BaseView<AccountController> {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: () => Navigator.of(context).pop(),
+                      onPressed: () {
+                        // Analytics: Log deactivate account go back event
+                        /*
+                        AnalyticsService.instance.logEvent(
+                          name: 'deactive_account_tap',
+                          parameters: {
+                            'screen_name': 'ProfessionalAccountScreen',
+                            'screen_class': 'AccountView',
+                            'element_text': 'no go back',
+                            'element_location': 'button_tap_cta',
+                            'page_category': 'profile',
+                          },
+                        );
+                        */
+                        Navigator.of(context).pop();
+                      },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColor.color_2FC4B2,
                         foregroundColor: AppColor.white,
@@ -315,6 +342,19 @@ class AccountView extends BaseView<AccountController> {
                     width: double.infinity,
                     child: TextButton(
                       onPressed: () {
+                        // Analytics: Log deactivate account confirm event
+                        /*
+                        AnalyticsService.instance.logEvent(
+                          name: 'deactive_account_tap',
+                          parameters: {
+                            'screen_name': 'ProfessionalAccountScreen',
+                            'screen_class': 'AccountView',
+                            'element_text': 'deactive account',
+                            'element_location': 'button_tap_cta',
+                            'page_category': 'profile',
+                          },
+                        );
+                        */
                         Navigator.of(context).pop();
                         onConfirm();
                       },

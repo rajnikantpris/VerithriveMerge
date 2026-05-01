@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:verithrive_dev/widgets/custom_text_field.dart';
+import 'package:verithrive_dev/services/analytics_service.dart';
 import '../../../theme/colors.dart';
 import '../../../theme/font_sizes.dart';
 import '../../../theme/fonts.dart';
@@ -15,6 +16,16 @@ class LoginView extends GetView<LoginController> {
 
   @override
   Widget build(BuildContext context) {
+    // Log screen view analytics
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      AnalyticsService.instance.logScreenView(
+        screenName: 'LoginScreen',
+        screenClass: 'LoginView',
+        pageCategory: 'login',
+        elementLocation: 'view',
+      );
+    });
+
     return Scaffold(
       backgroundColor: AppColor.white,
       body: SafeArea(
@@ -121,7 +132,20 @@ class LoginView extends GetView<LoginController> {
                           ),
                         ),
                       ),
-                      onPressed: controller.callLoginService,
+                      onPressed: () {
+                        // Analytics: Log login_tap event
+                        AnalyticsService.instance.logEvent(
+                          name: 'login_tap',
+                          parameters: {
+                            'screen_name': 'LoginScreen',
+                            'screen_class': 'LoginView',
+                            'element_text': 'Log in',
+                            'element_location': 'button_tap_cta',
+                            'page_category': 'login',
+                          },
+                        );
+                        controller.callLoginService();
+                      },
                       child: Text(
                         'Log in',
                         style: TextStyle(
@@ -173,7 +197,20 @@ class LoginView extends GetView<LoginController> {
                   SizedBox(height: HightWidthSizes.setValue_22),
                   Center(
                     child: TextButton(
-                      onPressed: controller.navigateToRegister,
+                      onPressed: () {
+                        // Analytics: Log join_tap event
+                        AnalyticsService.instance.logEvent(
+                          name: 'join_tap',
+                          parameters: {
+                            'screen_name': 'LoginScreen',
+                            'screen_class': 'LoginView',
+                            'element_text': 'Join now',
+                            'element_location': 'button_tap_cta',
+                            'page_category': 'login',
+                          },
+                        );
+                        controller.navigateToRegister();
+                      },
                       child: RichText(
                         text: TextSpan(
                           text: "Don't have an account yet? ",

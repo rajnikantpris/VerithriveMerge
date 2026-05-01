@@ -8,6 +8,7 @@ import '../../../theme/font_sizes.dart';
 import '../../../theme/hight_width_sizes.dart';
 import '../../../theme/image_paths.dart';
 import '../../../widgets/custom_text_field.dart';
+import '../../../../services/analytics_service.dart';
 import 'edit_availability_controller.dart';
 
 class EditAvailabilityView extends BaseView<EditAvailabilityController> {
@@ -55,6 +56,16 @@ class EditAvailabilityView extends BaseView<EditAvailabilityController> {
 
   @override
   Widget buildView(BuildContext context) {
+    // Log screen view analytics
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      AnalyticsService.instance.logScreenView(
+        screenName: 'ProfessionalEditAvailabilityScreen',
+        screenClass: 'EditAvailabilityView',
+        pageCategory: 'calendar',
+        elementLocation: 'view',
+      );
+    });
+
     return Container(
       color: AppColor.white,
       child: SingleChildScrollView(
@@ -358,7 +369,20 @@ class EditAvailabilityView extends BaseView<EditAvailabilityController> {
                 ),
               ),
             ),
-            onPressed: controller.onUpdateAvailability,
+            onPressed: () {
+              // Analytics: Log update availability tap event
+              AnalyticsService.instance.logEvent(
+                name: 'update_availability_tap',
+                parameters: {
+                  'screen_name': 'ProfessionalEditAvailabilityScreen',
+                  'screen_class': 'EditAvailabilityView',
+                  'element_text': 'update availability',
+                  'element_location': 'button_tap_cta',
+                  'page_category': 'calendar',
+                },
+              );
+              controller.onUpdateAvailability();
+            },
             child: Text(
               'Update availability',
               style: TextStyle(

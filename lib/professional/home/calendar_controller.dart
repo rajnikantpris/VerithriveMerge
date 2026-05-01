@@ -7,6 +7,7 @@ import '../../api/api_response.dart';
 import '../../api/user_api_service.dart';
 import '../../common/base_controller.dart';
 import '../../services/notification_service.dart';
+import '../../services/analytics_service.dart';
 import '../../theme/hight_width_sizes.dart';
 import '../../widgets/response_dialog.dart';
 import 'home_controller.dart';
@@ -453,6 +454,27 @@ class CalendarController extends BaseController {
 
             if (formats.isNotEmpty) {
               serviceFormats.value = formats;
+              
+              // Analytics: Log service format list view
+              final items = formats.map((format) => {
+                'item_id': format.id,
+                'item_name': format.name,
+                'item_category': 'service_format',
+                'item_variant': format.isBundle ? 'bundle' : 'standard',
+                'price': format.price,
+                'quantity': 1,
+                'currency': 'GBP',
+              }).toList();
+              
+              AnalyticsService.instance.logEvent(
+                name: 'view_item_list',
+                parameters: {
+                  'screen_name': 'ProfessionalCalendarScreen',
+                  'screen_class': 'CalendarTab',
+                  'page_category': 'calendar',
+                  'items': items,
+                },
+              );
             }
           }
         }

@@ -109,6 +109,44 @@ class TherapistDetailController extends BaseController
     // Sync selected index with tab controller (update immediately for IndexedStack)
     tabController.addListener(() {
       selectedTabIndex.value = tabController.index;
+      
+      // Analytics: Log secondary navigation tap event
+      String elementText = '';
+      switch (tabController.index) {
+        case 0:
+          elementText = 'Services';
+          break;
+        case 1:
+          elementText = 'About';
+          break;
+        case 2:
+          elementText = 'Qualifications';
+          break;
+        default:
+          elementText = 'Unknown';
+          break;
+      }
+      
+      // Get dynamic page category from navigation arguments
+      String pageCategory = 'wellness';
+      try {
+        final args = Get.arguments as Map<String, dynamic>?;
+        pageCategory = args?['category'] as String? ?? 'wellness';
+      } catch (e) {
+        // Fallback to wellness if arguments are not available
+        pageCategory = 'wellness';
+      }
+      
+      AnalyticsService.instance.logEvent(
+        name: 'secondary_nav_tap',
+        parameters: {
+          'screen_name': 'TherapistDetailScreen',
+          'screen_class': 'TherapistDetailScreen',
+          'element_text': elementText,
+          'element_location': 'nav',
+          'page_category': pageCategory,
+        },
+      );
     });
 
     // Call API to fetch professional details
