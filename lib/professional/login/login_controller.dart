@@ -10,6 +10,7 @@ import '../../services/notification_permission_service.dart';
 import '../../services/social_auth_service.dart';
 import '../../services/storage_service.dart';
 import '../../widgets/response_dialog.dart';
+import '../../services/analytics_service.dart';
 import 'package:geocoding/geocoding.dart';
 
 class ProfessionalLoginController extends BaseController {
@@ -258,7 +259,6 @@ class ProfessionalLoginController extends BaseController {
           // Extract user flags from user model
           final userFlags = _extractUserFlagsFromModel(loginData.user);
 
-          /*
           await AnalyticsService.instance.setUserProfile(
             loginState: 'logged_in',
             userId: loginData.user?.id,
@@ -269,7 +269,6 @@ class ProfessionalLoginController extends BaseController {
                     ? 'social'
                     : 'regular'),
           );
-          */
 
           // Save flags to storage
           final storage = _storageService;
@@ -615,7 +614,6 @@ class ProfessionalLoginController extends BaseController {
           // Extract user flags from user model
           final userFlags = _extractUserFlagsFromModel(loginData.user);
 
-          /*
           await AnalyticsService.instance.setUserProfile(
             loginState: 'logged_in',
             userId: loginData.user?.id,
@@ -626,7 +624,6 @@ class ProfessionalLoginController extends BaseController {
                     ? 'social'
                     : 'regular'),
           );
-          */
 
           // Save flags to storage
           final storage = _storageService;

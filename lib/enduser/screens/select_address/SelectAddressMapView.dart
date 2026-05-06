@@ -112,13 +112,17 @@ class SelectAddressMapView extends GetView<SelectAddressMapController> {
             markers: controller.markers,
           ),
 
-          // Center Pin (always in center)
-          const Center(
-            child: Icon(
-              Icons.location_on,
-              color: AppColors.color2FC4B2,
-              size: 48,
-            ),
+          // Center Pin (conditionally shown)
+          Obx(
+            () => (controller.hideSelectButton.value && controller.existingAddress.value.isEmpty)
+                ? SizedBox.shrink() // Hide pin when hideSelectButton is true AND no existing address
+                : const Center(
+                    child: Icon(
+                      Icons.location_on,
+                      color: AppColors.color2FC4B2,
+                      size: 48,
+                    ),
+                  ),
           ),
 
           // Search Bar
@@ -253,92 +257,100 @@ class SelectAddressMapView extends GetView<SelectAddressMapController> {
           // ),
 
           // Selected Address Display and Select Button
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: Container(
-              decoration: BoxDecoration(
-                color: AppColors.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 8,
-                    offset: const Offset(0, -2),
-                  ),
-                ],
-              ),
-              padding: EdgeInsets.all(16),
-              child: SafeArea(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Selected Address',
-                      style: TextStyle(
-                        fontFamily: "Rubik",
-                        fontSize:14,
-                        color: AppColors.color2D2D2D,
+          Obx(
+            () => controller.hideSelectButton.value && controller.existingAddress.value.isEmpty
+                ? SizedBox.shrink() // Hide when hideSelectButton is true AND no existing address
+                : Positioned(
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: AppColors.white,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 8,
+                            offset: const Offset(0, -2),
+                          ),
+                        ],
                       ),
-                    ),
-                    SizedBox(height: 8),
-                    Obx(
-                      () => controller.isLoadingAddress.value
-                          ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : Text(
-                              controller.selectedAddress.value.isEmpty
-                                  ? 'Loading address...'
-                                  : controller.selectedAddress.value,
+                      padding: EdgeInsets.all(16),
+                      child: SafeArea(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Selected Address',
                               style: TextStyle(
                                 fontFamily: "Rubik",
-                                fontSize: 14,
+                                fontSize:14,
                                 color: AppColors.color2D2D2D,
                               ),
                             ),
-                    ),
-                    SizedBox(height: 16),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.color2FC4B2,
-                          foregroundColor: AppColors.white,
-                          elevation: 0,
-                          minimumSize: Size(
-                            double.infinity,
-                            45,
-                          ),
-                          padding: EdgeInsets.symmetric(
-                            vertical: 12,
-                            horizontal: 16,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(
-                              10,
+                            SizedBox(height: 8),
+                            Obx(
+                              () => controller.isLoadingAddress.value
+                                  ? const SizedBox(
+                                          height: 20,
+                                          width: 20,
+                                          child: CircularProgressIndicator(strokeWidth: 2),
+                                        )
+                                  : Text(
+                                          controller.selectedAddress.value.isEmpty
+                                              ? 'Loading address...'
+                                              : controller.selectedAddress.value,
+                                          style: TextStyle(
+                                            fontFamily: "Rubik",
+                                            fontSize: 14,
+                                            color: AppColors.color2D2D2D,
+                                          ),
+                                        ),
                             ),
-                          ),
-                        ),
-                        onPressed: controller.onSelectAddress,
-                        child: Text(
-                          'Select Address',
-                          style: TextStyle(
-                            fontFamily: "Rubik",
-                            fontWeight: FontWeight.w500,
-                            color: AppColors.white,
-                            fontSize: 16,
-                          ),
+                            SizedBox(height: 16),
+                            Obx(
+                              () => controller.showSelectAddressButton.value
+                                  ? SizedBox(
+                                          width: double.infinity,
+                                          child: ElevatedButton(
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: AppColors.color2FC4B2,
+                                              foregroundColor: AppColors.white,
+                                              elevation: 0,
+                                              minimumSize: Size(
+                                                double.infinity,
+                                                45,
+                                              ),
+                                              padding: EdgeInsets.symmetric(
+                                                vertical: 12,
+                                                horizontal: 16,
+                                              ),
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius: BorderRadius.circular(
+                                                  10,
+                                                ),
+                                              ),
+                                            ),
+                                            onPressed: controller.onSelectAddress,
+                                            child: Text(
+                                              'Select Address',
+                                              style: TextStyle(
+                                                fontFamily: "Rubik",
+                                                fontWeight: FontWeight.w500,
+                                                color: AppColors.white,
+                                                fontSize: 16,
+                                              ),
+                                            ),
+                                          )
+                                        )
+                                  : SizedBox.shrink(),
+                            ),
+                          ],
                         ),
                       ),
                     ),
-                  ],
-                ),
-              ),
-            ),
+                  ),
           ),
         ],
       );

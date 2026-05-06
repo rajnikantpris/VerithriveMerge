@@ -188,7 +188,7 @@ class UpdateProfileScreen extends StatelessWidget {
                 // Update Profile Button
                 Obx(() => SizedBox(
                   width: double.infinity,
-                  height: 50,
+                  height: 55,
                   child: ElevatedButton(
                     onPressed: controller.isLoading.value ? null : controller.updateProfile,
                     style: ElevatedButton.styleFrom(

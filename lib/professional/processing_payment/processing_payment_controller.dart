@@ -6,6 +6,7 @@ import '../../common/base_controller.dart';
 import '../../models/profile_details_model.dart';
 import '../../routes/app_routes.dart';
 import '../../utils/logger.dart';
+import '../../services/analytics_service.dart';
 import 'package:geocoding/geocoding.dart';
 
 class ProcessingPaymentController extends BaseController {
@@ -73,7 +74,6 @@ class ProcessingPaymentController extends BaseController {
             if (data != null) {
               final profile = ProfileDetailsModel.fromJson(data);
               if (isFromSignup) {
-                /*
                 await AnalyticsService.instance.setUserProfile(
                   loginState: 'logged_in',
                   userId: profile.id,
@@ -83,13 +83,10 @@ class ProcessingPaymentController extends BaseController {
                   registrationType: profile.userType ??
                       ((profile.isSocialLogin ?? false) ? 'social' : 'regular'),
                 );
-                */
               } else {
-                /*
                 await AnalyticsService.instance.setUserProfile(
                   plan: _getTimePeriodFromPlan(selectedtitle.value),
                 );
-                */
               }
             } else {
               logError('Profile data is null');

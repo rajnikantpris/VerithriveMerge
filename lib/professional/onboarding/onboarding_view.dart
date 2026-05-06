@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:verithrive_dev/services/analytics_service.dart';
 import 'package:verithrive_dev/theme/hight_width_sizes.dart';
 
 import '../../common/base_view.dart';
@@ -15,7 +16,6 @@ class OnboardingView extends BaseView<OnboardingController> {
   @override
   Widget buildView(BuildContext context) {
     // Log screen view analytics
-    /*
     WidgetsBinding.instance.addPostFrameCallback((_) {
       AnalyticsService.instance.logScreenView(
         screenName: 'ProfessionalOnboardingScreen',
@@ -24,7 +24,6 @@ class OnboardingView extends BaseView<OnboardingController> {
         elementLocation: 'view',
       );
     });
-    */
 
     return SafeArea(
       child: Container(

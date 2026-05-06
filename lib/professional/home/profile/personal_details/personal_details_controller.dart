@@ -19,6 +19,7 @@ import '../../../../theme/font_sizes.dart';
 import '../../../../theme/hight_width_sizes.dart';
 import '../../../../utils/logger.dart';
 import '../../../../widgets/response_dialog.dart';
+import '../../../../services/analytics_service.dart';
 import '../../home_controller.dart';
 
 class PersonalDetailsController extends BaseController {
@@ -537,13 +538,11 @@ class PersonalDetailsController extends BaseController {
         if (response.success) {
           _refreshProfile();
           // Track persona in analytics when profile is updated
-          /*
           if (selectedProfessionType.value != null) {
             AnalyticsService.instance.setUserProfile(
               persona: "professional_${selectedProfessionType.value!.toLowerCase()}",
             );
           }
-          */
           showResponseDialog(
             message: response.message ?? 'Profile updated successfully',
             title: 'Success',

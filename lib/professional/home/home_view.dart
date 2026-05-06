@@ -10,6 +10,7 @@ import '../../theme/fonts.dart';
 import '../../theme/image_paths.dart';
 import '../../routes/app_routes.dart';
 import '../../services/notification_service.dart';
+import '../../services/analytics_service.dart';
 import 'dashboard_view.dart';
 import 'calendar_view.dart';
 import 'home_controller.dart';
@@ -192,7 +193,6 @@ class HomeView extends BaseView<HomeController> {
   @override
   Widget buildView(BuildContext context) {
     // Log screen view analytics
-    /* 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       AnalyticsService.instance.logScreenView(
         screenName: 'ProfessionalHomeScreen',
@@ -201,7 +201,6 @@ class HomeView extends BaseView<HomeController> {
         elementLocation: 'view',
       );
     });
-    */
 
     final calendarController = Get.find<CalendarController>();
     final messagesController = Get.find<MessagesController>();

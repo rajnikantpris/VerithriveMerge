@@ -55,16 +55,16 @@ class AnalyticsService {
       await _analytics.logEvent(
         name: 'screen_view',
         parameters: {
-          'screen_name': screenName,
-          if (screenClass != null) 'screen_class': screenClass,
+          'screen_name_context': screenName,
+          if (screenClass != null) 'screen_class_context': screenClass,
           ...parameters,
         },
       );
       
       if (kDebugMode) {
         final allParameters = {
-          'screen_name': screenName,
-          if (screenClass != null) 'screen_class': screenClass,
+          'screen_name_context': screenName,
+          if (screenClass != null) 'screen_class_context': screenClass,
           ...parameters,
         };
         print('Analytics: Logged screen view [$screenName] with parameters ${allParameters.isEmpty ? '' : allParameters}');

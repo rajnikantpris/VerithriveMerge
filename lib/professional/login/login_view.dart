@@ -9,6 +9,7 @@ import '../../theme/hight_width_sizes.dart';
 import '../../theme/image_paths.dart';
 import '../../widgets/custom_app_bar.dart';
 import '../../widgets/custom_text_field.dart';
+import '../../../services/analytics_service.dart';
 import 'login_controller.dart';
 
 class LoginView extends BaseView<ProfessionalLoginController> {
@@ -29,7 +30,6 @@ class LoginView extends BaseView<ProfessionalLoginController> {
   @override
   Widget buildView(BuildContext context) {
     // Log screen view analytics
-    /*
     WidgetsBinding.instance.addPostFrameCallback((_) {
       AnalyticsService.instance.logScreenView(
         screenName: 'ProfessionalLoginScreen',
@@ -38,7 +38,6 @@ class LoginView extends BaseView<ProfessionalLoginController> {
         elementLocation: 'view',
       );
     });
-    */
 
     return SafeArea(
       child: Container(
@@ -150,7 +149,6 @@ class LoginView extends BaseView<ProfessionalLoginController> {
                       ),
                       onPressed: () {
                         // Analytics: Log login tap event
-                        /*
                         AnalyticsService.instance.logEvent(
                           name: 'login_tap',
                           parameters: {
@@ -161,7 +159,6 @@ class LoginView extends BaseView<ProfessionalLoginController> {
                             'page_category': 'login',
                           },
                         );
-                        */
                         controller.onLogin();
                       },
                       child: Text(
@@ -217,7 +214,6 @@ class LoginView extends BaseView<ProfessionalLoginController> {
                     child: TextButton(
                       onPressed: () {
                         // Analytics: Log join tap event
-                        /*
                         AnalyticsService.instance.logEvent(
                           name: 'join_tap',
                           parameters: {
@@ -228,7 +224,6 @@ class LoginView extends BaseView<ProfessionalLoginController> {
                             'page_category': 'login',
                           },
                         );
-                        */
                         controller.onCreateAccount();
                       },
                       child: RichText(

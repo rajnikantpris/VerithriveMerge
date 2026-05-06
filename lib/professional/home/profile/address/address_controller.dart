@@ -7,6 +7,7 @@ import '../../../../common/base_controller.dart';
 import '../../../../models/address_details_model.dart';
 import '../../../../routes/app_routes.dart';
 import '../../../../widgets/response_dialog.dart';
+import '../../../../services/analytics_service.dart';
 import 'package:geocoding/geocoding.dart';
 
 class AddressController extends BaseController {
@@ -230,14 +231,12 @@ class AddressController extends BaseController {
       onSuccess: (response) async {
         if (response.success) {
           // Track city in analytics when address is updated
-          /*
           final postcode = yourPostcodeController.text.trim();
           if (postcode.isNotEmpty) {
             AnalyticsService.instance.setUserProfile(
               city: await getCityFromAddress(fullAddress.toString().toLowerCase()),
             );
           }
-          */
           
           showResponseDialog(
             title: 'Success',

@@ -37,9 +37,64 @@ class SelectAddressMapController extends BaseController {
   // Marker
   final Set<Marker> markers = <Marker>{}.obs;
 
+  // Initial coordinates passed from profile
+  final initialLatitude = Rxn<double>();
+  final initialLongitude = Rxn<double>();
+  
+  // Flag to track if user has interacted with map
+  final hasUserInteracted = false.obs;
+  
+  // Flag to show/hide select address button
+  final showSelectAddressButton = false.obs;
+  
+  // Flag to hide entire bottom section (from profile screen)
+  final hideSelectButton = false.obs;
+  
+  // Existing address from profile
+  final existingAddress = ''.obs;
+
   @override
   void onInit() {
     super.onInit();
+    
+    // Get initial coordinates from arguments if passed
+    final arguments = Get.arguments as Map<String, dynamic>?;
+    debugPrint('Map arguments received: $arguments');
+    
+    if (arguments != null) {
+      initialLatitude.value = arguments['latitude'] as double?;
+      initialLongitude.value = arguments['longitude'] as double?;
+      
+      debugPrint('Map initial coordinates: lat=${initialLatitude.value}, lng=${initialLongitude.value}');
+      
+      // Check if hideSelectButton flag is set (from profile screen)
+      final hideSelectButtonFlag = arguments['hideSelectButton'] as bool? ?? false;
+      hideSelectButton.value = hideSelectButtonFlag;
+      debugPrint('Hide select button flag: $hideSelectButtonFlag');
+      
+      // Get existing address from profile
+      final address = arguments['existingAddress'] as String? ?? '';
+      existingAddress.value = address;
+      debugPrint('Existing address from profile: $address');
+      
+      // If we have initial coordinates and not hiding button, show select button immediately
+      if (initialLatitude.value != null && initialLongitude.value != null && !hideSelectButtonFlag) {
+        showSelectAddressButton.value = true;
+        debugPrint('Select address button shown immediately due to initial coordinates');
+      } else if (hideSelectButtonFlag) {
+        // If we have existing address, show the section
+        if (address.isNotEmpty) {
+          showSelectAddressButton.value = true;
+          debugPrint('Select address button shown due to existing address');
+        } else {
+          showSelectAddressButton.value = false;
+          debugPrint('Select address button hidden - no existing address');
+        }
+      }
+    } else {
+      debugPrint('No arguments passed to map screen');
+    }
+    
     _initializeMap();
   }
 
@@ -64,7 +119,29 @@ class SelectAddressMapController extends BaseController {
             await _locationPermissionService.requestLocationPermission();
       }
 
-      if (hasPermission) {
+      LatLng targetPosition;
+      
+      // Use initial coordinates if available, otherwise get current location
+      if (initialLatitude.value != null && initialLongitude.value != null) {
+        targetPosition = LatLng(initialLatitude.value!, initialLongitude.value!);
+        currentPosition.value = targetPosition;
+        selectedPosition.value = targetPosition;
+        
+        initialCameraPosition = CameraPosition(
+          target: targetPosition,
+          zoom: 16.0,
+        );
+        isMapInitialized.value = true;
+        
+        // Reverse geocode to get address for initial coordinates
+        await _reverseGeocode(targetPosition);
+        
+        // If we have existing address from profile, use it instead of reverse geocoded address
+        if (existingAddress.value.isNotEmpty) {
+          selectedAddress.value = existingAddress.value;
+          debugPrint('Using existing address from profile: ${existingAddress.value}');
+        }
+      } else if (hasPermission) {
         await _getCurrentLocation();
       } else {
         // Default to a location (London, UK)
@@ -149,6 +226,13 @@ class SelectAddressMapController extends BaseController {
   void onCameraMove(CameraPosition position) {
     // Update selected position as camera moves
     selectedPosition.value = position.target;
+    
+    // Mark that user has interacted with the map
+    if (!hasUserInteracted.value) {
+      hasUserInteracted.value = true;
+      showSelectAddressButton.value = true;
+      // hideSelectButton.value = false;
+    }
   }
 
   void onCameraIdle() {
@@ -235,6 +319,18 @@ class SelectAddressMapController extends BaseController {
   void onPlaceSelected(Prediction prediction,
       {bool updateSearchText = false}) async {
     try {
+      // Mark that user has interacted with the map
+      if (!hasUserInteracted.value) {
+        hasUserInteracted.value = true;
+        showSelectAddressButton.value = true;
+      }
+      
+      // Override hideSelectButton flag when user searches and selects an address
+      if (hideSelectButton.value) {
+        hideSelectButton.value = false;
+        debugPrint('Override hideSelectButton flag due to address search and selection');
+      }
+      
       if (updateSearchText) {
         searchController.text = prediction.description ?? '';
         searchFocusNode.unfocus();

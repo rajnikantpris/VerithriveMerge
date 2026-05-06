@@ -8,6 +8,7 @@ import '../../theme/fonts.dart';
 import '../../theme/font_sizes.dart';
 import '../../theme/hight_width_sizes.dart';
 import '../../theme/image_paths.dart';
+import '../../../services/analytics_service.dart';
 import 'messages_controller.dart';
 
 /// Messages tab UI.
@@ -87,7 +88,6 @@ class MessagesTab extends BaseView<MessagesController> {
   @override
   Widget buildView(BuildContext context) {
     // Log screen view analytics
-    /*
     WidgetsBinding.instance.addPostFrameCallback((_) {
       AnalyticsService.instance.logScreenView(
         screenName: 'ProfessionalMessagesScreen',
@@ -96,7 +96,6 @@ class MessagesTab extends BaseView<MessagesController> {
         elementLocation: 'view',
       );
     });
-    */
 
     return Container(
       color: AppColor.white,

@@ -8,6 +8,7 @@ import '../../../../theme/font_sizes.dart';
 import '../../../../theme/hight_width_sizes.dart';
 import '../../../../theme/image_paths.dart';
 import '../../../../widgets/custom_text_field.dart';
+import '../../../../../services/analytics_service.dart';
 import 'account_controller.dart';
 
 class AccountView extends BaseView<AccountController> {
@@ -56,7 +57,6 @@ class AccountView extends BaseView<AccountController> {
   @override
   Widget buildView(BuildContext context) {
     // Log screen view analytics
-    /*
     WidgetsBinding.instance.addPostFrameCallback((_) {
       AnalyticsService.instance.logScreenView(
         screenName: 'ProfessionalAccountScreen',
@@ -65,7 +65,6 @@ class AccountView extends BaseView<AccountController> {
         elementLocation: 'view',
       );
     });
-    */
 
     return Container(
       color: AppColor.color_F5F5F5,
@@ -297,7 +296,6 @@ class AccountView extends BaseView<AccountController> {
                     child: ElevatedButton(
                       onPressed: () {
                         // Analytics: Log deactivate account go back event
-                        /*
                         AnalyticsService.instance.logEvent(
                           name: 'deactive_account_tap',
                           parameters: {
@@ -308,7 +306,6 @@ class AccountView extends BaseView<AccountController> {
                             'page_category': 'profile',
                           },
                         );
-                        */
                         Navigator.of(context).pop();
                       },
                       style: ElevatedButton.styleFrom(
@@ -343,7 +340,6 @@ class AccountView extends BaseView<AccountController> {
                     child: TextButton(
                       onPressed: () {
                         // Analytics: Log deactivate account confirm event
-                        /*
                         AnalyticsService.instance.logEvent(
                           name: 'deactive_account_tap',
                           parameters: {
@@ -354,7 +350,6 @@ class AccountView extends BaseView<AccountController> {
                             'page_category': 'profile',
                           },
                         );
-                        */
                         Navigator.of(context).pop();
                         onConfirm();
                       },

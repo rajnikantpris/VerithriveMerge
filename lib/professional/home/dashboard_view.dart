@@ -8,6 +8,7 @@ import '../../theme/hight_width_sizes.dart';
 import '../../theme/image_paths.dart';
 import '../../theme/font_sizes.dart';
 import '../../routes/app_routes.dart';
+import '../../../services/analytics_service.dart';
 import 'home_controller.dart';
 
 /// Dashboard tab extracted from HomeView so it can be reused and kept lean.
@@ -948,7 +949,6 @@ class _SessionCard extends StatelessWidget {
                   _ActionButton(
                     onTap: () {
                       // Analytics: Log cancel session tap event
-                      /*
                       AnalyticsService.instance.logEvent(
                         name: 'cancel_session_tap',
                         parameters: {
@@ -959,7 +959,6 @@ class _SessionCard extends StatelessWidget {
                           'page_category': 'home',
                         },
                       );
-                      */
                       showCancelSessionDialog(context, session.id, controller);
                     },
                     icon: AppImages.delete_list_svg(
@@ -1223,7 +1222,6 @@ void showCancelSessionDialog(
                   child: TextButton(
                     onPressed: () {
                       // Analytics: Log cancel session go back event
-                      /*
                       AnalyticsService.instance.logEvent(
                         name: 'cancel_session_tap',
                         parameters: {
@@ -1234,7 +1232,6 @@ void showCancelSessionDialog(
                           'page_category': 'home',
                         },
                       );
-                      */
                       Navigator.of(context).pop();
                     },
                     style: TextButton.styleFrom(

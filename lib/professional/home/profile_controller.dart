@@ -18,8 +18,9 @@ import '../../theme/image_paths.dart';
 import '../../widgets/response_dialog.dart';
 import '../strip_account_create/strip_account_create_webview.dart';
 import 'messages_controller.dart';
-import 'home_controller.dart';
+import '../../services/analytics_service.dart';
 import 'calendar_controller.dart';
+import 'home_controller.dart';
 
 class ProfileController extends BaseController {
   ProfileController([UserApiService? userApiService])
@@ -363,9 +364,7 @@ class ProfileController extends BaseController {
         if (response.success) {
           // Analytics: Log logout event at the moment logout API succeeds.
 
-          /*
           await AnalyticsService.instance.clearUser();
-          */
 
           // Clear local storage and navigate
           await _clearLocalDataAndNavigate();

@@ -75,9 +75,7 @@ class UpdateProfileController extends BaseController {
     // Add text change listener to automatically capitalize first letter
     fullNameController.addListener(_capitalizeFullName);
     
-    // Get current location and auto-fill address and postcode
-    getCurrentLocationAndFillAddress();
-    
+    // Fetch personal details first, then initialize location based on profile data
     fetchPersonalDetails();
   }
 
@@ -222,6 +220,10 @@ class UpdateProfileController extends BaseController {
           isProfilePictureRemoved.value = false;
         }
       }
+      
+      // Initialize map with profile coordinates if available
+      initializeMapWithProfileData();
+      
       isDataLoading.value = false;
     } catch (e) {
       isDataLoading.value = false;
@@ -232,6 +234,37 @@ class UpdateProfileController extends BaseController {
         showButton: true,
         onOkPressed: () {},
       );
+    }
+  }
+
+  /// Initialize map with profile coordinates if available, otherwise get current location
+  Future<void> initializeMapWithProfileData() async {
+    try {
+      debugPrint('Profile coordinates: lat=${selectedLatitude.value}, lng=${selectedLongitude.value}');
+      
+      // Check if profile has valid latitude and longitude
+      if (selectedLatitude.value != null && 
+          selectedLongitude.value != null &&
+          selectedLatitude.value != 0.0 &&
+          selectedLongitude.value != 0.0) {
+        
+        // Use profile coordinates
+        debugPrint('Using profile coordinates: ${selectedLatitude.value}, ${selectedLongitude.value}');
+        
+        // Reverse geocode to get address and postcode for profile coordinates
+        await reverseGeocodeAndFillFields(
+          selectedLatitude.value!,
+          selectedLongitude.value!,
+        );
+      } else {
+        // Fallback to current location if no valid profile coordinates
+        debugPrint('No valid profile coordinates, getting current location');
+        await getCurrentLocationAndFillAddress();
+      }
+    } catch (e) {
+      debugPrint('Error initializing map with profile data: $e');
+      // Fallback to current location on error
+      await getCurrentLocationAndFillAddress();
     }
   }
 
@@ -474,8 +507,25 @@ class UpdateProfileController extends BaseController {
   }
 
   Future<void> navigateToMapScreen() async {
+    // Prepare arguments with current coordinates if available
+    final Map<String, dynamic> arguments = {};
+    
+    debugPrint('Current coordinates in UpdateProfile: lat=${selectedLatitude.value}, lng=${selectedLongitude.value}');
+    
+    if (selectedLatitude.value != null && 
+        selectedLongitude.value != null &&
+        selectedLatitude.value != 0.0 &&
+        selectedLongitude.value != 0.0) {
+      arguments['latitude'] = selectedLatitude.value;
+      arguments['longitude'] = selectedLongitude.value;
+      debugPrint('Passing coordinates to map: $arguments');
+    } else {
+      debugPrint('No valid coordinates to pass to map');
+    }
+    
     final result = await Get.to(
           () => SelectAddressMapView(),
+      arguments: arguments.isNotEmpty ? arguments : null,
       binding: SelectAddressMapBinding(),
     );
     if (result != null && result is Map<String, dynamic>) {
@@ -499,7 +549,7 @@ class UpdateProfileController extends BaseController {
           result['postcode'].toString().isNotEmpty) {
         final postcode = result['postcode'] as String;
         postcodeController.text = postcode;
-        // selectedPostcode.value = postcode;
+        selectedPostcode.value = postcode;
       }
     }
   }
@@ -979,7 +1029,7 @@ class UpdateProfileController extends BaseController {
           // Auto-fill postcode only if not manually entered
           if (!isManualEntry.value) {
             // postcodeController.text = placemark.postalCode!;
-            selectedPostcode.value = placemark.postalCode!;
+            // selectedPostcode.value = placemark.postalCode!;
           }
           addressParts.add(placemark.postalCode!);
         }

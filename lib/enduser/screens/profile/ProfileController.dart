@@ -533,8 +533,25 @@ class ProfileController extends GetxController {
       return;
     }
 
+    // Prepare arguments for map screen
+    final Map<String, dynamic> arguments = {'hideSelectButton': true}; // Hide Select Address button initially
+    
+    // If we have existing coordinates, pass them to map
+    if (latitude.value != 0.0 && longitude.value != 0.0) {
+      arguments['latitude'] = latitude.value;
+      arguments['longitude'] = longitude.value;
+      debugPrint('Passing existing coordinates to map: lat=${latitude.value}, lng=${longitude.value}');
+    }
+    
+    // If we have existing address, pass it to map
+    if (selectedAddress.value.isNotEmpty) {
+      arguments['existingAddress'] = selectedAddress.value;
+      debugPrint('Passing existing address to map: ${selectedAddress.value}');
+    }
+    
     final result = await Get.to(
       () => SelectAddressMapView(),
+      arguments: arguments,
       binding: SelectAddressMapBinding(),
     );
     if (result != null && result is Map<String, dynamic>) {

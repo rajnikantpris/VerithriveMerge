@@ -6,6 +6,7 @@ import '../../theme/font_sizes.dart';
 import '../../theme/fonts.dart';
 import '../../theme/hight_width_sizes.dart';
 import '../../theme/image_paths.dart';
+import '../../../services/analytics_service.dart';
 import 'profile_controller.dart';
 
 class ProfileTab extends BaseView<ProfileController> {
@@ -16,7 +17,6 @@ class ProfileTab extends BaseView<ProfileController> {
   @override
   Widget buildView(BuildContext context) {
     // Log screen view analytics
-    /*
     WidgetsBinding.instance.addPostFrameCallback((_) {
       AnalyticsService.instance.logScreenView(
         screenName: 'ProfessionalProfileScreen',
@@ -25,7 +25,6 @@ class ProfileTab extends BaseView<ProfileController> {
         elementLocation: 'view',
       );
     });
-    */
 
     return Container(
       color: AppColor.white,

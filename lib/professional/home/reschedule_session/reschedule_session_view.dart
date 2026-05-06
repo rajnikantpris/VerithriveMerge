@@ -8,6 +8,7 @@ import '../../../theme/font_sizes.dart';
 import '../../../theme/hight_width_sizes.dart';
 import '../../../theme/image_paths.dart';
 import '../../../widgets/custom_text_field.dart';
+import '../../../../services/analytics_service.dart';
 import 'reschedule_session_controller.dart';
 
 class RescheduleSessionView extends BaseView<RescheduleSessionController> {
@@ -56,7 +57,6 @@ class RescheduleSessionView extends BaseView<RescheduleSessionController> {
   @override
   Widget buildView(BuildContext context) {
     // Log screen view analytics
-    /*
     WidgetsBinding.instance.addPostFrameCallback((_) {
       AnalyticsService.instance.logScreenView(
         screenName: 'ProfessionalRescheduleScreen',
@@ -65,7 +65,6 @@ class RescheduleSessionView extends BaseView<RescheduleSessionController> {
         elementLocation: 'view',
       );
     });
-    */
 
     return Container(
       color: AppColor.white,
@@ -198,7 +197,6 @@ class RescheduleSessionView extends BaseView<RescheduleSessionController> {
             ),
             onPressed: () {
               // Analytics: Log reschedule session tap event
-              /*
               AnalyticsService.instance.logEvent(
                 name: 'reschedule_session_tap',
                 parameters: {
@@ -209,7 +207,6 @@ class RescheduleSessionView extends BaseView<RescheduleSessionController> {
                   'page_category': 'home',
                 },
               );
-              */
               controller.onReschedule();
             },
             child: Text(
