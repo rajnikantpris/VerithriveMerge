@@ -112,17 +112,13 @@ class SelectAddressMapView extends GetView<SelectAddressMapController> {
             markers: controller.markers,
           ),
 
-          // Center Pin (conditionally shown)
-          Obx(
-            () => (controller.hideSelectButton.value && controller.existingAddress.value.isEmpty)
-                ? SizedBox.shrink() // Hide pin when hideSelectButton is true AND no existing address
-                : const Center(
-                    child: Icon(
-                      Icons.location_on,
-                      color: AppColors.color2FC4B2,
-                      size: 48,
-                    ),
-                  ),
+          // Center Pin (always shown)
+          const Center(
+            child: Icon(
+              Icons.location_on,
+              color: AppColors.color2FC4B2,
+              size: 48,
+            ),
           ),
 
           // Search Bar
@@ -258,31 +254,34 @@ class SelectAddressMapView extends GetView<SelectAddressMapController> {
 
           // Selected Address Display and Select Button
           Obx(
-            () => controller.hideSelectButton.value && controller.existingAddress.value.isEmpty
-                ? SizedBox.shrink() // Hide when hideSelectButton is true AND no existing address
-                : Positioned(
-                    bottom: 0,
-                    left: 0,
-                    right: 0,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: AppColors.white,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
-                            blurRadius: 8,
-                            offset: const Offset(0, -2),
-                          ),
-                        ],
-                      ),
-                      padding: EdgeInsets.all(16),
-                      child: SafeArea(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Selected Address',
+            () {
+              final shouldHide = controller.hideSelectButton.value && controller.existingAddress.value.isEmpty;
+              debugPrint('View visibility check: hideSelectButton=${controller.hideSelectButton.value}, existingAddress="${controller.existingAddress.value}", shouldHide=$shouldHide');
+              return shouldHide
+                  ? SizedBox.shrink() // Hide when hideSelectButton is true AND no existing address
+                  : Positioned(
+                      bottom: 0,
+                      left: 0,
+                      right: 0,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: AppColors.white,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 8,
+                              offset: const Offset(0, -2),
+                            ),
+                          ],
+                        ),
+                        padding: EdgeInsets.all(16),
+                        child: SafeArea(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Selected Address',
                               style: TextStyle(
                                 fontFamily: "Rubik",
                                 fontSize:14,
@@ -350,7 +349,8 @@ class SelectAddressMapView extends GetView<SelectAddressMapController> {
                         ),
                       ),
                     ),
-                  ),
+                  );
+            },
           ),
         ],
       );

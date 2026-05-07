@@ -3109,7 +3109,23 @@ class SignupProfileWizardController extends BaseController {
 
   /// Navigate to map screen to select address
   Future<void> navigateToMapScreen() async {
-    final result = await Get.toNamed(Routes.selectAddressMap);
+    // Prepare arguments for map screen
+    final Map<String, dynamic> arguments = {'hideSelectButton': true}; // Hide Select Address button initially
+
+    // If we have existing coordinates, pass them to map
+    if (selectedLatitude.value != null && selectedLongitude.value != null) {
+      arguments['latitude'] = selectedLatitude.value;
+      arguments['longitude'] = selectedLongitude.value;
+      debugPrint('Passing existing coordinates to map: lat=${selectedLatitude.value}, lng=${selectedLongitude.value}');
+    }
+
+    // If we have existing address, pass it to map
+    if (addressController.text.isNotEmpty) {
+      arguments['existingAddress'] = addressController.text;
+      debugPrint('Passing existing address to map: ${addressController.text}');
+    }
+
+    final result = await Get.toNamed(Routes.selectAddressMap, arguments: arguments);
     if (result != null && result is Map<String, dynamic>) {
       selectedLatitude.value = result['latitude'] as double?;
       selectedLongitude.value = result['longitude'] as double?;
@@ -3128,7 +3144,27 @@ class SignupProfileWizardController extends BaseController {
 
   /// Navigate to map screen to select work address
   Future<void> navigateToWorkMapScreen() async {
-    final result = await Get.toNamed(Routes.selectAddressMap);
+    // Prepare arguments for map screen
+    final Map<String, dynamic> arguments = {'hideSelectButton': true}; // Hide Select Address button initially
+
+    debugPrint('Current coordinates for work address: lat=${workLatitude.value}, lng=${workLongitude.value}');
+
+    if (workLatitude.value != null &&
+        workLongitude.value != null) {
+      arguments['latitude'] = workLatitude.value;
+      arguments['longitude'] = workLongitude.value;
+      debugPrint('Passing coordinates to map: $arguments');
+    } else {
+      debugPrint('No valid coordinates to pass to map');
+    }
+
+    // Pass existing address from API if available
+    if (workAddressController.text.isNotEmpty) {
+      arguments['existingAddress'] = workAddressController.text;
+      debugPrint('Passing existing address to map: ${workAddressController.text}');
+    }
+
+    final result = await Get.toNamed(Routes.selectAddressMap, arguments: arguments.isNotEmpty ? arguments : null);
     if (result != null && result is Map<String, dynamic>) {
       workLatitude.value = result['latitude'] as double?;
       workLongitude.value = result['longitude'] as double?;

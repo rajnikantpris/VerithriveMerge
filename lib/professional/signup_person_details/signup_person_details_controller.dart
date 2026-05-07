@@ -725,7 +725,23 @@ class SignupPersonDetailsController extends BaseController {
 
   /// Navigate to map screen to select address
   Future<void> navigateToMapScreen() async {
-    final result = await Get.toNamed(Routes.selectAddressMap);
+    // Prepare arguments for map screen
+    final Map<String, dynamic> arguments = {'hideSelectButton': true}; // Hide Select Address button initially
+
+    // If we have existing coordinates, pass them to map
+    if (selectedLatitude.value != null && selectedLongitude.value != null) {
+      arguments['latitude'] = selectedLatitude.value;
+      arguments['longitude'] = selectedLongitude.value;
+      debugPrint('Passing existing coordinates to map: lat=${selectedLatitude.value}, lng=${selectedLongitude.value}');
+    }
+
+    // If we have existing address, pass it to map
+    if (addressController.text.isNotEmpty) {
+      arguments['existingAddress'] = addressController.text;
+      debugPrint('Passing existing address to map: ${addressController.text}');
+    }
+
+    final result = await Get.toNamed(Routes.selectAddressMap, arguments: arguments);
     if (result != null && result is Map<String, dynamic>) {
       selectedLatitude.value = result['latitude'] as double?;
       selectedLongitude.value = result['longitude'] as double?;

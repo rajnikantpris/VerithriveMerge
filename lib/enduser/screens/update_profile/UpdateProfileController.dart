@@ -509,10 +509,10 @@ class UpdateProfileController extends BaseController {
   Future<void> navigateToMapScreen() async {
     // Prepare arguments with current coordinates if available
     final Map<String, dynamic> arguments = {};
-    
+
     debugPrint('Current coordinates in UpdateProfile: lat=${selectedLatitude.value}, lng=${selectedLongitude.value}');
-    
-    if (selectedLatitude.value != null && 
+
+    if (selectedLatitude.value != null &&
         selectedLongitude.value != null &&
         selectedLatitude.value != 0.0 &&
         selectedLongitude.value != 0.0) {
@@ -521,6 +521,12 @@ class UpdateProfileController extends BaseController {
       debugPrint('Passing coordinates to map: $arguments');
     } else {
       debugPrint('No valid coordinates to pass to map');
+    }
+
+    // Pass existing address from API if available
+    if (selectedAddress.value.isNotEmpty) {
+      arguments['existingAddress'] = selectedAddress.value;
+      debugPrint('Passing existing address to map: ${selectedAddress.value}');
     }
     
     final result = await Get.to(

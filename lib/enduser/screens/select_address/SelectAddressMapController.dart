@@ -43,12 +43,15 @@ class SelectAddressMapController extends BaseController {
   
   // Flag to track if user has interacted with map
   final hasUserInteracted = false.obs;
-  
+
   // Flag to show/hide select address button
   final showSelectAddressButton = false.obs;
-  
+
   // Flag to hide entire bottom section (from profile screen)
   final hideSelectButton = false.obs;
+
+  // Flag to track if map is fully initialized (to prevent initial camera move from triggering interaction)
+  final isMapFullyInitialized = false.obs;
   
   // Existing address from profile
   final existingAddress = ''.obs;
@@ -56,46 +59,37 @@ class SelectAddressMapController extends BaseController {
   @override
   void onInit() {
     super.onInit();
-    
+
     // Get initial coordinates from arguments if passed
     final arguments = Get.arguments as Map<String, dynamic>?;
+    debugPrint('=== Map onInit START ===');
     debugPrint('Map arguments received: $arguments');
-    
+
     if (arguments != null) {
       initialLatitude.value = arguments['latitude'] as double?;
       initialLongitude.value = arguments['longitude'] as double?;
-      
+
       debugPrint('Map initial coordinates: lat=${initialLatitude.value}, lng=${initialLongitude.value}');
-      
+
       // Check if hideSelectButton flag is set (from profile screen)
       final hideSelectButtonFlag = arguments['hideSelectButton'] as bool? ?? false;
       hideSelectButton.value = hideSelectButtonFlag;
-      debugPrint('Hide select button flag: $hideSelectButtonFlag');
-      
+      debugPrint('Hide select button flag: $hideSelectButtonFlag, hideSelectButton.value=${hideSelectButton.value}');
+
       // Get existing address from profile
       final address = arguments['existingAddress'] as String? ?? '';
       existingAddress.value = address;
-      debugPrint('Existing address from profile: $address');
-      
-      // If we have initial coordinates and not hiding button, show select button immediately
-      if (initialLatitude.value != null && initialLongitude.value != null && !hideSelectButtonFlag) {
-        showSelectAddressButton.value = true;
-        debugPrint('Select address button shown immediately due to initial coordinates');
-      } else if (hideSelectButtonFlag) {
-        // If we have existing address, show the section
-        if (address.isNotEmpty) {
-          showSelectAddressButton.value = true;
-          debugPrint('Select address button shown due to existing address');
-        } else {
-          showSelectAddressButton.value = false;
-          debugPrint('Select address button hidden - no existing address');
-        }
-      }
+      debugPrint('Existing address from profile: "$address", existingAddress.value="${existingAddress.value}"');
+
+      // Debug: Check visibility condition
+      final shouldHide = hideSelectButtonFlag && address.isEmpty;
+      debugPrint('Bottom section visibility check: hideSelectButton=$hideSelectButtonFlag, existingAddress.isEmpty=${address.isEmpty}, shouldHide=$shouldHide');
     } else {
       debugPrint('No arguments passed to map screen');
     }
-    
+
     _initializeMap();
+    debugPrint('=== Map onInit END ===');
   }
 
   @override
@@ -109,6 +103,7 @@ class SelectAddressMapController extends BaseController {
 
   Future<void> _initializeMap() async {
     try {
+      debugPrint('=== _initializeMap START ===');
       // Request location permission
       bool hasPermission =
           await _locationPermissionService.checkLocationPermissionStatus();
@@ -133,14 +128,21 @@ class SelectAddressMapController extends BaseController {
         );
         isMapInitialized.value = true;
         
+        debugPrint('Using initial coordinates: $targetPosition');
+        debugPrint('Before reverse geocode: hideSelectButton=${hideSelectButton.value}, existingAddress="${existingAddress.value}"');
+
         // Reverse geocode to get address for initial coordinates
         await _reverseGeocode(targetPosition);
-        
+
+        debugPrint('After reverse geocode: selectedAddress="${selectedAddress.value}"');
+
         // If we have existing address from profile, use it instead of reverse geocoded address
         if (existingAddress.value.isNotEmpty) {
           selectedAddress.value = existingAddress.value;
           debugPrint('Using existing address from profile: ${existingAddress.value}');
         }
+
+        debugPrint('After _initializeMap: hideSelectButton=${hideSelectButton.value}, existingAddress="${existingAddress.value}"');
       } else if (hasPermission) {
         await _getCurrentLocation();
       } else {
@@ -155,6 +157,7 @@ class SelectAddressMapController extends BaseController {
         isMapInitialized.value = true;
         await _reverseGeocode(defaultPosition);
       }
+      debugPrint('=== _initializeMap END ===');
     } catch (e) {
       debugPrint('Error initializing map: $e');
       // Default to a location on error
@@ -205,11 +208,11 @@ class SelectAddressMapController extends BaseController {
 
   void onMapCreated(GoogleMapController controller) {
     mapController = controller;
-    if (initialCameraPosition != null) {
-      controller.animateCamera(
-        CameraUpdate.newCameraPosition(initialCameraPosition!),
-      );
-    }
+    // Mark map as fully initialized after a short delay to prevent initial camera moves from triggering interaction
+    Future.delayed(const Duration(milliseconds: 500), () {
+      isMapFullyInitialized.value = true;
+      debugPrint('Map fully initialized');
+    });
   }
 
   // Handle map errors
@@ -226,12 +229,32 @@ class SelectAddressMapController extends BaseController {
   void onCameraMove(CameraPosition position) {
     // Update selected position as camera moves
     selectedPosition.value = position.target;
-    
-    // Mark that user has interacted with the map
-    if (!hasUserInteracted.value) {
-      hasUserInteracted.value = true;
-      showSelectAddressButton.value = true;
-      // hideSelectButton.value = false;
+
+    // Mark that user has interacted with the map (only after map is fully initialized)
+    // Only if the position has actually changed from the initial position
+    if (!hasUserInteracted.value && isMapFullyInitialized.value) {
+      // Check if position has changed significantly from initial position
+      if (initialLatitude.value != null && initialLongitude.value != null) {
+        final distance = Geolocator.distanceBetween(
+          initialLatitude.value!,
+          initialLongitude.value!,
+          position.target.latitude,
+          position.target.longitude,
+        );
+        // Only treat as user interaction if moved at least 10 meters
+        if (distance > 10) {
+          hasUserInteracted.value = true;
+          showSelectAddressButton.value = true;
+          hideSelectButton.value = false;
+          debugPrint('User interacted with map - showing bottom section (moved $distance meters)');
+        }
+      } else {
+        // No initial position, treat any move as interaction
+        hasUserInteracted.value = true;
+        showSelectAddressButton.value = true;
+        hideSelectButton.value = false;
+        debugPrint('User interacted with map - showing bottom section');
+      }
     }
   }
 
