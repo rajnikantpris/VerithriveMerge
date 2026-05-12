@@ -30,17 +30,17 @@ class DefaultFirebaseOptions {
 
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyDIHdFq55OMUeaBaKgsAB1Cpi5r5vEFU8k',
-    appId: '1:38374486736:android:87b926dcfe555b7c9264d5',
-    messagingSenderId: '38374486736',
-    projectId: 'verithrive-31bd6',
+    apiKey: 'AIzaSyA3bLE4gYWARW3FoaNTtNYbuxgDeSsqRH0',
+    appId: '1:950187352283:android:70b6e4be572a3882ac6cfe',
+    messagingSenderId: '950187352283',
+    projectId: 'verithrive---app---prod',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyDIHdFq55OMUeaBaKgsAB1Cpi5r5vEFU8k',
-    appId: '1:38374486736:android:87b926dcfe555b7c9264d5',
-    messagingSenderId: '38374486736',
-    projectId: 'verithrive-31bd6',
+    apiKey: 'AIzaSyA3bLE4gYWARW3FoaNTtNYbuxgDeSsqRH0',
+    appId: '1:950187352283:android:70b6e4be572a3882ac6cfe',
+    messagingSenderId: '950187352283',
+    projectId: 'verithrive---app---prod',
     androidClientId: '38374486736-mm3o9np8ra0h6mtr6q9i4gbvklglua8d.apps.googleusercontent.com',
     iosClientId: '',
     iosBundleId: '',

@@ -4,16 +4,25 @@ import 'package:firebase_core/firebase_core.dart';
 /// Common Firebase configuration class for Android and iOS
 class FirebaseConfig {
   // Common Firebase project information
-  static const String _projectId = 'verithrive-5380e';
-  static const String _messagingSenderId = '616853878729';
-  static const String _storageBucket = 'verithrive-5380e.firebasestorage.app';
+  // static const String _projectId = 'verithrive-5380e';
+  static const String _projectId = 'verithrive---app---prod';
+  // static const String _messagingSenderId = '616853878729';
+  static const String _messagingSenderId = '950187352283';
+  // static const String _storageBucket = 'verithrive-5380e.firebasestorage.app';
+  static const String _storageBucket = 'verithrive---app---prod.firebasestorage.app';
 
   // Android configuration
+  // static const String _androidApiKey =
+  //     'AIzaSyDjdom-8K5VyqYV_zFUtPX_Zabk3r-C6XQ';
+
   static const String _androidApiKey =
-      'AIzaSyDjdom-8K5VyqYV_zFUtPX_Zabk3r-C6XQ';
+      'AIzaSyA3bLE4gYWARW3FoaNTtNYbuxgDeSsqRH0';
+
+  // static const String _androidAppId =
+  //     '1:616853878729:android:981ded7c32ec4320e25a18';
 
   static const String _androidAppId =
-      '1:616853878729:android:981ded7c32ec4320e25a18';
+      '1:950187352283:android:70b6e4be572a3882ac6cfe';
 
   // iOS configuration
   // TODO: Update these values when you have GoogleService-Info.plist for iOS
