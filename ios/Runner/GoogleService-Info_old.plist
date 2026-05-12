@@ -3,23 +3,23 @@
 <plist version="1.0">
 <dict>
 	<key>CLIENT_ID</key>
-	<string>950187352283-lhn5htutdmvj4t9323ovk3b1495m9j4t.apps.googleusercontent.com</string>
+	<string>616853878729-0omteth64qqhfjvjarmtamlsd61ii5pd.apps.googleusercontent.com</string>
 	<key>REVERSED_CLIENT_ID</key>
-	<string>com.googleusercontent.apps.950187352283-lhn5htutdmvj4t9323ovk3b1495m9j4t</string>
+	<string>com.googleusercontent.apps.616853878729-0omteth64qqhfjvjarmtamlsd61ii5pd</string>
 	<key>ANDROID_CLIENT_ID</key>
-	<string>950187352283-f09bp1ho3orpjqao460toodibeado395.apps.googleusercontent.com</string>
+	<string>616853878729-678qsheh6u4j0uiqb9h4rsevcqdriti7.apps.googleusercontent.com</string>
 	<key>API_KEY</key>
-	<string>AIzaSyAt1ojfod_QD5VxSBOnp3s3OpbVuVlFIOY</string>
+	<string>AIzaSyBZaoF0a7pRlskOwfFGLVkjGJZVxfr1bEI</string>
 	<key>GCM_SENDER_ID</key>
-	<string>950187352283</string>
+	<string>616853878729</string>
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
 	<string>com.verithrive.verithrive</string>
 	<key>PROJECT_ID</key>
-	<string>verithrive---app---prod</string>
+	<string>verithrive-5380e</string>
 	<key>STORAGE_BUCKET</key>
-	<string>verithrive---app---prod.firebasestorage.app</string>
+	<string>verithrive-5380e.firebasestorage.app</string>
 	<key>IS_ADS_ENABLED</key>
 	<false></false>
 	<key>IS_ANALYTICS_ENABLED</key>
@@ -31,6 +31,6 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:950187352283:ios:aa92fc405eff5681ac6cfe</string>
+	<string>1:616853878729:ios:7045c340b0726669e25a18</string>
 </dict>
 </plist>

@@ -12,7 +12,9 @@ import GoogleMaps
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
      
-      GMSServices.provideAPIKey("AIzaSyDjdom-8K5VyqYV_zFUtPX_Zabk3r-C6XQ")
+//      GMSServices.provideAPIKey("AIzaSyDjdom-8K5VyqYV_zFUtPX_Zabk3r-C6XQ")//development
+        GMSServices.provideAPIKey("AIzaSyAt1ojfod_QD5VxSBOnp3s3OpbVuVlFIOY")//production
+      
       
       FirebaseApp.configure()
       Messaging.messaging().delegate = self
