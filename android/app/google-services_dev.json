@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "616853878729",
+    "project_id": "verithrive-5380e",
+    "storage_bucket": "verithrive-5380e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:616853878729:android:981ded7c32ec4320e25a18",
+        "android_client_info": {
+          "package_name": "com.app.verithrive"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "616853878729-678qsheh6u4j0uiqb9h4rsevcqdriti7.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.app.verithrive",
+            "certificate_hash": "ab91b867aea7a57e6ba3625b0acfe296df511699"
+          }
+        },
+        {
+          "client_id": "616853878729-dnal4mpe8qloj9no5phshuhgcbu7oa9s.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDjdom-8K5VyqYV_zFUtPX_Zabk3r-C6XQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "616853878729-dnal4mpe8qloj9no5phshuhgcbu7oa9s.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "616853878729-0omteth64qqhfjvjarmtamlsd61ii5pd.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.verithrive.verithrive",
+                "app_store_id": "6759242291"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
