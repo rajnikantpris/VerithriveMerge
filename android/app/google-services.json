@@ -1,49 +1,48 @@
 {
   "project_info": {
-    "project_number": "616853878729",
-    "project_id": "verithrive-5380e",
-    "storage_bucket": "verithrive-5380e.firebasestorage.app"
+    "project_number": "950187352283",
+    "project_id": "verithrive---app---prod",
+    "storage_bucket": "verithrive---app---prod.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:616853878729:android:981ded7c32ec4320e25a18",
+        "mobilesdk_app_id": "1:950187352283:android:70b6e4be572a3882ac6cfe",
         "android_client_info": {
           "package_name": "com.app.verithrive"
         }
       },
       "oauth_client": [
         {
-          "client_id": "616853878729-678qsheh6u4j0uiqb9h4rsevcqdriti7.apps.googleusercontent.com",
+          "client_id": "950187352283-f09bp1ho3orpjqao460toodibeado395.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.app.verithrive",
-            "certificate_hash": "ab91b867aea7a57e6ba3625b0acfe296df511699"
+            "certificate_hash": "5e4aea01258c82d8fe075f5429b129dd8fa5fc30"
           }
         },
         {
-          "client_id": "616853878729-dnal4mpe8qloj9no5phshuhgcbu7oa9s.apps.googleusercontent.com",
+          "client_id": "950187352283-r4cbag9nelambhs2ao9hvnl7amiemor6.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyDjdom-8K5VyqYV_zFUtPX_Zabk3r-C6XQ"
+          "current_key": "AIzaSyA3bLE4gYWARW3FoaNTtNYbuxgDeSsqRH0"
         }
       ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "616853878729-dnal4mpe8qloj9no5phshuhgcbu7oa9s.apps.googleusercontent.com",
+              "client_id": "950187352283-r4cbag9nelambhs2ao9hvnl7amiemor6.apps.googleusercontent.com",
               "client_type": 3
             },
             {
-              "client_id": "616853878729-0omteth64qqhfjvjarmtamlsd61ii5pd.apps.googleusercontent.com",
+              "client_id": "950187352283-lhn5htutdmvj4t9323ovk3b1495m9j4t.apps.googleusercontent.com",
               "client_type": 2,
               "ios_info": {
-                "bundle_id": "com.verithrive.verithrive",
-                "app_store_id": "6759242291"
+                "bundle_id": "com.verithrive.verithrive"
               }
             }
           ]

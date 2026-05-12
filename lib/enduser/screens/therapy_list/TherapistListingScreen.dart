@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -24,31 +25,14 @@ class TherapistListingScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Log view_item_list analytics when therapist list is displayed
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (controller.filteredTherapists.isNotEmpty) {
-        final category = _getCategoryFromTitle() ?? 'wellness';
-        final items = controller.filteredTherapists.map((therapist) => {
-          'item_id': therapist.id,
-          'item_name': therapist.name,
-          'item_category': category,
-          'item_variant': therapist.specialty,
-          'item_brand': therapist.services.isNotEmpty ? therapist.services.first : '',
-          'price': therapist.price.toString(),
-          'quantity': 1,
-          'currency': 'GBP',
-        }).toList();
-        
-        AnalyticsService.instance.logEvent(
-          name: 'view_item_list',
-          parameters: {
-            'screen_name': 'TherapistListingScreen',
-            'screen_class': 'TherapistListingScreen',
-            'page_category': category,
-            'items': items,
-          },
-        );
-      }
+    
+     WidgetsBinding.instance.addPostFrameCallback((_) {
+      AnalyticsService.instance.logScreenView(
+        screenName: 'TherapistListingScreen',
+        screenClass: 'TherapistListingScreen',
+        pageCategory: controller.category,
+        elementLocation: 'view',
+      );
     });
 
     return Scaffold(

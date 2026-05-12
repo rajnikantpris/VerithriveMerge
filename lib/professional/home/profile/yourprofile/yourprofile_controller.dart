@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../common/base_controller.dart';
 import '../../../../routes/app_routes.dart';
+import '../../../../models/profile_details_model.dart';
+import '../../home_controller.dart';
 
 class YourProfileController extends BaseController {
   /// Static list representing the your profile menu options.
@@ -29,9 +33,77 @@ class YourProfileController extends BaseController {
       Get.toNamed(Routes.personalIdentification);
     } else if (item.title == 'About you') {
       Get.toNamed(Routes.aboutYou);
+    } else if (item.title == 'Share profile') {
+      _shareViaOtherApps(Get.find<HomeController>().profileDetails.value!);
     } else {
       // Hook for future navigation or actions per item.
       debugPrint('Tapped on ${item.title}');
+    }
+  }
+
+  void _shareViaOtherApps(ProfileDetailsModel profile) {
+    final String profileText = _generateProfileText(profile);
+    Share.share(
+      profileText,
+      subject: 'Professional Profile',
+    );
+  }
+
+  String _generateProfileText(ProfileDetailsModel profile) {
+    final StringBuffer buffer = StringBuffer();
+    
+    buffer.writeln('Professional Profile');
+    buffer.writeln('');
+    
+    if (profile.fullName?.isNotEmpty == true) {
+      buffer.writeln('Name: ${profile.fullName}');
+    }
+    
+    if (profile.profession_name?.isNotEmpty == true) {
+      buffer.writeln('Profession: ${profile.profession_name}');
+    }
+    
+    if (profile.profession_sub_name?.isNotEmpty == true) {
+      buffer.writeln('Specialization: ${profile.profession_sub_name}');
+    }
+    
+    if (profile.totalExperience != null && profile.totalExperience! > 0) {
+      buffer.writeln('Experience: ${profile.totalExperience} years');
+    }
+    
+    if (profile.email?.isNotEmpty == true && !profile.isEmailHidden!) {
+      buffer.writeln('Email: ${profile.email}');
+    }
+    
+    if (profile.mobileNumber?.isNotEmpty == true) {
+      buffer.writeln('Phone: ${profile.mobileNumber}');
+    }
+    
+    if (profile.address?.isNotEmpty == true) {
+      buffer.writeln('Location: ${profile.address}');
+    }
+    
+    if (profile.description?.isNotEmpty == true) {
+      buffer.writeln('');
+      buffer.writeln('About:');
+      buffer.writeln(profile.description);
+    }
+    
+    buffer.writeln('');
+    buffer.writeln('Shared via Verithrive App');
+    
+    return buffer.toString();
+  }
+
+  Future<void> _launchUrl(Uri url) async {
+    try {
+      if (await canLaunchUrl(url)) {
+        await launchUrl(url, mode: LaunchMode.externalApplication);
+      } else {
+        Get.snackbar('Error', 'Could not launch sharing app');
+      }
+    } catch (e) {
+      Get.snackbar('Error', 'Failed to share: $e');
     }
   }
 }

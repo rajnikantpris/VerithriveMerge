@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:verithrive_dev/services/analytics_service.dart';
@@ -241,6 +242,11 @@ class TherapistController extends BaseController {
     }
   }
 
+  String? _getCategoryForAnalytics() {
+    // Return the category for analytics purposes
+    return category;
+  }
+
   void loadTherapists() {
     callProfessionalsListAPI();
   }
@@ -463,6 +469,31 @@ class TherapistController extends BaseController {
         }
         
         filteredTherapists.value = therapists;
+        
+        // Log view_item_list analytics when therapist list is loaded
+        if (filteredTherapists.isNotEmpty) {
+          final category = _getCategoryForAnalytics() ?? 'wellness';
+          final items = filteredTherapists.map((therapist) => {
+            'item_id': therapist.id,
+            'item_name': therapist.name,
+            'item_category': category,
+            'item_variant': therapist.specialty,
+            'item_brand': therapist.services.isNotEmpty ? therapist.services.first : '',
+            'price': therapist.price,
+            'quantity': 1,
+            'currency': 'GBP',
+          }).toList();
+          
+          AnalyticsService.instance.logEvent(
+            name: 'view_item_list',
+            parameters: {
+              'screen_name': 'TherapistListingScreen',
+              'screen_class': 'TherapistListingScreen',
+              'page_category': category,
+              'items': jsonEncode(items),
+            },
+          );
+        }
         
         print('========================================');
         print('Professionals List API Success:');

@@ -74,15 +74,35 @@ class ProcessingPaymentController extends BaseController {
             if (data != null) {
               final profile = ProfileDetailsModel.fromJson(data);
               if (isFromSignup) {
-                await AnalyticsService.instance.setUserProfile(
+                if(profile.registrationType.toString() == 'email'){
+                  await AnalyticsService.instance.setUserProfile(
                   loginState: 'logged_in',
                   userId: profile.id,
                   city: await getCityFromAddress(profile.address.toString()),
                   persona: "professional_${profile.profession_name?.toLowerCase()}",
                   plan: _getTimePeriodFromPlan(selectedtitle.value),
-                  registrationType: profile.userType ??
-                      ((profile.isSocialLogin ?? false) ? 'social' : 'regular'),
+                  registrationType: 'regular',
                 );
+                } else if(profile.registrationType.toString() == 'google' || profile.registrationType.toString() == 'facebook'){
+                  await AnalyticsService.instance.setUserProfile(
+                  loginState: 'logged_in',
+                  userId: profile.id,
+                  city: await getCityFromAddress(profile.address.toString()),
+                  persona: "professional_${profile.profession_name?.toLowerCase()}",
+                  plan: _getTimePeriodFromPlan(selectedtitle.value),
+                  registrationType: 'google',
+                );
+                } else{
+                  await AnalyticsService.instance.setUserProfile(
+                  loginState: 'logged_in',
+                  userId: profile.id,
+                  city: await getCityFromAddress(profile.address.toString()),
+                  persona: "professional_${profile.profession_name?.toLowerCase()}",
+                  plan: _getTimePeriodFromPlan(selectedtitle.value),
+                  registrationType: 'apple',
+                );
+                }
+               
               } else {
                 await AnalyticsService.instance.setUserProfile(
                   plan: _getTimePeriodFromPlan(selectedtitle.value),

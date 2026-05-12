@@ -74,6 +74,7 @@ class ProfileDetailsModel {
   final bool? hasServiceFormatToday;
   final bool? hasAvailabilityToday;
   final bool? isSubscription;
+  final String? registrationType;
 
   const ProfileDetailsModel({
     this.id,
@@ -149,6 +150,7 @@ class ProfileDetailsModel {
     this.hasServiceFormatToday,
     this.hasAvailabilityToday,
     this.isSubscription,
+    this.registrationType,
   });
 
   factory ProfileDetailsModel.fromJson(Map<String, dynamic> json) {
@@ -247,6 +249,7 @@ class ProfileDetailsModel {
       hasServiceFormatToday: data['has_service_format_today'] as bool?,
       hasAvailabilityToday: data['has_availability_today'] as bool?,
       isSubscription: data['is_subscription'] as bool?,
+      registrationType: data['registration_type'] as String?,
     );
   }
 
@@ -325,5 +328,7 @@ class ProfileDetailsModel {
           'has_availability_today': hasAvailabilityToday,
         if (isSubscription != null)
           'is_subscription': isSubscription,
+        if (registrationType != null)
+          'registration_type': registrationType,
       };
 }

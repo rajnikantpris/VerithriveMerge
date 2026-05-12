@@ -178,6 +178,31 @@ class FitnessGoalController extends BaseController {
       selectedSubServiceIds.add(subServiceId);
       // Add parent service ID if not already added
       selectedServiceIds.add(serviceId);
+      
+      // Log analytics when goal is selected
+      String subServiceName = '';
+      for (var service in services) {
+        for (var subService in service.subServices) {
+          if (subService.id == subServiceId) {
+            subServiceName = subService.subServiceName;
+            break;
+          }
+        }
+        if (subServiceName.isNotEmpty) break;
+      }
+      
+      if (subServiceName.isNotEmpty) {
+        AnalyticsService.instance.logEvent(
+          name: 'select_goal_tap',
+          parameters: {
+            'screen_name': 'FitnessGoalScreen',
+            'screen_class': 'FitnessGoalScreen',
+            'element_text': subServiceName,
+            'element_location': 'option_tap',
+            'page_category': 'fitness',
+          },
+        );
+      }
     }
   }
   
@@ -341,22 +366,6 @@ class FitnessGoalController extends BaseController {
     print('========================================');
     print('Navigating to therapy_list...');
     print('========================================');
-    
-    // Analytics: Log fitness goal selection
-    if (selectedGoals.isNotEmpty) {
-      for (String goal in selectedGoals) {
-        AnalyticsService.instance.logEvent(
-          name: 'select_goal_tap',
-          parameters: {
-            'screen_name': 'FitnessGoalScreen',
-            'screen_class': 'FitnessGoalScreen',
-            'element_text': goal,
-            'element_location': 'option_tap',
-            'page_category': 'fitness',
-          },
-        );
-      }
-    }
     
     _showLoadingAndNavigate(result);
   }
