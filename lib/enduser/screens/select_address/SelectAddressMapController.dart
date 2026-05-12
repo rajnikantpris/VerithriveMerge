@@ -84,6 +84,12 @@ class SelectAddressMapController extends BaseController {
       // Debug: Check visibility condition
       final shouldHide = hideSelectButtonFlag && address.isEmpty;
       debugPrint('Bottom section visibility check: hideSelectButton=$hideSelectButtonFlag, existingAddress.isEmpty=${address.isEmpty}, shouldHide=$shouldHide');
+
+      // Show select address button when editing (coordinates are passed from update profile)
+      if (initialLatitude.value != null && initialLongitude.value != null) {
+        showSelectAddressButton.value = true;
+        debugPrint('Showing select address button for edit mode');
+      }
     } else {
       debugPrint('No arguments passed to map screen');
     }

@@ -34,7 +34,11 @@ class YourProfileController extends BaseController {
     } else if (item.title == 'About you') {
       Get.toNamed(Routes.aboutYou);
     } else if (item.title == 'Share profile') {
-      _shareViaOtherApps(Get.find<HomeController>().profileDetails.value!);
+      if (Get.isRegistered<HomeController>()) {
+        _shareViaOtherApps(Get.find<HomeController>().profileDetails.value!);
+      } else {
+        debugPrint('HomeController not registered, cannot share profile');
+      }
     } else {
       // Hook for future navigation or actions per item.
       debugPrint('Tapped on ${item.title}');

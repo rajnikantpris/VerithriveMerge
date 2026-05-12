@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
-import 'package:verithrive_dev/enduser/routes/app_routes.dart';
 import 'package:verithrive_dev/enduser/screens/payment/PaymentMethodBinding.dart';
 import 'package:verithrive_dev/enduser/screens/payment/PaymentMethodScreen.dart';
 import 'package:verithrive_dev/enduser/screens/summary/SummaryBinding.dart';
@@ -591,8 +590,9 @@ class CartController extends BaseController {
           isError: false,
           showButton: true,
           onOkPressed: () {
-        // Navigate back to main screen (bookings tab)
-        Get.until((route) => route.settings.name == AppRoutes.main);
+        // Navigate back to bookings screen (CartScreen -> ConsultationBookingScreen -> BookingsScreen)
+        Get.back(); // Close CartScreen
+        Get.back(); // Close ConsultationBookingScreen
         // Refresh bookings list
         if (Get.isRegistered<BookingsController>(tag: 'bookings')) {
           Get.find<BookingsController>(tag: 'bookings').loadBookings();
