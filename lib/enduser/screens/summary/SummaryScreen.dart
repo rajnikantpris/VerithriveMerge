@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
@@ -41,7 +42,7 @@ class SummaryScreen extends StatelessWidget {
         'item_category': category,
         'item_variant': cartController.consultationType.value,
         'item_brand': cartController.professionalId.value, // Using professionalId as brand
-        'price': cartController.price.value.toString(),
+        'price': cartController.price.value,
         'quantity': 1,
         'currency': 'GBP',
       };
@@ -52,7 +53,7 @@ class SummaryScreen extends StatelessWidget {
           'screen_name': 'SummaryScreen',
           'screen_class': 'SummaryScreen',
           'page_category': category,
-          'items': [item],
+          'items': jsonEncode([item]), // Send as proper JSON string
         },
       );
     });

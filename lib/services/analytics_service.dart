@@ -151,7 +151,7 @@ class AnalyticsService {
 
       if (kDebugMode) {
         print(
-          'Analytics: Set user profile { loginState: $loginState, userId: $userId, registrationType: $registrationType, city: $city, persona: $persona, plan: $plan }',
+          'Analytics: Set user profile { user_login_state: $loginState, user_id: $userId, user_registration_type: $registrationType, user_city: $city, user_persona: $persona, user_plan: $plan }',
         );
       }
     } catch (e) {

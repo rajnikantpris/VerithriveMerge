@@ -253,7 +253,7 @@ class ProfessionalLoginController extends BaseController {
             await _storageService?.writeString('user_email', userEmail);
           }
 
-          // Always save userType as 'professional' for professional social login
+          // Always save userType as 'professional' for professional login
           await _storageService?.writeString('userType', 'professional');
 
           // Extract user flags from user model
@@ -264,10 +264,7 @@ class ProfessionalLoginController extends BaseController {
             userId: loginData.user?.id,
             city: await getCityFromAddress(loginData.user!.address.toString()),
             persona: "professional_${loginData.user?.profession_name?.toLowerCase()}",
-            registrationType: loginData.user?.registrationType ??
-                ((loginData.user?.isSocialLogin ?? false)
-                    ? 'social'
-                    : 'regular'),
+            registrationType: 'regular',
           );
 
           // Save flags to storage
@@ -287,7 +284,7 @@ class ProfessionalLoginController extends BaseController {
             showButton: false,
             onOkPressed: () {
               // Determine navigation based on user flags (in priority order)
-              _navigateBasedOnUserFlags(userFlags);
+              _navigateBasedOnUserFlags(userFlags, 'regular', loginData.user);
             },
           );
         } else {
@@ -614,17 +611,6 @@ class ProfessionalLoginController extends BaseController {
           // Extract user flags from user model
           final userFlags = _extractUserFlagsFromModel(loginData.user);
 
-          await AnalyticsService.instance.setUserProfile(
-            loginState: 'logged_in',
-            userId: loginData.user?.id,
-            city: await getCityFromAddress(loginData.user!.address.toString()),
-            persona: "professional_${loginData.user?.profession_name?.toLowerCase()}",
-            registrationType: loginData.user?.registrationType ??
-                ((loginData.user?.isSocialLogin ?? false)
-                    ? 'social'
-                    : 'regular'),
-          );
-
           // Save flags to storage
           final storage = _storageService;
           if (storage != null) {
@@ -644,7 +630,7 @@ class ProfessionalLoginController extends BaseController {
             showButton: false,
             onOkPressed: () {
               // Determine navigation based on user flags (in priority order)
-              _navigateBasedOnUserFlags(userFlags);
+              _navigateBasedOnUserFlags(userFlags,socialType,loginData.user);
             },
           );
         } else {
@@ -711,7 +697,7 @@ class ProfessionalLoginController extends BaseController {
   }
 
   /// Navigate based on user flags in priority order
-  void _navigateBasedOnUserFlags(Map<String, bool> userFlags) {
+  Future<void> _navigateBasedOnUserFlags(Map<String, bool> userFlags, String socialType, UserModel? user) async {
     // Priority order: check flags in sequence and navigate to first incomplete step
 
     if (userFlags['is_personal_details'] != true) {
@@ -781,6 +767,14 @@ class ProfessionalLoginController extends BaseController {
 
     // All steps completed - navigate to home
     Get.offAllNamed(Routes.home);
+
+     await AnalyticsService.instance.setUserProfile(
+            loginState: 'logged_in',
+            userId: user?.id,
+            city: await getCityFromAddress(user!.address.toString()),
+            persona: "professional_${user.profession_name?.toLowerCase()}",
+            registrationType: socialType, // Use the actual social type ('google' or 'apple')
+          );
   }
 
   Future<void> _cacheSocialProfileData(UserModel? user) async {

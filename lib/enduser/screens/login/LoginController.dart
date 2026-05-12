@@ -520,8 +520,7 @@ class LoginController extends BaseController {
           persona: 'end_user',
           city: await getCityFromAddress(user!.address.toString()),
           plan: 'null',
-          registrationType: user.registrationType ??
-              ((user.isSocialLogin ?? false) ? 'social' : 'regular'),
+          registrationType: user.registrationType == 'email' ? 'regular' : (user.registrationType ?? 'regular'),
         );
 
         if(guestUser.isNotEmpty && guestUser == "guest"){
