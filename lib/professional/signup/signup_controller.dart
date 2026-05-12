@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:geocoding/geocoding.dart';
 import 'package:get/get.dart';
 
 import '../../api/api_response.dart';
@@ -6,6 +7,7 @@ import '../../api/user_api_service.dart';
 import '../../common/base_controller.dart';
 import '../../models/login_response_model.dart';
 import '../../routes/app_routes.dart';
+import '../../services/analytics_service.dart';
 import '../../services/notification_permission_service.dart';
 import '../../services/social_auth_service.dart';
 import '../../services/storage_service.dart';
@@ -625,7 +627,7 @@ class SignupController extends BaseController {
           final successMessage =
               response.message ?? 'Account created successfully. Welcome!';
 
-          _navigateBasedOnUserFlags(userFlags);
+          _navigateBasedOnUserFlags(userFlags,loginData.user, socialType);
 
           // showResponseDialog(
           //   message: successMessage,
@@ -673,7 +675,7 @@ class SignupController extends BaseController {
   }
 
   /// Navigate based on user flags in priority order (same as LoginController)
-  void _navigateBasedOnUserFlags(Map<String, bool> userFlags) {
+  Future<void> _navigateBasedOnUserFlags(Map<String, bool> userFlags, UserModel? user, String socialType) async {
     // Priority order: check flags in sequence and navigate to first incomplete step
 
     if (userFlags['is_personal_details'] != true) {
@@ -741,9 +743,40 @@ class SignupController extends BaseController {
       return;
     }
 
+    await AnalyticsService.instance.setUserProfile(
+        loginState: 'logged_in',
+        userId: user?.id,
+        city: await getCityFromAddress(user!.address.toString()),
+    persona: "professional_${user.profession_name?.toLowerCase()}",
+    registrationType: socialType, // Use the actual social type ('google' or 'apple')
+    );
+
     // All steps completed - navigate to home
     Get.offAllNamed(Routes.home);
   }
+
+  Future<String?> getCityFromAddress(String address) async {
+    try {
+      List<Location> locations = await locationFromAddress(address);
+
+      if (locations.isNotEmpty) {
+        double lat = locations.first.latitude;
+        double lng = locations.first.longitude;
+
+        List<Placemark> placemarks =
+        await placemarkFromCoordinates(lat, lng);
+
+        if (placemarks.isNotEmpty) {
+          return placemarks.first.locality!.toLowerCase(); // return city
+        }
+      }
+    } catch (e) {
+      print("Error: $e");
+    }
+
+    return null;
+  }
+
 
   Future<void> _cacheSocialProfileData(UserModel? user) async {
     final storage = _storageService;
