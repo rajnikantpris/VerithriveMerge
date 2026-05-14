@@ -208,7 +208,7 @@ class SignupController extends BaseController {
     if (!(formKey.currentState?.validate() ?? false)) return;
 
     final email = emailController.text.trim();
-    // final phone = phoneController.text.trim();
+    final phone = phoneController.text.trim();
     final promoCode = promoCodeController.text.trim();
     final password = passwordController.text.trim();
     const userType = 'professional';
@@ -303,7 +303,7 @@ class SignupController extends BaseController {
                 Routes.verifyEmail,
                 arguments: {
                   'email': email,
-                  // 'phone': phone,
+                  'phone': phone,
                   'promo_code': isPromoCodeValid.value ? promoCode : '',
                   'password': password,
                   'user_type': userType,

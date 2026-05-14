@@ -66,6 +66,8 @@ class HomeController extends BaseController {
   // Profile details
   final profileDetails = Rxn<ProfileDetailsModel>();
   bool _stripeOnboardingDialogShown = false;
+  bool _approvalDialogShown = false;
+  bool _subscriptionDialogShown = false;
   bool _didAuthenticatedStartup = false;
   bool _scheduledAuthStartupRetry = false;
 
@@ -794,7 +796,7 @@ class HomeController extends BaseController {
               logInfo('User: ${profile.fullName}, Email: ${profile.email}');
               if (showStripeDialog) {
                 WidgetsBinding.instance.addPostFrameCallback((_) {
-                  _maybeShowStripeOnboardingDialog(profile);
+                  _maybeShowApprovalDialog(profile);
                 });
               }
             } else {
@@ -813,6 +815,56 @@ class HomeController extends BaseController {
             error: error, stackTrace: stack);
       },
     );
+  }
+
+  Future<void> _maybeShowApprovalDialog(ProfileDetailsModel profile) async {
+    if (_approvalDialogShown) return;
+    if (_isGuestUser()) return;
+    if (Get.context == null) return;
+    if (Get.isDialogOpen == true) return;
+
+    if (!(profile.isApproved ?? false)) {
+      _approvalDialogShown = true;
+      showResponseDialog(
+        title: 'Application Under Review',
+        message:
+            'Your professional application has been successfully submitted. Please wait while we review your application. Once it is approved, you will be able to access and use our services.',
+        isError: false,
+        showButton: true,
+      );
+      return;
+    }
+
+    // If approved, check subscription
+    await _maybeShowSubscriptionDialog(profile);
+  }
+
+  Future<void> _maybeShowSubscriptionDialog(
+      ProfileDetailsModel profile) async {
+    if (_subscriptionDialogShown) return;
+    if (_isGuestUser()) return;
+    if (Get.context == null) return;
+    if (Get.isDialogOpen == true) return;
+
+    if (!(profile.isSubscription ?? false)) {
+      _subscriptionDialogShown = true;
+      showConfirmationDialog(
+        title: 'Subscription Required',
+        message: 'Your profile has been approved. Please proceed with subscription payment to activate your account.',
+        onYesPressed: () {
+          Get.toNamed(Routes.profileSubscription);
+        },
+        onNoPressed: () {
+          // Dismiss dialog without checking other logic
+        },
+        yesText: 'Subscribe',
+        noText: 'Later',
+      );
+      return;
+    }
+
+    // If has subscription, show stripe onboarding dialog
+    await _maybeShowStripeOnboardingDialog(profile);
   }
 
   Future<void> _maybeShowStripeOnboardingDialog(
@@ -876,7 +928,7 @@ class HomeController extends BaseController {
                   ),
                   SizedBox(height: HightWidthSizes.setValue_16),
                   Text(
-                    'Create your account here to enable charges and payouts',
+                    'Please complete your Stripe onboarding to enable charges and payouts.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontFamily: AppFonts.rubikRegular,

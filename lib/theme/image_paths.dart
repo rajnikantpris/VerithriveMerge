@@ -1,6 +1,8 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
+import '../enduser/utils/app_assets.dart';
+
 /// Central place for image asset paths and small helpers.
 class AppImages {
   AppImages._();
@@ -632,7 +634,7 @@ class AppImages {
     Color? color,
   }) {
     return svg(
-      transactionSummary,
+      AppAssets.card_details,
       width: width,
       height: height,
       fit: fit,

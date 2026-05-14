@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:image_picker/image_picker.dart';
@@ -41,13 +42,14 @@ class PersonalDetailsController extends BaseController {
   final professionController = TextEditingController();
   final fullNameController = TextEditingController();
   final dobController = TextEditingController();
+  final phoneController = TextEditingController();
 
   final selectedDob = Rxn<DateTime>();
   final genders = ['Male', 'Female', 'Prefer not to say'];
   final selectedGender = ''.obs;
 
   // Marketing preferences
-  final marketingOptions = ['Yes', 'No'];
+  final marketingOptions = ['Opted In', 'Opted Out'];
   final selectedMarketingPreference = ''.obs;
 
   String _convertGenderFromApiFormat(String apiGender) {
@@ -91,6 +93,7 @@ class PersonalDetailsController extends BaseController {
     professionController.dispose();
     fullNameController.dispose();
     dobController.dispose();
+    phoneController.dispose();
     super.onClose();
   }
 
@@ -530,7 +533,8 @@ class PersonalDetailsController extends BaseController {
         fullName: fullNameController.text.trim(),
         dob: dobFormatted,
         gender: selectedGender.value,
-        optStatus: selectedMarketingPreference.value == 'Yes' ? 1 : 0,
+        optStatus: selectedMarketingPreference.value == 'Opted In' ? 1 : 0,
+        mobileNumber: phoneController.text.trim(),
         profilePicture: selectedImage.value,
       ),
       showLoader: true,
@@ -734,9 +738,14 @@ class PersonalDetailsController extends BaseController {
                 }
               }
 
+              if (profileDetails.mobileNumber != null &&
+                  profileDetails.mobileNumber!.isNotEmpty) {
+                phoneController.text = profileDetails.mobileNumber!;
+              }
+
               if (profileDetails.optStatus != null) {
                 selectedMarketingPreference.value =
-                profileDetails.optStatus == 1 ? 'Yes' : 'No';
+                profileDetails.optStatus == 1 ? 'Opted In' : 'Opted Out';
               }
 
               if (profileDetails.gender != null &&

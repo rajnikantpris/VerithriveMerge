@@ -73,7 +73,7 @@ class ProfileController extends BaseController {
     ProfileItem(title: 'Subscription', asset: AppImages.profileTicket),
     ProfileItem(
         title: 'Transaction Summary', asset: AppImages.transactionSummary),
-    ProfileItem(title: 'Notification', asset: AppImages.profileNotification),
+    ProfileItem(title: 'Notifications', asset: AppImages.profileNotification),
     ProfileItem(title: 'Account', asset: AppImages.profileSettings),
     ProfileItem(title: 'Log out', asset: AppImages.profileLogout),
   ];
@@ -87,10 +87,10 @@ class ProfileController extends BaseController {
     } else if (item.title == 'Bank details') {
       await _handleBankDetailsTap();
     } else if (item.title == 'Subscription') {
-      Get.toNamed(Routes.profileSubscription);
+      await _handleSubscriptionTap();
     } else if (item.title == 'Transaction Summary') {
       Get.toNamed(Routes.transactionSummary);
-    } else if (item.title == 'Notification') {
+    } else if (item.title == 'Notifications') {
       Get.toNamed(Routes.notificationSettings);
     } else if (item.title == 'Account') {
       Get.toNamed(Routes.account);
@@ -178,7 +178,7 @@ class ProfileController extends BaseController {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Text(
-                      'New Stripe account created',
+                      'Get Started with Stripe',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontFamily: AppFonts.rubikMedium,
@@ -319,6 +319,38 @@ class ProfileController extends BaseController {
     }
 
     Get.toNamed(Routes.bankAccount);
+  }
+
+  Future<void> _handleSubscriptionTap() async {
+    Map<String, dynamic>? readProfileMap() {
+      final raw = _storageService?.readString('user_data');
+      if (raw == null || raw.trim().isEmpty) return null;
+      try {
+        final decoded = jsonDecode(raw);
+        if (decoded is Map<String, dynamic>) return decoded;
+        return null;
+      } catch (_) {
+        return null;
+      }
+    }
+
+    Map<String, dynamic>? profile = readProfileMap();
+    final isApproved = profile?['is_approved'] ?? profile?['isApproved'] ?? false;
+
+    // If approved, directly navigate to subscription screen
+    if (isApproved) {
+      Get.toNamed(Routes.profileSubscription);
+      return;
+    }
+
+    // If not approved, show the dialog
+    showResponseDialog(
+      title: 'Application Under Review',
+      message:
+          'Your professional application has been successfully submitted. Please wait while we review your application. Once it is approved, you will be able to access and use our services.',
+      isError: false,
+      showButton: true,
+    );
   }
 
   Future<void> onLogout() async {

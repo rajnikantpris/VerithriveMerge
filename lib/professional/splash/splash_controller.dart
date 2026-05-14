@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:verithrive_dev/enduser/core/values/sharePrefrenceConst.dart'
-    as enduser_prefs;
+as enduser_prefs;
 import 'package:verithrive_dev/enduser/screens/main/MainScreen.dart'
-    as enduser_main;
+as enduser_main;
 import 'package:verithrive_dev/enduser/screens/profile/ProfileBinding.dart'
-    as enduser_profile_binding;
+as enduser_profile_binding;
 import 'package:verithrive_dev/enduser/screens/profile/ProfileView.dart'
-    as enduser_profile_view;
+as enduser_profile_view;
 
 import '../../common/base_controller.dart';
 import '../../routes/app_routes.dart';
@@ -34,18 +34,18 @@ class SplashController extends BaseController {
 
     final userType = prefs.getString('userType') ?? '';
     final userId = prefs.getString('user_id') ?? '';
-    
+
     // Additional check: if we have professional-specific data, treat as professional
-    final hasProfessionalFlags = prefs.containsKey('is_profile_created') || 
-                                prefs.containsKey('is_work_full') ||
-                                prefs.containsKey('is_professional_services');
+    final hasProfessionalFlags = prefs.containsKey('is_profile_created') ||
+        prefs.containsKey('is_work_full') ||
+        prefs.containsKey('is_professional_services');
 
     debugPrint('Splash: userType=$userType, userId=$userId, hasProfessionalFlags=$hasProfessionalFlags');
 
     // Determine user type with multiple fallback checks
-    final isProfessional = userType == 'professional' || 
-                          (userType.isEmpty && hasProfessionalFlags) ||
-                          (userType.isEmpty && userId.isNotEmpty && _checkIfProfessionalUserId(prefs));
+    final isProfessional = userType == 'professional' ||
+        (userType.isEmpty && hasProfessionalFlags) ||
+        (userType.isEmpty && userId.isNotEmpty && _checkIfProfessionalUserId(prefs));
 
     if (isProfessional) {
       debugPrint('Splash: Navigating to professional flow');
@@ -87,7 +87,7 @@ class SplashController extends BaseController {
     // Check for professional-specific keys that wouldn't exist for end users
     final professionalKeys = [
       'is_profile_created',
-      'is_work_full', 
+      'is_work_full',
       'is_professional_services',
       'is_qualification',
       'is_personal_identification',
@@ -96,7 +96,7 @@ class SplashController extends BaseController {
       'is_personal_details',
       'is_term_condition'
     ];
-    
+
     return professionalKeys.any((key) => prefs.containsKey(key));
   }
 

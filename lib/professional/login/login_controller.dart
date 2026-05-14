@@ -15,18 +15,18 @@ import 'package:geocoding/geocoding.dart';
 
 class ProfessionalLoginController extends BaseController {
   ProfessionalLoginController(
-    this._userApiService, [
-    StorageService? storageService,
-  ]) : _storageService = storageService ??
-            (Get.isRegistered<StorageService>()
-                ? Get.find<StorageService>()
-                : null);
+      this._userApiService, [
+        StorageService? storageService,
+      ]) : _storageService = storageService ??
+      (Get.isRegistered<StorageService>()
+          ? Get.find<StorageService>()
+          : null);
 
   final UserApiService _userApiService;
   final StorageService? _storageService;
   final SocialAuthService _socialAuthService = SocialAuthService();
   final NotificationPermissionService _notificationPermissionService =
-      NotificationPermissionService();
+  NotificationPermissionService();
 
   final emailController = TextEditingController();
   final passwordController = TextEditingController();

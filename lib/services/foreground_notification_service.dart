@@ -29,6 +29,7 @@ import '../enduser/utils/api_services.dart';
 import '../api/user_api_service.dart';
 import '../enduser/screens/message/socket_service.dart';
 import '../professional/home/messages_controller.dart';
+import '../professional/home/profile_controller.dart';
 import '../services/socket_service.dart';
 import '../services/social_auth_service.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -36,6 +37,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'notification_service.dart';
 import 'storage_service.dart';
 import 'analytics_service.dart';
+import '../widgets/response_dialog.dart';
 
 /// Notification types that should open the Bookings tab for end users
 const List<String> _endUserBookingNotificationTypes = [
@@ -369,12 +371,18 @@ class ForegroundNotificationService {
         channelDescription: 'This channel is used for app notifications',
         importance: Importance.high,
         priority: Priority.high,
-        icon: android?.smallIcon ?? '@mipmap/ic_launcher',
+        icon:'@mipmap/ic_launcher',
         playSound: true,
         enableVibration: true,
         showWhen: true,
         enableLights: true,
         color: const Color(0xFF2196F3),
+        styleInformation: BigTextStyleInformation(
+          body,
+          htmlFormatBigText: true,
+          contentTitle: title,
+          summaryText: body,
+        ),
       );
 
       const iosDetails = DarwinNotificationDetails(
@@ -432,7 +440,32 @@ class ForegroundNotificationService {
       logInfo(
           'Professional profile approval notification received - refreshing profile data');
       _refreshProfile();
+      _refreshProfileController();
       _refreshCalendar();
+
+      // Dismiss any open "Application Under Review" dialog
+      // if (Get.context != null) {
+      //   final navigator = Navigator.of(Get.context!);
+      //   if (navigator.canPop()) {
+      //     navigator.pop();
+      //     logInfo('Dismissed existing dialog before showing subscription dialog');
+      //   }
+      // }
+
+      // Show confirmation dialog for application approval
+      // showConfirmationDialog(
+      //   title: 'Subscription Required',
+      //   message: 'You need an active subscription to access all features. Please subscribe to continue.',
+      //   onYesPressed: () {
+      //     Get.toNamed(Routes.profileSubscription);
+      //   },
+      //   onNoPressed: () {
+      //     // Dismiss dialog without navigating
+      //   },
+      //   yesText: 'Subscribe',
+      //   noText: 'Later',
+      // );
+
       return true;
     } else if (notificationType == 'session_timeout') {
       logInfo('Professional session timeout notification received - logging out');
@@ -800,6 +833,23 @@ class ForegroundNotificationService {
     }
   }
 
+  /// Refresh profile data if ProfileController is available
+  static void _refreshProfileController() {
+    try {
+      if (Get.isRegistered<ProfileController>()) {
+        final profileController = Get.find<ProfileController>();
+        profileController.fetchProfileDetails();
+        logInfo('ProfileController profile data refresh triggered');
+      } else {
+        logInfo(
+            'ProfileController not registered, skipping profile refresh');
+      }
+    } catch (e, stackTrace) {
+      logError('Error refreshing ProfileController profile data',
+          error: e, stackTrace: stackTrace);
+    }
+  }
+
   /// Handle notification tap based on message data
   static void _handleNotificationTap(RemoteMessage message) {
     try {
@@ -856,9 +906,11 @@ class ForegroundNotificationService {
       }
     } else if (notificationType == 'application_approved') {
       _refreshProfile();
+      _refreshProfileController();
+      // Get.toNamed(Routes.profileSubscription);
       Get.toNamed(Routes.notifications);
       logInfo(
-          'Navigated to notifications screen for application approval');
+          'Navigated to subscription screen for application approval');
     } else if (notificationType == 'settlement_payout' ||
         notificationType == 'subscription_renewed' ||
         notificationType == 'subscription_expired' ||
@@ -1038,9 +1090,11 @@ class ForegroundNotificationService {
     } else if (payload.contains('type: application_approved') ||
         payload.contains("'type': 'application_approved'")) {
       _refreshProfile();
+      _refreshProfileController();
+      // Get.toNamed(Routes.profileSubscription);
       Get.toNamed(Routes.notifications);
       logInfo(
-          'Professional navigated to notifications screen from payload for application approval');
+          'Professional navigated to subscription screen from payload for application approval');
     } else if (payload.contains('type: settlement_payout') ||
         payload.contains("'type': 'settlement_payout'") ||
         payload.contains('type: subscription_renewed') ||

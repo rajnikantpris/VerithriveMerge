@@ -204,18 +204,18 @@ void showConfirmationDialog({
               children: [
                 // Error icon
                 Container(
-                  width: HightWidthSizes.setValue_60,
-                  height: HightWidthSizes.setValue_60,
-                  decoration: BoxDecoration(
-                    color: AppColor.color_B53232.withOpacity(0.1),
-                    shape: BoxShape.circle,
+                    width: HightWidthSizes.setValue_60,
+                    height: HightWidthSizes.setValue_60,
+                    decoration: BoxDecoration(
+                      color: AppColor.color_2FC4B2.withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.check_circle_outline,
+                      color: AppColor.color_2FC4B2,
+                      size: HightWidthSizes.setValue_30,
+                    ),
                   ),
-                  child: Icon(
-                    Icons.error_outline,
-                    color: AppColor.color_B53232,
-                    size: HightWidthSizes.setValue_30,
-                  ),
-                ),
                 SizedBox(height: HightWidthSizes.setValue_20),
 
                 // Title (optional)
@@ -227,7 +227,7 @@ void showConfirmationDialog({
                       fontFamily: AppFonts.rubikMedium,
                       fontWeight: FontWeight.w500,
                       fontSize: FontSizes.setFontValue_20,
-                      color: AppColor.color_B53232,
+                      color:AppColor.color_2FC4B2,
                     ),
                   ),
                   SizedBox(height: HightWidthSizes.setValue_12),
@@ -305,7 +305,7 @@ void showConfirmationDialog({
                         fontFamily: AppFonts.rubikRegular,
                         fontWeight: FontWeight.w400,
                         fontSize: FontSizes.setFontValue_16,
-                        color: AppColor.color_32435F,
+                        color: AppColor.color_B53232,
                       ),
                     ),
                   ),

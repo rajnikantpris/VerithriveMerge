@@ -87,22 +87,11 @@ class SubscriptionPlan {
       cutPriceLabelValue = '$currency${equivalentMonthlyPriceValue.toInt()}/$billingCycleValue';
     }
 
-    // Calculate perMonthLabel
+    // Calculate perMonthLabel: price_amount / billing_cycle_count
     String? perMonthLabelValue;
-    int months;
-    if (billingCycleLower == 'monthly') {
-      months = billingCycleCountValue;
-    } else if (billingCycleLower == 'quarterly') {
-      months = billingCycleCountValue * 3;
-    } else if (billingCycleLower == 'yearly') {
-      months = billingCycleCountValue * 12;
-    } else {
-      months = billingCycleLower.contains('year') ? 12 : (billingCycleLower.contains('quarter') ? 3 : 1);
-    }
-
-    if (months > 1) {
-      final monthlyPrice = (priceValue / months).round();
-      perMonthLabelValue = '$currency$monthlyPrice/month';
+    if (billingCycleCountValue > 1) {
+      final monthlyPrice = (priceValue / billingCycleCountValue).round();
+      perMonthLabelValue = '$currency$monthlyPrice/monthly';
     }
 
     // Promo label for yearly plans

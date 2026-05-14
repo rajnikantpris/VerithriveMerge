@@ -57,101 +57,101 @@ class SignupView extends BaseView<SignupController> {
                 ),
                 SizedBox(height: HightWidthSizes.setValue_18),
                 // Phone field
-                // Column(
-                //   crossAxisAlignment: CrossAxisAlignment.start,
-                //   children: [
-                //     Text(
-                //       'Phone number',
-                //       style: TextStyle(
-                //         fontFamily: AppFonts.rubikRegular,
-                //         fontWeight: FontWeight.w400,
-                //         fontSize: FontSizes.setFontValue_14,
-                //         color: AppColor.color_2D2D2D,
-                //       ),
-                //     ),
-                //     SizedBox(height: HightWidthSizes.setValue_5),
-                //     Row(
-                //       crossAxisAlignment: CrossAxisAlignment.start,
-                //       children: [
-                //         Container(
-                //           constraints: BoxConstraints(
-                //               minHeight: HightWidthSizes.setValue_45),
-                //           decoration: BoxDecoration(
-                //             color: AppColor.white,
-                //             borderRadius: BorderRadius.only(
-                //               topLeft: Radius.circular(
-                //                 HightWidthSizes.setValue_10,
-                //               ),
-                //               bottomLeft: Radius.circular(
-                //                 HightWidthSizes.setValue_10,
-                //               ),
-                //             ),
-                //             border: Border(
-                //               left: BorderSide(
-                //                 color: AppColor.borderColor,
-                //                 width: HightWidthSizes.setValue_1,
-                //               ),
-                //               top: BorderSide(
-                //                 color: AppColor.borderColor,
-                //                 width: HightWidthSizes.setValue_1,
-                //               ),
-                //               bottom: BorderSide(
-                //                 color: AppColor.borderColor,
-                //                 width: HightWidthSizes.setValue_1,
-                //               ),
-                //             ),
-                //           ),
-                //           padding: EdgeInsets.symmetric(
-                //             horizontal: HightWidthSizes.setValue_12,
-                //             vertical: HightWidthSizes.setValue_14,
-                //           ),
-                //           child: Row(
-                //             mainAxisSize: MainAxisSize.min,
-                //             children: [
-                //               Icon(
-                //                 Icons.phone_outlined,
-                //                 color: AppColor.color_9D9D9D,
-                //                 size: HightWidthSizes.setValue_16,
-                //               ),
-                //               SizedBox(width: HightWidthSizes.setValue_8),
-                //               Text(
-                //                 '+44',
-                //                 style: TextStyle(
-                //                   fontFamily: AppFonts.rubikRegular,
-                //                   fontWeight: FontWeight.w400,
-                //                   fontSize: FontSizes.setFontValue_15_5,
-                //                   color: AppColor.color_2D2D2D,
-                //                 ),
-                //               ),
-                //             ],
-                //           ),
-                //         ),
-                //         Expanded(
-                //           child: CustomTextField(
-                //             label: '',
-                //             hintText: 'Phone number',
-                //             controller: controller.phoneController,
-                //             keyboardType: TextInputType.phone,
-                //             validator: controller.validatePhone,
-                //             inputFormatters: [
-                //               FilteringTextInputFormatter.digitsOnly
-                //             ],
-                //             showLabel: false,
-                //             borderRadius: BorderRadius.only(
-                //               topRight: Radius.circular(
-                //                 HightWidthSizes.setValue_10,
-                //               ),
-                //               bottomRight: Radius.circular(
-                //                 HightWidthSizes.setValue_10,
-                //               ),
-                //             ),
-                //           ),
-                //         ),
-                //       ],
-                //     ),
-                //   ],
-                // ),
-                // SizedBox(height: HightWidthSizes.setValue_18),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Phone number',
+                      style: TextStyle(
+                        fontFamily: AppFonts.rubikRegular,
+                        fontWeight: FontWeight.w400,
+                        fontSize: FontSizes.setFontValue_14,
+                        color: AppColor.color_2D2D2D,
+                      ),
+                    ),
+                    SizedBox(height: HightWidthSizes.setValue_5),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          constraints: BoxConstraints(
+                              minHeight: HightWidthSizes.setValue_45),
+                          decoration: BoxDecoration(
+                            color: AppColor.white,
+                            borderRadius: BorderRadius.only(
+                              topLeft: Radius.circular(
+                                HightWidthSizes.setValue_10,
+                              ),
+                              bottomLeft: Radius.circular(
+                                HightWidthSizes.setValue_10,
+                              ),
+                            ),
+                            border: Border(
+                              left: BorderSide(
+                                color: AppColor.borderColor,
+                                width: HightWidthSizes.setValue_1,
+                              ),
+                              top: BorderSide(
+                                color: AppColor.borderColor,
+                                width: HightWidthSizes.setValue_1,
+                              ),
+                              bottom: BorderSide(
+                                color: AppColor.borderColor,
+                                width: HightWidthSizes.setValue_1,
+                              ),
+                            ),
+                          ),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: HightWidthSizes.setValue_12,
+                            vertical: HightWidthSizes.setValue_14,
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.phone_outlined,
+                                color: AppColor.color_9D9D9D,
+                                size: HightWidthSizes.setValue_16,
+                              ),
+                              SizedBox(width: HightWidthSizes.setValue_8),
+                              Text(
+                                '+44',
+                                style: TextStyle(
+                                  fontFamily: AppFonts.rubikRegular,
+                                  fontWeight: FontWeight.w400,
+                                  fontSize: FontSizes.setFontValue_15_5,
+                                  color: AppColor.color_2D2D2D,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Expanded(
+                          child: CustomTextField(
+                            label: '',
+                            hintText: 'Phone number',
+                            controller: controller.phoneController,
+                            keyboardType: TextInputType.phone,
+                            validator: controller.validatePhone,
+                            inputFormatters: [
+                              FilteringTextInputFormatter.digitsOnly
+                            ],
+                            showLabel: false,
+                            borderRadius: BorderRadius.only(
+                              topRight: Radius.circular(
+                                HightWidthSizes.setValue_10,
+                              ),
+                              bottomRight: Radius.circular(
+                                HightWidthSizes.setValue_10,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                SizedBox(height: HightWidthSizes.setValue_18),
                 // Password field
                 Obx(
                   () => CustomTextField(
