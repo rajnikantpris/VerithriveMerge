@@ -444,27 +444,27 @@ class ForegroundNotificationService {
       _refreshCalendar();
 
       // Dismiss any open "Application Under Review" dialog
-      // if (Get.context != null) {
-      //   final navigator = Navigator.of(Get.context!);
-      //   if (navigator.canPop()) {
-      //     navigator.pop();
-      //     logInfo('Dismissed existing dialog before showing subscription dialog');
-      //   }
-      // }
+      if (Get.context != null) {
+        final navigator = Navigator.of(Get.context!);
+        if (navigator.canPop()) {
+          navigator.pop();
+          logInfo('Dismissed existing dialog before showing subscription dialog');
+        }
+      }
 
       // Show confirmation dialog for application approval
-      // showConfirmationDialog(
-      //   title: 'Subscription Required',
-      //   message: 'You need an active subscription to access all features. Please subscribe to continue.',
-      //   onYesPressed: () {
-      //     Get.toNamed(Routes.profileSubscription);
-      //   },
-      //   onNoPressed: () {
-      //     // Dismiss dialog without navigating
-      //   },
-      //   yesText: 'Subscribe',
-      //   noText: 'Later',
-      // );
+      showConfirmationDialog(
+        title: 'Subscription Required',
+        message: 'You need an active subscription to access all features. Please subscribe to continue.',
+        onYesPressed: () {
+          Get.toNamed(Routes.profileSubscription);
+        },
+        onNoPressed: () {
+          // Dismiss dialog without navigating
+        },
+        yesText: 'Subscribe',
+        noText: 'Later',
+      );
 
       return true;
     } else if (notificationType == 'session_timeout') {
@@ -907,8 +907,8 @@ class ForegroundNotificationService {
     } else if (notificationType == 'application_approved') {
       _refreshProfile();
       _refreshProfileController();
-      // Get.toNamed(Routes.profileSubscription);
-      Get.toNamed(Routes.notifications);
+      Get.toNamed(Routes.profileSubscription);
+      // Get.toNamed(Routes.notifications);
       logInfo(
           'Navigated to subscription screen for application approval');
     } else if (notificationType == 'settlement_payout' ||
@@ -1091,8 +1091,8 @@ class ForegroundNotificationService {
         payload.contains("'type': 'application_approved'")) {
       _refreshProfile();
       _refreshProfileController();
-      // Get.toNamed(Routes.profileSubscription);
-      Get.toNamed(Routes.notifications);
+      Get.toNamed(Routes.profileSubscription);
+      // Get.toNamed(Routes.notifications);
       logInfo(
           'Professional navigated to subscription screen from payload for application approval');
     } else if (payload.contains('type: settlement_payout') ||

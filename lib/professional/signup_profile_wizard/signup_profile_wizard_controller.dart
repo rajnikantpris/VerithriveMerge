@@ -2515,8 +2515,8 @@ class SignupProfileWizardController extends BaseController {
             showButton: false,
             onOkPressed: () {
               // Navigate to subscription page after dialog is dismissed
-              Get.toNamed(Routes.subscription);
-              // Get.offAllNamed(Routes.home);
+              // Get.toNamed(Routes.subscription);
+              Get.offAllNamed(Routes.home);
             },
           );
         } else {

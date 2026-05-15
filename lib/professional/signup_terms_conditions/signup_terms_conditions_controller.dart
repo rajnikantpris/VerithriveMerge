@@ -86,6 +86,7 @@ class SignupTermsConditionsController extends BaseController {
         isTermCondition: true,
         latitude: latitude,
         longitude: longitude,
+        optStatus: marketingOptIn.value ? 1 : 0,
         // Prefer manually selected image; fall back to social URL if available
         profileImagePath: profileImagePath ?? socialProfileImageUrl,
         promoCode: (promoCode != null && promoCode!.isNotEmpty) ? promoCode : null,

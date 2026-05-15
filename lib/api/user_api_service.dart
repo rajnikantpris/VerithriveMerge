@@ -9,6 +9,7 @@ import 'dio_client.dart';
 import '../utils/logger.dart';
 import '../models/login_response_model.dart';
 import '../services/social_auth_service.dart';
+import '../services/connectivity_service.dart';
 import '../utils/timezone_helper.dart';
 
 /// Common API service class for user-related endpoints
@@ -17,12 +18,13 @@ class UserApiService extends GetxService {
 
   final DioClient _dioClient;
   final SocialAuthService _socialAuthService = SocialAuthService();
+  final ConnectivityService _connectivityService = ConnectivityService();
 
   // Base URL for the API
   //  static const String baseUrl = 'http://192.168.0.126:4142/api/v3/professional/';
-  //static const String socketUrl = 'http://192.168.0.51:4142';
+  // static const String socketUrl = 'http://27.54.168.101:4142';
   static const String socketUrl = 'https://adminportal.verithrive.co.uk';
-  static const String baseUrl = 'https://adminportal.verithrive.co.uk/api/api/v3/professional/';
+  static const String baseUrl ='https://adminportal.verithrive.co.uk/api/api/v3/professional/';
   //static const String baseUrl = 'http://18.135.255.93:4142/api/v2/professional/';
   // static const String baseUrl = 'http://27.54.168.101:4142/api/v3/professional/';
 
@@ -32,6 +34,31 @@ class UserApiService extends GetxService {
   static String get socketBaseUrl {
     final uri = Uri.parse(socketUrl);
     return '${uri.scheme}://${uri.host}:${uri.port}';
+  }
+
+  /// Check internet connection before making API calls
+  Future<ApiResponse<T>> _checkConnectivityAndExecute<T>(
+      Future<ApiResponse<T>> Function() apiCall,
+      ) async {
+    try {
+      // Check internet connection with retry mechanism
+      final hasConnection = await _connectivityService.checkWithRetry(maxRetries: 3);
+
+      if (!hasConnection) {
+        return ApiResponse.failure(
+          error: 'No internet connection',
+          message: 'Please check your internet connection and try again',
+        );
+      }
+
+      // If connected, proceed with the API call
+      return await apiCall();
+    } catch (e) {
+      return ApiResponse.failure(
+        error: e.toString(),
+        message: 'An unexpected error occurred',
+      );
+    }
   }
 
   // API endpoints
@@ -416,30 +443,32 @@ class UserApiService extends GetxService {
     required String password,
     required String promo_code,
   }) async {
-    try {
-      final fullUrl = '$baseUrl$_registerPath';
+    return _checkConnectivityAndExecute(() async {
+      try {
+        final fullUrl = '$baseUrl$_registerPath';
 
-      final response = await _dioClient.postRequest<dynamic>(
-        fullUrl,
-        withAuth: false,
-        body: {
-          'email': email,
-          'user_type': userType,
-          'mobile_number': mobileNumber,
-          'password': password,
-          'promo_code': promo_code,
-        },
-      );
+        final response = await _dioClient.postRequest<dynamic>(
+          fullUrl,
+          withAuth: false,
+          body: {
+            'email': email,
+            'user_type': userType,
+            'mobile_number': mobileNumber,
+            'password': password,
+            'promo_code': promo_code,
+          },
+        );
 
-      return ApiResponse.fromDioResponse(response);
-    } on dio.DioException catch (e) {
-      return ApiResponse.fromDioException(e);
-    } catch (e) {
-      return ApiResponse.failure(
-        error: e.toString(),
-        message: 'An unexpected error occurred',
-      );
-    }
+        return ApiResponse.fromDioResponse(response);
+      } on dio.DioException catch (e) {
+        return ApiResponse.fromDioException(e);
+      } catch (e) {
+        return ApiResponse.failure(
+          error: e.toString(),
+          message: 'An unexpected error occurred',
+        );
+      }
+    });
   }
 
   /// Log a user in
@@ -454,28 +483,30 @@ class UserApiService extends GetxService {
     required String userType,
     required String password,
   }) async {
-    try {
-      final fullUrl = '$baseUrl$_loginPath';
+    return _checkConnectivityAndExecute(() async {
+      try {
+        final fullUrl = '$baseUrl$_loginPath';
 
-      final response = await _dioClient.postRequest<dynamic>(
-        fullUrl,
-        withAuth: false,
-        body: {
-          'email': email,
-          'user_type': userType,
-          'password': password,
-        },
-      );
+        final response = await _dioClient.postRequest<dynamic>(
+          fullUrl,
+          withAuth: false,
+          body: {
+            'email': email,
+            'user_type': userType,
+            'password': password,
+          },
+        );
 
-      return ApiResponse.fromDioResponse(response);
-    } on dio.DioException catch (e) {
-      return ApiResponse.fromDioException(e);
-    } catch (e) {
-      return ApiResponse.failure(
-        error: e.toString(),
-        message: 'An unexpected error occurred',
-      );
-    }
+        return ApiResponse.fromDioResponse(response);
+      } on dio.DioException catch (e) {
+        return ApiResponse.fromDioException(e);
+      } catch (e) {
+        return ApiResponse.failure(
+          error: e.toString(),
+          message: 'An unexpected error occurred',
+        );
+      }
+    });
   }
 
   /// Check social account before login/signup
@@ -561,7 +592,7 @@ class UserApiService extends GetxService {
                 imageResponse.data!,
                 // Basic filename; server can ignore if not needed
                 filename:
-                    'profile_${DateTime.now().millisecondsSinceEpoch}.jpg',
+                'profile_${DateTime.now().millisecondsSinceEpoch}.jpg',
               );
             }
           } else {
@@ -672,6 +703,7 @@ class UserApiService extends GetxService {
     required String postcode,
     required String address,
     required bool isTermCondition,
+    int? optStatus,
     double? latitude,
     double? longitude,
     String? profileImagePath,
@@ -688,6 +720,11 @@ class UserApiService extends GetxService {
         'address': address,
         'is_term_condition': isTermCondition ? 'true' : 'false',
       };
+
+      // Optional opt_status (0 = false, 1 = true)
+      if (optStatus != null) {
+        fields['opt_status'] = optStatus.toString();
+      }
 
       // Optional promo code
       if (promoCode != null && promoCode.isNotEmpty) {
@@ -717,7 +754,7 @@ class UserApiService extends GetxService {
               profileMultipart = dio.MultipartFile.fromBytes(
                 imageResponse.data!,
                 filename:
-                    'profile_${DateTime.now().millisecondsSinceEpoch}.jpg',
+                'profile_${DateTime.now().millisecondsSinceEpoch}.jpg',
               );
             }
           } else {
@@ -738,6 +775,13 @@ class UserApiService extends GetxService {
       }
 
       final formData = dio.FormData.fromMap(formMap);
+
+      // Log FormData contents for debugging
+      logInfo('=== API Request: PUT $fullUrl ===');
+      logFullResponse('FormData fields', fields);
+      if (profileMultipart != null) {
+        logInfo('FormData file: profile_picture (${profileMultipart.length} bytes)');
+      }
 
       final response = await _dioClient.putRequest<dynamic>(
         fullUrl,
@@ -1064,6 +1108,7 @@ class UserApiService extends GetxService {
     required String dob,
     required String gender,
     required int optStatus,
+    String? mobileNumber,
     File? profilePicture,
   }) async {
     try {
@@ -1077,6 +1122,8 @@ class UserApiService extends GetxService {
         'dob': dob,
         'gender': _convertGenderToApiFormat(gender),
         'opt_status': optStatus,
+        if (mobileNumber != null && mobileNumber.isNotEmpty)
+          'mobile_number': mobileNumber,
       };
 
       final response = await _dioClient.uploadMultipart<dynamic>(
@@ -2251,7 +2298,6 @@ class UserApiService extends GetxService {
   Future<ApiResponse<dynamic>> getTransactionHistory({
     required int page,
     required int limit,
-
   }) async {
     try {
       final fullUrl = '$baseUrl$_transactionHistoryPath';
@@ -2262,7 +2308,6 @@ class UserApiService extends GetxService {
         body: {
           'page': page,
           'limit': limit,
-
         },
       );
 

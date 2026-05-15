@@ -200,12 +200,12 @@ class SplashController extends BaseController {
     }
 
     // Step 9: Check if payment/subscription is needed
-    if (isPayment != true) {
-      if (Get.currentRoute != Routes.subscription) {
-        Get.offAllNamed(Routes.subscription);
-      }
-      return;
-    }
+    // if (isPayment != true) {
+    //   if (Get.currentRoute != Routes.subscription) {
+    //     Get.offAllNamed(Routes.subscription);
+    //   }
+    //   return;
+    // }
 
     // All steps completed - navigate to home
     if (Get.currentRoute != Routes.home) {

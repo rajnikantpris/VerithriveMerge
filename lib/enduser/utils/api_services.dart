@@ -1,5 +1,5 @@
 // var bareUrl = 'http://192.168.0.126:4142/api/v3/user/';
-//var socketUrl = 'http://192.168.0.51:4142';
+// var socketUrl = 'http://27.54.168.101:4142';
 // var bareUrl = 'http://27.54.168.101:4142/api/v3/user/';
 
 var bareUrl = 'https://adminportal.verithrive.co.uk/api/api/v3/user/';

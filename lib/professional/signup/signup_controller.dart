@@ -738,10 +738,10 @@ class SignupController extends BaseController {
     }
 
     // Step 7: Check if payment/subscription is needed
-    if (userFlags['is_payment'] != true) {
-      Get.offAllNamed(Routes.subscription);
-      return;
-    }
+    // if (userFlags['is_payment'] != true) {
+    //   Get.offAllNamed(Routes.subscription);
+    //   return;
+    // }
 
     await AnalyticsService.instance.setUserProfile(
         loginState: 'logged_in',
