@@ -59,7 +59,7 @@ class UpdateProfileController extends BaseController {
 
   final List<String> genderOptions = ['Male', 'Female', 'Prefer not to say'];
 
-  final marketingOptions = ['Yes', 'No'];
+  final marketingOptions = ['Opted In', 'Opted Out'];
   final selectedMarketingPreference = ''.obs;
 
   final genderError = RxString('');
@@ -176,8 +176,8 @@ class UpdateProfileController extends BaseController {
         if (data['opt_status'] != null) {
           selectedMarketingPreference.value =
           (data['opt_status'] == 1 || data['opt_status'] == true)
-              ? 'Yes'
-              : 'No';
+              ? 'Opted In'
+              : 'Opted Out';
         }
 
         if (data['postcode'] != null) {
@@ -822,7 +822,7 @@ class UpdateProfileController extends BaseController {
       data['latitude'] = latitude.value;
       data['longitude'] = longitude.value;
       data['opt_status'] =
-      selectedMarketingPreference.value == 'Yes' ? 1 : 0;
+      selectedMarketingPreference.value == 'Opted In' ? 1 : 0;
       data['is_term_condition'] = true;
       data['is_update'] = true;
 
