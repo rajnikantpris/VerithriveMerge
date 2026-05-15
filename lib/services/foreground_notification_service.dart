@@ -453,18 +453,18 @@ class ForegroundNotificationService {
       }
 
       // Show confirmation dialog for application approval
-      showConfirmationDialog(
-        title: 'Subscription Required',
-        message: 'You need an active subscription to access all features. Please subscribe to continue.',
-        onYesPressed: () {
-          Get.toNamed(Routes.profileSubscription);
-        },
-        onNoPressed: () {
-          // Dismiss dialog without navigating
-        },
-        yesText: 'Subscribe',
-        noText: 'Later',
-      );
+      // showConfirmationDialog(
+      //   title: 'Subscription Required',
+      //   message: 'You need an active subscription to access all features. Please subscribe to continue.',
+      //   onYesPressed: () {
+      //     Get.toNamed(Routes.profileSubscription);
+      //   },
+      //   onNoPressed: () {
+      //     // Dismiss dialog without navigating
+      //   },
+      //   yesText: 'Subscribe',
+      //   noText: 'Later',
+      // );
 
       return true;
     } else if (notificationType == 'session_timeout') {

@@ -18,6 +18,7 @@ import '../../core/values/sharePrefrenceConst.dart';
 import '../../data/model/login_model.dart';
 import 'package:verithrive_dev/services/storage_service.dart';
 import 'package:verithrive_dev/services/analytics_service.dart';
+import '../../utils/OTPInputField.dart';
 
 class OTPController extends BaseController {
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
@@ -527,6 +528,15 @@ class OTPController extends BaseController {
 
   Future<void> resendOTP() async {
     if (!canResend.value) return;
+
+    // Clear the OTP input fields
+    otpValue.value = '';
+    
+    // Clear all text controllers in the OTP input field
+    final otpFieldState = otpFieldKey.currentState;
+    if (otpFieldState != null && otpFieldState is OTPInputFieldState) {
+      otpFieldState.clearOTP();
+    }
 
     isLoading.value = true;
 

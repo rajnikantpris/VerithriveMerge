@@ -327,6 +327,12 @@ class VerifyEmailController extends BaseController {
   }
 
   Future<void> resendOtp() async {
+    // Clear the OTP input fields
+    otpValue.value = '';
+    for (final c in codeControllers) {
+      c.clear();
+    }
+
     // Use forgot password API if this is a forgot password flow, otherwise use registration API
     final Future<ApiResponse<dynamic>> otpFuture =
         nextRoute == Routes.createNewPassword

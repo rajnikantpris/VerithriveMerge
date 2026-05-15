@@ -39,10 +39,10 @@ class OTPInputField extends StatefulWidget {
   }) : super(key: fieldKey ?? key);
 
   @override
-  State<OTPInputField> createState() => _OTPInputFieldState();
+  State<OTPInputField> createState() => OTPInputFieldState();
 }
 
-class _OTPInputFieldState extends State<OTPInputField> {
+class OTPInputFieldState extends State<OTPInputField> {
   late List<TextEditingController> _controllers;
   late List<FocusNode> _focusNodes;
 
