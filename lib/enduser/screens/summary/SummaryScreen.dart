@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
@@ -35,26 +34,17 @@ class SummaryScreen extends StatelessWidget {
       final args = Get.arguments as Map<String, dynamic>?;
       final category = args?['category'] as String? ?? 'wellness';
       
-      // Create item from cart controller booking data
-      final item = {
-        'item_id': cartController.professionalId.value,
-        'item_name': cartController.serviceName.value,
-        'item_category': category,
-        'item_variant': cartController.consultationType.value,
-        'item_brand': cartController.professionalId.value, // Using professionalId as brand
-        'price': cartController.price.value,
-        'quantity': 1,
-        'currency': 'GBP',
-      };
-      
-      AnalyticsService.instance.logEvent(
-        name: 'view_cart',
-        parameters: {
-          'screen_name': 'SummaryScreen',
-          'screen_class': 'SummaryScreen',
-          'page_category': category,
-          'items': jsonEncode([item]), // Send as proper JSON string
-        },
+      AnalyticsService.instance.logViewCartEvent(
+        item: AnalyticsService.instance.buildItem(
+          itemId: cartController.professionalId.value.isNotEmpty ? cartController.professionalId.value : 'unknown',
+          itemName: cartController.serviceName.value.isNotEmpty ? cartController.serviceName.value : 'unknown',
+          itemCategory: category,
+          itemVariant: cartController.consultationType.value,
+          itemBrand: cartController.consultationType.value.isNotEmpty ? cartController.consultationType.value : category,
+          price: cartController.price.value,
+          quantity: 1,
+        ),
+        value: cartController.price.value,
       );
     });
 

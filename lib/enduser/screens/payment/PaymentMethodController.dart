@@ -203,25 +203,17 @@ class PaymentMethodController extends BaseController {
       final args = Get.arguments as Map<String, dynamic>?;
       final category = args?['category'] as String? ?? 'wellness';
       
-      final item = {
-        'item_id': professionalId.value,
-        'item_name': serviceName.value,
-        'item_category': category,
-        'item_variant': serviceName.value,
-        'item_brand': professionalId.value,
-        'price': price.value.toString(),
-        'quantity': 1,
-        'currency': 'GBP',
-      };
-      
-      AnalyticsService.instance.logEvent(
-        name: 'begin_checkout',
-        parameters: {
-          'screen_name': 'PaymentMethodScreen',
-          'screen_class': 'PaymentMethodScreen',
-          'page_category': category,
-          'items': [item],
-        },
+      AnalyticsService.instance.logBeginCheckoutEvent(
+        item: AnalyticsService.instance.buildItem(
+          itemId: professionalId.value.isNotEmpty ? professionalId.value : 'unknown',
+          itemName: serviceName.value.isNotEmpty ? serviceName.value : 'unknown',
+          itemCategory: category,
+          itemVariant: serviceName.value,
+          itemBrand: serviceName.value.isNotEmpty ? serviceName.value : category,
+          price: price.value,
+          quantity: 1,
+        ),
+        value: price.value,
       );
     });
 

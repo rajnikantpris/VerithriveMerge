@@ -215,7 +215,7 @@ class ChatController extends BaseController {
       parameters: {
         'screen_name': 'ProfessionalChatScreen',
         'screen_class': 'ChatView',
-        'element_text': text,
+        'element_text': 'message',
         'element_location': 'button_tap_cta',
         'page_category': 'messaging',
       },

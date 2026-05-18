@@ -74,12 +74,17 @@ class ProcessingPaymentController extends BaseController {
             if (data != null) {
               final profile = ProfileDetailsModel.fromJson(data);
               if (isFromSignup) {
+                final personaValue = profile.profession_name != null
+                    ? "professional_${profile.profession_name!.toLowerCase()}"
+                    : profile.fullName != null
+                        ? "professional_${profile.fullName!.toLowerCase()}"
+                        : 'professional';
                 if(profile.registrationType.toString() == 'email'){
                   await AnalyticsService.instance.setUserProfile(
                   loginState: 'logged_in',
                   userId: profile.id,
                   city: await getCityFromAddress(profile.address.toString()),
-                  persona: "professional_${profile.profession_name?.toLowerCase()}",
+                  persona: personaValue,
                   plan: _getTimePeriodFromPlan(selectedtitle.value),
                   registrationType: 'regular',
                 );
@@ -88,7 +93,7 @@ class ProcessingPaymentController extends BaseController {
                   loginState: 'logged_in',
                   userId: profile.id,
                   city: await getCityFromAddress(profile.address.toString()),
-                  persona: "professional_${profile.profession_name?.toLowerCase()}",
+                  persona: personaValue,
                   plan: _getTimePeriodFromPlan(selectedtitle.value),
                   registrationType: 'google',
                 );
@@ -97,7 +102,7 @@ class ProcessingPaymentController extends BaseController {
                   loginState: 'logged_in',
                   userId: profile.id,
                   city: await getCityFromAddress(profile.address.toString()),
-                  persona: "professional_${profile.profession_name?.toLowerCase()}",
+                  persona: personaValue,
                   plan: _getTimePeriodFromPlan(selectedtitle.value),
                   registrationType: 'apple',
                 );

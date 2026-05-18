@@ -456,24 +456,21 @@ class CalendarController extends BaseController {
               serviceFormats.value = formats;
               
               // Analytics: Log service format list view
-              final items = formats.map((format) => {
-                'item_id': format.id,
-                'item_name': format.name,
-                'item_category': 'service_format',
-                'item_variant': format.isBundle ? 'bundle' : 'standard',
-                'price': format.price,
-                'quantity': 1,
-                'currency': 'GBP',
-              }).toList();
+              final analyticsItems = formats.map((format) =>
+                AnalyticsService.instance.buildItem(
+                  itemId: format.id.isNotEmpty ? format.id : 'unknown',
+                  itemName: format.name.isNotEmpty ? format.name : 'unknown',
+                  itemCategory: 'service_format',
+                  itemVariant: format.isBundle ? 'bundle' : 'standard',
+                  price: double.tryParse(format.price.replaceAll(RegExp(r'[^0-9.]'), '')) ?? 0.0,
+                  quantity: 1,
+                ),
+              ).toList();
               
-              AnalyticsService.instance.logEvent(
-                name: 'view_item_list',
-                parameters: {
-                  'screen_name': 'ProfessionalCalendarScreen',
-                  'screen_class': 'CalendarTab',
-                  'page_category': 'calendar',
-                  'items': items,
-                },
+              AnalyticsService.instance.logViewItemListEvent(
+                items: analyticsItems,
+                itemListId: 'service_format',
+                itemListName: 'service_format',
               );
             }
           }

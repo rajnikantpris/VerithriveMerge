@@ -45,21 +45,17 @@ class TherapistDetailScreen extends StatelessWidget {
         final therapist = args['therapist'];
         final category = args['category'] as String? ?? 'wellness';
         
-        AnalyticsService.instance.logEvent(
-          name: 'view_item',
-          parameters: {
-            'screen_name': 'TherapistDetailScreen',
-            'screen_class': 'TherapistDetailScreen',
-            'page_category': category,
-            'item_id': therapist.id?.toString() ?? '',
-            'item_name': therapist.name ?? '',
-            'item_category': category,
-            'item_variant': therapist.specialty ?? '',
-            'item_brand': therapist.services?.isNotEmpty == true ? therapist.services.first : '',
-            'price': therapist.price?.toString() ?? '',
-            'quantity': 1,
-            'currency': 'GBP',
-          },
+        AnalyticsService.instance.logViewItemEvent(
+          item: AnalyticsService.instance.buildItem(
+            itemId: therapist.id?.toString() ?? 'unknown',
+            itemName: therapist.specialty?.isNotEmpty == true ? therapist.specialty! : 'unknown',
+            itemCategory: category,
+            itemVariant: therapist.specialty ?? '',
+            itemBrand: therapist.services?.isNotEmpty == true ? therapist.services!.first : (therapist.specialty ?? ''),
+            price: (therapist.price ?? 0.0).toDouble(),
+            quantity: 1,
+          ),
+          value: (therapist.price ?? 0.0).toDouble(),
         );
       }
     });
@@ -418,21 +414,18 @@ class TherapistDetailScreen extends StatelessWidget {
                             final category = args?['category'] as String? ?? 'wellness';
                             final therapist = args?['therapist'];
                             
-                            AnalyticsService.instance.logEvent(
-                              name: 'select_item',
-                              parameters: {
-                                'screen_name': 'TherapistDetailScreen',
-                                'screen_class': 'TherapistDetailScreen',
-                                'page_category': category,
-                                'item_id': therapist?.id?.toString() ?? '',
-                                'item_name': therapist?.name ?? '',
-                                'item_category': category,
-                                'item_variant': package.title ?? '',
-                                'item_brand': therapist?.services?.isNotEmpty == true ? therapist.services.first : '',
-                                'price': package.price?.toString() ?? '',
-                                'quantity': 1,
-                                'currency': 'GBP',
-                              },
+                            AnalyticsService.instance.logSelectItemEvent(
+                              item: AnalyticsService.instance.buildItem(
+                                itemId: therapist?.id?.toString() ?? 'unknown',
+                                itemName: therapist?.specialty?.isNotEmpty == true ? therapist!.specialty : 'unknown',
+                                itemCategory: category,
+                                itemVariant: package.title.isNotEmpty ? package.title : (therapist?.specialty ?? ''),
+                                itemBrand: therapist?.services?.isNotEmpty == true ? therapist!.services.first : (therapist?.specialty ?? ''),
+                                price: (package.price ?? 0.0).toDouble(),
+                                quantity: 1,
+                              ),
+                              itemListId: category,
+                              itemListName: category,
                             );
                           });
 

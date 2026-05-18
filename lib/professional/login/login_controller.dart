@@ -263,7 +263,11 @@ class ProfessionalLoginController extends BaseController {
             loginState: 'logged_in',
             userId: loginData.user?.id,
             city: await getCityFromAddress(loginData.user!.address.toString()),
-            persona: "professional_${loginData.user?.profession_name?.toLowerCase()}",
+            persona: loginData.user?.profession_name != null
+                ? "professional_${loginData.user!.profession_name!.toLowerCase()}"
+                : loginData.user?.fullName != null
+                    ? "professional_${loginData.user!.fullName!.toLowerCase()}"
+                    : 'professional',
             registrationType: 'regular',
           );
 
@@ -769,7 +773,11 @@ class ProfessionalLoginController extends BaseController {
       loginState: 'logged_in',
       userId: user?.id,
       city: await getCityFromAddress(user!.address.toString()),
-      persona: "professional_${user.profession_name?.toLowerCase()}",
+      persona: user.profession_name != null
+          ? "professional_${user.profession_name!.toLowerCase()}"
+          : user.fullName != null
+              ? "professional_${user.fullName!.toLowerCase()}"
+              : 'professional',
       registrationType: socialType, // Use the actual social type ('google' or 'apple')
     );
 

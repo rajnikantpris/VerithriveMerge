@@ -18,26 +18,25 @@ class PaymentSuccessScreen extends StatelessWidget {
       final args = Get.arguments as Map<String, dynamic>?;
       final category = args?['category'] as String? ?? 'wellness';
       
-      // Create item from booking data
-      final item = {
-        'item_id': args?['professional_id']?.toString() ?? '',
-        'item_name': args?['service_name']?.toString() ?? '',
-        'item_category': category,
-        'item_variant': args?['service_name']?.toString() ?? '',
-        'item_brand': args?['professional_id']?.toString() ?? '',
-        'price': args?['price']?.toString() ?? '',
-        'quantity': 1,
-        'currency': 'GBP',
-      };
+      final professionalId = args?['professional_id']?.toString() ?? 'unknown';
+      final serviceName = args?['service_name']?.toString() ?? 'unknown';
+      final rawPrice = args?['price'];
+      final double itemPrice = rawPrice is num ? rawPrice.toDouble() : double.tryParse(rawPrice?.toString() ?? '') ?? 0.0;
+      final transactionId = args?['booking_id']?.toString() ?? DateTime.now().millisecondsSinceEpoch.toString();
+      final consultationType = args?['consultation_type']?.toString() ?? '';
       
-      AnalyticsService.instance.logEvent(
-        name: 'purchase',
-        parameters: {
-          'screen_name': 'PaymentSuccessScreen',
-          'screen_class': 'PaymentSuccessScreen',
-          'page_category': category,
-          'items': [item],
-        },
+      AnalyticsService.instance.logPurchaseEvent(
+        item: AnalyticsService.instance.buildItem(
+          itemId: professionalId.isNotEmpty ? professionalId : 'unknown',
+          itemName: serviceName.isNotEmpty ? serviceName : 'unknown',
+          itemCategory: category,
+          itemVariant: consultationType.isNotEmpty ? consultationType : serviceName,
+          itemBrand: consultationType.isNotEmpty ? consultationType : category,
+          price: itemPrice,
+          quantity: 1,
+        ),
+        transactionId: transactionId,
+        value: itemPrice,
       );
     });
 

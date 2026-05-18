@@ -747,7 +747,11 @@ class SignupController extends BaseController {
         loginState: 'logged_in',
         userId: user?.id,
         city: await getCityFromAddress(user!.address.toString()),
-    persona: "professional_${user.profession_name?.toLowerCase()}",
+    persona: user.profession_name != null
+        ? "professional_${user.profession_name!.toLowerCase()}"
+        : user.fullName != null
+            ? "professional_${user.fullName!.toLowerCase()}"
+            : 'professional',
     registrationType: socialType, // Use the actual social type ('google' or 'apple')
     );
 
