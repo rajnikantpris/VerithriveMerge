@@ -450,12 +450,14 @@ class ProfileSubscriptionController extends BaseController {
       }
     }
 
-    // Navigate to payment method screen with plan ID and name
+    // Navigate to payment method screen with plan ID, name, price, and stripe price ID
     Get.toNamed(
       Routes.paymentMethod,
       arguments: {
         'planId': plan.id!,
         'planName': plan.name,
+        'planPrice': plan.price,
+        'stripePriceId': plan.stripePriceId,
         'isFromSignup': false,
       },
     );

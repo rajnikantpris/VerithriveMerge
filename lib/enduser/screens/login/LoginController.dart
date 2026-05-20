@@ -519,7 +519,7 @@ class LoginController extends BaseController {
           userId: user?.id,
           persona: 'end_user',
           city: await getCityFromAddress(user!.address.toString()),
-          plan: 'null',
+          plan: '',
           registrationType: user.registrationType == 'email' ? 'regular' : (user.registrationType ?? 'regular'),
         );
 

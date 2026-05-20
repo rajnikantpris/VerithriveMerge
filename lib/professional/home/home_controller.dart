@@ -846,6 +846,12 @@ class HomeController extends BaseController {
     if (Get.context == null) return;
     if (Get.isDialogOpen == true) return;
 
+    // Check if user is already on subscription screen - don't show redundant dialog
+    final currentRoute = Get.currentRoute;
+    if (currentRoute == Routes.profileSubscription) {
+      return;
+    }
+
     if (!(profile.isSubscription ?? false)) {
       _subscriptionDialogShown = true;
       showConfirmationDialog(

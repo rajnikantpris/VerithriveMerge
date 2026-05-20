@@ -255,8 +255,20 @@ class SubscriptionController extends BaseController {
       ),
     );
 
-    // Analytics: Log professional subscription plan selected
-    
+    // Analytics: Log professional subscription plan selected / begin_checkout
+    AnalyticsService.instance.logBeginCheckoutEvent(
+      item: AnalyticsService.instance.buildItem(
+        itemId: selectedPlanId.value.isNotEmpty ? selectedPlanId.value : 'unknown',
+        itemName: selectedPlan.title.isNotEmpty ? selectedPlan.title : 'subscription',
+        itemCategory: 'professional',
+        itemVariant: selectedPlan.title.toLowerCase(),
+        itemBrand: 'verithrive',
+        price: 0.0,
+        quantity: 1,
+      ),
+      value: 0.0,
+      currency: 'GBP',
+    );
 
     Get.toNamed(
       Routes.paymentMethod,

@@ -474,20 +474,22 @@ class TherapistController extends BaseController {
           final category = _getCategoryForAnalytics() ?? 'wellness';
           final analyticsItems = filteredTherapists.map((therapist) =>
             AnalyticsService.instance.buildItem(
-              itemId: therapist.id.isNotEmpty ? therapist.id : 'unknown',
-              itemName: therapist.specialty.isNotEmpty ? therapist.specialty : 'unknown',
+              itemId: therapist.id.isNotEmpty ? therapist.id : '',
+              itemName: therapist.name.isNotEmpty ? therapist.name : '',
               itemCategory: category,
-              itemVariant: therapist.specialty,
-              itemBrand: therapist.services.isNotEmpty ? therapist.services.first : therapist.specialty,
-              price: therapist.price,
+              itemVariant: therapist.specialty.isNotEmpty ? therapist.specialty : category,
+              itemBrand: therapist.services.isNotEmpty ? therapist.services.first : (therapist.specialty.isNotEmpty ? therapist.specialty : category),
+              price: AnalyticsService.validatePrice(therapist.price),
               quantity: 1,
             ),
           ).toList();
           
+          final subTypeLabel = (label != null && label!.isNotEmpty) ? label! : category;
+          final subTypeIdValue = (subTypeId != null && subTypeId!.isNotEmpty) ? subTypeId! : category;
           AnalyticsService.instance.logViewItemListEvent(
             items: analyticsItems,
-            itemListId: category,
-            itemListName: category,
+            itemListId: subTypeIdValue,
+            itemListName: subTypeLabel,
           );
         }
         

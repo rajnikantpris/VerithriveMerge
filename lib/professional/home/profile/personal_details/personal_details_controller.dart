@@ -544,7 +544,9 @@ class PersonalDetailsController extends BaseController {
           // Track persona in analytics when profile is updated
           if (selectedProfessionType.value != null) {
             AnalyticsService.instance.setUserProfile(
-              persona: "professional_${selectedProfessionType.value!.toLowerCase()}",
+              persona: AnalyticsService.resolvePersona(
+                professionName: selectedProfessionType.value,
+              ),
             );
           }
           showResponseDialog(

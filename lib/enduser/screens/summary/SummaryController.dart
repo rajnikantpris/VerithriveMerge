@@ -200,26 +200,21 @@ class SummaryController extends BaseController {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final args = Get.arguments as Map<String, dynamic>?;
       final category = args?['category'] as String? ?? 'wellness';
-      
-      final item = {
-        'item_id': cartController.professionalId.value,
-        'item_name': cartController.serviceName.value,
-        'item_category': category,
-        'item_variant': cartController.consultationType.value,
-        'item_brand': cartController.professionalId.value,
-        'price': cartController.price.value.toString(),
-        'quantity': 1,
-        'currency': 'GBP',
-      };
-      
-      AnalyticsService.instance.logEvent(
-        name: 'remove_from_cart',
-        parameters: {
-          'screen_name': 'SummaryScreen',
-          'screen_class': 'SummaryScreen',
-          'page_category': category,
-          'items': [item],
-        },
+      final itemPrice = AnalyticsService.validatePrice(cartController.price.value);
+      final consultationType = cartController.consultationType.value;
+
+      AnalyticsService.instance.logRemoveFromCartEvent(
+        item: AnalyticsService.instance.buildItem(
+          itemId: cartController.professionalId.value.isNotEmpty ? cartController.professionalId.value : '',
+          itemName: cartController.serviceName.value.isNotEmpty ? cartController.serviceName.value : '',
+          itemCategory: category,
+          itemVariant: consultationType.isNotEmpty ? consultationType : serviceName.value,
+          itemBrand: consultationType.isNotEmpty ? consultationType : category,
+          price: itemPrice,
+          quantity: 1,
+        ),
+        value: itemPrice,
+        currency: 'GBP',
       );
     });
     
@@ -296,6 +291,7 @@ class SummaryController extends BaseController {
         
 
         // Navigate to payment screen with all booking data
+        final summaryArgs = Get.arguments as Map<String, dynamic>?;
         Get.to(
           () => PaymentMethodScreen(),
           binding: PaymentMethodBinding(),
@@ -311,6 +307,9 @@ class SummaryController extends BaseController {
             'professional_service_format_id': professionalServiceFormatId.value,
             'booking_id': bookingId.value,
             'is_edit_mode': isEditMode.value,
+            'category': summaryArgs?['category'] ?? 'wellness',
+            'item_variant': summaryArgs?['item_variant'] ?? '',
+            'item_brand': summaryArgs?['item_brand'] ?? '',
           },
         );
       } else {

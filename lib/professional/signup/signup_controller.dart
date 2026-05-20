@@ -747,12 +747,10 @@ class SignupController extends BaseController {
         loginState: 'logged_in',
         userId: user?.id,
         city: await getCityFromAddress(user!.address.toString()),
-    persona: user.profession_name != null
-        ? "professional_${user.profession_name!.toLowerCase()}"
-        : user.fullName != null
-            ? "professional_${user.fullName!.toLowerCase()}"
-            : 'professional',
-    registrationType: socialType, // Use the actual social type ('google' or 'apple')
+        persona: AnalyticsService.resolvePersona(
+          professionName: user.profession_name,
+        ),
+        registrationType: socialType,
     );
 
     // All steps completed - navigate to home
@@ -766,18 +764,14 @@ class SignupController extends BaseController {
       if (locations.isNotEmpty) {
         double lat = locations.first.latitude;
         double lng = locations.first.longitude;
-
-        List<Placemark> placemarks =
-        await placemarkFromCoordinates(lat, lng);
-
+        List<Placemark> placemarks = await placemarkFromCoordinates(lat, lng);
         if (placemarks.isNotEmpty) {
-          return placemarks.first.locality!.toLowerCase(); // return city
+          return (placemarks.first.locality ?? placemarks.first.subAdministrativeArea ?? '').toLowerCase();
         }
       }
     } catch (e) {
-      print("Error: $e");
+      print("Error getCityFromAddress: $e");
     }
-
     return null;
   }
 

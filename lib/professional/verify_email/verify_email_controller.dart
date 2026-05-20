@@ -333,6 +333,11 @@ class VerifyEmailController extends BaseController {
       c.clear();
     }
 
+    // Move focus back to the first OTP field
+    if (focusNodes.isNotEmpty) {
+      focusNodes[0].requestFocus();
+    }
+
     // Use forgot password API if this is a forgot password flow, otherwise use registration API
     final Future<ApiResponse<dynamic>> otpFuture =
         nextRoute == Routes.createNewPassword

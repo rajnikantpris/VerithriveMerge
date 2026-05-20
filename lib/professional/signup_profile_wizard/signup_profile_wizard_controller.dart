@@ -27,6 +27,7 @@ import '../../services/location_permission_service.dart';
 import '../../services/camera_storage_permission_service.dart';
 import '../../services/storage_service.dart';
 import '../../services/analytics_service.dart';
+import '../../utils/logger.dart';
 import '../../widgets/response_dialog.dart';
 import '../../theme/colors.dart';
 import '../../theme/font_sizes.dart';
@@ -1119,8 +1120,109 @@ class SignupProfileWizardController extends BaseController {
     }
 
     // Get.offAllNamed(Routes.subscription);
-    Get.offAllNamed(Routes.home);
+
+    loadProfileDetails();
+
+    // Get.offAllNamed(Routes.home);
   }
+
+  Future<void> loadProfileDetails() async {
+    final apiService = _userApiService;
+    if (apiService == null) {
+      logError('UserApiService not available');
+      return;
+    }
+
+    await callDataService(
+      apiService.getProfileDetails(),
+      showLoader: false,
+      onSuccess: (response) async {
+        if (response.success && response.data != null) {
+          try {
+            final data = response.data as Map<String, dynamic>?;
+            if (data != null) {
+              final profile = ProfileDetailsModel.fromJson(data);
+              // if (isFromSignup) {
+                final resolvedPersona = AnalyticsService.resolvePersona(
+                  professionName: profile.profession_name,
+                );
+                final resolvedCity = await getCityFromAddress(profile.address.toString());
+                final regType = profile.registrationType?.toString() ?? 'email';
+                final analyticsRegType = (regType == 'google' || regType == 'facebook')
+                    ? 'google'
+                    : (regType == 'apple' ? 'apple' : 'regular');
+
+                await AnalyticsService.instance.setUserProfile(
+                  loginState: 'logged_in',
+                  userId: profile.id,
+                  city: resolvedCity,
+                  persona: resolvedPersona,
+                  plan: '',
+                  registrationType: analyticsRegType,
+                );
+
+              Get.offAllNamed(Routes.home);
+
+                // Log subscription purchase event
+                // final planPeriod = _getTimePeriodFromPlan(selectedtitle.value);
+                // await AnalyticsService.instance.logPurchaseEvent(
+                //   item: AnalyticsService.instance.buildItem(
+                //     itemId: selectedPlanId.value.isNotEmpty ? selectedPlanId.value : 'unknown',
+                //     itemName: selectedtitle.value.isNotEmpty ? selectedtitle.value : 'subscription',
+                //     itemCategory: resolvedPersona,
+                //     itemVariant: planPeriod,
+                //     itemBrand: 'verithrive',
+                //     price: 0.0,
+                //     quantity: 1,
+                //   ),
+                //   transactionId: selectedPlanId.value.isNotEmpty
+                //       ? '${selectedPlanId.value}_${DateTime.now().millisecondsSinceEpoch}'
+                //       : DateTime.now().millisecondsSinceEpoch.toString(),
+                //   value: 0.0,
+                //   currency: 'GBP',
+                // );
+
+              // } else {
+              //   await AnalyticsService.instance.setUserProfile(
+              //     plan: _getTimePeriodFromPlan(selectedtitle.value),
+              //   );
+              // }
+            } else {
+              logError('Profile data is null');
+            }
+          } catch (e, stackTrace) {
+            logError('Error parsing profile details',
+                error: e, stackTrace: stackTrace);
+          }
+        } else {
+          logError('Failed to load profile details: ${response.message}');
+        }
+      },
+      onError: (error, stack) {
+        logError('Failed to load profile details',
+            error: error, stackTrace: stack);
+      },
+    );
+  }
+
+  Future<String?> getCityFromAddress(String address) async {
+    try {
+      List<Location> locations = await locationFromAddress(address);
+
+      if (locations.isNotEmpty) {
+        double lat = locations.first.latitude;
+        double lng = locations.first.longitude;
+        List<Placemark> placemarks = await placemarkFromCoordinates(lat, lng);
+        if (placemarks.isNotEmpty) {
+          return (placemarks.first.locality ?? placemarks.first.subAdministrativeArea ?? '').toLowerCase();
+        }
+      }
+    } catch (e) {
+      print("Error getCityFromAddress: $e");
+    }
+    return null;
+  }
+
 
   /// Create profile API call (Step 0)
   /// This API creates the user profile and returns profession_sub_type in response
@@ -2516,7 +2618,8 @@ class SignupProfileWizardController extends BaseController {
             onOkPressed: () {
               // Navigate to subscription page after dialog is dismissed
               // Get.toNamed(Routes.subscription);
-              Get.offAllNamed(Routes.home);
+              loadProfileDetails();
+              // Get.offAllNamed(Routes.home);
             },
           );
         } else {

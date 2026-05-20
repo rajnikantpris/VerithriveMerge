@@ -41,23 +41,31 @@ class TherapistDetailScreen extends StatelessWidget {
     // Log view_item analytics when therapist details are displayed
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final args = Get.arguments as Map<String, dynamic>?;
-      if (args != null && args['therapist'] != null) {
-        final therapist = args['therapist'];
-        final category = args['category'] as String? ?? 'wellness';
-        
-        AnalyticsService.instance.logViewItemEvent(
-          item: AnalyticsService.instance.buildItem(
-            itemId: therapist.id?.toString() ?? 'unknown',
-            itemName: therapist.specialty?.isNotEmpty == true ? therapist.specialty! : 'unknown',
-            itemCategory: category,
-            itemVariant: therapist.specialty ?? '',
-            itemBrand: therapist.services?.isNotEmpty == true ? therapist.services!.first : (therapist.specialty ?? ''),
-            price: (therapist.price ?? 0.0).toDouble(),
-            quantity: 1,
-          ),
-          value: (therapist.price ?? 0.0).toDouble(),
-        );
-      }
+      final category = args?['category'] as String? ?? 'wellness';
+      final therapistArg = args?['therapist'];
+      final therapistId = therapistArg?.id?.toString() ?? controller.therapist.value.id;
+      final therapistName = controller.therapist.value.name.isNotEmpty
+          ? controller.therapist.value.name
+          : (therapistArg?.name?.toString() ?? '');
+      final therapistSpecialty = controller.therapist.value.specialty.isNotEmpty
+          ? controller.therapist.value.specialty
+          : (therapistArg?.specialty?.toString() ?? '');
+      final therapistServices = controller.therapist.value.services;
+      final therapistPrice = AnalyticsService.validatePrice(
+          controller.therapist.value.price > 0 ? controller.therapist.value.price : (therapistArg?.price ?? 0.0));
+
+      AnalyticsService.instance.logViewItemEvent(
+        item: AnalyticsService.instance.buildItem(
+          itemId: therapistId.isNotEmpty ? therapistId : '',
+          itemName: therapistName.isNotEmpty ? therapistName : '',
+          itemCategory: category,
+          itemVariant: therapistSpecialty,
+          itemBrand: therapistServices.isNotEmpty ? therapistServices.first : therapistSpecialty,
+          price: therapistPrice,
+          quantity: 1,
+        ),
+        value: therapistPrice,
+      );
     });
 
     return Scaffold(
@@ -408,20 +416,23 @@ class TherapistDetailScreen extends StatelessWidget {
                       const SizedBox(width: 12),
                       ElevatedButton(
                         onPressed: () {
+                          final _bookingArgs = Get.arguments as Map<String, dynamic>?;
+                          final _bookingCategory = _bookingArgs?['category'] as String? ?? '';
+
                           // Analytics: Log select_item event for booking option
                           WidgetsBinding.instance.addPostFrameCallback((_) {
-                            final args = Get.arguments as Map<String, dynamic>?;
-                            final category = args?['category'] as String? ?? 'wellness';
-                            final therapist = args?['therapist'];
-                            
+                            final detailController = Get.find<TherapistDetailController>();
+                            final therapist = detailController.therapist.value;
+                            final category = _bookingCategory;
+
                             AnalyticsService.instance.logSelectItemEvent(
                               item: AnalyticsService.instance.buildItem(
-                                itemId: therapist?.id?.toString() ?? 'unknown',
-                                itemName: therapist?.specialty?.isNotEmpty == true ? therapist!.specialty : 'unknown',
+                                itemId: therapist.id.isNotEmpty ? therapist.id : '',
+                                itemName: package.title.isNotEmpty ? package.title : (therapist.name.isNotEmpty ? therapist.name : ''),
                                 itemCategory: category,
-                                itemVariant: package.title.isNotEmpty ? package.title : (therapist?.specialty ?? ''),
-                                itemBrand: therapist?.services?.isNotEmpty == true ? therapist!.services.first : (therapist?.specialty ?? ''),
-                                price: (package.price ?? 0.0).toDouble(),
+                                itemVariant: therapist.specialty.isNotEmpty ? therapist.specialty : package.title,
+                                itemBrand: therapist.services.isNotEmpty ? therapist.services.first : (therapist.specialty.isNotEmpty ? therapist.specialty : category),
+                                price: AnalyticsService.validatePrice(package.price),
                                 quantity: 1,
                               ),
                               itemListId: category,
@@ -468,6 +479,9 @@ class TherapistDetailScreen extends StatelessWidget {
                                 'professional_service_format_id': package
                                     .professionalServiceFormatId ?? '',
                                 // Pass _id for create-booking API
+                                'category': _bookingCategory,
+                                'item_variant': controller.therapist.value.specialty,
+                                'item_brand': controller.therapist.value.services.isNotEmpty ? controller.therapist.value.services.first : controller.therapist.value.specialty,
                               },
                             );
                           }else{
@@ -632,22 +646,20 @@ class TherapistDetailScreen extends StatelessWidget {
       child: ElevatedButton(
         onPressed: () {
           // Analytics: Log chat tap event
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            final args = Get.arguments as Map<String, dynamic>?;
-            final category = args?['category'] as String? ?? 'wellness';
-            final therapist = Get.find<TherapistDetailController>().therapist.value;
-            
-            AnalyticsService.instance.logEvent(
-              name: 'chat_tap',
-              parameters: {
-                'screen_name': 'TherapistDetailScreen',
-                'screen_class': 'TherapistDetailScreen',
-                'element_text': therapist.name ?? '',
-                'element_location': 'button_tap_cta',
-                'page_category': category,
-              },
-            );
-          });
+          final args = Get.arguments as Map<String, dynamic>?;
+          final category = args?['category'] as String? ?? 'wellness';
+          final therapist = Get.find<TherapistDetailController>().therapist.value;
+
+          AnalyticsService.instance.logEvent(
+            name: 'chat_tap',
+            parameters: {
+              'screen_name': 'TherapistDetailScreen',
+              'screen_class': 'TherapistDetailScreen',
+              'element_text': therapist.name ?? '',
+              'element_location': 'button_tap_cta',
+              'page_category': category,
+            },
+          );
 
           final controller = Get.find<TherapistDetailController>();
 

@@ -22,6 +22,9 @@ class ConsultationBookingController extends BaseController {
   String? professionalServiceFormatId; // _id for create-booking API
   String? bookingId; // booking_id for edit mode
   bool isEditMode = false; // Flag to indicate edit modee
+  String category = '';
+  String itemVariant = '';
+  String itemBrand = '';
 
   // Observable variables
   var selectedMonth = DateTime.now().obs;
@@ -154,6 +157,30 @@ class ConsultationBookingController extends BaseController {
         } catch (e) {
           print('Error parsing is_edit_mode: $e');
           isEditMode = false;
+        }
+
+        try {
+          if (arguments['category'] != null) {
+            category = arguments['category'].toString();
+          }
+        } catch (e) {
+          print('Error parsing category: $e');
+        }
+
+        try {
+          if (arguments['item_variant'] != null) {
+            itemVariant = arguments['item_variant'].toString();
+          }
+        } catch (e) {
+          print('Error parsing item_variant: $e');
+        }
+
+        try {
+          if (arguments['item_brand'] != null) {
+            itemBrand = arguments['item_brand'].toString();
+          }
+        } catch (e) {
+          print('Error parsing item_brand: $e');
         }
 
 
@@ -473,6 +500,9 @@ class ConsultationBookingController extends BaseController {
               'is_edit_mode': isEditMode,
               'available_time_slots': availableTimeSlots,
               'slot_duration_minutes': slotDuration,
+              'category': category,
+              'item_variant': itemVariant,
+              'item_brand': itemBrand,
             },
           );
           // Clear selection when returning from cart

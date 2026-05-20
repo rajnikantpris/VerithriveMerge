@@ -429,6 +429,10 @@ class OTPController extends BaseController {
           onOkPressed: () {
             // Clear OTP on error
             otpValue.value = '';
+            final otpFieldState = otpFieldKey.currentState;
+            if (otpFieldState != null && otpFieldState is OTPInputFieldState) {
+              otpFieldState.clearOTP();
+            }
           },
         );
       }
@@ -439,7 +443,12 @@ class OTPController extends BaseController {
         isError: true,
         showButton: true,
         onOkPressed: () {
-          // dispose();
+          // Clear OTP on error
+          otpValue.value = '';
+          final otpFieldState = otpFieldKey.currentState;
+          if (otpFieldState != null && otpFieldState is OTPInputFieldState) {
+            otpFieldState.clearOTP();
+          }
         },
       );
     }
@@ -495,6 +504,10 @@ class OTPController extends BaseController {
           onOkPressed: () {
             // Clear OTP on error
             otpValue.value = '';
+            final otpFieldState = otpFieldKey.currentState;
+            if (otpFieldState != null && otpFieldState is OTPInputFieldState) {
+              otpFieldState.clearOTP();
+            }
           },
         );
       }
@@ -504,7 +517,14 @@ class OTPController extends BaseController {
         title: 'Error',
         isError: true,
         showButton: true,
-        onOkPressed: () {},
+        onOkPressed: () {
+          // Clear OTP on error
+          otpValue.value = '';
+          final otpFieldState = otpFieldKey.currentState;
+          if (otpFieldState != null && otpFieldState is OTPInputFieldState) {
+            otpFieldState.clearOTP();
+          }
+        },
       );
     }
   }
@@ -521,6 +541,10 @@ class OTPController extends BaseController {
         onOkPressed: () {
           // Clear OTP on error
           otpValue.value = '';
+          final otpFieldState = otpFieldKey.currentState;
+          if (otpFieldState != null && otpFieldState is OTPInputFieldState) {
+            otpFieldState.clearOTP();
+          }
         },
       );
     }

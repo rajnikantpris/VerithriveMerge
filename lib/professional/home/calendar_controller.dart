@@ -458,8 +458,8 @@ class CalendarController extends BaseController {
               // Analytics: Log service format list view
               final analyticsItems = formats.map((format) =>
                 AnalyticsService.instance.buildItem(
-                  itemId: format.id.isNotEmpty ? format.id : 'unknown',
-                  itemName: format.name.isNotEmpty ? format.name : 'unknown',
+                  itemId: format.id.isNotEmpty ? format.id : '',
+                  itemName: format.name.isNotEmpty ? format.name : '',
                   itemCategory: 'service_format',
                   itemVariant: format.isBundle ? 'bundle' : 'standard',
                   price: double.tryParse(format.price.replaceAll(RegExp(r'[^0-9.]'), '')) ?? 0.0,
@@ -467,10 +467,18 @@ class CalendarController extends BaseController {
                 ),
               ).toList();
               
+              // Get professional details from HomeController
+              final profile = _homeController?.profileDetails.value;
+              final professionalId = profile?.professionTypeId ?? '';
+              final professionalName = profile?.profession_name ?? '';
+
               AnalyticsService.instance.logViewItemListEvent(
                 items: analyticsItems,
-                itemListId: 'service_format',
-                itemListName: 'service_format',
+                itemListId: professionalId.isNotEmpty ? professionalId : 'unknown',
+                itemListName: professionalName.isNotEmpty ? professionalName : 'unknown',
+                extraParams: {
+                  'currency': 'GBP',
+                },
               );
             }
           }

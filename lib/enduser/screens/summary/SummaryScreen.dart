@@ -33,14 +33,16 @@ class SummaryScreen extends StatelessWidget {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final args = Get.arguments as Map<String, dynamic>?;
       final category = args?['category'] as String? ?? 'wellness';
-      
+      final itemVariant = args?['item_variant']?.toString() ?? '';
+      final itemBrand = args?['item_brand']?.toString() ?? '';
+
       AnalyticsService.instance.logViewCartEvent(
         item: AnalyticsService.instance.buildItem(
           itemId: cartController.professionalId.value.isNotEmpty ? cartController.professionalId.value : 'unknown',
           itemName: cartController.serviceName.value.isNotEmpty ? cartController.serviceName.value : 'unknown',
           itemCategory: category,
-          itemVariant: cartController.consultationType.value,
-          itemBrand: cartController.consultationType.value.isNotEmpty ? cartController.consultationType.value : category,
+          itemVariant: itemVariant.isNotEmpty ? itemVariant : cartController.consultationType.value,
+          itemBrand: itemBrand.isNotEmpty ? itemBrand : (cartController.consultationType.value.isNotEmpty ? cartController.consultationType.value : category),
           price: cartController.price.value,
           quantity: 1,
         ),

@@ -60,6 +60,9 @@ class CartController extends BaseController {
   var bookingId = ''.obs; // booking_id for edit mode
   var isEditMode = false.obs; // Flag to indicate edit mode
   var isLoading = false.obs;
+  var category = ''.obs;
+  var itemVariant = ''.obs;
+  var itemBrand = ''.obs;
 
   @override
   void onInit() {
@@ -117,6 +120,15 @@ class CartController extends BaseController {
       }
       if (arguments['is_edit_mode'] != null) {
         isEditMode.value = arguments['is_edit_mode'] as bool;
+      }
+      if (arguments['category'] != null) {
+        category.value = arguments['category'] as String;
+      }
+      if (arguments['item_variant'] != null) {
+        itemVariant.value = arguments['item_variant'].toString();
+      }
+      if (arguments['item_brand'] != null) {
+        itemBrand.value = arguments['item_brand'].toString();
       }
       if (arguments['available_time_slots'] != null) {
         try {
@@ -472,6 +484,9 @@ class CartController extends BaseController {
           'professional_service_format_id': professionalServiceFormatId.value,
           'booking_id': bookingId.value,
           'is_edit_mode': isEditMode.value,
+          'category': category.value,
+          'item_variant': itemVariant.value,
+          'item_brand': itemBrand.value,
         },
       );
     }

@@ -202,14 +202,16 @@ class PaymentMethodController extends BaseController {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final args = Get.arguments as Map<String, dynamic>?;
       final category = args?['category'] as String? ?? 'wellness';
-      
+      final itemVariant = args?['item_variant']?.toString() ?? '';
+      final itemBrand = args?['item_brand']?.toString() ?? '';
+
       AnalyticsService.instance.logBeginCheckoutEvent(
         item: AnalyticsService.instance.buildItem(
           itemId: professionalId.value.isNotEmpty ? professionalId.value : 'unknown',
           itemName: serviceName.value.isNotEmpty ? serviceName.value : 'unknown',
           itemCategory: category,
-          itemVariant: serviceName.value,
-          itemBrand: serviceName.value.isNotEmpty ? serviceName.value : category,
+          itemVariant: itemVariant.isNotEmpty ? itemVariant : serviceName.value,
+          itemBrand: itemBrand.isNotEmpty ? itemBrand : (serviceName.value.isNotEmpty ? serviceName.value : category),
           price: price.value,
           quantity: 1,
         ),
@@ -326,9 +328,22 @@ class PaymentMethodController extends BaseController {
           final result = await Get.to(() => PaymentEndWebViewScreen(url: checkoutUrl!));
           
           if (result == 'success') {
+            final args = Get.arguments as Map<String, dynamic>?;
+            final category = args?['category'] as String? ?? 'wellness';
+            final successBookingId = responseData['data']?['booking_id']?.toString() ??
+                responseData['data']?['_id']?.toString() ??
+                bookingId.value;
             Get.offAll(
               () => PaymentSuccessScreen(),
               binding: PaymentSuccessBinding(),
+              arguments: {
+                'professional_id': professionalId.value,
+                'service_name': serviceName.value,
+                'price': price.value,
+                'booking_id': successBookingId.isNotEmpty ? successBookingId : DateTime.now().millisecondsSinceEpoch.toString(),
+                'category': category,
+                'consultation_type': serviceName.value,
+              },
             );
           } else if (result == 'failed') {
             showResponseDialog(

@@ -14,6 +14,7 @@ class SubscriptionPlan {
   final String? cutPriceLabel;
   final String? perMonthLabel;
   final String? promoLabel;
+  final String? stripePriceId;
 
   SubscriptionPlan({
     this.id,
@@ -31,6 +32,7 @@ class SubscriptionPlan {
     this.cutPriceLabel,
     this.perMonthLabel,
     this.promoLabel,
+    this.stripePriceId,
   });
 
   factory SubscriptionPlan.fromJson(Map<String, dynamic> json) {
@@ -124,6 +126,7 @@ class SubscriptionPlan {
       cutPriceLabel: cutPriceLabelValue,
       perMonthLabel: perMonthLabelValue,
       promoLabel: promoLabelValue,
+      stripePriceId: json['stripe_price_id'] as String?,
     );
   }
 

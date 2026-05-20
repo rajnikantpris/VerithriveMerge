@@ -13,6 +13,31 @@ class AnalyticsService {
   /// Observer to automatically track screen transitions in [GetMaterialApp] or [MaterialApp].
   FirebaseAnalyticsObserver get observer => FirebaseAnalyticsObserver(analytics: _analytics);
 
+  /// Log a button tap / CTA interaction event.
+  ///
+  /// [eventName] should be one of the defined tap event names (e.g. join_tap, login_tap).
+  /// [screenName], [screenClass], [elementText], [elementLocation], [pageCategory]
+  /// match the standard analytics parameter schema.
+  Future<void> logButtonTap({
+    required String eventName,
+    required String screenName,
+    String? screenClass,
+    String? elementText,
+    String elementLocation = 'button_tap_cta',
+    String pageCategory = 'onboarding',
+  }) async {
+    await logEvent(
+      name: eventName,
+      parameters: {
+        'screen_name': screenName,
+        if (screenClass != null) 'screen_class': screenClass,
+        if (elementText != null) 'element_text': elementText,
+        'element_location': elementLocation,
+        'page_category': pageCategory,
+      },
+    );
+  }
+
   /// Log a custom event.
   /// 
   /// [name] is the event name (use snake_case, max 40 chars).
@@ -142,7 +167,7 @@ class AnalyticsService {
         );
       }
 
-      if (plan != null) {
+      if (plan != null && plan.isNotEmpty) {
         await _analytics.setUserProperty(
           name: 'user_plan',
           value: plan,
@@ -150,8 +175,9 @@ class AnalyticsService {
       }
 
       if (kDebugMode) {
+        final planPart = (plan != null && plan.isNotEmpty) ? ', user_plan: $plan' : '';
         print(
-          'Analytics: Set user profile { user_login_state: $loginState, user_id: $userId, user_registration_type: $registrationType, user_city: $city, user_persona: $persona, user_plan: $plan }',
+          'Analytics: Set user profile { user_login_state: $loginState, user_id: $userId, user_registration_type: $registrationType, user_city: $city, user_persona: $persona$planPart }',
         );
       }
     } catch (e) {
@@ -161,6 +187,53 @@ class AnalyticsService {
     }
   }
 
+  /// Maps a raw profession_name/type value to a canonical persona string.
+  /// Returns one of: professional_wellness, professional_fitness,
+  /// professional_nutrition, end_user, or 'professional' as fallback.
+  /// Never includes PII (names).
+  static String resolvePersona({
+    String? professionName,
+    bool isProfessional = true,
+  }) {
+    if (!isProfessional) return 'end_user';
+    final raw = professionName?.trim().toLowerCase() ?? '';
+    if (raw.isEmpty) return 'professional';
+    if (raw.contains('wellness') || raw.contains('therapy') ||
+        raw.contains('therapist') || raw.contains('sport')) {
+      return 'professional_wellness';
+    }
+    if (raw.contains('fitness') || raw.contains('trainer') ||
+        raw.contains('personal train')) {
+      return 'professional_fitness';
+    }
+    if (raw.contains('nutrition') || raw.contains('nutritionist') ||
+        raw.contains('food')) {
+      return 'professional_nutrition';
+    }
+    return 'professional';
+  }
+
+  /// Validate and coerce a numeric value to [double]. Returns 0.0 for nulls/invalid.
+  static double validatePrice(dynamic raw) {
+    if (raw == null) return 0.0;
+    if (raw is num) return raw.toDouble();
+    return double.tryParse(raw.toString()) ?? 0.0;
+  }
+
+  /// Validate a quantity value. Returns 1 for nulls/invalid, minimum 1.
+  static int validateQuantity(dynamic raw) {
+    if (raw == null) return 1;
+    if (raw is int) return raw < 1 ? 1 : raw;
+    final parsed = int.tryParse(raw.toString());
+    return (parsed == null || parsed < 1) ? 1 : parsed;
+  }
+
+  /// Validate a currency string. Always returns a non-empty string, defaults to 'GBP'.
+  static String validateCurrency(String? raw) {
+    if (raw == null || raw.trim().isEmpty) return 'GBP';
+    return raw.trim().toUpperCase();
+  }
+
   /// Build a validated [AnalyticsEventItem] enforcing numeric types.
   AnalyticsEventItem buildItem({
     required String itemId,
@@ -168,8 +241,8 @@ class AnalyticsService {
     String? itemCategory,
     String? itemVariant,
     String? itemBrand,
-    double price = 0.0,
-    int quantity = 1,
+    dynamic price = 0.0,
+    dynamic quantity = 1,
   }) {
     return AnalyticsEventItem(
       itemId: itemId.isNotEmpty ? itemId : 'unknown',
@@ -177,8 +250,8 @@ class AnalyticsService {
       itemCategory: itemCategory,
       itemVariant: itemVariant,
       itemBrand: itemBrand,
-      price: price,
-      quantity: quantity,
+      price: validatePrice(price),
+      quantity: validateQuantity(quantity),
     );
   }
 
@@ -195,7 +268,20 @@ class AnalyticsService {
         itemListName: itemListName,
       );
       if (kDebugMode) {
-        print('Analytics: view_item_list logged (${items.length} items)');
+        final itemDetails = items.map((i) => {
+          'item_id': i.itemId,
+          'item_name': i.itemName,
+          'item_category': i.itemCategory,
+          'item_variant': i.itemVariant,
+          'item_brand': i.itemBrand,
+          'price': i.price,
+          'quantity': i.quantity,
+        }).toList();
+        print(
+          'Analytics: view_item_list logged '
+          '{ item_list_id: $itemListId, item_list_name: $itemListName, '
+          'items (${items.length}): $itemDetails }',
+        );
       }
     } catch (e) {
       if (kDebugMode) print('Analytics Error: view_item_list. $e');
@@ -215,7 +301,13 @@ class AnalyticsService {
         items: [item],
       );
       if (kDebugMode) {
-        print('Analytics: view_item logged (${item.itemName})');
+        print(
+          'Analytics: view_item logged { '
+          'currency: $currency, value: $value, '
+          'item_id: ${item.itemId}, item_name: ${item.itemName}, '
+          'item_category: ${item.itemCategory}, item_variant: ${item.itemVariant}, '
+          'item_brand: ${item.itemBrand}, price: ${item.price}, quantity: ${item.quantity} }',
+        );
       }
     } catch (e) {
       if (kDebugMode) print('Analytics Error: view_item. $e');
@@ -234,7 +326,13 @@ class AnalyticsService {
         itemListName: itemListName,
       );
       if (kDebugMode) {
-        print('Analytics: select_item logged (${item.itemName})');
+        print(
+          'Analytics: select_item logged { '
+          'item_list_id: $itemListId, item_list_name: $itemListName, '
+          'item_id: ${item.itemId}, item_name: ${item.itemName}, '
+          'item_category: ${item.itemCategory}, item_variant: ${item.itemVariant}, '
+          'item_brand: ${item.itemBrand}, price: ${item.price}, quantity: ${item.quantity} }',
+        );
       }
     } catch (e) {
       if (kDebugMode) print('Analytics Error: select_item. $e');
@@ -243,45 +341,73 @@ class AnalyticsService {
 
   Future<void> logViewCartEvent({
     required AnalyticsEventItem item,
-    double value = 0.0,
+    dynamic value = 0.0,
     String currency = 'GBP',
   }) async {
     try {
-      await _analytics.logEvent(
-        name: 'view_cart',
-        parameters: {
-          'currency': currency,
-          'value': value,
-          'item_id': item.itemId ?? '',
-          'item_name': item.itemName ?? '',
-          'item_category': item.itemCategory ?? '',
-          'item_variant': item.itemVariant ?? '',
-          'item_brand': item.itemBrand ?? '',
-          'price': item.price ?? 0.0,
-          'quantity': item.quantity ?? 1,
-        },
+      final validatedValue = validatePrice(value);
+      final validatedCurrency = validateCurrency(currency);
+      await _analytics.logViewCart(
+        currency: validatedCurrency,
+        value: validatedValue,
+        items: [item],
       );
       if (kDebugMode) {
-        print('Analytics: view_cart logged (${item.itemName})');
+        print(
+          'Analytics: view_cart logged { '
+          'currency: $validatedCurrency, value: $validatedValue, '
+          'item_id: ${item.itemId}, item_name: ${item.itemName}, '
+          'item_category: ${item.itemCategory}, item_variant: ${item.itemVariant}, '
+          'item_brand: ${item.itemBrand}, price: ${item.price}, quantity: ${item.quantity} }',
+        );
       }
     } catch (e) {
       if (kDebugMode) print('Analytics Error: view_cart. $e');
     }
   }
 
-  Future<void> logBeginCheckoutEvent({
+  Future<void> logRemoveFromCartEvent({
     required AnalyticsEventItem item,
-    double value = 0.0,
+    dynamic value = 0.0,
     String currency = 'GBP',
   }) async {
     try {
-      await _analytics.logBeginCheckout(
-        currency: currency,
-        value: value,
+      final validatedValue = validatePrice(value);
+      final validatedCurrency = validateCurrency(currency);
+      await _analytics.logRemoveFromCart(
+        currency: validatedCurrency,
+        value: validatedValue,
         items: [item],
       );
       if (kDebugMode) {
-        print('Analytics: begin_checkout logged (${item.itemName})');
+        print('Analytics: remove_from_cart logged (${item.itemName}, value: $validatedValue $validatedCurrency)');
+      }
+    } catch (e) {
+      if (kDebugMode) print('Analytics Error: remove_from_cart. $e');
+    }
+  }
+
+  Future<void> logBeginCheckoutEvent({
+    required AnalyticsEventItem item,
+    dynamic value = 0.0,
+    String currency = 'GBP',
+  }) async {
+    try {
+      final validatedValue = validatePrice(value);
+      final validatedCurrency = validateCurrency(currency);
+      await _analytics.logBeginCheckout(
+        currency: validatedCurrency,
+        value: validatedValue,
+        items: [item],
+      );
+      if (kDebugMode) {
+        print(
+          'Analytics: begin_checkout logged { '
+          'currency: $validatedCurrency, value: $validatedValue, '
+          'item_id: ${item.itemId}, item_name: ${item.itemName}, '
+          'item_category: ${item.itemCategory}, item_variant: ${item.itemVariant}, '
+          'item_brand: ${item.itemBrand}, price: ${item.price}, quantity: ${item.quantity} }',
+        );
       }
     } catch (e) {
       if (kDebugMode) print('Analytics Error: begin_checkout. $e');
@@ -291,18 +417,32 @@ class AnalyticsService {
   Future<void> logPurchaseEvent({
     required AnalyticsEventItem item,
     required String transactionId,
-    double value = 0.0,
+    dynamic value = 0.0,
     String currency = 'GBP',
   }) async {
     try {
+      final validatedValue = validatePrice(value);
+      final validatedCurrency = validateCurrency(currency);
+      if (validatedValue <= 0.0) {
+        if (kDebugMode) {
+          print('Analytics Warning: purchase event value is £0.00 — check price passed to logPurchaseEvent (transactionId: $transactionId)');
+        }
+      }
       await _analytics.logPurchase(
-        currency: currency,
-        value: value,
+        currency: validatedCurrency,
+        value: validatedValue,
         transactionId: transactionId,
         items: [item],
       );
       if (kDebugMode) {
-        print('Analytics: purchase logged (${item.itemName}, tx: $transactionId)');
+        print(
+          'Analytics: purchase logged { '
+          'currency: $validatedCurrency, value: $validatedValue, '
+          'transaction_id: $transactionId, '
+          'item_id: ${item.itemId}, item_name: ${item.itemName}, '
+          'item_category: ${item.itemCategory}, item_variant: ${item.itemVariant}, '
+          'item_brand: ${item.itemBrand}, price: ${item.price}, quantity: ${item.quantity} }',
+        );
       }
     } catch (e) {
       if (kDebugMode) print('Analytics Error: purchase. $e');

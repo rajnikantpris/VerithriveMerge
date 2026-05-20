@@ -10,8 +10,8 @@ import '../../services/storage_service.dart';
 import '../../services/analytics_service.dart';
 import '../../theme/image_paths.dart';
 import '../../widgets/response_dialog.dart';
+import '../home/home_controller.dart';
 import '../payment_view/payment_webview_screen.dart';
-import '../signup_terms_conditions/professional_webview_screen.dart';
 
 class PaymentMethodOption {
   PaymentMethodOption({
@@ -64,6 +64,8 @@ class PaymentMethodController extends BaseController {
   final isConfirming = false.obs;
   String selectedPlanId = '';
   String selectedPlanName = '';
+  double selectedPlanPrice = 0.0;
+  String selectedStripePriceId = '';
   bool isFromSignup = false;
 
   @override
@@ -77,6 +79,12 @@ class PaymentMethodController extends BaseController {
       if (args['planName'] is String) {
         selectedPlanName = args['planName'] as String;
       }
+      if (args['planPrice'] is num) {
+        selectedPlanPrice = (args['planPrice'] as num).toDouble();
+      }
+      if (args['stripePriceId'] is String) {
+        selectedStripePriceId = args['stripePriceId'] as String;
+      }
       if (args['isFromSignup'] is bool) {
         isFromSignup = args['isFromSignup'] as bool;
       }
@@ -88,6 +96,35 @@ class PaymentMethodController extends BaseController {
   }
 
   Future<void> confirmPayment() async {
+    // Get professional details from HomeController
+    final homeController = Get.isRegistered<HomeController>()
+        ? Get.find<HomeController>()
+        : null;
+    final profile = homeController?.profileDetails.value;
+    final professionName = profile?.profession_name ?? '';
+    final stripeAccountId = profile?.stripeConnectAccountId ?? '';
+
+    await AnalyticsService.instance.logPurchaseEvent(
+      item: AnalyticsService.instance.buildItem(
+        itemId: selectedPlanId.isNotEmpty ? selectedPlanId : '',
+        itemName: selectedPlanName.isNotEmpty ? selectedPlanName : 'subscription',
+        itemCategory: professionName.isNotEmpty ? professionName : 'subscription',
+        itemVariant: selectedPlanName.toLowerCase(),
+        itemBrand: 'subscription',
+        price: selectedPlanPrice,
+        quantity: 1,
+      ),
+      transactionId: selectedStripePriceId.isNotEmpty
+          ? selectedStripePriceId
+          : stripeAccountId.isNotEmpty
+              ? stripeAccountId
+              : selectedPlanId.isNotEmpty
+                  ? '${selectedPlanId}_${DateTime.now().millisecondsSinceEpoch}'
+                  : DateTime.now().millisecondsSinceEpoch.toString(),
+      value: selectedPlanPrice,
+      currency: 'GBP',
+    );
+
     if (selectedMethodId.value.isEmpty ||
         selectedPlanId.isEmpty ||
         isConfirming.value) {
@@ -109,12 +146,35 @@ class PaymentMethodController extends BaseController {
             final checkoutUrl = paymentData['checkout_url']?.toString();
 
             if (checkoutUrl != null && checkoutUrl.isNotEmpty) {
+
               // Open Stripe Checkout in WebView
               final result =
                   await Get.to(() => PaymentWebViewScreen(url: checkoutUrl));
 
               // When returning from WebView, check result and navigate if successful
               if (result == 'success') {
+
+                await AnalyticsService.instance.logPurchaseEvent(
+                  item: AnalyticsService.instance.buildItem(
+                    itemId: selectedPlanId.isNotEmpty ? selectedPlanId : '',
+                    itemName: selectedPlanName.isNotEmpty ? selectedPlanName : 'subscription',
+                    itemCategory: professionName.isNotEmpty ? professionName : 'subscription',
+                    itemVariant: selectedPlanName.toLowerCase(),
+                    itemBrand: 'subscription',
+                    price: selectedPlanPrice,
+                    quantity: 1,
+                  ),
+                  transactionId: selectedStripePriceId.isNotEmpty
+                      ? selectedStripePriceId
+                      : stripeAccountId.isNotEmpty
+                      ? stripeAccountId
+                      : selectedPlanId.isNotEmpty
+                      ? '${selectedPlanId}_${DateTime.now().millisecondsSinceEpoch}'
+                      : DateTime.now().millisecondsSinceEpoch.toString(),
+                  value: selectedPlanPrice,
+                  currency: 'GBP',
+                );
+
                 await _checkPaymentStatusAndNavigate(response.data?.user);
               } else if (result == 'failed') {
                 showResponseDialog(

@@ -74,40 +74,38 @@ class ProcessingPaymentController extends BaseController {
             if (data != null) {
               final profile = ProfileDetailsModel.fromJson(data);
               if (isFromSignup) {
-                final personaValue = profile.profession_name != null
-                    ? "professional_${profile.profession_name!.toLowerCase()}"
-                    : profile.fullName != null
-                        ? "professional_${profile.fullName!.toLowerCase()}"
-                        : 'professional';
-                if(profile.registrationType.toString() == 'email'){
-                  await AnalyticsService.instance.setUserProfile(
-                  loginState: 'logged_in',
-                  userId: profile.id,
-                  city: await getCityFromAddress(profile.address.toString()),
-                  persona: personaValue,
-                  plan: _getTimePeriodFromPlan(selectedtitle.value),
-                  registrationType: 'regular',
+                final resolvedPersona = AnalyticsService.resolvePersona(
+                  professionName: profile.profession_name,
                 );
-                } else if(profile.registrationType.toString() == 'google' || profile.registrationType.toString() == 'facebook'){
-                  await AnalyticsService.instance.setUserProfile(
-                  loginState: 'logged_in',
-                  userId: profile.id,
-                  city: await getCityFromAddress(profile.address.toString()),
-                  persona: personaValue,
-                  plan: _getTimePeriodFromPlan(selectedtitle.value),
-                  registrationType: 'google',
+                final resolvedCity = await getCityFromAddress(profile.address.toString());
+                final regType = profile.registrationType?.toString() ?? 'email';
+                final analyticsRegType = (regType == 'google' || regType == 'facebook')
+                    ? 'google'
+                    : (regType == 'apple' ? 'apple' : 'regular');
+
+                await AnalyticsService.instance.setUserProfile(
+                  plan: _getTimePeriodFromPlan(selectedtitle.value)
                 );
-                } else{
-                  await AnalyticsService.instance.setUserProfile(
-                  loginState: 'logged_in',
-                  userId: profile.id,
-                  city: await getCityFromAddress(profile.address.toString()),
-                  persona: personaValue,
-                  plan: _getTimePeriodFromPlan(selectedtitle.value),
-                  registrationType: 'apple',
-                );
-                }
-               
+
+                // Log subscription purchase event
+                final planPeriod = _getTimePeriodFromPlan(selectedtitle.value);
+                // await AnalyticsService.instance.logPurchaseEvent(
+                //   item: AnalyticsService.instance.buildItem(
+                //     itemId: selectedPlanId.value.isNotEmpty ? selectedPlanId.value : 'unknown',
+                //     itemName: selectedtitle.value.isNotEmpty ? selectedtitle.value : 'subscription',
+                //     itemCategory: resolvedPersona,
+                //     itemVariant: planPeriod,
+                //     itemBrand: 'verithrive',
+                //     price: 0.0,
+                //     quantity: 1,
+                //   ),
+                //   transactionId: selectedPlanId.value.isNotEmpty
+                //       ? '${selectedPlanId.value}_${DateTime.now().millisecondsSinceEpoch}'
+                //       : DateTime.now().millisecondsSinceEpoch.toString(),
+                //   value: 0.0,
+                //   currency: 'GBP',
+                // );
+                //
               } else {
                 await AnalyticsService.instance.setUserProfile(
                   plan: _getTimePeriodFromPlan(selectedtitle.value),
@@ -149,17 +147,14 @@ class ProcessingPaymentController extends BaseController {
       if (locations.isNotEmpty) {
         double lat = locations.first.latitude;
         double lng = locations.first.longitude;
-
         List<Placemark> placemarks = await placemarkFromCoordinates(lat, lng);
-
         if (placemarks.isNotEmpty) {
-          return placemarks.first.locality!.toLowerCase(); // return city
+          return (placemarks.first.locality ?? placemarks.first.subAdministrativeArea ?? '').toLowerCase();
         }
       }
     } catch (e) {
-      print("Error: $e");
+      print("Error getCityFromAddress: $e");
     }
-
     return null;
   }
 }

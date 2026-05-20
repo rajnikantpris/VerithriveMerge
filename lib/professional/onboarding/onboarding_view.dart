@@ -113,7 +113,17 @@ class OnboardingView extends BaseView<OnboardingController> {
                             ),
                           ),
                         ),
-                        onPressed: controller.joinNow,
+                        onPressed: () {
+                          AnalyticsService.instance.logButtonTap(
+                            eventName: 'join_tap',
+                            screenName: 'ProfessionalOnboardingScreen',
+                            screenClass: 'OnboardingView',
+                            elementText: 'join now',
+                            elementLocation: 'button_tap_cta',
+                            pageCategory: 'onboarding',
+                          );
+                          controller.joinNow();
+                        },
                         child: Text(
                           'Join now',
                           style: TextStyle(
@@ -144,7 +154,17 @@ class OnboardingView extends BaseView<OnboardingController> {
                             ),
                           ),
                         ),
-                        onPressed: controller.logIn,
+                        onPressed: () {
+                          AnalyticsService.instance.logButtonTap(
+                            eventName: 'login_tap',
+                            screenName: 'ProfessionalOnboardingScreen',
+                            screenClass: 'OnboardingView',
+                            elementText: 'log in',
+                            elementLocation: 'button_tap_cta',
+                            pageCategory: 'onboarding',
+                          );
+                          controller.logIn();
+                        },
                         child: Text(
                           'Log in',
                           style: TextStyle(
@@ -161,7 +181,17 @@ class OnboardingView extends BaseView<OnboardingController> {
               ),
             /*  SizedBox(height: HightWidthSizes.setValue_14),
               TextButton(
-                onPressed: controller.continueAsGuest,
+                onPressed: () {
+                  AnalyticsService.instance.logButtonTap(
+                    eventName: 'continue_guest_tap',
+                    screenName: 'ProfessionalOnboardingScreen',
+                    screenClass: 'OnboardingView',
+                    elementText: 'continue as a guest',
+                    elementLocation: 'button_tap_cta',
+                    pageCategory: 'onboarding',
+                  );
+                  controller.continueAsGuest();
+                },
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [

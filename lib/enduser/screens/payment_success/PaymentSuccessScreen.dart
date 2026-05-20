@@ -16,22 +16,25 @@ class PaymentSuccessScreen extends StatelessWidget {
     // Log purchase analytics when successful payment page is loaded
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final args = Get.arguments as Map<String, dynamic>?;
-      final category = args?['category'] as String? ?? 'wellness';
-      
-      final professionalId = args?['professional_id']?.toString() ?? 'unknown';
-      final serviceName = args?['service_name']?.toString() ?? 'unknown';
-      final rawPrice = args?['price'];
-      final double itemPrice = rawPrice is num ? rawPrice.toDouble() : double.tryParse(rawPrice?.toString() ?? '') ?? 0.0;
+      final category = AnalyticsService.validateCurrency(args?['category'] as String? ?? 'wellness') == 'GBP'
+          ? (args?['category'] as String? ?? 'wellness')
+          : (args?['category'] as String? ?? 'wellness');
+      final resolvedCategory = args?['category'] as String? ?? 'wellness';
+
+      final professionalId = args?['professional_id']?.toString() ?? '';
+      final serviceName = args?['service_name']?.toString() ?? '';
+      final itemPrice = AnalyticsService.validatePrice(args?['price']);
+      // booking_id is the canonical transaction ID — consistent with the booking confirmation email
       final transactionId = args?['booking_id']?.toString() ?? DateTime.now().millisecondsSinceEpoch.toString();
       final consultationType = args?['consultation_type']?.toString() ?? '';
-      
+
       AnalyticsService.instance.logPurchaseEvent(
         item: AnalyticsService.instance.buildItem(
           itemId: professionalId.isNotEmpty ? professionalId : 'unknown',
           itemName: serviceName.isNotEmpty ? serviceName : 'unknown',
-          itemCategory: category,
+          itemCategory: resolvedCategory,
           itemVariant: consultationType.isNotEmpty ? consultationType : serviceName,
-          itemBrand: consultationType.isNotEmpty ? consultationType : category,
+          itemBrand: consultationType.isNotEmpty ? consultationType : resolvedCategory,
           price: itemPrice,
           quantity: 1,
         ),
