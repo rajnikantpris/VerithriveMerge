@@ -1135,7 +1135,7 @@ class SignupProfileWizardController extends BaseController {
 
     await callDataService(
       apiService.getProfileDetails(),
-      showLoader: false,
+      showLoader: true,
       onSuccess: (response) async {
         if (response.success && response.data != null) {
           try {

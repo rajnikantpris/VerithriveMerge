@@ -263,9 +263,11 @@ class ProfessionalLoginController extends BaseController {
             loginState: 'logged_in',
             userId: loginData.user?.id,
             city: await getCityFromAddress(loginData.user!.address.toString()),
-            persona: AnalyticsService.resolvePersona(
-              professionName: loginData.user?.profession_name,
-            ),
+            persona: loginData.user!.profession_name != null
+                ? "professional_${loginData.user!.profession_name!.toLowerCase()}"
+                : loginData.user!.fullName != null
+                ? "professional_${loginData.user!.fullName!.toLowerCase()}"
+                : 'professional',
             registrationType: 'regular',
           );
 
