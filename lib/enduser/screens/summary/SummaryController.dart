@@ -206,8 +206,9 @@ class SummaryController extends BaseController {
       AnalyticsService.instance.logRemoveFromCartEvent(
         item: AnalyticsService.instance.buildItem(
           itemId: cartController.professionalId.value.isNotEmpty ? cartController.professionalId.value : '',
-          itemName: cartController.serviceName.value.isNotEmpty ? cartController.serviceName.value : '',
+          itemName: cartController.itemVariant.value.isNotEmpty ? cartController.itemVariant.value : (cartController.serviceName.value.isNotEmpty ? cartController.serviceName.value : ''),
           itemCategory: category,
+          itemCategory2: cartController.serviceName.value,
           itemVariant: consultationType.isNotEmpty ? consultationType : serviceName.value,
           itemBrand: consultationType.isNotEmpty ? consultationType : category,
           price: itemPrice,

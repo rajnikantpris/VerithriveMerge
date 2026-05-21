@@ -39,8 +39,9 @@ class SummaryScreen extends StatelessWidget {
       AnalyticsService.instance.logViewCartEvent(
         item: AnalyticsService.instance.buildItem(
           itemId: cartController.professionalId.value.isNotEmpty ? cartController.professionalId.value : 'unknown',
-          itemName: cartController.serviceName.value.isNotEmpty ? cartController.serviceName.value : 'unknown',
+          itemName: itemVariant.isNotEmpty ? itemVariant : (cartController.serviceName.value.isNotEmpty ? cartController.serviceName.value : 'unknown'),
           itemCategory: category,
+          itemCategory2: cartController.serviceName.value,
           itemVariant: itemVariant.isNotEmpty ? itemVariant : cartController.consultationType.value,
           itemBrand: itemBrand.isNotEmpty ? itemBrand : (cartController.consultationType.value.isNotEmpty ? cartController.consultationType.value : category),
           price: cartController.price.value,

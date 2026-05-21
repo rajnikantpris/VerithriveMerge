@@ -84,6 +84,7 @@ class ProcessingPaymentController extends BaseController {
                     : (regType == 'apple' ? 'apple' : 'regular');
 
                 await AnalyticsService.instance.setUserProfile(
+                  persona: resolvedPersona,
                   plan: _getTimePeriodFromPlan(selectedtitle.value)
                 );
 

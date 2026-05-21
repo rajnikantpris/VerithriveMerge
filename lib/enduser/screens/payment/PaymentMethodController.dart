@@ -208,8 +208,9 @@ class PaymentMethodController extends BaseController {
       AnalyticsService.instance.logBeginCheckoutEvent(
         item: AnalyticsService.instance.buildItem(
           itemId: professionalId.value.isNotEmpty ? professionalId.value : 'unknown',
-          itemName: serviceName.value.isNotEmpty ? serviceName.value : 'unknown',
+          itemName: itemVariant.isNotEmpty ? itemVariant : (serviceName.value.isNotEmpty ? serviceName.value : 'unknown'),
           itemCategory: category,
+          itemCategory2: serviceName.value,
           itemVariant: itemVariant.isNotEmpty ? itemVariant : serviceName.value,
           itemBrand: itemBrand.isNotEmpty ? itemBrand : (serviceName.value.isNotEmpty ? serviceName.value : category),
           price: price.value,
@@ -330,6 +331,8 @@ class PaymentMethodController extends BaseController {
           if (result == 'success') {
             final args = Get.arguments as Map<String, dynamic>?;
             final category = args?['category'] as String? ?? 'wellness';
+            final itemVariant = args?['item_variant']?.toString() ?? '';
+            final itemBrand = args?['item_brand']?.toString() ?? '';
             final successBookingId = responseData['data']?['booking_id']?.toString() ??
                 responseData['data']?['_id']?.toString() ??
                 bookingId.value;
@@ -343,6 +346,8 @@ class PaymentMethodController extends BaseController {
                 'booking_id': successBookingId.isNotEmpty ? successBookingId : DateTime.now().millisecondsSinceEpoch.toString(),
                 'category': category,
                 'consultation_type': serviceName.value,
+                'item_variant': itemVariant,
+                'item_brand': itemBrand,
               },
             );
           } else if (result == 'failed') {

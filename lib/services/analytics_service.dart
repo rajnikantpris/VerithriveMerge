@@ -206,7 +206,7 @@ class AnalyticsService {
         raw.contains('personal train')) {
       return 'professional_fitness';
     }
-    if (raw.contains('nutrition') || raw.contains('nutritionist') ||
+    if (raw.contains('food & nutrition') || raw.contains('nutritionist') ||
         raw.contains('food')) {
       return 'professional_nutrition';
     }
@@ -239,17 +239,52 @@ class AnalyticsService {
     required String itemId,
     required String itemName,
     String? itemCategory,
+    String? itemCategory2,
     String? itemVariant,
     String? itemBrand,
     dynamic price = 0.0,
     dynamic quantity = 1,
   }) {
+    // Standardize Brand and Name based on user requirements
+    String finalBrand = itemBrand ?? '';
+    String finalName = itemName;
+
+    final category = itemCategory?.toLowerCase() ?? '';
+    if (category == 'fitness' || category.contains('trainer') || category.contains('coach')) {
+      finalBrand = 'Fitness';
+    } else if (category == 'wellness' || category.contains('therapist') || category.contains('physio')) {
+      finalBrand = 'Wellness';
+    } else if (category == 'food_nutrition' || category == 'food & nutrition' || category.contains('nutrition') || category.contains('diet')) {
+      finalBrand = 'Food & Nutrition';
+    }
+
+    // Standardize Name if it matches one of the known sub-types
+    final nameLower = itemName.toLowerCase();
+    if (finalBrand == 'Fitness') {
+      if (nameLower.contains('trainer')) finalName = 'Personal Trainer';
+      else if (nameLower.contains('coach')) finalName = 'Fitness Coach';
+      else if (nameLower.contains('instructor')) finalName = 'Fitness Instructor';
+      else if (finalName == 'unknown' || finalName.isEmpty || finalName == 'fitness') finalName = 'Personal Trainer'; // Default
+    } else if (finalBrand == 'Wellness') {
+      if (nameLower.contains('physio')) finalName = 'Physiotherapist';
+      else if (nameLower.contains('chiro')) finalName = 'Chiropractor';
+      else if (nameLower.contains('osteo')) finalName = 'Osteopath';
+      else if (nameLower.contains('sport')) finalName = 'Sports Therapist';
+      else if (finalName == 'unknown' || finalName.isEmpty || finalName == 'wellness') finalName = 'Sports Therapist'; // Default
+    } else if (finalBrand == 'Food & Nutrition') {
+      if (nameLower.contains('diet')) finalName = 'Dietitian';
+      else if (nameLower.contains('nutrition')) finalName = 'Nutritionist';
+      else if (nameLower.contains('chef')) finalName = 'Private Chef';
+      else if (finalName == 'unknown' || finalName.isEmpty || finalName == 'food_nutrition') finalName = 'Nutritionist'; // Default
+    }
+
     return AnalyticsEventItem(
-      itemId: itemId.isNotEmpty ? itemId : 'unknown',
-      itemName: itemName.isNotEmpty ? itemName : 'unknown',
-      itemCategory: itemCategory,
+      itemId: itemId.isNotEmpty ? itemId : '',
+      itemName: finalName.isNotEmpty ? finalName : '',
+      itemCategory: finalBrand,
+      itemCategory2: itemCategory2,
       itemVariant: itemVariant,
-      itemBrand: itemBrand,
+      itemBrand: finalBrand.isNotEmpty ? finalBrand : null,
       price: validatePrice(price),
       quantity: validateQuantity(quantity),
     );
@@ -272,6 +307,7 @@ class AnalyticsService {
           'item_id': i.itemId,
           'item_name': i.itemName,
           'item_category': i.itemCategory,
+          'item_category2': i.itemCategory2,
           'item_variant': i.itemVariant,
           'item_brand': i.itemBrand,
           'price': i.price,
@@ -305,7 +341,8 @@ class AnalyticsService {
           'Analytics: view_item logged { '
           'currency: $currency, value: $value, '
           'item_id: ${item.itemId}, item_name: ${item.itemName}, '
-          'item_category: ${item.itemCategory}, item_variant: ${item.itemVariant}, '
+          'item_category: ${item.itemCategory}, item_category2: ${item.itemCategory2}, '
+          'item_variant: ${item.itemVariant}, '
           'item_brand: ${item.itemBrand}, price: ${item.price}, quantity: ${item.quantity} }',
         );
       }
@@ -330,7 +367,8 @@ class AnalyticsService {
           'Analytics: select_item logged { '
           'item_list_id: $itemListId, item_list_name: $itemListName, '
           'item_id: ${item.itemId}, item_name: ${item.itemName}, '
-          'item_category: ${item.itemCategory}, item_variant: ${item.itemVariant}, '
+          'item_category: ${item.itemCategory}, item_category2: ${item.itemCategory2}, '
+          'item_variant: ${item.itemVariant}, '
           'item_brand: ${item.itemBrand}, price: ${item.price}, quantity: ${item.quantity} }',
         );
       }
@@ -357,7 +395,8 @@ class AnalyticsService {
           'Analytics: view_cart logged { '
           'currency: $validatedCurrency, value: $validatedValue, '
           'item_id: ${item.itemId}, item_name: ${item.itemName}, '
-          'item_category: ${item.itemCategory}, item_variant: ${item.itemVariant}, '
+          'item_category: ${item.itemCategory}, item_category2: ${item.itemCategory2}, '
+          'item_variant: ${item.itemVariant}, '
           'item_brand: ${item.itemBrand}, price: ${item.price}, quantity: ${item.quantity} }',
         );
       }
@@ -405,7 +444,8 @@ class AnalyticsService {
           'Analytics: begin_checkout logged { '
           'currency: $validatedCurrency, value: $validatedValue, '
           'item_id: ${item.itemId}, item_name: ${item.itemName}, '
-          'item_category: ${item.itemCategory}, item_variant: ${item.itemVariant}, '
+          'item_category: ${item.itemCategory}, item_category2: ${item.itemCategory2}, '
+          'item_variant: ${item.itemVariant}, '
           'item_brand: ${item.itemBrand}, price: ${item.price}, quantity: ${item.quantity} }',
         );
       }
@@ -440,7 +480,8 @@ class AnalyticsService {
           'currency: $validatedCurrency, value: $validatedValue, '
           'transaction_id: $transactionId, '
           'item_id: ${item.itemId}, item_name: ${item.itemName}, '
-          'item_category: ${item.itemCategory}, item_variant: ${item.itemVariant}, '
+          'item_category: ${item.itemCategory}, item_category2: ${item.itemCategory2}, '
+          'item_variant: ${item.itemVariant}, '
           'item_brand: ${item.itemBrand}, price: ${item.price}, quantity: ${item.quantity} }',
         );
       }

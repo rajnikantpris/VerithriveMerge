@@ -475,8 +475,9 @@ class TherapistController extends BaseController {
           final analyticsItems = filteredTherapists.map((therapist) =>
             AnalyticsService.instance.buildItem(
               itemId: therapist.id.isNotEmpty ? therapist.id : '',
-              itemName: therapist.name.isNotEmpty ? therapist.name : '',
+              itemName: therapist.specialty.isNotEmpty ? therapist.specialty : (therapist.name.isNotEmpty ? therapist.name : ''),
               itemCategory: category,
+              itemCategory2: '',
               itemVariant: therapist.specialty.isNotEmpty ? therapist.specialty : category,
               itemBrand: therapist.services.isNotEmpty ? therapist.services.first : (therapist.specialty.isNotEmpty ? therapist.specialty : category),
               price: AnalyticsService.validatePrice(therapist.price),

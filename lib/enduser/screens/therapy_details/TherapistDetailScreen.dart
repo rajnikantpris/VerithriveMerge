@@ -57,7 +57,7 @@ class TherapistDetailScreen extends StatelessWidget {
       AnalyticsService.instance.logViewItemEvent(
         item: AnalyticsService.instance.buildItem(
           itemId: therapistId.isNotEmpty ? therapistId : '',
-          itemName: therapistName.isNotEmpty ? therapistName : '',
+          itemName: therapistSpecialty.isNotEmpty ? therapistSpecialty : (therapistName.isNotEmpty ? therapistName : ''),
           itemCategory: category,
           itemVariant: therapistSpecialty,
           itemBrand: therapistServices.isNotEmpty ? therapistServices.first : therapistSpecialty,
@@ -428,10 +428,11 @@ class TherapistDetailScreen extends StatelessWidget {
                             AnalyticsService.instance.logSelectItemEvent(
                               item: AnalyticsService.instance.buildItem(
                                 itemId: therapist.id.isNotEmpty ? therapist.id : '',
-                                itemName: package.title.isNotEmpty ? package.title : (therapist.name.isNotEmpty ? therapist.name : ''),
+                                itemName: therapist.specialty.isNotEmpty ? therapist.specialty : (therapist.name.isNotEmpty ? therapist.name : ''),
                                 itemCategory: category,
-                                itemVariant: therapist.specialty.isNotEmpty ? therapist.specialty : package.title,
-                                itemBrand: therapist.services.isNotEmpty ? therapist.services.first : (therapist.specialty.isNotEmpty ? therapist.specialty : category),
+                                itemCategory2: package.title,
+                                itemVariant: therapist.specialty,
+                                itemBrand: therapist.services.isNotEmpty ? therapist.services.first : therapist.specialty,
                                 price: AnalyticsService.validatePrice(package.price),
                                 quantity: 1,
                               ),
