@@ -156,7 +156,6 @@ class RegisterController extends BaseController {
 
       if (success == true) {
         // Analytics: Log registration start (OTP sent)
-        
 
         // Show success message
         showResponseDialog(
@@ -405,7 +404,9 @@ class RegisterController extends BaseController {
             persona: 'end_user',
             city: await getCityFromAddress(user!.address.toString()),
             plan: '',
-            registrationType: user.registrationType == 'email' ? 'regular' : (user.registrationType ?? 'regular'),
+            registrationType: user.registrationType == 'email'
+                ? 'regular'
+                : (user.registrationType ?? 'regular'),
           );
           Get.offAll(() => MainScreen());
         } else {
@@ -448,8 +449,7 @@ class RegisterController extends BaseController {
         double lat = locations.first.latitude;
         double lng = locations.first.longitude;
 
-        List<Placemark> placemarks =
-        await placemarkFromCoordinates(lat, lng);
+        List<Placemark> placemarks = await placemarkFromCoordinates(lat, lng);
 
         if (placemarks.isNotEmpty) {
           return placemarks.first.locality!.toLowerCase(); // return city
@@ -461,7 +461,6 @@ class RegisterController extends BaseController {
 
     return null;
   }
-
 
   Future<void> continueWithApple() async {
     try {
@@ -506,12 +505,12 @@ class RegisterController extends BaseController {
         profilePicture: userInfo['photoUrl'],
       );
     } catch (e) {
-      showResponseDialog(
-        message: 'Apple sign-in failed: ${e.toString()}',
-        title: 'Error',
-        isError: true,
-        showButton: true,
-      );
+      // showResponseDialog(
+      //   message: 'Apple sign-in failed: ${e.toString()}',
+      //   title: 'Error',
+      //   isError: true,
+      //   showButton: true,
+      // );
     }
   }
 

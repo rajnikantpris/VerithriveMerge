@@ -46,7 +46,7 @@ class LoginController extends BaseController {
   @override
   void onInit() {
     super.onInit();
-    if(Get.arguments != null) {
+    if (Get.arguments != null) {
       guestUser = Get.arguments;
     }
     _loadRememberMeData();
@@ -199,12 +199,12 @@ class LoginController extends BaseController {
         userInfo: userInfo,
       );
     } catch (e) {
-      showResponseDialog(
-        message: 'Apple sign-in failed: ${e.toString()}',
-        title: 'Error',
-        isError: true,
-        showButton: true,
-      );
+      // showResponseDialog(
+      //   message: 'Apple sign-in failed: ${e.toString()}',
+      //   title: 'Error',
+      //   isError: true,
+      //   showButton: true,
+      // );
     }
   }
 
@@ -292,7 +292,6 @@ class LoginController extends BaseController {
   }*/
 
   void callLoginService() {
-
     if (!(formKey.currentState?.validate() ?? false)) return;
 
     Map<String, dynamic> toJson() {
@@ -520,11 +519,14 @@ class LoginController extends BaseController {
           persona: 'end_user',
           city: await getCityFromAddress(user!.address.toString()),
           plan: '',
-          registrationType: user.registrationType == 'email' ? 'regular' : (user.registrationType ?? 'regular'),
+          registrationType: user.registrationType == 'email'
+              ? 'regular'
+              : (user.registrationType ?? 'regular'),
         );
 
-        if(guestUser.isNotEmpty && guestUser == "guest"){
-          final TherapistDetailController controller = Get.put(TherapistDetailController());
+        if (guestUser.isNotEmpty && guestUser == "guest") {
+          final TherapistDetailController controller =
+              Get.put(TherapistDetailController());
           controller.getPreferenceDetails();
           Get.back();
         } else {
@@ -544,7 +546,7 @@ class LoginController extends BaseController {
             Get.offAll(() => MainScreen());
           } else {
             Get.offAll(
-                  () => const ProfileView(),
+              () => const ProfileView(),
               binding: ProfileBinding(),
               arguments: socialData,
             );
@@ -584,8 +586,7 @@ class LoginController extends BaseController {
         double lat = locations.first.latitude;
         double lng = locations.first.longitude;
 
-        List<Placemark> placemarks =
-        await placemarkFromCoordinates(lat, lng);
+        List<Placemark> placemarks = await placemarkFromCoordinates(lat, lng);
 
         if (placemarks.isNotEmpty) {
           return placemarks.first.locality!.toLowerCase(); // return city

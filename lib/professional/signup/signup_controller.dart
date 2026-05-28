@@ -409,12 +409,12 @@ class SignupController extends BaseController {
         userInfo: userInfo,
       );
     } catch (e) {
-      showResponseDialog(
-        message: 'Apple sign-in failed: ${e.toString()}',
-        title: 'Error',
-        isError: true,
-        showButton: true,
-      );
+      // showResponseDialog(
+      //   message: 'Apple sign-in failed: ${e.toString()}',
+      //   title: 'Error',
+      //   isError: true,
+      //   showButton: true,
+      // );
     }
   }
 
@@ -598,7 +598,6 @@ class SignupController extends BaseController {
 
           await _storageService?.writeString('userType', 'professional');
 
-
           // Save user ID from login response
           final userId = loginData.user?.id;
           if (userId != null && userId.isNotEmpty) {
@@ -627,7 +626,7 @@ class SignupController extends BaseController {
           final successMessage =
               response.message ?? 'Account created successfully. Welcome!';
 
-          _navigateBasedOnUserFlags(userFlags,loginData.user, socialType);
+          _navigateBasedOnUserFlags(userFlags, loginData.user, socialType);
 
           // showResponseDialog(
           //   message: successMessage,
@@ -675,7 +674,8 @@ class SignupController extends BaseController {
   }
 
   /// Navigate based on user flags in priority order (same as LoginController)
-  Future<void> _navigateBasedOnUserFlags(Map<String, bool> userFlags, UserModel? user, String socialType) async {
+  Future<void> _navigateBasedOnUserFlags(
+      Map<String, bool> userFlags, UserModel? user, String socialType) async {
     // Priority order: check flags in sequence and navigate to first incomplete step
 
     if (userFlags['is_personal_details'] != true) {
@@ -744,13 +744,13 @@ class SignupController extends BaseController {
     // }
 
     await AnalyticsService.instance.setUserProfile(
-        loginState: 'logged_in',
-        userId: user?.id,
-        city: await getCityFromAddress(user!.address.toString()),
-        persona: AnalyticsService.resolvePersona(
-          professionName: user.profession_name,
-        ),
-        registrationType: socialType,
+      loginState: 'logged_in',
+      userId: user?.id,
+      city: await getCityFromAddress(user!.address.toString()),
+      persona: AnalyticsService.resolvePersona(
+        professionName: user.profession_name,
+      ),
+      registrationType: socialType,
     );
 
     // All steps completed - navigate to home
@@ -766,7 +766,10 @@ class SignupController extends BaseController {
         double lng = locations.first.longitude;
         List<Placemark> placemarks = await placemarkFromCoordinates(lat, lng);
         if (placemarks.isNotEmpty) {
-          return (placemarks.first.locality ?? placemarks.first.subAdministrativeArea ?? '').toLowerCase();
+          return (placemarks.first.locality ??
+                  placemarks.first.subAdministrativeArea ??
+                  '')
+              .toLowerCase();
         }
       }
     } catch (e) {
@@ -774,7 +777,6 @@ class SignupController extends BaseController {
     }
     return null;
   }
-
 
   Future<void> _cacheSocialProfileData(UserModel? user) async {
     final storage = _storageService;

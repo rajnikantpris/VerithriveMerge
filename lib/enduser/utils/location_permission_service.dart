@@ -167,14 +167,18 @@ class LocationPermissionService {
       PopScope(
         canPop: false, // Prevent back button dismissal
         child: AlertDialog(
-          title: const Text('Location Permission Required'),
+          title: const Text('Location Denied'),
           content: const Text(
-            'Location permission is required to get your address. Please enable it in app settings to continue.',
+            "Couldn't detect your location, please allow location from settings!",
           ),
           actions: [
             TextButton(
+              onPressed: () => Get.back(result: false),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
               onPressed: () => Get.back(result: true),
-              child: const Text('Open Settings'),
+              child: const Text('Go to Settings'),
             ),
           ],
         ),
@@ -223,14 +227,18 @@ class LocationPermissionService {
       PopScope(
         canPop: false, // Prevent back button dismissal
         child: AlertDialog(
-          title: const Text('Location Permission Required'),
+          title: const Text('Location Denied'),
           content: const Text(
-            'Location permission is essential to automatically fill your address. Please grant this permission to continue.',
+            "Couldn't detect your location, please allow location from settings!",
           ),
           actions: [
             TextButton(
+              onPressed: () => Get.back(result: false),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
               onPressed: () => Get.back(result: true),
-              child: const Text('Grant Permission'),
+              child: const Text('Go to Settings'),
             ),
           ],
         ),
@@ -238,4 +246,3 @@ class LocationPermissionService {
     );
   }
 }
-

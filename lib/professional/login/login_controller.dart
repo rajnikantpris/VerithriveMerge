@@ -15,18 +15,18 @@ import 'package:geocoding/geocoding.dart';
 
 class ProfessionalLoginController extends BaseController {
   ProfessionalLoginController(
-      this._userApiService, [
-        StorageService? storageService,
-      ]) : _storageService = storageService ??
-      (Get.isRegistered<StorageService>()
-          ? Get.find<StorageService>()
-          : null);
+    this._userApiService, [
+    StorageService? storageService,
+  ]) : _storageService = storageService ??
+            (Get.isRegistered<StorageService>()
+                ? Get.find<StorageService>()
+                : null);
 
   final UserApiService _userApiService;
   final StorageService? _storageService;
   final SocialAuthService _socialAuthService = SocialAuthService();
   final NotificationPermissionService _notificationPermissionService =
-  NotificationPermissionService();
+      NotificationPermissionService();
 
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
@@ -386,12 +386,12 @@ class ProfessionalLoginController extends BaseController {
         userInfo: userInfo,
       );
     } catch (e) {
-      showResponseDialog(
-        message: 'Apple sign-in failed: ${e.toString()}',
-        title: 'Error',
-        isError: true,
-        showButton: true,
-      );
+      // showResponseDialog(
+      //   message: 'Apple sign-in failed: ${e.toString()}',
+      //   title: 'Error',
+      //   isError: true,
+      //   showButton: true,
+      // );
     }
   }
 
@@ -632,7 +632,7 @@ class ProfessionalLoginController extends BaseController {
             showButton: false,
             onOkPressed: () {
               // Determine navigation based on user flags (in priority order)
-              _navigateBasedOnUserFlags(userFlags,socialType,loginData.user);
+              _navigateBasedOnUserFlags(userFlags, socialType, loginData.user);
             },
           );
         } else {
@@ -655,8 +655,7 @@ class ProfessionalLoginController extends BaseController {
         double lat = locations.first.latitude;
         double lng = locations.first.longitude;
 
-        List<Placemark> placemarks =
-        await placemarkFromCoordinates(lat, lng);
+        List<Placemark> placemarks = await placemarkFromCoordinates(lat, lng);
 
         if (placemarks.isNotEmpty) {
           return placemarks.first.locality!.toLowerCase(); // return city
@@ -699,7 +698,8 @@ class ProfessionalLoginController extends BaseController {
   }
 
   /// Navigate based on user flags in priority order
-  Future<void> _navigateBasedOnUserFlags(Map<String, bool> userFlags, String socialType, UserModel? user) async {
+  Future<void> _navigateBasedOnUserFlags(
+      Map<String, bool> userFlags, String socialType, UserModel? user) async {
     // Priority order: check flags in sequence and navigate to first incomplete step
 
     if (userFlags['is_personal_details'] != true) {
@@ -774,13 +774,12 @@ class ProfessionalLoginController extends BaseController {
       persona: AnalyticsService.resolvePersona(
         professionName: user.profession_name,
       ),
-      registrationType: socialType, // Use the actual social type ('google' or 'apple')
+      registrationType:
+          socialType, // Use the actual social type ('google' or 'apple')
     );
 
     // All steps completed - navigate to home
     Get.offAllNamed(Routes.home);
-
-
   }
 
   Future<void> _cacheSocialProfileData(UserModel? user) async {

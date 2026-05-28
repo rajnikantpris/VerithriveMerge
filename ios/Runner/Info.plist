@@ -36,7 +36,7 @@
 	<key>CFBundleVersion</key>
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>GMSApiKey</key>
-	<string>AIzaSyDjdom-8K5VyqYV_zFUtPX_Zabk3r-C6XQ</string>
+	<string>AIzaSyAt1ojfod_QD5VxSBOnp3s3OpbVuVlFIOY</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 	<key>LSApplicationQueriesSchemes</key>
@@ -47,13 +47,13 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
-	<string>We need camera access to update your profile picture.</string>
+	<string>This will allow you to update your profile picture using the camera.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>This app needs your location even when the app is in background.</string>
+	<string>This will allow us to show nearby services based on your location.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>This app needs your location to show nearby services.</string>
+	<string>This will allow us to show nearby services based on your location.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>We need photo access to select images from your gallery.</string>
+	<string>This will allow you to select images from your photo library to update your profile picture.</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>
