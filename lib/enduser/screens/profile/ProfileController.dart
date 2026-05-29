@@ -62,7 +62,7 @@ class ProfileController extends GetxController {
     fullNameController.addListener(_capitalizeFullName);
 
     // Get current location and auto-fill address and postcode
-    getCurrentLocationAndFillAddress();
+    // getCurrentLocationAndFillAddress();
 
     // Check if social data was passed from login
     final arguments = Get.arguments as Map<String, dynamic>?;
@@ -100,8 +100,9 @@ class ProfileController extends GetxController {
     String text = fullNameController.text;
     if (text.isNotEmpty) {
       // Capitalize first letter and keep the rest as is (don't force lowercase)
-      String capitalized = text.substring(0, 1).toUpperCase() + text.substring(1);
-      
+      String capitalized =
+          text.substring(0, 1).toUpperCase() + text.substring(1);
+
       // Only update if the text is different to prevent infinite loops
       if (text != capitalized) {
         // Remove listener temporarily to prevent infinite loop
@@ -109,7 +110,7 @@ class ProfileController extends GetxController {
         fullNameController.text = capitalized;
         // Add listener back
         fullNameController.addListener(_capitalizeFullName);
-        
+
         // Move cursor to the end
         fullNameController.selection = TextSelection.fromPosition(
           TextPosition(offset: capitalized.length),
@@ -139,7 +140,7 @@ class ProfileController extends GetxController {
     if (!RegExp(r'^\d{2}/\d{2}/\d{4}$').hasMatch(value)) {
       return 'Please enter date in DD/MM/YYYY format';
     }
-    
+
     // Check if user is 18+ years old
     if (selectedDob.value == null) {
       // Parse the date from the controller if selectedDob is not set
@@ -155,20 +156,21 @@ class ProfileController extends GetxController {
         return 'Invalid date format';
       }
     }
-    
+
     if (selectedDob.value != null) {
       final now = DateTime.now();
       final age = now.year - selectedDob.value!.year;
       final monthDiff = now.month - selectedDob.value!.month;
       final dayDiff = now.day - selectedDob.value!.day;
-      
-      final actualAge = monthDiff < 0 || (monthDiff == 0 && dayDiff < 0) ? age - 1 : age;
-      
+
+      final actualAge =
+          monthDiff < 0 || (monthDiff == 0 && dayDiff < 0) ? age - 1 : age;
+
       if (actualAge < 18) {
         return 'You must be 18 years old to use this app.';
       }
     }
-    
+
     return null;
   }
 
@@ -214,10 +216,10 @@ class ProfileController extends GetxController {
 
   Future<void> selectDateOfBirth(BuildContext context) async {
     // Use selected DOB if available, otherwise use current date minus 18 years
-   final now = DateTime.now();
-    final DateTime initialDate = selectedDob.value ?? 
+    final now = DateTime.now();
+    final DateTime initialDate = selectedDob.value ??
         DateTime(now.year, now.month, now.day); // 18 years ago
-    
+
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: initialDate,
@@ -519,36 +521,39 @@ class ProfileController extends GetxController {
 
   Future<void> navigateToMapScreen() async {
     // First check if location permission is already granted
-    bool hasPermission =
-        await _locationPermissionService.checkLocationPermissionStatus();
+    // bool hasPermission =
+    //     await _locationPermissionService.checkLocationPermissionStatus();
 
-    // If not granted, request permission
-    if (!hasPermission) {
-      hasPermission =
-          await _locationPermissionService.requestLocationPermission();
-    }
+    // // If not granted, request permission
+    // if (!hasPermission) {
+    //   hasPermission =
+    //       await _locationPermissionService.requestLocationPermission();
+    // }
 
-    if (!hasPermission) {
-      // Permission service already shows appropriate message/dialog
-      return;
-    }
+    // if (!hasPermission) {
+    //   // Permission service already shows appropriate message/dialog
+    //   return;
+    // }
 
     // Prepare arguments for map screen
-    final Map<String, dynamic> arguments = {'hideSelectButton': true}; // Hide Select Address button initially
-    
+    final Map<String, dynamic> arguments = {
+      'hideSelectButton': true
+    }; // Hide Select Address button initially
+
     // If we have existing coordinates, pass them to map
     if (latitude.value != 0.0 && longitude.value != 0.0) {
       arguments['latitude'] = latitude.value;
       arguments['longitude'] = longitude.value;
-      debugPrint('Passing existing coordinates to map: lat=${latitude.value}, lng=${longitude.value}');
+      debugPrint(
+          'Passing existing coordinates to map: lat=${latitude.value}, lng=${longitude.value}');
     }
-    
+
     // If we have existing address, pass it to map
     if (selectedAddress.value.isNotEmpty) {
       arguments['existingAddress'] = selectedAddress.value;
       debugPrint('Passing existing address to map: ${selectedAddress.value}');
     }
-    
+
     final result = await Get.to(
       () => SelectAddressMapView(),
       arguments: arguments,
@@ -589,19 +594,19 @@ class ProfileController extends GetxController {
   Future<void> getCurrentLocationAndFillAddress() async {
     try {
       // First check if permission is already granted
-      bool hasPermission =
-          await _locationPermissionService.checkLocationPermissionStatus();
+      // bool hasPermission =
+      //     await _locationPermissionService.checkLocationPermissionStatus();
 
-      // If not granted, request permission
-      if (!hasPermission) {
-        hasPermission =
-            await _locationPermissionService.requestLocationPermission();
-      }
+      // // If not granted, request permission
+      // if (!hasPermission) {
+      //   hasPermission =
+      //       await _locationPermissionService.requestLocationPermission();
+      // }
 
-      if (!hasPermission) {
-        debugPrint('Location permission not granted');
-        return;
-      }
+      // if (!hasPermission) {
+      //   debugPrint('Location permission not granted');
+      //   return;
+      // }
 
       // Check if location services are enabled
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();

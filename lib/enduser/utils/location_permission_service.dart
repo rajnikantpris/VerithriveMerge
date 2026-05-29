@@ -167,19 +167,18 @@ class LocationPermissionService {
       PopScope(
         canPop: false, // Prevent back button dismissal
         child: AlertDialog(
-          title: const Text('Location Denied'),
+          title: const Text('Unable to Detect Location'),
           content: const Text(
-            "Couldn't detect your location, please allow location from settings!",
-          ),
+              "To show your current location on the map, we need access to your device’s location. You can still search addresses, browse the map, and use address-finding features without enabling Location access. You can enable it anytime from Settings → Apps → Verithrive → Permissions."),
           actions: [
             TextButton(
               onPressed: () => Get.back(result: false),
-              child: const Text('Cancel'),
+              child: const Text('Okay'),
             ),
-            TextButton(
-              onPressed: () => Get.back(result: true),
-              child: const Text('Go to Settings'),
-            ),
+            // TextButton(
+            //   onPressed: () => Get.back(result: true),
+            //   child: const Text('Go to Settings'),
+            // ),
           ],
         ),
       ),
@@ -227,19 +226,18 @@ class LocationPermissionService {
       PopScope(
         canPop: false, // Prevent back button dismissal
         child: AlertDialog(
-          title: const Text('Location Denied'),
+          title: const Text('Unable to Detect Location'),
           content: const Text(
-            "Couldn't detect your location, please allow location from settings!",
-          ),
+              "To show your current location on the map, we need access to your device’s location. You can still search addresses, browse the map, and use address-finding features without enabling Location access. You can enable it anytime from Settings → Apps → Verithrive → Permissions."),
           actions: [
             TextButton(
               onPressed: () => Get.back(result: false),
-              child: const Text('Cancel'),
+              child: const Text('Okay'),
             ),
-            TextButton(
-              onPressed: () => Get.back(result: true),
-              child: const Text('Go to Settings'),
-            ),
+            // TextButton(
+            //   onPressed: () => Get.back(result: true),
+            //   child: const Text('Go to Settings'),
+            // ),
           ],
         ),
       ),

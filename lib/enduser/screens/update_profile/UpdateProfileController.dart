@@ -22,7 +22,7 @@ import 'package:verithrive_dev/services/storage_service.dart';
 
 class UpdateProfileController extends BaseController {
   final ProjectRepository _repository =
-  Get.find(tag: (ProjectRepository).toString());
+      Get.find(tag: (ProjectRepository).toString());
   final StorageService _storageService = Get.find<StorageService>();
 
   final formKey = GlobalKey<FormState>();
@@ -48,9 +48,9 @@ class UpdateProfileController extends BaseController {
 
   final ImagePicker _picker = ImagePicker();
   final CameraStoragePermissionService _cameraStoragePermissionService =
-  CameraStoragePermissionService();
+      CameraStoragePermissionService();
   final LocationPermissionService _locationPermissionService =
-  LocationPermissionService();
+      LocationPermissionService();
 
   bool _isPicking = false; // Guard against double picker calls
 
@@ -71,10 +71,10 @@ class UpdateProfileController extends BaseController {
   @override
   void onInit() {
     super.onInit();
-    
+
     // Add text change listener to automatically capitalize first letter
     fullNameController.addListener(_capitalizeFullName);
-    
+
     // Fetch personal details first, then initialize location based on profile data
     fetchPersonalDetails();
   }
@@ -83,8 +83,9 @@ class UpdateProfileController extends BaseController {
     String text = fullNameController.text;
     if (text.isNotEmpty) {
       // Capitalize first letter and keep the rest as is (don't force lowercase)
-      String capitalized = text.substring(0, 1).toUpperCase() + text.substring(1);
-      
+      String capitalized =
+          text.substring(0, 1).toUpperCase() + text.substring(1);
+
       // Only update if the text is different to prevent infinite loops
       if (text != capitalized) {
         // Remove listener temporarily to prevent infinite loop
@@ -92,7 +93,7 @@ class UpdateProfileController extends BaseController {
         fullNameController.text = capitalized;
         // Add listener back
         fullNameController.addListener(_capitalizeFullName);
-        
+
         // Move cursor to the end
         fullNameController.selection = TextSelection.fromPosition(
           TextPosition(offset: capitalized.length),
@@ -102,8 +103,7 @@ class UpdateProfileController extends BaseController {
   }
 
   void fetchPersonalDetails() {
-    var service =
-    _repository.sendGetApiNoParamRequest(get_personal_details);
+    var service = _repository.sendGetApiNoParamRequest(get_personal_details);
 
     callDataService(
       service,
@@ -113,8 +113,7 @@ class UpdateProfileController extends BaseController {
     );
   }
 
-  Future<void> _handleGetPersonalDetailsSuccess(
-      dynamic baseResponse) async {
+  Future<void> _handleGetPersonalDetailsSuccess(dynamic baseResponse) async {
     try {
       Map<String, dynamic> responseData;
       if (baseResponse != null && baseResponse.data != null) {
@@ -131,7 +130,7 @@ class UpdateProfileController extends BaseController {
 
       if (success == true && responseData['data'] != null) {
         Map<String, dynamic> data =
-        responseData['data'] as Map<String, dynamic>;
+            responseData['data'] as Map<String, dynamic>;
 
         bool isSocialLogin =
             _storageService.readBool(SharePreferenceConst.isSocialLogin) ??
@@ -141,9 +140,9 @@ class UpdateProfileController extends BaseController {
             data['full_name'].toString().isNotEmpty) {
           fullNameController.text = data['full_name'].toString();
         } else if (isSocialLogin) {
-          String socialFullName = _storageService
-              .readString(SharePreferenceConst.socialFullName) ??
-              '';
+          String socialFullName =
+              _storageService.readString(SharePreferenceConst.socialFullName) ??
+                  '';
           if (socialFullName.isNotEmpty) {
             fullNameController.text = socialFullName;
           }
@@ -155,7 +154,7 @@ class UpdateProfileController extends BaseController {
             DateTime dobDate = DateTime.parse(dobString);
             selectedDob.value = dobDate;
             dobController.text =
-            '${dobDate.day.toString().padLeft(2, '0')}/${dobDate.month.toString().padLeft(2, '0')}/${dobDate.year}';
+                '${dobDate.day.toString().padLeft(2, '0')}/${dobDate.month.toString().padLeft(2, '0')}/${dobDate.year}';
           } catch (e) {
             print('Error parsing DOB: $e');
           }
@@ -175,9 +174,9 @@ class UpdateProfileController extends BaseController {
 
         if (data['opt_status'] != null) {
           selectedMarketingPreference.value =
-          (data['opt_status'] == 1 || data['opt_status'] == true)
-              ? 'Opted In'
-              : 'Opted Out';
+              (data['opt_status'] == 1 || data['opt_status'] == true)
+                  ? 'Opted In'
+                  : 'Opted Out';
         }
 
         if (data['postcode'] != null) {
@@ -210,7 +209,7 @@ class UpdateProfileController extends BaseController {
           isProfilePictureRemoved.value = false;
         } else if (isSocialLogin) {
           String socialProfilePicture = _storageService
-              .readString(SharePreferenceConst.socialProfilePicture) ??
+                  .readString(SharePreferenceConst.socialProfilePicture) ??
               '';
           if (socialProfilePicture.isNotEmpty) {
             profileImageUrl.value = socialProfilePicture;
@@ -220,10 +219,10 @@ class UpdateProfileController extends BaseController {
           isProfilePictureRemoved.value = false;
         }
       }
-      
+
       // Initialize map with profile coordinates if available
       initializeMapWithProfileData();
-      
+
       isDataLoading.value = false;
     } catch (e) {
       isDataLoading.value = false;
@@ -240,17 +239,18 @@ class UpdateProfileController extends BaseController {
   /// Initialize map with profile coordinates if available, otherwise get current location
   Future<void> initializeMapWithProfileData() async {
     try {
-      debugPrint('Profile coordinates: lat=${selectedLatitude.value}, lng=${selectedLongitude.value}');
-      
+      debugPrint(
+          'Profile coordinates: lat=${selectedLatitude.value}, lng=${selectedLongitude.value}');
+
       // Check if profile has valid latitude and longitude
-      if (selectedLatitude.value != null && 
+      if (selectedLatitude.value != null &&
           selectedLongitude.value != null &&
           selectedLatitude.value != 0.0 &&
           selectedLongitude.value != 0.0) {
-        
         // Use profile coordinates
-        debugPrint('Using profile coordinates: ${selectedLatitude.value}, ${selectedLongitude.value}');
-        
+        debugPrint(
+            'Using profile coordinates: ${selectedLatitude.value}, ${selectedLongitude.value}');
+
         // Reverse geocode to get address and postcode for profile coordinates
         await reverseGeocodeAndFillFields(
           selectedLatitude.value!,
@@ -282,7 +282,7 @@ class UpdateProfileController extends BaseController {
     if (!RegExp(r'^\d{2}/\d{2}/\d{4}$').hasMatch(value)) {
       return 'Please enter date in DD/MM/YYYY format';
     }
-    
+
     // Check if user is 18+ years old
     if (selectedDob.value == null) {
       // Parse date from controller if selectedDob is not set
@@ -298,20 +298,21 @@ class UpdateProfileController extends BaseController {
         return 'Invalid date format';
       }
     }
-    
+
     if (selectedDob.value != null) {
       final now = DateTime.now();
       final age = now.year - selectedDob.value!.year;
       final monthDiff = now.month - selectedDob.value!.month;
       final dayDiff = now.day - selectedDob.value!.day;
-      
-      final actualAge = monthDiff < 0 || (monthDiff == 0 && dayDiff < 0) ? age - 1 : age;
-      
+
+      final actualAge =
+          monthDiff < 0 || (monthDiff == 0 && dayDiff < 0) ? age - 1 : age;
+
       if (actualAge < 18) {
         return 'You must be 18 years old to use this app.';
       }
     }
-    
+
     return null;
   }
 
@@ -343,9 +344,9 @@ class UpdateProfileController extends BaseController {
   Future<void> selectDateOfBirth(BuildContext context) async {
     // Use selected DOB if available, otherwise use current date minus 18 years
     final now = DateTime.now();
-    final DateTime initialDate = selectedDob.value ?? 
-       DateTime(now.year, now.month, now.day); // 18 years ago
-    
+    final DateTime initialDate = selectedDob.value ??
+        DateTime(now.year, now.month, now.day); // 18 years ago
+
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: initialDate,
@@ -369,7 +370,7 @@ class UpdateProfileController extends BaseController {
     if (picked != null) {
       selectedDob.value = picked;
       dobController.text =
-      '${picked.day.toString().padLeft(2, '0')}/${picked.month.toString().padLeft(2, '0')}/${picked.year}';
+          '${picked.day.toString().padLeft(2, '0')}/${picked.month.toString().padLeft(2, '0')}/${picked.year}';
       // Trigger validation to show age error immediately if needed
       formKey.currentState?.validate();
     }
@@ -448,8 +449,7 @@ class UpdateProfileController extends BaseController {
               return ListTile(
                 contentPadding: EdgeInsets.zero,
                 title: Text(option, style: TextStyle(fontSize: 16)),
-                trailing: Obx(() =>
-                selectedMarketingPreference.value == option
+                trailing: Obx(() => selectedMarketingPreference.value == option
                     ? Icon(Icons.check, color: AppColors.primaryColor)
                     : SizedBox.shrink()),
                 onTap: () => setMarketingPreference(option),
@@ -510,7 +510,8 @@ class UpdateProfileController extends BaseController {
     // Prepare arguments with current coordinates if available
     final Map<String, dynamic> arguments = {};
 
-    debugPrint('Current coordinates in UpdateProfile: lat=${selectedLatitude.value}, lng=${selectedLongitude.value}');
+    debugPrint(
+        'Current coordinates in UpdateProfile: lat=${selectedLatitude.value}, lng=${selectedLongitude.value}');
 
     if (selectedLatitude.value != null &&
         selectedLongitude.value != null &&
@@ -528,9 +529,9 @@ class UpdateProfileController extends BaseController {
       arguments['existingAddress'] = selectedAddress.value;
       debugPrint('Passing existing address to map: ${selectedAddress.value}');
     }
-    
+
     final result = await Get.to(
-          () => SelectAddressMapView(),
+      () => SelectAddressMapView(),
       arguments: arguments.isNotEmpty ? arguments : null,
       binding: SelectAddressMapBinding(),
     );
@@ -682,7 +683,7 @@ class UpdateProfileController extends BaseController {
 
     try {
       final bool hasPermission =
-      await _cameraStoragePermissionService.requestCameraPermission();
+          await _cameraStoragePermissionService.requestCameraPermission();
       if (!hasPermission) return;
 
       final XFile? image = await _picker.pickImage(
@@ -769,8 +770,7 @@ class UpdateProfileController extends BaseController {
                 takePhoto();
               },
             ),
-            if (profileImage.value != null ||
-                profileImageUrl.value.isNotEmpty)
+            if (profileImage.value != null || profileImageUrl.value.isNotEmpty)
               ListTile(
                 leading: Icon(Icons.delete, color: Colors.red),
                 title: Text('Remove photo'),
@@ -822,7 +822,7 @@ class UpdateProfileController extends BaseController {
       data['latitude'] = latitude.value;
       data['longitude'] = longitude.value;
       data['opt_status'] =
-      selectedMarketingPreference.value == 'Opted In' ? 1 : 0;
+          selectedMarketingPreference.value == 'Opted In' ? 1 : 0;
       data['is_term_condition'] = true;
       data['is_update'] = true;
 

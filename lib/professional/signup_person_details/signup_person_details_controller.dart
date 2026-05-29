@@ -69,7 +69,7 @@ class SignupPersonDetailsController extends BaseController {
         Get.isRegistered<StorageService>() ? Get.find<StorageService>() : null;
     _populateSocialDefaults();
     // Get current location and auto-fill address and postcode
-    _getCurrentLocationAndFillAddress();
+    // _getCurrentLocationAndFillAddress();
   }
 
   @override
@@ -299,22 +299,23 @@ class SignupPersonDetailsController extends BaseController {
     if (value == null || value.trim().isEmpty) {
       return 'Please enter your date of birth';
     }
-    
+
     if (selectedDob.value == null) {
       return null; // Will be validated by date picker
     }
-    
+
     final now = DateTime.now();
     final age = now.year - selectedDob.value!.year;
     final monthDiff = now.month - selectedDob.value!.month;
     final dayDiff = now.day - selectedDob.value!.day;
-    
-    final actualAge = monthDiff < 0 || (monthDiff == 0 && dayDiff < 0) ? age - 1 : age;
-    
+
+    final actualAge =
+        monthDiff < 0 || (monthDiff == 0 && dayDiff < 0) ? age - 1 : age;
+
     if (actualAge < 18) {
       return 'You must be 18 years old to use this app.';
     }
-    
+
     return null;
   }
 
@@ -726,13 +727,16 @@ class SignupPersonDetailsController extends BaseController {
   /// Navigate to map screen to select address
   Future<void> navigateToMapScreen() async {
     // Prepare arguments for map screen
-    final Map<String, dynamic> arguments = {'hideSelectButton': true}; // Hide Select Address button initially
+    final Map<String, dynamic> arguments = {
+      'hideSelectButton': true
+    }; // Hide Select Address button initially
 
     // If we have existing coordinates, pass them to map
     if (selectedLatitude.value != null && selectedLongitude.value != null) {
       arguments['latitude'] = selectedLatitude.value;
       arguments['longitude'] = selectedLongitude.value;
-      debugPrint('Passing existing coordinates to map: lat=${selectedLatitude.value}, lng=${selectedLongitude.value}');
+      debugPrint(
+          'Passing existing coordinates to map: lat=${selectedLatitude.value}, lng=${selectedLongitude.value}');
     }
 
     // If we have existing address, pass it to map
@@ -741,7 +745,8 @@ class SignupPersonDetailsController extends BaseController {
       debugPrint('Passing existing address to map: ${addressController.text}');
     }
 
-    final result = await Get.toNamed(Routes.selectAddressMap, arguments: arguments);
+    final result =
+        await Get.toNamed(Routes.selectAddressMap, arguments: arguments);
     if (result != null && result is Map<String, dynamic>) {
       selectedLatitude.value = result['latitude'] as double?;
       selectedLongitude.value = result['longitude'] as double?;
@@ -754,6 +759,4 @@ class SignupPersonDetailsController extends BaseController {
       }
     }
   }
-
-
 }
