@@ -37,7 +37,7 @@ import '../../theme/hight_width_sizes.dart';
 class SignupProfileWizardController extends BaseController {
   final UserApiService _userApiService;
   final StorageService? _storageService =
-  Get.isRegistered<StorageService>() ? Get.find<StorageService>() : null;
+      Get.isRegistered<StorageService>() ? Get.find<StorageService>() : null;
   final pageController = PageController();
   final currentStep = 0.obs;
   int initialStep = 0; // Track the initial step when wizard was opened
@@ -76,10 +76,10 @@ class SignupProfileWizardController extends BaseController {
       <String, String>{}.obs; // Maps sub-type name to _id
   final selectedProfessionType = Rxn<String>();
   final selectedProfessionTypeId =
-  Rxn<String>(); // Store the _id of selected profession type
+      Rxn<String>(); // Store the _id of selected profession type
   final selectedProfessionSubType = Rxn<String>();
   final selectedProfessionSubTypeId =
-  Rxn<String>(); // Store the _id of selected profession sub-type
+      Rxn<String>(); // Store the _id of selected profession sub-type
   final isLoadingProfessionTypes = false.obs;
   final isLoadingProfessionSubTypes = false.obs;
 
@@ -101,9 +101,9 @@ class SignupProfileWizardController extends BaseController {
   final fullAddressId = Rxn<String>();
   final workAddressId = Rxn<String>();
   final LocationPermissionService _locationPermissionService =
-  LocationPermissionService();
+      LocationPermissionService();
   final CameraStoragePermissionService _cameraStoragePermissionService =
-  CameraStoragePermissionService();
+      CameraStoragePermissionService();
   final ImagePicker _imagePicker = ImagePicker();
 
   // Step 3 - Services
@@ -137,7 +137,7 @@ class SignupProfileWizardController extends BaseController {
   final idTypeController = TextEditingController(text: 'Passport');
   final idExpiryController = TextEditingController();
   final idUploadController =
-  TextEditingController(text: 'Upload file (PDF or Image)');
+      TextEditingController(text: 'Upload file (PDF or Image)');
   final confirmRightToWork = false.obs;
   final selectedIdType = ''.obs;
   final idTypes = ['Passport', 'Driving license'];
@@ -182,7 +182,8 @@ class SignupProfileWizardController extends BaseController {
     final initialDob = args['dob'] as String?;
     final initialGender = args['gender'] as String?;
     final initialProfileImagePath = args['profileImagePath'] as String?;
-    final initialSocialProfileImageUrl = args['socialProfileImageUrl'] as String?;
+    final initialSocialProfileImageUrl =
+        args['socialProfileImageUrl'] as String?;
 
     if (initialFullName != null && initialFullName.isNotEmpty) {
       fullNameController.text = initialFullName;
@@ -566,17 +567,17 @@ class SignupProfileWizardController extends BaseController {
     debugPrint('_loadStepData called for step: $step');
     switch (step) {
       case 0:
-      // Step 0: Create Profile
+        // Step 0: Create Profile
         debugPrint('Loading step 0: Create Profile');
         _loadCreateProfileDetails();
         break;
       case 1:
-      // Step 1: Add Address
+        // Step 1: Add Address
         debugPrint('Loading step 1: Add Address');
         _loadCreateAddressDetails();
         break;
       case 2:
-      // Step 2: Services
+        // Step 2: Services
         debugPrint('Loading step 2: Services');
         debugPrint(
             'Services count: ${services.length}, isLoading: ${isLoadingServices.value}');
@@ -588,8 +589,8 @@ class SignupProfileWizardController extends BaseController {
         // Note: _loadProfessionServices() is called in _loadServices() onComplete callback
         break;
       case 3:
-      // Step 3: Qualifications
-      // Load colleges first, then qualifications (so IDs can be matched)
+        // Step 3: Qualifications
+        // Load colleges first, then qualifications (so IDs can be matched)
         _loadCollegesUniversities().then((_) {
           // Wait a bit for colleges to be fully processed
           Future.delayed(const Duration(milliseconds: 100), () {
@@ -598,11 +599,11 @@ class SignupProfileWizardController extends BaseController {
         });
         break;
       case 4:
-      // Step 4: Identification
+        // Step 4: Identification
         _loadPersonalIdentificationDetails();
         break;
       case 5:
-      // Step 5: About You
+        // Step 5: About You
         _loadAboutYouDetails();
         break;
       default:
@@ -631,7 +632,7 @@ class SignupProfileWizardController extends BaseController {
                   if (professionType.id != null &&
                       professionType.type != null) {
                     professionTypesMap[professionType.type!] =
-                    professionType.id!;
+                        professionType.id!;
                     types.add(professionType.type!);
                   }
                 }
@@ -653,7 +654,7 @@ class SignupProfileWizardController extends BaseController {
                     if (professionType.id != null &&
                         professionType.type != null) {
                       professionTypesMap[professionType.type!] =
-                      professionType.id!;
+                          professionType.id!;
                       types.add(professionType.type!);
                     }
                   }
@@ -684,7 +685,8 @@ class SignupProfileWizardController extends BaseController {
     if (fullNameController.text.isNotEmpty &&
         dobController.text.isNotEmpty &&
         selectedGender.value.isNotEmpty) {
-      debugPrint('Profile details already set from arguments, skipping initial API call');
+      debugPrint(
+          'Profile details already set from arguments, skipping initial API call');
       return;
     }
 
@@ -744,10 +746,10 @@ class SignupProfileWizardController extends BaseController {
                   profileDetails.gender!.isNotEmpty) {
                 // Convert API format to display format
                 final displayGender =
-                _convertGenderFromApiFormat(profileDetails.gender!);
+                    _convertGenderFromApiFormat(profileDetails.gender!);
                 // Try to match with dropdown items
                 final matchedGender = genders.firstWhere(
-                      (g) => g.toLowerCase() == displayGender.toLowerCase(),
+                  (g) => g.toLowerCase() == displayGender.toLowerCase(),
                   orElse: () => displayGender,
                 );
                 selectedGender.value = matchedGender;
@@ -761,7 +763,7 @@ class SignupProfileWizardController extends BaseController {
                 // Find profession type name by ID
                 try {
                   final matchingType = professionTypesMap.entries.firstWhere(
-                        (entry) => entry.value == professionTypeId,
+                    (entry) => entry.value == professionTypeId,
                   );
                   selectedProfessionType.value = matchingType.key;
                   selectedProfessionTypeId.value = professionTypeId;
@@ -772,7 +774,7 @@ class SignupProfileWizardController extends BaseController {
                     if (profileDetails.professionSubTypeId != null &&
                         profileDetails.professionSubTypeId!.isNotEmpty) {
                       final professionSubTypeId =
-                      profileDetails.professionSubTypeId!;
+                          profileDetails.professionSubTypeId!;
 
                       // Store profession_sub_type_id for use in step 2
                       professionSubTypeIdFromResponse.value =
@@ -783,8 +785,8 @@ class SignupProfileWizardController extends BaseController {
                       // Find profession sub-type name by ID
                       try {
                         final matchingSubType =
-                        professionSubTypesMap.entries.firstWhere(
-                              (entry) => entry.value == professionSubTypeId,
+                            professionSubTypesMap.entries.firstWhere(
+                          (entry) => entry.value == professionSubTypeId,
                         );
                         selectedProfessionSubType.value = matchingSubType.key;
                         selectedProfessionSubTypeId.value = professionSubTypeId;
@@ -814,7 +816,8 @@ class SignupProfileWizardController extends BaseController {
     // If address is already set (e.g. passed from arguments), skip initial API call
     if (postcodeController.text.isNotEmpty &&
         addressController.text.isNotEmpty) {
-      debugPrint('Address already set from arguments, skipping initial API call');
+      debugPrint(
+          'Address already set from arguments, skipping initial API call');
       return;
     }
 
@@ -875,27 +878,27 @@ class SignupProfileWizardController extends BaseController {
 
               // If address data exists, don't get current location
               // Otherwise, fallback to getting current location
-              if (addressDetails.postcode == null ||
-                  addressDetails.postcode!.isEmpty ||
-                  addressDetails.address == null ||
-                  addressDetails.address!.isEmpty) {
-                _getCurrentLocationAndFillAddress();
-              }
+              // if (addressDetails.postcode == null ||
+              //     addressDetails.postcode!.isEmpty ||
+              //     addressDetails.address == null ||
+              //     addressDetails.address!.isEmpty) {
+              //   _getCurrentLocationAndFillAddress();
+              // }
             }
           } catch (e) {
             // Handle parsing errors
             print('Error parsing create address details: $e');
             // Fallback to getting current location if parsing fails
-            _getCurrentLocationAndFillAddress();
+            // _getCurrentLocationAndFillAddress();
           }
         } else {
           // If no data, get current location
-          _getCurrentLocationAndFillAddress();
+          // _getCurrentLocationAndFillAddress();
         }
       },
       onError: (error, stackTrace) {
         // On error, fallback to getting current location
-        _getCurrentLocationAndFillAddress();
+        // _getCurrentLocationAndFillAddress();
       },
     );
   }
@@ -927,11 +930,11 @@ class SignupProfileWizardController extends BaseController {
               try {
                 if (item is Map<String, dynamic>) {
                   final professionSubType =
-                  ProfessionSubTypeModel.fromJson(item);
+                      ProfessionSubTypeModel.fromJson(item);
                   if (professionSubType.subType != null &&
                       professionSubType.id != null) {
                     professionSubTypesMap[professionSubType.subType!] =
-                    professionSubType.id!;
+                        professionSubType.id!;
                     subTypes.add(professionSubType.subType!);
                   }
                 }
@@ -950,11 +953,11 @@ class SignupProfileWizardController extends BaseController {
                 try {
                   if (item is Map<String, dynamic>) {
                     final professionSubType =
-                    ProfessionSubTypeModel.fromJson(item);
+                        ProfessionSubTypeModel.fromJson(item);
                     if (professionSubType.subType != null &&
                         professionSubType.id != null) {
                       professionSubTypesMap[professionSubType.subType!] =
-                      professionSubType.id!;
+                          professionSubType.id!;
                       subTypes.add(professionSubType.subType!);
                     }
                   }
@@ -1143,44 +1146,46 @@ class SignupProfileWizardController extends BaseController {
             if (data != null) {
               final profile = ProfileDetailsModel.fromJson(data);
               // if (isFromSignup) {
-                final resolvedPersona = AnalyticsService.resolvePersona(
-                  professionName: profile.profession_name,
-                );
-                final resolvedCity = await getCityFromAddress(profile.address.toString());
-                final regType = profile.registrationType?.toString() ?? 'email';
-                final analyticsRegType = (regType == 'google' || regType == 'facebook')
-                    ? 'google'
-                    : (regType == 'apple' ? 'apple' : 'regular');
+              final resolvedPersona = AnalyticsService.resolvePersona(
+                professionName: profile.profession_name,
+              );
+              final resolvedCity =
+                  await getCityFromAddress(profile.address.toString());
+              final regType = profile.registrationType?.toString() ?? 'email';
+              final analyticsRegType =
+                  (regType == 'google' || regType == 'facebook')
+                      ? 'google'
+                      : (regType == 'apple' ? 'apple' : 'regular');
 
-                await AnalyticsService.instance.setUserProfile(
-                  loginState: 'logged_in',
-                  userId: profile.id,
-                  city: resolvedCity,
-                  persona: resolvedPersona,
-                  plan: '',
-                  registrationType: analyticsRegType,
-                );
+              await AnalyticsService.instance.setUserProfile(
+                loginState: 'logged_in',
+                userId: profile.id,
+                city: resolvedCity,
+                persona: resolvedPersona,
+                plan: '',
+                registrationType: analyticsRegType,
+              );
 
               Get.offAllNamed(Routes.home);
 
-                // Log subscription purchase event
-                // final planPeriod = _getTimePeriodFromPlan(selectedtitle.value);
-                // await AnalyticsService.instance.logPurchaseEvent(
-                //   item: AnalyticsService.instance.buildItem(
-                //     itemId: selectedPlanId.value.isNotEmpty ? selectedPlanId.value : 'unknown',
-                //     itemName: selectedtitle.value.isNotEmpty ? selectedtitle.value : 'subscription',
-                //     itemCategory: resolvedPersona,
-                //     itemVariant: planPeriod,
-                //     itemBrand: 'verithrive',
-                //     price: 0.0,
-                //     quantity: 1,
-                //   ),
-                //   transactionId: selectedPlanId.value.isNotEmpty
-                //       ? '${selectedPlanId.value}_${DateTime.now().millisecondsSinceEpoch}'
-                //       : DateTime.now().millisecondsSinceEpoch.toString(),
-                //   value: 0.0,
-                //   currency: 'GBP',
-                // );
+              // Log subscription purchase event
+              // final planPeriod = _getTimePeriodFromPlan(selectedtitle.value);
+              // await AnalyticsService.instance.logPurchaseEvent(
+              //   item: AnalyticsService.instance.buildItem(
+              //     itemId: selectedPlanId.value.isNotEmpty ? selectedPlanId.value : 'unknown',
+              //     itemName: selectedtitle.value.isNotEmpty ? selectedtitle.value : 'subscription',
+              //     itemCategory: resolvedPersona,
+              //     itemVariant: planPeriod,
+              //     itemBrand: 'verithrive',
+              //     price: 0.0,
+              //     quantity: 1,
+              //   ),
+              //   transactionId: selectedPlanId.value.isNotEmpty
+              //       ? '${selectedPlanId.value}_${DateTime.now().millisecondsSinceEpoch}'
+              //       : DateTime.now().millisecondsSinceEpoch.toString(),
+              //   value: 0.0,
+              //   currency: 'GBP',
+              // );
 
               // } else {
               //   await AnalyticsService.instance.setUserProfile(
@@ -1214,7 +1219,10 @@ class SignupProfileWizardController extends BaseController {
         double lng = locations.first.longitude;
         List<Placemark> placemarks = await placemarkFromCoordinates(lat, lng);
         if (placemarks.isNotEmpty) {
-          return (placemarks.first.locality ?? placemarks.first.subAdministrativeArea ?? '').toLowerCase();
+          return (placemarks.first.locality ??
+                  placemarks.first.subAdministrativeArea ??
+                  '')
+              .toLowerCase();
         }
       }
     } catch (e) {
@@ -1222,7 +1230,6 @@ class SignupProfileWizardController extends BaseController {
     }
     return null;
   }
-
 
   /// Create profile API call (Step 0)
   /// This API creates the user profile and returns profession_sub_type in response
@@ -1291,7 +1298,7 @@ class SignupProfileWizardController extends BaseController {
     try {
       final dobDate = selectedDob.value!;
       formattedDob =
-      '${dobDate.year}-${dobDate.month.toString().padLeft(2, '0')}-${dobDate.day.toString().padLeft(2, '0')}';
+          '${dobDate.year}-${dobDate.month.toString().padLeft(2, '0')}-${dobDate.day.toString().padLeft(2, '0')}';
     } catch (e) {
       // Try parsing from dd/MM/yyyy format if selectedDob is null
       try {
@@ -1301,7 +1308,7 @@ class SignupProfileWizardController extends BaseController {
           final month = int.parse(parts[1]);
           final year = int.parse(parts[2]);
           formattedDob =
-          '$year-${month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}';
+              '$year-${month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}';
         } else {
           throw Exception('Invalid date format');
         }
@@ -1449,10 +1456,10 @@ class SignupProfileWizardController extends BaseController {
       // Fallback to current location if selected coordinates are not available
       try {
         bool hasPermission =
-        await _locationPermissionService.checkLocationPermissionStatus();
+            await _locationPermissionService.checkLocationPermissionStatus();
         if (!hasPermission) {
           hasPermission =
-          await _locationPermissionService.requestLocationPermission();
+              await _locationPermissionService.requestLocationPermission();
         }
 
         if (hasPermission) {
@@ -1461,7 +1468,7 @@ class SignupProfileWizardController extends BaseController {
           ).timeout(
             const Duration(seconds: 10),
             onTimeout: () =>
-            throw TimeoutException('Location request timed out'),
+                throw TimeoutException('Location request timed out'),
           );
           latitude = position.latitude;
           longitude = position.longitude;
@@ -1676,7 +1683,6 @@ class SignupProfileWizardController extends BaseController {
         if (response.success) {
           // Analytics: Log professional wizard completion
 
-
           // Extract and save user flags from response (same as login controller)
           final storage = _storageService;
           if (response.data is Map<String, dynamic>) {
@@ -1886,9 +1892,9 @@ class SignupProfileWizardController extends BaseController {
   }
 
   Future<void> pickDate(
-      BuildContext context,
-      TextEditingController target,
-      ) async {
+    BuildContext context,
+    TextEditingController target,
+  ) async {
     final now = DateTime.now();
     final picked = await showDatePicker(
       context: context,
@@ -1904,10 +1910,10 @@ class SignupProfileWizardController extends BaseController {
   }
 
   Future<void> pickIdExpiryDate(
-      BuildContext context,
-      TextEditingController target, {
-        int? qualificationIndex,
-      }) async {
+    BuildContext context,
+    TextEditingController target, {
+    int? qualificationIndex,
+  }) async {
     final now = DateTime.now();
     // Set initial date to tomorrow to ensure it's always a future date
     final initialDate = now.add(const Duration(days: 1));
@@ -2056,14 +2062,14 @@ class SignupProfileWizardController extends BaseController {
     item.schoolController.text = value;
     // Check if the text matches any college/university
     final matchedCollege = collegesUniversities.firstWhereOrNull(
-          (college) => college.toLowerCase() == value.toLowerCase(),
+      (college) => college.toLowerCase() == value.toLowerCase(),
     );
 
     if (matchedCollege != null) {
       // Exact match found
       item.selectedCollegeUniversity = matchedCollege;
       item.selectedCollegeUniversityId =
-      collegesUniversitiesMap[matchedCollege];
+          collegesUniversitiesMap[matchedCollege];
     } else {
       // Custom text - no match
       item.selectedCollegeUniversity = value.isNotEmpty ? value : null;
@@ -2151,7 +2157,7 @@ class SignupProfileWizardController extends BaseController {
       final school = qualification.schoolController.text.trim();
       final degree = qualification.degreeController.text.trim();
       final expiryText =
-      qualification.qualificationExpiryController.text.trim();
+          qualification.qualificationExpiryController.text.trim();
 
       debugPrint('--- Processing Qualification[$i] ---');
       debugPrint('School: $school');
@@ -2178,7 +2184,7 @@ class SignupProfileWizardController extends BaseController {
             final month = int.parse(parts[1]);
             final year = int.parse(parts[2]);
             formattedExpiryDate =
-            '$year-${month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}';
+                '$year-${month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}';
             debugPrint('Formatted Expiry Date: $formattedExpiryDate');
           }
         } catch (e) {
@@ -2277,7 +2283,6 @@ class SignupProfileWizardController extends BaseController {
         debugPrint('Error Message: ${response.errorMessage}');
         if (response.success) {
           // Analytics: Log professional wizard completion
-
 
           // Extract and save user flags from response (same as login controller)
           final storage = _storageService;
@@ -2396,7 +2401,7 @@ class SignupProfileWizardController extends BaseController {
         final month = int.parse(parts[1]);
         final year = int.parse(parts[2]);
         formattedExpiryDate =
-        '$year-${month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}';
+            '$year-${month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}';
         debugPrint('Formatted Expiry Date: $formattedExpiryDate');
       } else {
         showResponseDialog(
@@ -2440,7 +2445,7 @@ class SignupProfileWizardController extends BaseController {
           showResponseDialog(
             title: 'Error',
             message:
-            'Failed to download existing document. Please upload a new document.',
+                'Failed to download existing document. Please upload a new document.',
             isError: true,
             showButton: true,
           );
@@ -2453,7 +2458,7 @@ class SignupProfileWizardController extends BaseController {
         showResponseDialog(
           title: 'Error',
           message:
-          'Failed to download existing document. Please upload a new document.',
+              'Failed to download existing document. Please upload a new document.',
           isError: true,
           showButton: true,
         );
@@ -2563,7 +2568,6 @@ class SignupProfileWizardController extends BaseController {
 
     debugPrint('Description: $description');
 
-
     await callDataService<ApiResponse<dynamic>>(
       _userApiService.saveAboutYou(
         description: description,
@@ -2653,10 +2657,10 @@ class SignupProfileWizardController extends BaseController {
 
   /// Show file picker dialog to choose between image or PDF
   Future<void> pickCertificateFile(
-      BuildContext context,
-      QualificationItem qualification,
-      int index,
-      ) async {
+    BuildContext context,
+    QualificationItem qualification,
+    int index,
+  ) async {
     try {
       final source = await showModalBottomSheet<FilePickerSource>(
         context: context,
@@ -2687,7 +2691,7 @@ class SignupProfileWizardController extends BaseController {
                 ),
                 ListTile(
                   leading:
-                  const Icon(Icons.image, color: AppColor.color_2D2D2D),
+                      const Icon(Icons.image, color: AppColor.color_2D2D2D),
                   title: Text(
                     'Image',
                     style: TextStyle(
@@ -2813,7 +2817,8 @@ class SignupProfileWizardController extends BaseController {
   }
 
   /// Process the selected file (common logic for both platforms)
-  Future<void> _processSelectedFile(XFile pickedFile, QualificationItem qualification, int index) async {
+  Future<void> _processSelectedFile(
+      XFile pickedFile, QualificationItem qualification, int index) async {
     final file = File(pickedFile.path);
     final fileSize = await file.length();
     const maxSize = 5 * 1024 * 1024; // 5MB
@@ -2841,7 +2846,7 @@ class SignupProfileWizardController extends BaseController {
   Future<void> _pickPDF(QualificationItem qualification, int index) async {
     try {
       final hasPermissions =
-      await _cameraStoragePermissionService.requestStoragePermission();
+          await _cameraStoragePermissionService.requestStoragePermission();
       if (!hasPermissions) {
         return;
       }
@@ -2916,7 +2921,7 @@ class SignupProfileWizardController extends BaseController {
                 ),
                 ListTile(
                   leading:
-                  const Icon(Icons.image, color: AppColor.color_2D2D2D),
+                      const Icon(Icons.image, color: AppColor.color_2D2D2D),
                   title: Text(
                     'Image',
                     style: TextStyle(
@@ -3145,7 +3150,6 @@ class SignupProfileWizardController extends BaseController {
     }
   }
 
-
   // /// Pick ID PDF file
   // Future<void> _pickIdPDF() async {
   //   try {
@@ -3194,12 +3198,12 @@ class SignupProfileWizardController extends BaseController {
     try {
       // First check if permission is already granted
       bool hasPermission =
-      await _locationPermissionService.checkLocationPermissionStatus();
+          await _locationPermissionService.checkLocationPermissionStatus();
 
       // If not granted, request permission
       if (!hasPermission) {
         hasPermission =
-        await _locationPermissionService.requestLocationPermission();
+            await _locationPermissionService.requestLocationPermission();
       }
 
       if (!hasPermission) {
@@ -3253,9 +3257,9 @@ class SignupProfileWizardController extends BaseController {
 
   /// Reverse geocode coordinates and fill address and postcode fields
   Future<void> _reverseGeocodeAndFillFields(
-      double latitude,
-      double longitude,
-      ) async {
+    double latitude,
+    double longitude,
+  ) async {
     try {
       final placemarks = await placemarkFromCoordinates(latitude, longitude);
 
@@ -3297,13 +3301,16 @@ class SignupProfileWizardController extends BaseController {
   /// Navigate to map screen to select address
   Future<void> navigateToMapScreen() async {
     // Prepare arguments for map screen
-    final Map<String, dynamic> arguments = {'hideSelectButton': true}; // Hide Select Address button initially
+    final Map<String, dynamic> arguments = {
+      'hideSelectButton': true
+    }; // Hide Select Address button initially
 
     // If we have existing coordinates, pass them to map
     if (selectedLatitude.value != null && selectedLongitude.value != null) {
       arguments['latitude'] = selectedLatitude.value;
       arguments['longitude'] = selectedLongitude.value;
-      debugPrint('Passing existing coordinates to map: lat=${selectedLatitude.value}, lng=${selectedLongitude.value}');
+      debugPrint(
+          'Passing existing coordinates to map: lat=${selectedLatitude.value}, lng=${selectedLongitude.value}');
     }
 
     // If we have existing address, pass it to map
@@ -3312,7 +3319,8 @@ class SignupProfileWizardController extends BaseController {
       debugPrint('Passing existing address to map: ${addressController.text}');
     }
 
-    final result = await Get.toNamed(Routes.selectAddressMap, arguments: arguments);
+    final result =
+        await Get.toNamed(Routes.selectAddressMap, arguments: arguments);
     if (result != null && result is Map<String, dynamic>) {
       selectedLatitude.value = result['latitude'] as double?;
       selectedLongitude.value = result['longitude'] as double?;
@@ -3332,12 +3340,14 @@ class SignupProfileWizardController extends BaseController {
   /// Navigate to map screen to select work address
   Future<void> navigateToWorkMapScreen() async {
     // Prepare arguments for map screen
-    final Map<String, dynamic> arguments = {'hideSelectButton': true}; // Hide Select Address button initially
+    final Map<String, dynamic> arguments = {
+      'hideSelectButton': true
+    }; // Hide Select Address button initially
 
-    debugPrint('Current coordinates for work address: lat=${workLatitude.value}, lng=${workLongitude.value}');
+    debugPrint(
+        'Current coordinates for work address: lat=${workLatitude.value}, lng=${workLongitude.value}');
 
-    if (workLatitude.value != null &&
-        workLongitude.value != null) {
+    if (workLatitude.value != null && workLongitude.value != null) {
       arguments['latitude'] = workLatitude.value;
       arguments['longitude'] = workLongitude.value;
       debugPrint('Passing coordinates to map: $arguments');
@@ -3348,10 +3358,12 @@ class SignupProfileWizardController extends BaseController {
     // Pass existing address from API if available
     if (workAddressController.text.isNotEmpty) {
       arguments['existingAddress'] = workAddressController.text;
-      debugPrint('Passing existing address to map: ${workAddressController.text}');
+      debugPrint(
+          'Passing existing address to map: ${workAddressController.text}');
     }
 
-    final result = await Get.toNamed(Routes.selectAddressMap, arguments: arguments.isNotEmpty ? arguments : null);
+    final result = await Get.toNamed(Routes.selectAddressMap,
+        arguments: arguments.isNotEmpty ? arguments : null);
     if (result != null && result is Map<String, dynamic>) {
       workLatitude.value = result['latitude'] as double?;
       workLongitude.value = result['longitude'] as double?;
@@ -3494,7 +3506,7 @@ class SignupProfileWizardController extends BaseController {
       onComplete: () {
         isLoadingServices.value = false;
         hasLoadedServices.value =
-        true; // Mark that services API call has completed
+            true; // Mark that services API call has completed
         resetState(); // Reset pageState to dismiss loader
         debugPrint('Services loaded. Count: ${services.length}');
         // After services are loaded, load selected profession services
@@ -3550,9 +3562,9 @@ class SignupProfileWizardController extends BaseController {
                     if (serviceItem is Map<String, dynamic>) {
                       final serviceId = serviceItem['_id']?.toString();
                       final serviceName =
-                      serviceItem['service_name']?.toString();
+                          serviceItem['service_name']?.toString();
                       final subServicesList =
-                      serviceItem['sub_services'] as List?;
+                          serviceItem['sub_services'] as List?;
 
                       if (serviceId != null && serviceId.isNotEmpty) {
                         // Check if this service has sub-services
@@ -3563,15 +3575,15 @@ class SignupProfileWizardController extends BaseController {
                           final existingSubServiceIds =
                               selectedSubServiceIds[serviceId] ?? <String>[];
                           final subServiceIdList =
-                          existingSubServiceIds.toSet().toList();
+                              existingSubServiceIds.toSet().toList();
 
                           for (final subServiceItem in subServicesList) {
                             if (subServiceItem is Map<String, dynamic>) {
                               final subServiceId =
-                              subServiceItem['_id']?.toString();
+                                  subServiceItem['_id']?.toString();
                               final subServiceName =
-                              subServiceItem['sub_service_name']
-                                  ?.toString();
+                                  subServiceItem['sub_service_name']
+                                      ?.toString();
 
                               if (subServiceId != null &&
                                   subServiceId.isNotEmpty) {
@@ -3690,7 +3702,7 @@ class SignupProfileWizardController extends BaseController {
                     // Load school/university
                     if (qualData['school_or_university'] != null) {
                       final schoolValue =
-                      qualData['school_or_university'].toString();
+                          qualData['school_or_university'].toString();
 
                       // Check if it's an ID (24 character hex string - MongoDB ObjectId format)
                       final isId = schoolValue.length == 24 &&
@@ -3737,7 +3749,7 @@ class SignupProfileWizardController extends BaseController {
                           qualification.selectedCollegeUniversity =
                               matchedCollege;
                           qualification.selectedCollegeUniversityId =
-                          collegesUniversitiesMap[matchedCollege];
+                              collegesUniversitiesMap[matchedCollege];
                         } else {
                           qualification.selectedCollegeUniversity = schoolValue;
                           qualification.selectedCollegeUniversityId = null;
@@ -3792,11 +3804,11 @@ class SignupProfileWizardController extends BaseController {
                                 pathSegments.last;
                           } else {
                             qualification.uploadCertificateController.text =
-                            'Certificate uploaded';
+                                'Certificate uploaded';
                           }
                         } else {
                           qualification.uploadCertificateController.text =
-                          'Certificate uploaded';
+                              'Certificate uploaded';
                         }
                       }
                       debugPrint('Loaded certificate URL: $certUrl');
@@ -4008,7 +4020,7 @@ class SignupProfileWizardController extends BaseController {
               if (identificationsList != null &&
                   identificationsList.isNotEmpty) {
                 final identificationData =
-                identificationsList[0] as Map<String, dynamic>?;
+                    identificationsList[0] as Map<String, dynamic>?;
                 if (identificationData != null) {
                   // Store identification ID for updates
                   if (identificationData['_id'] != null) {
@@ -4021,7 +4033,7 @@ class SignupProfileWizardController extends BaseController {
                   // Load ID type
                   if (identificationData['id_type'] != null) {
                     final idType =
-                    identificationData['id_type'].toString().toLowerCase();
+                        identificationData['id_type'].toString().toLowerCase();
                     // Convert API format to display format
                     if (idType == 'passport') {
                       selectedIdType.value = 'Passport';
@@ -4037,7 +4049,7 @@ class SignupProfileWizardController extends BaseController {
                   // Load expiry date
                   if (identificationData['expiry_date'] != null) {
                     final expiryDate =
-                    identificationData['expiry_date'].toString();
+                        identificationData['expiry_date'].toString();
                     try {
                       // Parse ISO format (yyyy-MM-dd or yyyy-MM-ddTHH:mm:ss.sssZ) to dd/MM/yyyy
                       final date = DateTime.parse(expiryDate);
@@ -4064,7 +4076,7 @@ class SignupProfileWizardController extends BaseController {
                   // Note: This field might not be in the response, check if it exists
                   if (identificationData['confirm_legal_right'] != null) {
                     final confirmRight =
-                    identificationData['confirm_legal_right'];
+                        identificationData['confirm_legal_right'];
                     if (confirmRight is bool) {
                       confirmRightToWork.value = confirmRight;
                     } else if (confirmRight is String) {
@@ -4078,7 +4090,7 @@ class SignupProfileWizardController extends BaseController {
                   // Load document file URL (if available)
                   if (identificationData['document_file'] != null) {
                     final docUrl =
-                    identificationData['document_file'].toString();
+                        identificationData['document_file'].toString();
                     if (docUrl.isNotEmpty) {
                       // Store the document URL
                       idDocumentUrl = docUrl;
@@ -4189,11 +4201,11 @@ class SignupProfileWizardController extends BaseController {
               try {
                 if (item is Map<String, dynamic>) {
                   final collegeUniversity =
-                  CollegeUniversityModel.fromJson(item);
+                      CollegeUniversityModel.fromJson(item);
                   if (collegeUniversity.id != null &&
                       collegeUniversity.name != null) {
                     collegesUniversitiesMap[collegeUniversity.name!] =
-                    collegeUniversity.id!;
+                        collegeUniversity.id!;
                     names.add(collegeUniversity.name!);
                   }
                 }
@@ -4212,11 +4224,11 @@ class SignupProfileWizardController extends BaseController {
                 try {
                   if (item is Map<String, dynamic>) {
                     final collegeUniversity =
-                    CollegeUniversityModel.fromJson(item);
+                        CollegeUniversityModel.fromJson(item);
                     if (collegeUniversity.id != null &&
                         collegeUniversity.name != null) {
                       collegesUniversitiesMap[collegeUniversity.name!] =
-                      collegeUniversity.id!;
+                          collegeUniversity.id!;
                       names.add(collegeUniversity.name!);
                     }
                   }
