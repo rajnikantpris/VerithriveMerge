@@ -25,6 +25,7 @@ class CustomTextField extends StatelessWidget {
   final bool hideLeftBorder;
   final FocusNode? focusNode;
   final Function(String)? onChanged;
+  final GlobalKey<FormFieldState<String>>? formFieldKey;
 
   const CustomTextField({
     Key? key,
@@ -48,11 +49,13 @@ class CustomTextField extends StatelessWidget {
     this.hideLeftBorder = false,
     this.focusNode,
     this.onChanged,
+    this.formFieldKey,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     final textField = TextFormField(
+          key: formFieldKey,
           controller: controller,
           focusNode: focusNode,
           obscureText: isPassword,

@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'dart:async';
 import 'package:flutter/material.dart';
@@ -12,9 +13,14 @@ import 'package:verithrive_dev/enduser/screens/term_condition/TermsView.dart';
 import 'package:verithrive_dev/enduser/utils/common_dialog.dart';
 import 'package:verithrive_dev/enduser/utils/camera_storage_permission_service.dart';
 import 'package:verithrive_dev/enduser/utils/location_permission_service.dart';
+import 'package:verithrive_dev/enduser/core/values/sharePrefrenceConst.dart';
+import 'package:verithrive_dev/services/storage_service.dart';
 
 class ProfileController extends GetxController {
+  StorageService? get _storageService =>
+      Get.isRegistered<StorageService>() ? Get.find<StorageService>() : null;
   final formKey = GlobalKey<FormState>();
+  final dobFieldKey = GlobalKey<FormFieldState<String>>();
 
   final fullNameController = TextEditingController();
   final dobController = TextEditingController();
@@ -49,6 +55,7 @@ class ProfileController extends GetxController {
   // Validation error messages
   final genderError = RxString('');
   final addressError = RxString('');
+  final postcodeError = RxString('');
 
   // Track if user clicked "enter manually" for postcode
   final isManualEntry = false.obs;
@@ -64,35 +71,106 @@ class ProfileController extends GetxController {
     // Get current location and auto-fill address and postcode
     // getCurrentLocationAndFillAddress();
 
-    // Check if social data was passed from login
-    final arguments = Get.arguments as Map<String, dynamic>?;
-    if (arguments != null && arguments!.isNotEmpty) {
-      // Use social data passed from login screen
-      if (arguments!['fullName'] != null &&
-          arguments!['fullName'].toString().isNotEmpty) {
-        fullNameController.text = arguments!['fullName'].toString();
-        print(
-            "Profile screen - Social full name: ${arguments!['fullName'].toString()}");
-      }
+    _applySocialDataFromArguments(Get.arguments as Map<String, dynamic>?);
+    _loadPersistedSocialData();
+    _persistSocialFieldsToStorage();
+  }
 
-      // Set profile image from social data
-      String profilePic = arguments!['profilePicture']?.toString() ?? '';
-      if (profilePic.isEmpty && arguments!['googleProfilePicture'] != null) {
-        profilePic = arguments!['googleProfilePicture'].toString();
+  void _applySocialDataFromArguments(Map<String, dynamic>? arguments) {
+    if (arguments == null || arguments.isEmpty) return;
+
+    final fullName = arguments['fullName']?.toString().trim() ?? '';
+    if (fullName.isNotEmpty) {
+      fullNameController.text = fullName;
+    }
+
+    String profilePic = arguments['profilePicture']?.toString().trim() ?? '';
+    if (profilePic.isEmpty) {
+      profilePic = arguments['googleProfilePicture']?.toString().trim() ?? '';
+    }
+    if (profilePic.isNotEmpty) {
+      profileImageUrl.value = profilePic;
+    }
+
+    if (arguments['profileImageFile'] is File) {
+      profileImage.value = arguments['profileImageFile'] as File;
+    }
+  }
+
+  /// Restore social pre-fill after app restart (splash opens profile without arguments).
+  void _loadPersistedSocialData() {
+    final storage = _storageService;
+    if (storage == null) return;
+
+    if (fullNameController.text.trim().isEmpty) {
+      String fullName =
+          storage.readString(SharePreferenceConst.socialFullName)?.trim() ?? '';
+      if (fullName.isEmpty) {
+        fullName = storage.readString('apple_user_name')?.trim() ?? '';
+      }
+      if (fullName.isEmpty) {
+        fullName = _readFullNameFromStoredUserData(storage);
+      }
+      if (fullName.isNotEmpty) {
+        fullNameController.text = fullName;
+      }
+    }
+
+    if (profileImage.value == null && profileImageUrl.value.isEmpty) {
+      String profilePic = storage
+              .readString(SharePreferenceConst.socialProfilePicture)
+              ?.trim() ??
+          '';
+      if (profilePic.isEmpty) {
+        profilePic = _readProfilePictureFromStoredUserData(storage);
       }
       if (profilePic.isNotEmpty) {
-        // Set network image URL for social login
         profileImageUrl.value = profilePic;
-        print("Profile screen - Social profile picture: $profilePic");
       }
+    }
+  }
 
-      // Store profileImageFile if passed from login
-      if (arguments!['profileImageFile'] != null &&
-          arguments!['profileImageFile'] is File) {
-        profileImage.value = arguments!['profileImageFile'] as File;
-        print(
-            "Profile screen - Received profileImageFile: ${profileImage.value?.path}");
-      }
+  String _readFullNameFromStoredUserData(StorageService storage) {
+    final userDataJson = storage.readString(SharePreferenceConst.userData);
+    if (userDataJson == null || userDataJson.isEmpty) return '';
+    try {
+      final userData = jsonDecode(userDataJson) as Map<String, dynamic>;
+      return userData['full_name']?.toString().trim() ?? '';
+    } catch (_) {
+      return '';
+    }
+  }
+
+  String _readProfilePictureFromStoredUserData(StorageService storage) {
+    final userDataJson = storage.readString(SharePreferenceConst.userData);
+    if (userDataJson == null || userDataJson.isEmpty) return '';
+    try {
+      final userData = jsonDecode(userDataJson) as Map<String, dynamic>;
+      return userData['profile_picture']?.toString().trim() ?? '';
+    } catch (_) {
+      return '';
+    }
+  }
+
+  Future<void> _persistSocialFieldsToStorage() async {
+    final storage = _storageService;
+    if (storage == null) return;
+
+    final isSocialLogin =
+        storage.readBool(SharePreferenceConst.isSocialLogin) ?? false;
+    if (!isSocialLogin) return;
+
+    final fullName = fullNameController.text.trim();
+    if (fullName.isNotEmpty) {
+      await storage.writeString(SharePreferenceConst.socialFullName, fullName);
+    }
+
+    final profilePic = profileImageUrl.value.trim();
+    if (profilePic.isNotEmpty) {
+      await storage.writeString(
+        SharePreferenceConst.socialProfilePicture,
+        profilePic,
+      );
     }
   }
 
@@ -214,6 +292,13 @@ class ProfileController extends GetxController {
     return null;
   }
 
+  String? validatePostcodeField() {
+    final postcode = postcodeController.text.trim().isNotEmpty
+        ? postcodeController.text.trim()
+        : selectedPostcode.value.trim();
+    return validatePostcode(postcode.isEmpty ? null : postcode);
+  }
+
   Future<void> selectDateOfBirth(BuildContext context) async {
     // Use selected DOB if available, otherwise use current date minus 18 years
     final now = DateTime.now();
@@ -244,8 +329,8 @@ class ProfileController extends GetxController {
       selectedDob.value = picked;
       dobController.text =
           '${picked.day.toString().padLeft(2, '0')}/${picked.month.toString().padLeft(2, '0')}/${picked.year}';
-      // Trigger validation to show age error immediately if needed
-      formKey.currentState?.validate();
+      // Validate DOB only — avoid validating other fields (e.g. full name)
+      dobFieldKey.currentState?.validate();
     }
   }
 
@@ -440,23 +525,30 @@ class ProfileController extends GetxController {
     // Clear previous errors
     genderError.value = '';
     addressError.value = '';
+    postcodeError.value = '';
 
-    // Validate form fields
-    if (!formKey.currentState!.validate()) {
-      return;
-    }
+    // Validate all fields so every error is shown on Next
+    final formValid = formKey.currentState!.validate();
 
-    // Validate gender
     final genderValidationError = validateGender();
     if (genderValidationError != null) {
       genderError.value = genderValidationError;
-      return;
     }
 
-    // Validate address
+    final postcodeValidationError = validatePostcodeField();
+    if (postcodeValidationError != null && !isManualEntry.value) {
+      postcodeError.value = postcodeValidationError;
+    }
+
     final addressValidationError = validateAddressField();
     if (addressValidationError != null) {
       addressError.value = addressValidationError;
+    }
+
+    if (!formValid ||
+        genderError.value.isNotEmpty ||
+        postcodeError.value.isNotEmpty ||
+        addressError.value.isNotEmpty) {
       return;
     }
 
@@ -586,6 +678,7 @@ class ProfileController extends GetxController {
         final postcode = result['postcode'] as String;
         postcodeController.text = postcode;
         selectedPostcode.value = postcode;
+        postcodeError.value = '';
       }
     }
   }

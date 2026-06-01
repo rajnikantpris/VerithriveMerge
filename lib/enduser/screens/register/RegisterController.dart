@@ -39,6 +39,9 @@ class RegisterController extends BaseController {
   final isConfirmPasswordVisible = false.obs;
   final isLoading = false.obs;
 
+  String? _pendingSocialDisplayName;
+  String? _pendingSocialProfilePicture;
+
   void togglePasswordVisibility() {
     isPasswordVisible.value = !isPasswordVisible.value;
   }
@@ -247,13 +250,16 @@ class RegisterController extends BaseController {
         return;
       }
 
+      _pendingSocialDisplayName = userInfo['displayName']?.trim();
+      _pendingSocialProfilePicture = userInfo['photoUrl']?.trim();
+
       // For registration, we'll directly proceed to social registration
       await _handleSocialRegistration(
         email: email,
         socialType: 'google',
         socialId: socialId,
-        fullName: userInfo['displayName'],
-        profilePicture: userInfo['photoUrl'],
+        fullName: _pendingSocialDisplayName,
+        profilePicture: _pendingSocialProfilePicture,
       );
     } catch (e) {
       showResponseDialog(
@@ -273,6 +279,8 @@ class RegisterController extends BaseController {
     String? fullName,
     String? profilePicture,
   }) async {
+    await _persistSocialDisplayNameIfNeeded(fullName);
+
     Map<String, dynamic> toJson() {
       final Map<String, dynamic> data = <String, dynamic>{};
       data['email'] = email;
@@ -349,16 +357,22 @@ class RegisterController extends BaseController {
           }
           // Save social login specific data (full_name and profile_picture) from User model
           if (user.isSocialLogin == true) {
-            if (user.fullName != null && user.fullName!.isNotEmpty) {
+            final resolvedFullName = _resolveProfileFullName(user.fullName);
+            if (resolvedFullName.isNotEmpty) {
               await storage.writeString(
-                  SharePreferenceConst.socialFullName, user.fullName!);
+                  SharePreferenceConst.socialFullName, resolvedFullName);
             }
-            // Save profile picture from API
-            if (user.profilePicture != null &&
-                user.profilePicture!.isNotEmpty) {
+            final apiProfilePicture = user.profilePicture?.trim() ?? '';
+            final providerProfilePicture =
+                _pendingSocialProfilePicture?.trim() ?? '';
+            final profilePictureToStore = apiProfilePicture.isNotEmpty
+                ? apiProfilePicture
+                : providerProfilePicture;
+            if (profilePictureToStore.isNotEmpty) {
               await storage.writeString(
-                  SharePreferenceConst.socialProfilePicture,
-                  user.profilePicture!);
+                SharePreferenceConst.socialProfilePicture,
+                profilePictureToStore,
+              );
             }
           }
           if (user.mobileNumber != null) {
@@ -385,10 +399,17 @@ class RegisterController extends BaseController {
         // Prepare social login data to pass to profile screen
         Map<String, dynamic> socialData = {};
         if (user?.isSocialLogin == true) {
+          final resolvedFullName = _resolveProfileFullName(user?.fullName);
+          final apiProfilePicture = user?.profilePicture?.trim() ?? '';
+          final profilePicture = apiProfilePicture.isNotEmpty
+              ? apiProfilePicture
+              : (_pendingSocialProfilePicture?.trim() ?? '');
           socialData = {
-            'fullName': user?.fullName ?? '',
-            'profilePicture': user?.profilePicture ?? '',
+            'fullName': resolvedFullName,
+            'profilePicture': profilePicture,
           };
+          _pendingSocialDisplayName = null;
+          _pendingSocialProfilePicture = null;
         }
 
 /*        if (isPersonalDetailsCompleted) {
@@ -496,13 +517,16 @@ class RegisterController extends BaseController {
         return;
       }
 
+      _pendingSocialDisplayName = userInfo['displayName']?.trim();
+      _pendingSocialProfilePicture = userInfo['photoUrl']?.trim();
+
       // For registration, we'll directly proceed to social registration
       await _handleSocialRegistration(
         email: email,
         socialType: 'apple',
         socialId: socialId,
-        fullName: userInfo['displayName'],
-        profilePicture: userInfo['photoUrl'],
+        fullName: _pendingSocialDisplayName,
+        profilePicture: _pendingSocialProfilePicture,
       );
     } catch (e) {
       // showResponseDialog(
@@ -519,6 +543,29 @@ class RegisterController extends BaseController {
       () => const LoginView(),
       binding: LoginBinding(),
     );
+  }
+
+  Future<void> _persistSocialDisplayNameIfNeeded(String? displayName) async {
+    if (displayName == null || displayName.trim().isEmpty) return;
+    await _socialAuthService.persistSocialDisplayName(displayName.trim());
+    await _storageService?.writeString(
+      SharePreferenceConst.socialFullName,
+      displayName.trim(),
+    );
+  }
+
+  String _resolveProfileFullName(String? apiFullName) {
+    final resolved = _socialAuthService.resolveSocialFullName(
+      apiFullName: apiFullName,
+      credentialDisplayName: _pendingSocialDisplayName,
+    );
+    if (resolved.isNotEmpty) return resolved;
+
+    final stored = _storageService
+            ?.readString(SharePreferenceConst.socialFullName)
+            ?.trim() ??
+        '';
+    return stored;
   }
 
   @override

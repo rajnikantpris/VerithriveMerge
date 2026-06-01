@@ -366,10 +366,7 @@ class SignupPersonDetailsController extends BaseController {
       // Request camera permission for camera access
       final hasCameraPermission =
           await _cameraStoragePermissionService.requestCameraPermission();
-      if (!hasCameraPermission) {
-        _showPermissionSettingsSnackbar();
-        return;
-      }
+      if (!hasCameraPermission) return;
 
       final XFile? pickedFile = await _imagePicker.pickImage(
         source: ImageSource.camera,
@@ -415,31 +412,30 @@ class SignupPersonDetailsController extends BaseController {
         debugPrint('iOS photo permission status (before): $status');
 
         if (status.isPermanentlyDenied) {
-          _showPermissionSettingsSnackbar();
+          await _cameraStoragePermissionService
+              .showPhotoLibraryPermissionDeniedDialog();
           return;
         }
-
         if (status.isDenied) {
-          // First-time request — iOS may show its own "Select Photos" sheet
-          // for "Limited Access" during this call.
           status = await Permission.photos.request();
           debugPrint('iOS photo permission status (after request): $status');
 
-          if (status.isLimited) {
-            // iOS already showed its own photo selection sheet during the
-            // permission request. Do NOT call pickImage() — that would open
-            // a second picker. Ask user to tap again instead.
-            Get.snackbar(
-              'Limited Access Granted',
-              'Tap the photo icon again to select a photo.',
-              snackPosition: SnackPosition.BOTTOM,
-              duration: const Duration(seconds: 3),
-            );
-            return; // ← KEY FIX: exit without opening picker a second time
-          }
+          // if (status.isLimited) {
+          //   // iOS already showed its own photo sheet during the request.
+          //   // Do NOT call pickImage() — that opens a second picker.
+          //   // User must tap again; second tap hits isLimited below → opens once.
+          //   Get.snackbar(
+          //     'Limited Access Granted',
+          //     'Tap the photo icon again to select a photo.',
+          //     snackPosition: SnackPosition.BOTTOM,
+          //     duration: const Duration(seconds: 3),
+          //   );
+          //   return; // ← KEY FIX
+          // }
 
-          if (status.isDenied || status.isPermanentlyDenied) {
-            _showPermissionSettingsSnackbar();
+          if (status.isPermanentlyDenied) {
+            await _cameraStoragePermissionService
+                .showPhotoLibraryPermissionDeniedDialog();
             return;
           }
         }
@@ -483,22 +479,6 @@ class SignupPersonDetailsController extends BaseController {
         snackPosition: SnackPosition.BOTTOM,
       );
     }
-  }
-
-  void _showPermissionSettingsSnackbar() {
-    Get.snackbar(
-      'Permission Required',
-      'Camera/Photo access is required. Please enable it in Settings.',
-      snackPosition: SnackPosition.BOTTOM,
-      duration: const Duration(seconds: 4),
-      mainButton: TextButton(
-        onPressed: () => openAppSettings(),
-        child: const Text(
-          'Settings',
-          style: TextStyle(color: Colors.white),
-        ),
-      ),
-    );
   }
 
   Future<File?> _cropImage(File imageFile) async {

@@ -34,6 +34,8 @@ class ProfessionalLoginController extends BaseController {
   final isPasswordVisible = false.obs;
   final rememberMe = false.obs;
 
+  String? _pendingSocialDisplayName;
+
   late final GlobalKey<FormState> formKey;
 
   @override
@@ -461,12 +463,14 @@ class ProfessionalLoginController extends BaseController {
       },
       onSuccess: (response) async {
         if (response.success) {
+          _pendingSocialDisplayName = userInfo['displayName']?.trim();
+
           // If check passes, proceed with social login
           await _handleSocialLogin(
             email: email,
             socialType: socialType,
             socialId: socialId,
-            fullName: userInfo['displayName'],
+            fullName: _pendingSocialDisplayName,
             profilePicture: userInfo['photoUrl'],
           );
         } else {
@@ -489,6 +493,8 @@ class ProfessionalLoginController extends BaseController {
     String? fullName,
     String? profilePicture,
   }) async {
+    await _persistSocialDisplayNameIfNeeded(fullName);
+
     await callDataService<ApiResponse<dynamic>>(
       _userApiService.socialLogin(
         email: email,
@@ -622,6 +628,8 @@ class ProfessionalLoginController extends BaseController {
           }
 
           await _cacheSocialProfileData(loginData.user);
+
+          _pendingSocialDisplayName = null;
 
           final successMessage =
               response.message ?? 'Logged in successfully. Welcome back!';
@@ -782,11 +790,19 @@ class ProfessionalLoginController extends BaseController {
     Get.offAllNamed(Routes.home);
   }
 
+  Future<void> _persistSocialDisplayNameIfNeeded(String? displayName) async {
+    if (displayName == null || displayName.trim().isEmpty) return;
+    await _socialAuthService.persistSocialDisplayName(displayName.trim());
+  }
+
   Future<void> _cacheSocialProfileData(UserModel? user) async {
     final storage = _storageService;
     if (storage == null) return;
 
-    final socialFullName = user?.fullName?.trim() ?? '';
+    final socialFullName = _socialAuthService.resolveSocialFullName(
+      apiFullName: user?.fullName,
+      credentialDisplayName: _pendingSocialDisplayName,
+    );
     await storage.writeString('user_full_name', socialFullName);
 
     final socialProfilePicture = user?.profilePicture ?? '';

@@ -42,6 +42,8 @@ class LoginController extends BaseController {
   final isLoading = false.obs;
 
   String guestUser = "";
+  String? _pendingSocialDisplayName;
+  String? _pendingSocialProfilePicture;
 
   @override
   void onInit() {
@@ -223,13 +225,16 @@ class LoginController extends BaseController {
       return data;
     }
 
+    _pendingSocialDisplayName = userInfo['displayName']?.trim();
+    _pendingSocialProfilePicture = userInfo['photoUrl']?.trim();
+
     // For end user, we'll directly proceed to social login since check API may not be available
     await _handleSocialLogin(
       email: email,
       socialType: socialType,
       socialId: socialId,
-      fullName: userInfo['displayName'],
-      profilePicture: userInfo['photoUrl'],
+      fullName: _pendingSocialDisplayName,
+      profilePicture: _pendingSocialProfilePicture,
     );
   }
 
@@ -241,6 +246,8 @@ class LoginController extends BaseController {
     String? fullName,
     String? profilePicture,
   }) async {
+    await _persistSocialDisplayNameIfNeeded(fullName);
+
     Map<String, dynamic> toJson() {
       final Map<String, dynamic> data = <String, dynamic>{};
       data['email'] = email;
@@ -379,16 +386,22 @@ class LoginController extends BaseController {
           }
           // Save social login specific data (full_name and profile_picture) from User model
           if (user.isSocialLogin == true) {
-            if (user.fullName != null && user.fullName!.isNotEmpty) {
+            final resolvedFullName = _resolveProfileFullName(user.fullName);
+            if (resolvedFullName.isNotEmpty) {
               await storage.writeString(
-                  SharePreferenceConst.socialFullName, user.fullName!);
+                  SharePreferenceConst.socialFullName, resolvedFullName);
             }
-            // Save profile picture from API
-            if (user.profilePicture != null &&
-                user.profilePicture!.isNotEmpty) {
+            final apiProfilePicture = user.profilePicture?.trim() ?? '';
+            final providerProfilePicture =
+                _pendingSocialProfilePicture?.trim() ?? '';
+            final profilePictureToStore = apiProfilePicture.isNotEmpty
+                ? apiProfilePicture
+                : providerProfilePicture;
+            if (profilePictureToStore.isNotEmpty) {
               await storage.writeString(
-                  SharePreferenceConst.socialProfilePicture,
-                  user.profilePicture!);
+                SharePreferenceConst.socialProfilePicture,
+                profilePictureToStore,
+              );
             }
           }
           if (user.mobileNumber != null) {
@@ -535,11 +548,18 @@ class LoginController extends BaseController {
           // Prepare social login data to pass to profile screen
           Map<String, dynamic> socialData = {};
           if (user?.isSocialLogin == true) {
+            final resolvedFullName = _resolveProfileFullName(user?.fullName);
+            final apiProfilePicture = user?.profilePicture?.trim() ?? '';
+            final profilePicture = apiProfilePicture.isNotEmpty
+                ? apiProfilePicture
+                : (_pendingSocialProfilePicture?.trim() ?? '');
             socialData = {
-              'fullName': user?.fullName ?? '',
-              'profilePicture': user?.profilePicture ?? '',
+              'fullName': resolvedFullName,
+              'profilePicture': profilePicture,
               'profileImageFile': profileImageFile,
             };
+            _pendingSocialDisplayName = null;
+            _pendingSocialProfilePicture = null;
           }
 
           if (isPersonalDetailsCompleted) {
@@ -613,5 +633,28 @@ class LoginController extends BaseController {
         },
       );
     }
+  }
+
+  Future<void> _persistSocialDisplayNameIfNeeded(String? displayName) async {
+    if (displayName == null || displayName.trim().isEmpty) return;
+    await _socialAuthService.persistSocialDisplayName(displayName.trim());
+    await _storageService?.writeString(
+      SharePreferenceConst.socialFullName,
+      displayName.trim(),
+    );
+  }
+
+  String _resolveProfileFullName(String? apiFullName) {
+    final resolved = _socialAuthService.resolveSocialFullName(
+      apiFullName: apiFullName,
+      credentialDisplayName: _pendingSocialDisplayName,
+    );
+    if (resolved.isNotEmpty) return resolved;
+
+    final stored = _storageService
+            ?.readString(SharePreferenceConst.socialFullName)
+            ?.trim() ??
+        '';
+    return stored;
   }
 }

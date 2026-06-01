@@ -619,7 +619,8 @@ class UpdateProfileController extends BaseController {
         debugPrint('iOS photo permission status (before): $status');
 
         if (status.isPermanentlyDenied) {
-          _showPermissionSettingsSnackbar();
+          await _cameraStoragePermissionService
+              .showPhotoLibraryPermissionDeniedDialog();
           return;
         }
 
@@ -631,17 +632,18 @@ class UpdateProfileController extends BaseController {
             // iOS already showed its own photo sheet during the request.
             // Do NOT call pickImage() — that opens a second picker.
             // User must tap again; second tap hits isLimited below → opens once.
-            Get.snackbar(
-              'Limited Access Granted',
-              'Tap the photo icon again to select a photo.',
-              snackPosition: SnackPosition.BOTTOM,
-              duration: const Duration(seconds: 3),
-            );
+            // Get.snackbar(
+            //   'Limited Access Granted',
+            //   'Tap the photo icon again to select a photo.',
+            //   snackPosition: SnackPosition.BOTTOM,
+            //   duration: const Duration(seconds: 3),
+            // );
             return; // ← KEY FIX
           }
 
-          if (status.isDenied || status.isPermanentlyDenied) {
-            _showPermissionSettingsSnackbar();
+          if (status.isPermanentlyDenied) {
+            await _cameraStoragePermissionService
+                .showPhotoLibraryPermissionDeniedDialog();
             return;
           }
         }
@@ -714,22 +716,6 @@ class UpdateProfileController extends BaseController {
     profileImage.value = File(image.path);
     profileImageUrl.value = ''; // Clear URL when new image is selected
     isProfilePictureRemoved.value = false; // Reset removal flag
-  }
-
-  void _showPermissionSettingsSnackbar() {
-    Get.snackbar(
-      'Permission Required',
-      'Photo access is required. Please enable it in Settings.',
-      snackPosition: SnackPosition.BOTTOM,
-      duration: const Duration(seconds: 4),
-      mainButton: TextButton(
-        onPressed: () => openAppSettings(),
-        child: const Text(
-          'Settings',
-          style: TextStyle(color: Colors.white),
-        ),
-      ),
-    );
   }
 
   void showImagePickerOptions() {

@@ -55,60 +55,48 @@ class YourProfileController extends BaseController {
 
   String _generateProfileText(ProfileDetailsModel profile) {
     final StringBuffer buffer = StringBuffer();
-    
+
     buffer.writeln('Professional Profile');
     buffer.writeln('');
-    
+
     if (profile.fullName?.isNotEmpty == true) {
       buffer.writeln('Name: ${profile.fullName}');
     }
-    
+
     if (profile.profession_name?.isNotEmpty == true) {
       buffer.writeln('Profession: ${profile.profession_name}');
     }
-    
+
     if (profile.profession_sub_name?.isNotEmpty == true) {
       buffer.writeln('Specialization: ${profile.profession_sub_name}');
     }
-    
+
     if (profile.totalExperience != null && profile.totalExperience! > 0) {
       buffer.writeln('Experience: ${profile.totalExperience} years');
     }
-    
+
     if (profile.email?.isNotEmpty == true && !profile.isEmailHidden!) {
       buffer.writeln('Email: ${profile.email}');
     }
-    
+
     if (profile.mobileNumber?.isNotEmpty == true) {
       buffer.writeln('Phone: ${profile.mobileNumber}');
     }
-    
+
     if (profile.address?.isNotEmpty == true) {
       buffer.writeln('Location: ${profile.address}');
     }
-    
+
     if (profile.description?.isNotEmpty == true) {
       buffer.writeln('');
       buffer.writeln('About:');
       buffer.writeln(profile.description);
     }
-    
+
     buffer.writeln('');
     buffer.writeln('Shared via Verithrive App');
-    
-    return buffer.toString();
-  }
 
-  Future<void> _launchUrl(Uri url) async {
-    try {
-      if (await canLaunchUrl(url)) {
-        await launchUrl(url, mode: LaunchMode.externalApplication);
-      } else {
-        Get.snackbar('Error', 'Could not launch sharing app');
-      }
-    } catch (e) {
-      Get.snackbar('Error', 'Failed to share: $e');
-    }
+    return buffer.toString();
   }
 }
 

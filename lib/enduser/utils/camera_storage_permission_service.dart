@@ -291,6 +291,11 @@ class CameraStoragePermissionService {
     }
   }
 
+  /// Shows the photo library denied dialog (e.g. iOS gallery flow when permanently denied).
+  Future<void> showPhotoLibraryPermissionDeniedDialog() async {
+    await _showStoragePermissionSettingsDialog();
+  }
+
   /// Check camera permission status
   /// Returns true if permission is granted, false otherwise
   Future<bool> checkCameraPermissionStatus() async {
@@ -362,15 +367,15 @@ class CameraStoragePermissionService {
       PopScope(
         canPop: false, // Prevent back button dismissal
         child: AlertDialog(
-          title: const Text('Camera Permission Required'),
+          title: const Text('Unable to Access Camera'),
           content: const Text(
-            'Camera permission is required. Please enable it in app settings to continue.',
+            'To capture and upload your profile picture, we need access to your device’s camera. Please allow Camera access to continue using this feature. You can enable it anytime from Settings → Apps → Verithrive → Permissions.',
           ),
           actions: [
             TextButton(
-              onPressed: () => Get.back(result: true),
-              child: const Text('Open Settings'),
-            ),
+              onPressed: () => Get.back(result: false),
+              child: const Text('Okay'),
+            )
           ],
         ),
       ),
@@ -389,15 +394,19 @@ class CameraStoragePermissionService {
       PopScope(
         canPop: false, // Prevent back button dismissal
         child: AlertDialog(
-          title: const Text('Storage Permission Required'),
+          title: const Text('Unable to Access Photo Library'),
           content: const Text(
-            'Storage permission is required. Please enable it in app settings to continue.',
+            'To upload your profile picture, we need access to your device’s photo library. You can still continue using other app features without enabling Photo Library access. You can enable it anytime from Settings → Apps → Verithrive → Permissions.',
           ),
           actions: [
             TextButton(
-              onPressed: () => Get.back(result: true),
-              child: const Text('Open Settings'),
+              onPressed: () => Get.back(result: false),
+              child: const Text('Okay'),
             ),
+            // TextButton(
+            //   onPressed: () => Get.back(result: true),
+            //   child: const Text('Open Settings'),
+            // ),
           ],
         ),
       ),

@@ -382,31 +382,30 @@ class SignupProfileWizardController extends BaseController {
         debugPrint('iOS photo permission status (before): $status');
 
         if (status.isPermanentlyDenied) {
-          _showPermissionSettingsSnackbar();
+          await _cameraStoragePermissionService
+              .showPhotoLibraryPermissionDeniedDialog();
           return;
         }
-
         if (status.isDenied) {
-          // First-time request — iOS may show its own "Select Photos" sheet
-          // for "Limited Access" during this call.
           status = await Permission.photos.request();
           debugPrint('iOS photo permission status (after request): $status');
 
-          if (status.isLimited) {
-            // iOS already showed its own photo selection sheet during the
-            // permission request. Do NOT call pickImage() — that would open
-            // a second picker. Ask user to tap again instead.
-            Get.snackbar(
-              'Limited Access Granted',
-              'Tap the photo icon again to select a photo.',
-              snackPosition: SnackPosition.BOTTOM,
-              duration: const Duration(seconds: 3),
-            );
-            return; // ← KEY FIX: exit without opening picker a second time
-          }
+          // if (status.isLimited) {
+          //   // iOS already showed its own photo sheet during the request.
+          //   // Do NOT call pickImage() — that opens a second picker.
+          //   // User must tap again; second tap hits isLimited below → opens once.
+          //   Get.snackbar(
+          //     'Limited Access Granted',
+          //     'Tap the photo icon again to select a photo.',
+          //     snackPosition: SnackPosition.BOTTOM,
+          //     duration: const Duration(seconds: 3),
+          //   );
+          //   return; // ← KEY FIX
+          // }
 
-          if (status.isDenied || status.isPermanentlyDenied) {
-            _showPermissionSettingsSnackbar();
+          if (status.isPermanentlyDenied) {
+            await _cameraStoragePermissionService
+                .showPhotoLibraryPermissionDeniedDialog();
             return;
           }
         }
@@ -2764,31 +2763,30 @@ class SignupProfileWizardController extends BaseController {
         debugPrint('iOS photo permission status (before): $status');
 
         if (status.isPermanentlyDenied) {
-          _showPermissionSettingsSnackbar();
+          await _cameraStoragePermissionService
+              .showPhotoLibraryPermissionDeniedDialog();
           return;
         }
-
         if (status.isDenied) {
-          // First-time request — iOS may show its own "Select Photos" sheet
-          // for "Limited Access" during this call.
           status = await Permission.photos.request();
           debugPrint('iOS photo permission status (after request): $status');
 
-          if (status.isLimited) {
-            // iOS already showed its own photo selection sheet during the
-            // permission request. Do NOT call pickImage() — that would open
-            // a second picker. Ask user to tap again instead.
-            Get.snackbar(
-              'Limited Access Granted',
-              'Tap the upload button again to select a photo.',
-              snackPosition: SnackPosition.BOTTOM,
-              duration: const Duration(seconds: 3),
-            );
-            return; // ← KEY FIX: exit without opening picker a second time
-          }
+          // if (status.isLimited) {
+          //   // iOS already showed its own photo sheet during the request.
+          //   // Do NOT call pickImage() — that opens a second picker.
+          //   // User must tap again; second tap hits isLimited below → opens once.
+          //   Get.snackbar(
+          //     'Limited Access Granted',
+          //     'Tap the photo icon again to select a photo.',
+          //     snackPosition: SnackPosition.BOTTOM,
+          //     duration: const Duration(seconds: 3),
+          //   );
+          //   return; // ← KEY FIX
+          // }
 
-          if (status.isDenied || status.isPermanentlyDenied) {
-            _showPermissionSettingsSnackbar();
+          if (status.isPermanentlyDenied) {
+            await _cameraStoragePermissionService
+                .showPhotoLibraryPermissionDeniedDialog();
             return;
           }
         }
@@ -2845,11 +2843,11 @@ class SignupProfileWizardController extends BaseController {
   /// Pick PDF file
   Future<void> _pickPDF(QualificationItem qualification, int index) async {
     try {
-      final hasPermissions =
-          await _cameraStoragePermissionService.requestStoragePermission();
-      if (!hasPermissions) {
-        return;
-      }
+      // final hasPermissions =
+      //     await _cameraStoragePermissionService.requestStoragePermission();
+      // if (!hasPermissions) {
+      //   return;
+      // }
 
       final result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
@@ -2994,31 +2992,30 @@ class SignupProfileWizardController extends BaseController {
         debugPrint('iOS photo permission status (before): $status');
 
         if (status.isPermanentlyDenied) {
-          _showPermissionSettingsSnackbar();
+          await _cameraStoragePermissionService
+              .showPhotoLibraryPermissionDeniedDialog();
           return;
         }
-
         if (status.isDenied) {
-          // First-time request — iOS may show its own "Select Photos" sheet
-          // for "Limited Access" during this call.
           status = await Permission.photos.request();
           debugPrint('iOS photo permission status (after request): $status');
 
-          if (status.isLimited) {
-            // iOS already showed its own photo selection sheet during the
-            // permission request. Do NOT call pickImage() — that would open
-            // a second picker. Ask user to tap again instead.
-            Get.snackbar(
-              'Limited Access Granted',
-              'Tap the upload button again to select a photo.',
-              snackPosition: SnackPosition.BOTTOM,
-              duration: const Duration(seconds: 3),
-            );
-            return; // ← KEY FIX: exit without opening picker a second time
-          }
+          // if (status.isLimited) {
+          //   // iOS already showed its own photo sheet during the request.
+          //   // Do NOT call pickImage() — that opens a second picker.
+          //   // User must tap again; second tap hits isLimited below → opens once.
+          //   Get.snackbar(
+          //     'Limited Access Granted',
+          //     'Tap the photo icon again to select a photo.',
+          //     snackPosition: SnackPosition.BOTTOM,
+          //     duration: const Duration(seconds: 3),
+          //   );
+          //   return; // ← KEY FIX
+          // }
 
-          if (status.isDenied || status.isPermanentlyDenied) {
-            _showPermissionSettingsSnackbar();
+          if (status.isPermanentlyDenied) {
+            await _cameraStoragePermissionService
+                .showPhotoLibraryPermissionDeniedDialog();
             return;
           }
         }
@@ -3085,36 +3082,26 @@ class SignupProfileWizardController extends BaseController {
         }
       } else if (Platform.isIOS) {
         // ── iOS: Check current status WITHOUT triggering a prompt ──────────
-        PermissionStatus status = await Permission.photos.status;
-        debugPrint('iOS photo permission status (before): $status');
+        // PermissionStatus status = await Permission.photos.status;
+        // debugPrint('iOS photo permission status (before): $status');
 
-        if (status.isPermanentlyDenied) {
-          _showPermissionSettingsSnackbar();
-          return;
+        // if (status.isPermanentlyDenied) {
+        //   await _cameraStoragePermissionService
+        //       .showPhotoLibraryPermissionDeniedDialog();
+        //   return;
+        // }
+
+        // // Status is .granted or .limited — safe to open picker
+        // if (status.isGranted || status.isLimited) {
+        final result = await FilePicker.platform.pickFiles(
+          type: FileType.custom,
+          allowedExtensions: ['pdf'],
+        );
+
+        if (result != null && result.files.single.path != null) {
+          await _processSelectedPdfFile(result.files.single);
         }
-
-        if (status.isDenied) {
-          // First-time request — iOS may show its own permission dialog
-          status = await Permission.photos.request();
-          debugPrint('iOS photo permission status (after request): $status');
-
-          if (status.isDenied || status.isPermanentlyDenied) {
-            _showPermissionSettingsSnackbar();
-            return;
-          }
-        }
-
-        // Status is .granted or .limited — safe to open picker
-        if (status.isGranted || status.isLimited) {
-          final result = await FilePicker.platform.pickFiles(
-            type: FileType.custom,
-            allowedExtensions: ['pdf'],
-          );
-
-          if (result != null && result.files.single.path != null) {
-            await _processSelectedPdfFile(result.files.single);
-          }
-        }
+        // }
       }
     } catch (e) {
       Get.snackbar(

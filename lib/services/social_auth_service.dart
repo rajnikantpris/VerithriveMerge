@@ -132,35 +132,32 @@ class SocialAuthService {
         }
       }
 
-      // Store Apple user data for future use (if email/name were provided)
-      if (credential.email != null && credential.email!.isNotEmpty) {
-        final storage = Get.isRegistered<StorageService>()
-            ? Get.find<StorageService>()
-            : null;
-        if (storage != null) {
-          await storage.writeString('apple_user_email', credential.email!);
-          if (displayName.isNotEmpty) {
-            await storage.writeString('apple_user_name', displayName);
-          }
-          final userId = credential.userIdentifier;
-          if (userId != null && userId.isNotEmpty) {
-            await storage.writeString('apple_user_id', userId);
-          }
+      // Persist Apple user data whenever available (name is only sent on first auth)
+      final storage = Get.isRegistered<StorageService>()
+          ? Get.find<StorageService>()
+          : null;
+      if (storage != null) {
+        if (email.isNotEmpty) {
+          await storage.writeString(_appleUserEmailKey, email);
+        }
+        if (displayName.isNotEmpty) {
+          await storage.writeString(_appleUserNameKey, displayName);
+        }
+        final userId = credential.userIdentifier;
+        if (userId != null && userId.isNotEmpty) {
+          await storage.writeString(_appleUserIdKey, userId);
+        }
+        if (email.isNotEmpty || displayName.isNotEmpty) {
           debugPrint('Stored Apple user data for future use');
         }
       }
 
-      // Use stored display name if not provided in credential
-      if (displayName.isEmpty) {
-        final storage = Get.isRegistered<StorageService>()
-            ? Get.find<StorageService>()
-            : null;
-        if (storage != null) {
-          final storedName = storage.readString('apple_user_name');
-          if (storedName != null && storedName.isNotEmpty) {
-            displayName = storedName;
-            debugPrint('Using stored Apple display name: $displayName');
-          }
+      // Use stored display name if not provided in credential (subsequent sign-ins)
+      if (displayName.isEmpty && storage != null) {
+        final storedName = storage.readString(_appleUserNameKey);
+        if (storedName != null && storedName.isNotEmpty) {
+          displayName = storedName;
+          debugPrint('Using stored Apple display name: $displayName');
         }
       }
 
@@ -210,6 +207,41 @@ class SocialAuthService {
       signOutGoogle(),
       signOutApple(),
     ]);
+  }
+
+  /// Persist display name from a social sign-in (e.g. Apple first authorization).
+  Future<void> persistSocialDisplayName(String displayName) async {
+    final trimmed = displayName.trim();
+    if (trimmed.isEmpty) return;
+
+    final storage = Get.isRegistered<StorageService>()
+        ? Get.find<StorageService>()
+        : null;
+    if (storage == null) return;
+
+    await storage.writeString(_appleUserNameKey, trimmed);
+  }
+
+  /// Best available full name: API response, credential, then stored Apple name.
+  String resolveSocialFullName({
+    String? apiFullName,
+    String? credentialDisplayName,
+  }) {
+    final api = apiFullName?.trim() ?? '';
+    if (api.isNotEmpty) return api;
+
+    final credential = credentialDisplayName?.trim() ?? '';
+    if (credential.isNotEmpty) return credential;
+
+    final storage = Get.isRegistered<StorageService>()
+        ? Get.find<StorageService>()
+        : null;
+    if (storage != null) {
+      final stored = storage.readString(_appleUserNameKey)?.trim() ?? '';
+      if (stored.isNotEmpty) return stored;
+    }
+
+    return '';
   }
 
   /// Check if Apple Sign In is available

@@ -26,7 +26,7 @@ import '../../home_controller.dart';
 class PersonalDetailsController extends BaseController {
   final UserApiService _userApiService;
   final CameraStoragePermissionService _cameraStoragePermissionService =
-  CameraStoragePermissionService();
+      CameraStoragePermissionService();
   final ImagePicker _imagePicker = ImagePicker();
   bool _isPicking = false; // Guard against double picker calls
 
@@ -126,8 +126,7 @@ class PersonalDetailsController extends BaseController {
 
   Future<void> pickDate(BuildContext context) async {
     final now = DateTime.now();
-    final initial =
-        selectedDob.value ?? DateTime(now.year, now.month, now.day);
+    final initial = selectedDob.value ?? DateTime(now.year, now.month, now.day);
     final picked = await showDatePicker(
       context: context,
       initialDate: initial.isAfter(now) ? now : initial,
@@ -234,7 +233,7 @@ class PersonalDetailsController extends BaseController {
 
     try {
       final hasCameraPermission =
-      await _cameraStoragePermissionService.requestCameraPermission();
+          await _cameraStoragePermissionService.requestCameraPermission();
       if (!hasCameraPermission) return;
 
       final XFile? pickedFile = await _imagePicker.pickImage(
@@ -295,31 +294,30 @@ class PersonalDetailsController extends BaseController {
         debugPrint('iOS photo permission status (before): $status');
 
         if (status.isPermanentlyDenied) {
-          _showPermissionSettingsSnackbar();
+          await _cameraStoragePermissionService
+              .showPhotoLibraryPermissionDeniedDialog();
           return;
         }
-
         if (status.isDenied) {
-          // First-time request — iOS may show its own "Select Photos" sheet
-          // for "Limited Access" during this call.
           status = await Permission.photos.request();
           debugPrint('iOS photo permission status (after request): $status');
 
-          if (status.isLimited) {
-            // iOS already showed its own photo selection sheet during the
-            // permission request. Do NOT call pickImage() — that would open
-            // a second picker. Ask user to tap again instead.
-            Get.snackbar(
-              'Limited Access Granted',
-              'Tap the photo icon again to select a photo.',
-              snackPosition: SnackPosition.BOTTOM,
-              duration: const Duration(seconds: 3),
-            );
-            return; // ← KEY FIX: exit without opening picker a second time
-          }
+          // if (status.isLimited) {
+          //   // iOS already showed its own photo sheet during the request.
+          //   // Do NOT call pickImage() — that opens a second picker.
+          //   // User must tap again; second tap hits isLimited below → opens once.
+          //   Get.snackbar(
+          //     'Limited Access Granted',
+          //     'Tap the photo icon again to select a photo.',
+          //     snackPosition: SnackPosition.BOTTOM,
+          //     duration: const Duration(seconds: 3),
+          //   );
+          //   return; // ← KEY FIX
+          // }
 
-          if (status.isDenied || status.isPermanentlyDenied) {
-            _showPermissionSettingsSnackbar();
+          if (status.isPermanentlyDenied) {
+            await _cameraStoragePermissionService
+                .showPhotoLibraryPermissionDeniedDialog();
             return;
           }
         }
@@ -351,22 +349,6 @@ class PersonalDetailsController extends BaseController {
     } finally {
       _isPicking = false;
     }
-  }
-
-  void _showPermissionSettingsSnackbar() {
-    Get.snackbar(
-      'Permission Required',
-      'Photo access is required. Please enable it in Settings.',
-      snackPosition: SnackPosition.BOTTOM,
-      duration: const Duration(seconds: 4),
-      mainButton: TextButton(
-        onPressed: () => openAppSettings(),
-        child: const Text(
-          'Settings',
-          style: TextStyle(color: Colors.white),
-        ),
-      ),
-    );
   }
 
   Future<File?> _cropImage(File imageFile) async {
@@ -468,7 +450,7 @@ class PersonalDetailsController extends BaseController {
                 ),
                 ListTile(
                   leading:
-                  const Icon(Icons.cancel, color: AppColor.color_2D2D2D),
+                      const Icon(Icons.cancel, color: AppColor.color_2D2D2D),
                   title: Text(
                     'Cancel',
                     style: TextStyle(
@@ -602,7 +584,7 @@ class PersonalDetailsController extends BaseController {
     if (value == null || value.trim().isEmpty) {
       return 'Please enter your date of birth';
     }
-    
+
     if (selectedDob.value == null) {
       // Parse date from controller if selectedDob is not set
       try {
@@ -617,20 +599,21 @@ class PersonalDetailsController extends BaseController {
         return 'Invalid date format';
       }
     }
-    
+
     if (selectedDob.value != null) {
       final now = DateTime.now();
       final age = now.year - selectedDob.value!.year;
       final monthDiff = now.month - selectedDob.value!.month;
       final dayDiff = now.day - selectedDob.value!.day;
-      
-      final actualAge = monthDiff < 0 || (monthDiff == 0 && dayDiff < 0) ? age - 1 : age;
-      
+
+      final actualAge =
+          monthDiff < 0 || (monthDiff == 0 && dayDiff < 0) ? age - 1 : age;
+
       if (actualAge < 18) {
         return 'You must be 18 years old to use this app.';
       }
     }
-    
+
     return null;
   }
 
@@ -649,9 +632,10 @@ class PersonalDetailsController extends BaseController {
               try {
                 if (item is Map<String, dynamic>) {
                   final professionType = ProfessionTypeModel.fromJson(item);
-                  if (professionType.id != null && professionType.type != null) {
+                  if (professionType.id != null &&
+                      professionType.type != null) {
                     professionTypesMap[professionType.type!] =
-                    professionType.id!;
+                        professionType.id!;
                     types.add(professionType.type!);
                   }
                 }
@@ -672,7 +656,7 @@ class PersonalDetailsController extends BaseController {
                     if (professionType.id != null &&
                         professionType.type != null) {
                       professionTypesMap[professionType.type!] =
-                      professionType.id!;
+                          professionType.id!;
                       types.add(professionType.type!);
                     }
                   }
@@ -717,7 +701,8 @@ class PersonalDetailsController extends BaseController {
                 fullNameController.text = profileDetails.fullName!;
               }
 
-              if (profileDetails.dob != null && profileDetails.dob!.isNotEmpty) {
+              if (profileDetails.dob != null &&
+                  profileDetails.dob!.isNotEmpty) {
                 try {
                   final dobDate = DateTime.parse(profileDetails.dob!);
                   selectedDob.value = dobDate;
@@ -747,15 +732,15 @@ class PersonalDetailsController extends BaseController {
 
               if (profileDetails.optStatus != null) {
                 selectedMarketingPreference.value =
-                profileDetails.optStatus == 1 ? 'Opted In' : 'Opted Out';
+                    profileDetails.optStatus == 1 ? 'Opted In' : 'Opted Out';
               }
 
               if (profileDetails.gender != null &&
                   profileDetails.gender!.isNotEmpty) {
                 final displayGender =
-                _convertGenderFromApiFormat(profileDetails.gender!);
+                    _convertGenderFromApiFormat(profileDetails.gender!);
                 final matchedGender = genders.firstWhere(
-                      (g) => g.toLowerCase() == displayGender.toLowerCase(),
+                  (g) => g.toLowerCase() == displayGender.toLowerCase(),
                   orElse: () => displayGender,
                 );
                 selectedGender.value = matchedGender;
@@ -768,7 +753,7 @@ class PersonalDetailsController extends BaseController {
 
                 try {
                   final matchingType = professionTypesMap.entries.firstWhere(
-                        (entry) => entry.value == professionTypeId,
+                    (entry) => entry.value == professionTypeId,
                   );
                   selectedProfessionType.value = matchingType.key;
                   youAreInController.text = matchingType.key;
@@ -777,13 +762,13 @@ class PersonalDetailsController extends BaseController {
                     if (profileDetails.professionSubTypeId != null &&
                         profileDetails.professionSubTypeId!.isNotEmpty) {
                       final professionSubTypeId =
-                      profileDetails.professionSubTypeId!;
+                          profileDetails.professionSubTypeId!;
                       selectedProfessionSubTypeId.value = professionSubTypeId;
 
                       try {
                         final matchingSubType =
-                        professionSubTypesMap.entries.firstWhere(
-                              (entry) => entry.value == professionSubTypeId,
+                            professionSubTypesMap.entries.firstWhere(
+                          (entry) => entry.value == professionSubTypeId,
                         );
                         selectedProfessionSubType.value = matchingSubType.key;
                         professionController.text = matchingSubType.key;
@@ -822,12 +807,12 @@ class PersonalDetailsController extends BaseController {
               try {
                 if (item is Map<String, dynamic>) {
                   final professionSubType =
-                  ProfessionSubTypeModel.fromJson(item);
+                      ProfessionSubTypeModel.fromJson(item);
                   if (professionSubType.id != null &&
                       professionSubType.subType != null &&
                       !seenSubTypes.contains(professionSubType.subType!)) {
                     professionSubTypesMap[professionSubType.subType!] =
-                    professionSubType.id!;
+                        professionSubType.id!;
                     subTypes.add(professionSubType.subType!);
                     seenSubTypes.add(professionSubType.subType!);
                   }
@@ -846,12 +831,12 @@ class PersonalDetailsController extends BaseController {
                 try {
                   if (item is Map<String, dynamic>) {
                     final professionSubType =
-                    ProfessionSubTypeModel.fromJson(item);
+                        ProfessionSubTypeModel.fromJson(item);
                     if (professionSubType.id != null &&
                         professionSubType.subType != null &&
                         !seenSubTypes.contains(professionSubType.subType!)) {
                       professionSubTypesMap[professionSubType.subType!] =
-                      professionSubType.id!;
+                          professionSubType.id!;
                       subTypes.add(professionSubType.subType!);
                       seenSubTypes.add(professionSubType.subType!);
                     }

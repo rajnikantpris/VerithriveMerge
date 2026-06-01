@@ -156,16 +156,6 @@ class CameraStoragePermissionService {
     try {
       final cameraStatus = await Permission.camera.status;
 
-      // iOS: do not force open Settings – behave like notifications.
-      if (!Platform.isAndroid) {
-        if (cameraStatus.isGranted) {
-          return true;
-        }
-        final requestedStatus = await Permission.camera.request();
-        return requestedStatus.isGranted;
-      }
-
-      // Android: keep existing behavior with settings dialog support.
       if (cameraStatus.isPermanentlyDenied) {
         await _showCameraPermissionSettingsDialog();
         return false;
@@ -277,23 +267,35 @@ class CameraStoragePermissionService {
         // For iOS, check photos permission
         final photosStatus = await Permission.photos.status;
 
-        // iOS: behave like notifications – no Settings dialog.
-        if (photosStatus.isGranted ||
-            photosStatus == PermissionStatus.limited) {
-          return true;
+        if (photosStatus.isPermanentlyDenied) {
+          await _showStoragePermissionSettingsDialog();
+          return false;
         }
 
-        final requestedStatus = await Permission.photos.request();
-        if (requestedStatus.isPermanentlyDenied) {
-          await _showStoragePermissionSettingsDialog();
-          return false;
+        if (!photosStatus.isGranted &&
+            photosStatus != PermissionStatus.limited) {
+          final requestedStatus = await Permission.photos.request();
+
+          if (requestedStatus.isPermanentlyDenied) {
+            await _showStoragePermissionSettingsDialog();
+            return false;
+          }
+
+          if (requestedStatus.isDenied) {
+            Get.snackbar(
+              'Permission Required',
+              'Photos permission is required to select an image',
+              snackPosition: SnackPosition.BOTTOM,
+            );
+            return false;
+          }
+
+          return requestedStatus.isGranted ||
+              requestedStatus == PermissionStatus.limited;
         }
-        if (requestedStatus.isDenied) {
-          await _showStoragePermissionSettingsDialog();
-          return false;
-        }
-        return requestedStatus.isGranted ||
-            requestedStatus == PermissionStatus.limited;
+
+        return photosStatus.isGranted ||
+            photosStatus == PermissionStatus.limited;
       }
     } catch (e) {
       debugPrint('Error in requestStoragePermission: $e');
@@ -304,6 +306,11 @@ class CameraStoragePermissionService {
       );
       return false;
     }
+  }
+
+  /// Shows the photo library denied dialog (e.g. iOS gallery flow when permanently denied).
+  Future<void> showPhotoLibraryPermissionDeniedDialog() async {
+    await _showStoragePermissionSettingsDialog();
   }
 
   /// Check camera permission status
@@ -378,15 +385,15 @@ class CameraStoragePermissionService {
       PopScope(
         canPop: false, // Prevent back button dismissal
         child: AlertDialog(
-          title: const Text('Camera Permission Required'),
+          title: const Text('Unable to Access Camera'),
           content: const Text(
-            'Camera permission is required. Please enable it in app settings to continue.',
+            'To capture and upload your profile picture, we need access to your device’s camera. Please allow Camera access to continue using this feature. You can enable it anytime from Settings → Apps → Verithrive → Permissions.',
           ),
           actions: [
             TextButton(
-              onPressed: () => Get.back(result: true),
-              child: const Text('Open Settings'),
-            ),
+              onPressed: () => Get.back(result: false),
+              child: const Text('Okay'),
+            )
           ],
         ),
       ),
@@ -405,15 +412,19 @@ class CameraStoragePermissionService {
       PopScope(
         canPop: false, // Prevent back button dismissal
         child: AlertDialog(
-          title: const Text('Storage Permission Required'),
+          title: const Text('Unable to Access Photo Library'),
           content: const Text(
-            'Storage permission is required. Please enable it in app settings to continue.',
+            'To upload your profile picture, we need access to your device’s photo library. You can still continue using other app features without enabling Photo Library access. You can enable it anytime from Settings → Apps → Verithrive → Permissions.',
           ),
           actions: [
             TextButton(
-              onPressed: () => Get.back(result: true),
-              child: const Text('Open Settings'),
+              onPressed: () => Get.back(result: false),
+              child: const Text('Okay'),
             ),
+            // TextButton(
+            //   onPressed: () => Get.back(result: true),
+            //   child: const Text('Open Settings'),
+            // ),
           ],
         ),
       ),

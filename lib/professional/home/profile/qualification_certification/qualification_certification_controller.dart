@@ -29,9 +29,9 @@ enum FilePickerSource {
 class QualificationCertificationController extends BaseController {
   final UserApiService _userApiService;
   final StorageService? _storageService =
-  Get.isRegistered<StorageService>() ? Get.find<StorageService>() : null;
+      Get.isRegistered<StorageService>() ? Get.find<StorageService>() : null;
   final CameraStoragePermissionService _cameraStoragePermissionService =
-  CameraStoragePermissionService();
+      CameraStoragePermissionService();
   final ImagePicker _imagePicker = ImagePicker();
   bool _isPicking = false;
 
@@ -80,8 +80,9 @@ class QualificationCertificationController extends BaseController {
     // Add listeners to text controllers
     newQualification.schoolController.addListener(_checkHasValidData);
     newQualification.degreeController.addListener(_checkHasValidData);
-    newQualification.qualificationExpiryController.addListener(_checkHasValidData);
-    
+    newQualification.qualificationExpiryController
+        .addListener(_checkHasValidData);
+
     qualifications.add(newQualification);
     qualifications.refresh();
     _checkHasValidData();
@@ -109,9 +110,9 @@ class QualificationCertificationController extends BaseController {
   }
 
   Future<void> pickDate(
-      BuildContext context,
-      TextEditingController target,
-      ) async {
+    BuildContext context,
+    TextEditingController target,
+  ) async {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
 
@@ -162,11 +163,11 @@ class QualificationCertificationController extends BaseController {
               try {
                 if (item is Map<String, dynamic>) {
                   final collegeUniversity =
-                  CollegeUniversityModel.fromJson(item);
+                      CollegeUniversityModel.fromJson(item);
                   if (collegeUniversity.id != null &&
                       collegeUniversity.name != null) {
                     collegesUniversitiesMap[collegeUniversity.name!] =
-                    collegeUniversity.id!;
+                        collegeUniversity.id!;
                     names.add(collegeUniversity.name!);
                   }
                 }
@@ -184,11 +185,11 @@ class QualificationCertificationController extends BaseController {
                 try {
                   if (item is Map<String, dynamic>) {
                     final collegeUniversity =
-                    CollegeUniversityModel.fromJson(item);
+                        CollegeUniversityModel.fromJson(item);
                     if (collegeUniversity.id != null &&
                         collegeUniversity.name != null) {
                       collegesUniversitiesMap[collegeUniversity.name!] =
-                      collegeUniversity.id!;
+                          collegeUniversity.id!;
                       names.add(collegeUniversity.name!);
                     }
                   }
@@ -253,7 +254,7 @@ class QualificationCertificationController extends BaseController {
 
                     if (qualData['school_or_university'] != null) {
                       final schoolValue =
-                      qualData['school_or_university'].toString();
+                          qualData['school_or_university'].toString();
                       final isId = schoolValue.length == 24 &&
                           RegExp(r'^[0-9a-fA-F]{24}$').hasMatch(schoolValue);
 
@@ -291,7 +292,7 @@ class QualificationCertificationController extends BaseController {
                           qualification.selectedCollegeUniversity =
                               matchedCollege;
                           qualification.selectedCollegeUniversityId =
-                          collegesUniversitiesMap[matchedCollege];
+                              collegesUniversitiesMap[matchedCollege];
                         } else {
                           qualification.selectedCollegeUniversity = schoolValue;
                           qualification.selectedCollegeUniversityId = null;
@@ -309,7 +310,7 @@ class QualificationCertificationController extends BaseController {
                       try {
                         final date = DateTime.parse(expiryDate);
                         qualification.qualificationExpiryController.text =
-                        '${date.day.toString().padLeft(2, '0')}/'
+                            '${date.day.toString().padLeft(2, '0')}/'
                             '${date.month.toString().padLeft(2, '0')}/'
                             '${date.year}';
                       } catch (e) {
@@ -325,19 +326,25 @@ class QualificationCertificationController extends BaseController {
                           certUrl.split('/').last;
                     }
 
-                    qualification.schoolController.addListener(_checkHasValidData);
-                    qualification.degreeController.addListener(_checkHasValidData);
-                    qualification.qualificationExpiryController.addListener(_checkHasValidData);
-                    
+                    qualification.schoolController
+                        .addListener(_checkHasValidData);
+                    qualification.degreeController
+                        .addListener(_checkHasValidData);
+                    qualification.qualificationExpiryController
+                        .addListener(_checkHasValidData);
+
                     qualifications.add(qualification);
                   }
                 }
               } else {
                 if (qualifications.isEmpty) {
                   final initialQualification = QualificationItem.initial();
-                  initialQualification.schoolController.addListener(_checkHasValidData);
-                  initialQualification.degreeController.addListener(_checkHasValidData);
-                  initialQualification.qualificationExpiryController.addListener(_checkHasValidData);
+                  initialQualification.schoolController
+                      .addListener(_checkHasValidData);
+                  initialQualification.degreeController
+                      .addListener(_checkHasValidData);
+                  initialQualification.qualificationExpiryController
+                      .addListener(_checkHasValidData);
                   qualifications.add(initialQualification);
                 }
               }
@@ -346,18 +353,24 @@ class QualificationCertificationController extends BaseController {
             debugPrint('Error parsing qualifications: $e');
             if (qualifications.isEmpty) {
               final initialQualification = QualificationItem.initial();
-              initialQualification.schoolController.addListener(_checkHasValidData);
-              initialQualification.degreeController.addListener(_checkHasValidData);
-              initialQualification.qualificationExpiryController.addListener(_checkHasValidData);
+              initialQualification.schoolController
+                  .addListener(_checkHasValidData);
+              initialQualification.degreeController
+                  .addListener(_checkHasValidData);
+              initialQualification.qualificationExpiryController
+                  .addListener(_checkHasValidData);
               qualifications.add(initialQualification);
             }
           }
         } else {
           if (qualifications.isEmpty) {
             final initialQualification = QualificationItem.initial();
-            initialQualification.schoolController.addListener(_checkHasValidData);
-            initialQualification.degreeController.addListener(_checkHasValidData);
-            initialQualification.qualificationExpiryController.addListener(_checkHasValidData);
+            initialQualification.schoolController
+                .addListener(_checkHasValidData);
+            initialQualification.degreeController
+                .addListener(_checkHasValidData);
+            initialQualification.qualificationExpiryController
+                .addListener(_checkHasValidData);
             qualifications.add(initialQualification);
           }
         }
@@ -367,7 +380,8 @@ class QualificationCertificationController extends BaseController {
           final initialQualification = QualificationItem.initial();
           initialQualification.schoolController.addListener(_checkHasValidData);
           initialQualification.degreeController.addListener(_checkHasValidData);
-          initialQualification.qualificationExpiryController.addListener(_checkHasValidData);
+          initialQualification.qualificationExpiryController
+              .addListener(_checkHasValidData);
           qualifications.add(initialQualification);
         }
       },
@@ -380,12 +394,12 @@ class QualificationCertificationController extends BaseController {
   void setCollegeUniversity(QualificationItem item, String? value, int index) {
     item.schoolController.text = value ?? '';
     final matchedCollege = collegesUniversities.firstWhereOrNull(
-          (college) => college.toLowerCase() == (value ?? '').toLowerCase(),
+      (college) => college.toLowerCase() == (value ?? '').toLowerCase(),
     );
     if (matchedCollege != null) {
       item.selectedCollegeUniversity = matchedCollege;
       item.selectedCollegeUniversityId =
-      collegesUniversitiesMap[matchedCollege];
+          collegesUniversitiesMap[matchedCollege];
     } else {
       item.selectedCollegeUniversity = value?.isNotEmpty == true ? value : null;
       item.selectedCollegeUniversityId = null;
@@ -396,12 +410,12 @@ class QualificationCertificationController extends BaseController {
       QualificationItem item, String text, int index) {
     item.schoolController.text = text;
     final matchedCollege = collegesUniversities.firstWhereOrNull(
-          (college) => college.toLowerCase() == text.toLowerCase(),
+      (college) => college.toLowerCase() == text.toLowerCase(),
     );
     if (matchedCollege != null) {
       item.selectedCollegeUniversity = matchedCollege;
       item.selectedCollegeUniversityId =
-      collegesUniversitiesMap[matchedCollege];
+          collegesUniversitiesMap[matchedCollege];
     } else {
       item.selectedCollegeUniversity = text.isNotEmpty ? text : null;
       item.selectedCollegeUniversityId = null;
@@ -420,10 +434,10 @@ class QualificationCertificationController extends BaseController {
   }
 
   Future<void> pickCertificateFile(
-      BuildContext context,
-      QualificationItem qualification,
-      int index,
-      ) async {
+    BuildContext context,
+    QualificationItem qualification,
+    int index,
+  ) async {
     // Guard: prevent opening if already picking
     if (_isPicking) return;
 
@@ -457,7 +471,7 @@ class QualificationCertificationController extends BaseController {
                 ),
                 ListTile(
                   leading:
-                  const Icon(Icons.image, color: AppColor.color_2D2D2D),
+                      const Icon(Icons.image, color: AppColor.color_2D2D2D),
                   title: Text(
                     'Image',
                     style: TextStyle(
@@ -545,35 +559,34 @@ class QualificationCertificationController extends BaseController {
         debugPrint('iOS photo permission status (before): $status');
 
         if (status.isPermanentlyDenied) {
-          _showPermissionSettingsSnackbar('Photo');
+          await _cameraStoragePermissionService
+              .showPhotoLibraryPermissionDeniedDialog();
           return;
         }
 
         if (status.isDenied) {
-          // First-time request — iOS may show its own picker for "Limited"
           status = await Permission.photos.request();
           debugPrint('iOS photo permission status (after request): $status');
 
-          if (status.isLimited) {
-            // iOS already showed its own photo selection sheet during
-            // the permission request. Do NOT call pickImage() again.
-            // User must tap Upload again — second tap hits isLimited
-            // branch below which directly opens the picker.
-            Get.snackbar(
-              'Limited Access Granted',
-              'Tap "Upload" again to select a photo.',
-              snackPosition: SnackPosition.BOTTOM,
-              duration: const Duration(seconds: 3),
-            );
-            return; // ← KEY: exit without opening picker a second time
-          }
+          // if (status.isLimited) {
+          //   // iOS already showed its own photo sheet during the request.
+          //   // Do NOT call pickImage() — that opens a second picker.
+          //   // User must tap again; second tap hits isLimited below → opens once.
+          //   Get.snackbar(
+          //     'Limited Access Granted',
+          //     'Tap the photo icon again to select a photo.',
+          //     snackPosition: SnackPosition.BOTTOM,
+          //     duration: const Duration(seconds: 3),
+          //   );
+          //   return; // ← KEY FIX
+          // }
 
-          if (status.isDenied || status.isPermanentlyDenied) {
-            _showPermissionSettingsSnackbar('Photo');
+          if (status.isPermanentlyDenied) {
+            await _cameraStoragePermissionService
+                .showPhotoLibraryPermissionDeniedDialog();
             return;
           }
         }
-
         // Status is .granted or .limited (second tap) — safe to open picker
         if (status.isGranted || status.isLimited) {
           final XFile? pickedFile = await _imagePicker.pickImage(
@@ -760,24 +773,25 @@ class QualificationCertificationController extends BaseController {
   /// Check if there's any valid data in the form
   void _checkHasValidData() {
     bool hasData = false;
-    
+
     // Check if years of experience has data
     if (yearsExperienceController.text.trim().isNotEmpty) {
       hasData = true;
     }
-    
+
     // Check if any qualification has data
     for (final qualification in qualifications) {
       if (qualification.schoolController.text.trim().isNotEmpty ||
           qualification.degreeController.text.trim().isNotEmpty ||
           qualification.qualificationExpiryController.text.trim().isNotEmpty ||
           qualification.certificateFile != null ||
-          (qualification.certificateUrl != null && qualification.certificateUrl!.isNotEmpty)) {
+          (qualification.certificateUrl != null &&
+              qualification.certificateUrl!.isNotEmpty)) {
         hasData = true;
         break;
       }
     }
-    
+
     hasValidData.value = hasData;
   }
 
@@ -805,7 +819,7 @@ class QualificationCertificationController extends BaseController {
       final school = qualification.schoolController.text.trim();
       final degree = qualification.degreeController.text.trim();
       final expiryText =
-      qualification.qualificationExpiryController.text.trim();
+          qualification.qualificationExpiryController.text.trim();
 
       String? formattedExpiryDate;
       if (expiryText.isNotEmpty) {
@@ -816,7 +830,7 @@ class QualificationCertificationController extends BaseController {
             final month = int.parse(parts[1]);
             final year = int.parse(parts[2]);
             formattedExpiryDate =
-            '$year-${month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}';
+                '$year-${month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}';
           }
         } catch (e) {
           debugPrint('Error parsing expiry date: $e');

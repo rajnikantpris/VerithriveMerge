@@ -598,40 +598,27 @@ class QualificationCertificationController extends BaseController {
   /// Pick PDF file
   Future<void> _pickPDF(QualificationItem qualification, int index) async {
     try {
-      final hasPermissions =
-          await _cameraStoragePermissionService.requestStoragePermission();
-      if (!hasPermissions) {
-        return;
-      }
+      if (Platform.isAndroid) {
+        // ── Android: Let file_picker handle permissions internally ────────
+        // DO NOT call Permission.storage.request() manually.
+        // On Android 13+, file_picker handles permissions properly.
+        final result = await FilePicker.platform.pickFiles(
+          type: FileType.custom,
+          allowedExtensions: ['pdf'],
+        );
 
-      // Reset file picker instance to avoid cached permission issues
-      final result = await FilePicker.platform.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: ['pdf'],
-        allowMultiple: false,
-      );
-
-      if (result != null && result.files.isNotEmpty) {
-        final file = File(result.files.first.path!);
-        final fileSize = await file.length();
-        const maxSize = 5 * 1024 * 1024; // 5MB
-
-        if (fileSize > maxSize) {
-          Get.snackbar(
-            'Error',
-            'File size exceeds 5MB limit',
-            snackPosition: SnackPosition.BOTTOM,
-          );
-          return;
+        if (result != null && result.files.single.path != null) {
+          await _processSelectedPdfFile(result.files.single, qualification);
         }
+      } else if (Platform.isIOS) {
+        final result = await FilePicker.platform.pickFiles(
+          type: FileType.custom,
+          allowedExtensions: ['pdf'],
+        );
 
-        qualification.certificateFile = file;
-        qualification.uploadCertificateController.text = result.files.first.name;
-        qualification.certificateUrl =
-            null; // Clear URL when new file is selected
-        
-        // Refresh the UI to show the selected PDF
-        qualifications.refresh();
+        if (result != null && result.files.single.path != null) {
+          await _processSelectedPdfFile(result.files.single, qualification);
+        }
       }
     } catch (e) {
       Get.snackbar(
@@ -639,6 +626,34 @@ class QualificationCertificationController extends BaseController {
         'Failed to pick PDF: ${e.toString()}',
         snackPosition: SnackPosition.BOTTOM,
       );
+    }
+  }
+
+  /// Process the selected PDF file (common logic for both platforms)
+  Future<void> _processSelectedPdfFile(
+    PlatformFile file,
+    QualificationItem qualification,
+  ) async {
+    if (file.path != null) {
+      final pdfFile = File(file.path!);
+      final fileSize = await pdfFile.length();
+      const maxSize = 5 * 1024 * 1024; // 5MB
+
+      if (fileSize > maxSize) {
+        Get.snackbar(
+          'Error',
+          'File size exceeds 5MB limit',
+          snackPosition: SnackPosition.BOTTOM,
+        );
+        return;
+      }
+
+      qualification.certificateFile = pdfFile;
+      qualification.uploadCertificateController.text = file.name;
+      qualification.certificateUrl =
+          null; // Clear URL when new file is selected
+
+      qualifications.refresh();
     }
   }
 
