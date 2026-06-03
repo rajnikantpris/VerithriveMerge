@@ -24,7 +24,8 @@ class UserApiService extends GetxService {
   //  static const String baseUrl = 'http://192.168.0.126:4142/api/v3/professional/';
   // static const String socketUrl = 'http://27.54.168.101:4142';
   static const String socketUrl = 'https://adminportal.verithrive.co.uk';
-  static const String baseUrl ='https://adminportal.verithrive.co.uk/api/api/v3/professional/';
+  static const String baseUrl =
+      'https://adminportal.verithrive.co.uk/api/api/v3/professional/';
   //static const String baseUrl = 'http://18.135.255.93:4142/api/v2/professional/';
   // static const String baseUrl = 'http://27.54.168.101:4142/api/v3/professional/';
 
@@ -38,11 +39,12 @@ class UserApiService extends GetxService {
 
   /// Check internet connection before making API calls
   Future<ApiResponse<T>> _checkConnectivityAndExecute<T>(
-      Future<ApiResponse<T>> Function() apiCall,
-      ) async {
+    Future<ApiResponse<T>> Function() apiCall,
+  ) async {
     try {
       // Check internet connection with retry mechanism
-      final hasConnection = await _connectivityService.checkWithRetry(maxRetries: 3);
+      final hasConnection =
+          await _connectivityService.checkWithRetry(maxRetries: 3);
 
       if (!hasConnection) {
         return ApiResponse.failure(
@@ -514,24 +516,31 @@ class UserApiService extends GetxService {
   /// [socialId] - Social provider user ID (Google user ID or Apple user identifier)
   /// [socialType] - Social provider type ('google' or 'apple')
   /// [email] - User's email address
+  /// [fullName] - User's full name from social provider (optional)
   ///
   /// Returns the API response wrapped in ApiResponse
   Future<ApiResponse<dynamic>> checkSocialAccount({
     required String socialId,
     required String socialType,
     required String email,
+    String? fullName,
   }) async {
     try {
       final fullUrl = '$baseUrl$_socialCheckPath';
 
+      final body = <String, dynamic>{
+        'social_id': socialId,
+        'social_type': socialType,
+        'email': email,
+      };
+      if (fullName != null && fullName.isNotEmpty) {
+        body['full_name'] = fullName;
+      }
+
       final response = await _dioClient.postRequest<dynamic>(
         fullUrl,
         withAuth: false,
-        body: {
-          'social_id': socialId,
-          'social_type': socialType,
-          'email': email,
-        },
+        body: body,
       );
 
       return ApiResponse.fromDioResponse(response);
@@ -592,7 +601,7 @@ class UserApiService extends GetxService {
                 imageResponse.data!,
                 // Basic filename; server can ignore if not needed
                 filename:
-                'profile_${DateTime.now().millisecondsSinceEpoch}.jpg',
+                    'profile_${DateTime.now().millisecondsSinceEpoch}.jpg',
               );
             }
           } else {
@@ -754,7 +763,7 @@ class UserApiService extends GetxService {
               profileMultipart = dio.MultipartFile.fromBytes(
                 imageResponse.data!,
                 filename:
-                'profile_${DateTime.now().millisecondsSinceEpoch}.jpg',
+                    'profile_${DateTime.now().millisecondsSinceEpoch}.jpg',
               );
             }
           } else {
@@ -780,7 +789,8 @@ class UserApiService extends GetxService {
       logInfo('=== API Request: PUT $fullUrl ===');
       logFullResponse('FormData fields', fields);
       if (profileMultipart != null) {
-        logInfo('FormData file: profile_picture (${profileMultipart.length} bytes)');
+        logInfo(
+            'FormData file: profile_picture (${profileMultipart.length} bytes)');
       }
 
       final response = await _dioClient.putRequest<dynamic>(

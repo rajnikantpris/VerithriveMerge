@@ -46,7 +46,7 @@ class ProfessionalLoginController extends BaseController {
     // Load saved credentials if remember me was enabled
     _loadSavedCredentials();
     // Ask for notification permission when login screen opens
-    _requestNotificationPermission();
+    // _requestNotificationPermission();
   }
 
   Future<void> _requestNotificationPermission() async {
@@ -404,11 +404,14 @@ class ProfessionalLoginController extends BaseController {
     required String email,
     required Map<String, String?> userInfo,
   }) async {
+    final resolvedFullName = await _resolveSocialFullName(userInfo);
+
     await callDataService<ApiResponse<dynamic>>(
       _userApiService.checkSocialAccount(
         socialId: socialId,
         socialType: socialType,
         email: email,
+        fullName: resolvedFullName.isNotEmpty ? resolvedFullName : null,
       ),
       showLoader: true,
       onComplete: () {
@@ -463,7 +466,9 @@ class ProfessionalLoginController extends BaseController {
       },
       onSuccess: (response) async {
         if (response.success) {
-          _pendingSocialDisplayName = userInfo['displayName']?.trim();
+          final resolvedFullName = await _resolveSocialFullName(userInfo);
+          _pendingSocialDisplayName =
+              resolvedFullName.isNotEmpty ? resolvedFullName : null;
 
           // If check passes, proceed with social login
           await _handleSocialLogin(
@@ -494,13 +499,16 @@ class ProfessionalLoginController extends BaseController {
     String? profilePicture,
   }) async {
     await _persistSocialDisplayNameIfNeeded(fullName);
+    final resolvedFullName = _socialAuthService.resolveSocialFullName(
+      credentialDisplayName: fullName,
+    );
 
     await callDataService<ApiResponse<dynamic>>(
       _userApiService.socialLogin(
         email: email,
         socialType: socialType,
         socialId: socialId,
-        fullName: fullName,
+        fullName: resolvedFullName.isNotEmpty ? resolvedFullName : null,
         profilePicture: profilePicture,
       ),
       showLoader: true,
@@ -793,6 +801,15 @@ class ProfessionalLoginController extends BaseController {
   Future<void> _persistSocialDisplayNameIfNeeded(String? displayName) async {
     if (displayName == null || displayName.trim().isEmpty) return;
     await _socialAuthService.persistSocialDisplayName(displayName.trim());
+  }
+
+  /// Resolves full name from Google/Apple credential and stored Apple name.
+  Future<String> _resolveSocialFullName(Map<String, String?> userInfo) async {
+    final displayName = userInfo['displayName']?.trim();
+    await _persistSocialDisplayNameIfNeeded(displayName);
+    return _socialAuthService.resolveSocialFullName(
+      credentialDisplayName: displayName,
+    );
   }
 
   Future<void> _cacheSocialProfileData(UserModel? user) async {

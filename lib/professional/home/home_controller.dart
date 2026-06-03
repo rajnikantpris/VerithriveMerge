@@ -290,7 +290,7 @@ class HomeController extends BaseController {
           final profileController = Get.find<ProfileController>();
           profileController.fetchProfileDetails(showStripeDialog: true);
         }
-      } else if (index == 0 || index==1) {
+      } else if (index == 0 || index == 1) {
         // Only refresh profile details when switching to Home tab
         loadProfileDetails();
       }
@@ -839,8 +839,7 @@ class HomeController extends BaseController {
     await _maybeShowSubscriptionDialog(profile);
   }
 
-  Future<void> _maybeShowSubscriptionDialog(
-      ProfileDetailsModel profile) async {
+  Future<void> _maybeShowSubscriptionDialog(ProfileDetailsModel profile) async {
     if (_subscriptionDialogShown) return;
     if (_isGuestUser()) return;
     if (Get.context == null) return;
@@ -856,7 +855,8 @@ class HomeController extends BaseController {
       _subscriptionDialogShown = true;
       showConfirmationDialog(
         title: 'Subscription Required',
-        message: 'Your profile has been approved. Please proceed with subscription payment to activate your account.',
+        message:
+            'Your profile has been approved. Please proceed with subscription payment to activate your account.',
         onYesPressed: () {
           Get.toNamed(Routes.profileSubscription);
         },
@@ -949,19 +949,18 @@ class HomeController extends BaseController {
                     child: ElevatedButton(
                       onPressed: () async {
                         Navigator.of(context).pop();
-                        final result = await Get.to(
-                            () => StripAccountWebViewScreen(url: onboardingUrl));
+                        final result = await Get.to(() =>
+                            StripAccountWebViewScreen(url: onboardingUrl));
 
                         // When returning from WebView, check result and navigate if successful
                         if (result == 'success') {
                           loadProfileDetails(showStripeDialog: true);
-                            showResponseDialog(
-                              message: 'Stripe account created successfully.',
-                              title: 'Stripe Account Created',
-                              showButton: true,
-                              onOkPressed: () =>
-                                  Get.toNamed(Routes.bankAccount),
-                            );
+                          showResponseDialog(
+                            message: 'Stripe account created successfully.',
+                            title: 'Stripe Account Created',
+                            showButton: true,
+                            onOkPressed: () => Get.toNamed(Routes.bankAccount),
+                          );
                         } else if (result == 'failed') {
                           loadProfileDetails(showStripeDialog: true);
                           showResponseDialog(

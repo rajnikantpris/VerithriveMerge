@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -13,9 +14,15 @@ import '../../api/api_response.dart';
 import '../../api/dio_client.dart';
 import '../../api/user_api_service.dart';
 import '../../common/base_controller.dart';
+import '../../enduser/screens/message/socket_service.dart';
 import '../../routes/app_routes.dart';
 import '../../services/location_permission_service.dart';
 import '../../services/camera_storage_permission_service.dart';
+import '../../services/social_auth_service.dart';
+import '../../services/socket_service.dart';
+import 'package:verithrive_dev/enduser/core/values/sharePrefrenceConst.dart';
+import 'package:verithrive_dev/select_user/select_user_binding.dart';
+import 'package:verithrive_dev/select_user/select_user_view.dart';
 import '../../theme/colors.dart';
 import '../../theme/font_sizes.dart';
 import '../../theme/fonts.dart';
@@ -58,6 +65,7 @@ class SignupPersonDetailsController extends BaseController {
       LocationPermissionService();
   final CameraStoragePermissionService _cameraStoragePermissionService =
       CameraStoragePermissionService();
+  final SocialAuthService _socialAuthService = SocialAuthService();
   StorageService? _storageService;
 
   @override
@@ -67,9 +75,149 @@ class SignupPersonDetailsController extends BaseController {
     formKey = GlobalKey<FormState>();
     _storageService =
         Get.isRegistered<StorageService>() ? Get.find<StorageService>() : null;
-    _populateSocialDefaults();
+    _loadIsSocialLogin();
+    _applySocialDataFromArguments(Get.arguments as Map<String, dynamic>?);
+    _loadPersistedSocialData();
     // Get current location and auto-fill address and postcode
     // _getCurrentLocationAndFillAddress();
+  }
+
+  void _loadIsSocialLogin() {
+    final storage = _storageService;
+    if (storage == null) return;
+    isSocialLogin.value = storage.readBool('is_social_login') ?? false;
+  }
+
+  /// Social login: hide full name when pre-filled; show when empty (e.g. Apple hide email).
+  bool get shouldShowFullNameField =>
+      !isSocialLogin.value || fullNameController.text.trim().isEmpty;
+
+  Future<void> onBackPressed() async {
+    try {
+      if (Get.isRegistered<EndUserSocketService>()) {
+        final endUserSocket = Get.find<EndUserSocketService>();
+        endUserSocket.disconnect();
+        Get.delete<EndUserSocketService>();
+      }
+
+      if (Get.isRegistered<SocketService>()) {
+        final professionalSocket = Get.find<SocketService>();
+        professionalSocket.disconnect();
+        Get.delete<SocketService>();
+      }
+
+      await _socialAuthService.signOutSocialProviders();
+
+      final storage = _storageService;
+      if (storage != null) {
+        await storage.clearAllExcept(const [
+          'professional_remember_me',
+          'professional_saved_email',
+          'professional_saved_password',
+          SharePreferenceConst.rememberMe,
+          SharePreferenceConst.savedEmail,
+          SharePreferenceConst.savedPassword,
+        ]);
+      }
+    } catch (_) {
+      // Still navigate even if cleanup fails
+    }
+
+    Get.offAll(
+      () => const SelectUserView(),
+      binding: SelectUserBinding(),
+    );
+  }
+
+  void _applySocialDataFromArguments(Map<String, dynamic>? arguments) {
+    if (arguments == null || arguments.isEmpty) return;
+
+    final fullName = arguments['fullName']?.toString().trim() ?? '';
+    if (fullName.isNotEmpty) {
+      fullNameController.text = fullName;
+    }
+
+    String profilePic = arguments['profilePicture']?.toString().trim() ?? '';
+    if (profilePic.isEmpty) {
+      profilePic = arguments['googleProfilePicture']?.toString().trim() ?? '';
+    }
+    if (profilePic.isNotEmpty) {
+      socialProfileImageUrl.value = profilePic;
+    }
+
+    if (arguments['profileImageFile'] is File) {
+      selectedImage.value = arguments['profileImageFile'] as File;
+    }
+  }
+
+  void _loadPersistedSocialData() {
+    final storage = _storageService;
+    if (storage == null) return;
+
+    if (fullNameController.text.trim().isEmpty) {
+      String fullName = storage.readString('user_full_name')?.trim() ?? '';
+      if (fullName.isEmpty) {
+        fullName =
+            storage.readString(SharePreferenceConst.socialFullName)?.trim() ??
+                '';
+      }
+      if (fullName.isEmpty) {
+        fullName = storage.readString('apple_user_name')?.trim() ?? '';
+      }
+      if (fullName.isEmpty) {
+        fullName = _readFullNameFromStoredUserData(storage);
+      }
+      if (fullName.isNotEmpty) {
+        fullNameController.text = fullName;
+      }
+    }
+
+    if (selectedImage.value == null && socialProfileImageUrl.value.isEmpty) {
+      String profilePic =
+          storage.readString('user_profile_picture')?.trim() ?? '';
+      if (profilePic.isEmpty) {
+        profilePic = storage
+                .readString(SharePreferenceConst.socialProfilePicture)
+                ?.trim() ??
+            '';
+      }
+      if (profilePic.isEmpty) {
+        profilePic = _readProfilePictureFromStoredUserData(storage);
+      }
+      if (profilePic.isNotEmpty) {
+        socialProfileImageUrl.value = profilePic;
+      }
+    }
+  }
+
+  String _readFullNameFromStoredUserData(StorageService storage) {
+    for (final key in ['user_data', SharePreferenceConst.userData]) {
+      final json = storage.readString(key);
+      if (json == null || json.isEmpty) continue;
+      try {
+        final userData = jsonDecode(json) as Map<String, dynamic>;
+        final name = userData['full_name']?.toString().trim() ?? '';
+        if (name.isNotEmpty) return name;
+      } catch (_) {
+        continue;
+      }
+    }
+    return '';
+  }
+
+  String _readProfilePictureFromStoredUserData(StorageService storage) {
+    for (final key in ['user_data', SharePreferenceConst.userData]) {
+      final json = storage.readString(key);
+      if (json == null || json.isEmpty) continue;
+      try {
+        final userData = jsonDecode(json) as Map<String, dynamic>;
+        final picture = userData['profile_picture']?.toString().trim() ?? '';
+        if (picture.isNotEmpty) return picture;
+      } catch (_) {
+        continue;
+      }
+    }
+    return '';
   }
 
   @override
@@ -293,6 +441,11 @@ class SignupPersonDetailsController extends BaseController {
       return 'Please enter $label';
     }
     return null;
+  }
+
+  String? validateFullName(String? value) {
+    if (isSocialLogin.value && !shouldShowFullNameField) return null;
+    return validateNotEmpty(value, 'your full name');
   }
 
   String? validateAge(String? value) {
@@ -631,24 +784,6 @@ class SignupPersonDetailsController extends BaseController {
       debugPrint('Error getting current location: $e');
       // Silently fail - user can manually select address
     }
-  }
-
-  void _populateSocialDefaults() {
-    final storage = _storageService;
-    if (storage == null) return;
-
-    final storedName = storage.readString('user_full_name');
-    if (storedName != null && storedName.isNotEmpty) {
-      fullNameController.text = storedName;
-    }
-
-    final storedImage = storage.readString('user_profile_picture');
-    if (storedImage != null && storedImage.isNotEmpty) {
-      socialProfileImageUrl.value = storedImage;
-    }
-
-    final storedIsSocial = storage.readBool('is_social_login') ?? false;
-    isSocialLogin.value = storedIsSocial;
   }
 
   ImageProvider? get avatarImageProvider {

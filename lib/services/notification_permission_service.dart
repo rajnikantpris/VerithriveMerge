@@ -205,18 +205,17 @@ class NotificationPermissionService {
       PopScope(
         canPop: false, // Prevent back button dismissal
         child: AlertDialog(
-          title: const Text('Notification Permission Required'),
+          title: const Text('Notifications Disabled'),
           content: const Text(
-            'Notification permission is required to receive important updates and alerts. Please enable it in app settings to continue.',
-          ),
+              "Notifications are currently disabled. You can continue using the app without enabling notifications. If you would like to receive important updates and alerts, you can enable it anytime from Settings → Apps → Verithrive → Notifications."),
           actions: [
-            TextButton(
-              onPressed: () => Get.back(result: true),
-              child: const Text('Open Settings'),
-            ),
+            // TextButton(
+            //   onPressed: () => Get.back(result: true),
+            //   child: const Text('Open Settings'),
+            // ),
             TextButton(
               onPressed: () => Get.back(result: false),
-              child: const Text('Cancel'),
+              child: const Text('Okay'),
             ),
           ],
         ),

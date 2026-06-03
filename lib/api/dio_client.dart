@@ -141,6 +141,27 @@ class DioClient extends GetxService {
     );
   }
 
+  /// Readable log string for JSON maps and multipart [FormData].
+  static String _formatBodyForLog(dynamic body) {
+    if (body == null) return 'null';
+    if (body is FormData) {
+      final parts = <String>[];
+      for (final field in body.fields) {
+        parts.add('${field.key}: ${field.value}');
+      }
+      for (final file in body.files) {
+        final multipart = file.value;
+        final name = multipart.filename ?? 'file';
+        final length = multipart.length;
+        parts.add(
+          '${file.key}: MultipartFile($name, ${length} bytes)',
+        );
+      }
+      return '{${parts.join(', ')}}';
+    }
+    return body.toString();
+  }
+
   Future<Response<T>> postRequest<T>(
     String path, {
     Map<String, dynamic>? query,
@@ -150,7 +171,7 @@ class DioClient extends GetxService {
     bool withAuth = true,
   }) async {
     await _applyHeaders(withAuth: withAuth);
-    logInfo('POST $path body=$body query=$query');
+    logInfo('POST $path body=${_formatBodyForLog(body)} query=$query');
     return _dio.post<T>(
       path,
       data: body,
@@ -171,7 +192,7 @@ class DioClient extends GetxService {
   }) async {
     await _applyHeaders(
         withAuth: withAuth, additionalHeaders: additionalHeaders);
-    logInfo('PUT $path body=$body query=$query');
+    logInfo('PUT $path body=${_formatBodyForLog(body)} query=$query');
     return _dio.put<T>(
       path,
       data: body,
@@ -190,7 +211,7 @@ class DioClient extends GetxService {
     bool withAuth = true,
   }) async {
     await _applyHeaders(withAuth: withAuth);
-    logInfo('DELETE $path body=$body query=$query');
+    logInfo('DELETE $path body=${_formatBodyForLog(body)} query=$query');
     return _dio.delete<T>(
       path,
       data: body,

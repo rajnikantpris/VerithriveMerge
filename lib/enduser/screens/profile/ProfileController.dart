@@ -14,6 +14,11 @@ import 'package:verithrive_dev/enduser/utils/common_dialog.dart';
 import 'package:verithrive_dev/enduser/utils/camera_storage_permission_service.dart';
 import 'package:verithrive_dev/enduser/utils/location_permission_service.dart';
 import 'package:verithrive_dev/enduser/core/values/sharePrefrenceConst.dart';
+import 'package:verithrive_dev/enduser/screens/message/socket_service.dart';
+import 'package:verithrive_dev/select_user/select_user_binding.dart';
+import 'package:verithrive_dev/select_user/select_user_view.dart';
+import 'package:verithrive_dev/services/social_auth_service.dart';
+import 'package:verithrive_dev/services/socket_service.dart' as prof_socket;
 import 'package:verithrive_dev/services/storage_service.dart';
 
 class ProfileController extends GetxController {
@@ -44,6 +49,7 @@ class ProfileController extends GetxController {
       CameraStoragePermissionService();
   final LocationPermissionService _locationPermissionService =
       LocationPermissionService();
+  final SocialAuthService _socialAuthService = SocialAuthService();
 
   // Selected address data
   final selectedLatitude = Rxn<double>();
@@ -60,6 +66,7 @@ class ProfileController extends GetxController {
   // Track if user clicked "enter manually" for postcode
   final isManualEntry = false.obs;
   final isManualAddress = false.obs;
+  final isSocialLogin = false.obs;
 
   @override
   void onInit() {
@@ -71,9 +78,58 @@ class ProfileController extends GetxController {
     // Get current location and auto-fill address and postcode
     // getCurrentLocationAndFillAddress();
 
+    _loadIsSocialLogin();
     _applySocialDataFromArguments(Get.arguments as Map<String, dynamic>?);
     _loadPersistedSocialData();
     _persistSocialFieldsToStorage();
+  }
+
+  void _loadIsSocialLogin() {
+    final storage = _storageService;
+    if (storage == null) return;
+    isSocialLogin.value =
+        storage.readBool(SharePreferenceConst.isSocialLogin) ?? false;
+  }
+
+  /// Social login: hide full name when pre-filled; show when empty (e.g. Apple hide email).
+  bool get shouldShowFullNameField =>
+      !isSocialLogin.value || fullNameController.text.trim().isEmpty;
+
+  Future<void> onBackPressed() async {
+    try {
+      if (Get.isRegistered<EndUserSocketService>()) {
+        final endUserSocket = Get.find<EndUserSocketService>();
+        endUserSocket.disconnect();
+        Get.delete<EndUserSocketService>();
+      }
+
+      if (Get.isRegistered<prof_socket.SocketService>()) {
+        final professionalSocket = Get.find<prof_socket.SocketService>();
+        professionalSocket.disconnect();
+        Get.delete<prof_socket.SocketService>();
+      }
+
+      await _socialAuthService.signOutSocialProviders();
+
+      final storage = _storageService;
+      if (storage != null) {
+        await storage.clearAllExcept(const [
+          'professional_remember_me',
+          'professional_saved_email',
+          'professional_saved_password',
+          SharePreferenceConst.rememberMe,
+          SharePreferenceConst.savedEmail,
+          SharePreferenceConst.savedPassword,
+        ]);
+      }
+    } catch (_) {
+      // Still navigate even if cleanup fails
+    }
+
+    Get.offAll(
+      () => const SelectUserView(),
+      binding: SelectUserBinding(),
+    );
   }
 
   void _applySocialDataFromArguments(Map<String, dynamic>? arguments) {
@@ -198,6 +254,7 @@ class ProfileController extends GetxController {
   }
 
   String? validateFullName(String? value) {
+    if (isSocialLogin.value && !shouldShowFullNameField) return null;
     if (value == null || value.isEmpty) {
       return 'Full name is required';
     }

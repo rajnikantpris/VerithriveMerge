@@ -21,7 +21,7 @@ class ProfileView extends GetView<ProfileController> {
         elevation: 0,
         leading: IconButton(
           icon: SvgPicture.asset(AppAssets.back),
-          onPressed: () => Get.back(),
+          onPressed: controller.onBackPressed,
         ),
       ),
       body: SafeArea(
@@ -155,17 +155,22 @@ class ProfileView extends GetView<ProfileController> {
 
                 SizedBox(height: 20),
 
-                // Full name
-                CustomTextField(
-                  controller: controller.fullNameController,
-                  label: AppText.fullName,
-                  hint: AppText.enterFullName,
-                  keyboardType: TextInputType.name,
-                  textCapitalization: TextCapitalization.words,
-                  validator: controller.validateFullName,
-                ),
-
-                SizedBox(height: 16),
+                Obx(() => controller.shouldShowFullNameField
+                    ? Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          CustomTextField(
+                            controller: controller.fullNameController,
+                            label: AppText.fullName,
+                            hint: AppText.enterFullName,
+                            keyboardType: TextInputType.name,
+                            textCapitalization: TextCapitalization.words,
+                            validator: controller.validateFullName,
+                          ),
+                          SizedBox(height: 16),
+                        ],
+                      )
+                    : const SizedBox.shrink()),
 
                 // Date of birth
                 CustomTextField(

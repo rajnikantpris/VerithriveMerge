@@ -19,6 +19,7 @@ import '../../utils/api_services.dart';
 import 'models/ProfessionTypeModel.dart';
 import 'package:verithrive_dev/services/analytics_service.dart';
 import 'package:verithrive_dev/services/storage_service.dart';
+import 'package:verithrive_dev/services/notification_permission_service.dart';
 
 // Holds one category (type + ordered sub_types) exactly as returned by the API
 class ProfessionCategory {
@@ -39,8 +40,13 @@ class HomeMainController extends BaseController with WidgetsBindingObserver {
   bool _hasFetchedPersonalDetails = false;
   RxBool isGuest = false.obs;
 
+  final NotificationPermissionService _notificationPermissionService =
+      NotificationPermissionService();
+  bool _notificationPermissionRequested = false;
+
   ProjectRepository get repository {
-    _repository ??= Get.find<ProjectRepository>(tag: (ProjectRepository).toString());
+    _repository ??=
+        Get.find<ProjectRepository>(tag: (ProjectRepository).toString());
     return _repository!;
   }
 
@@ -63,6 +69,27 @@ class HomeMainController extends BaseController with WidgetsBindingObserver {
     isLoading.value = true;
     fetchProfessionTypes();
     fetchNotificationCount();
+    _ensureNotificationPermission();
+  }
+
+  Future<void> _ensureNotificationPermission() async {
+    if (_notificationPermissionRequested) {
+      return;
+    }
+
+    _notificationPermissionRequested = true;
+
+    try {
+      final isGranted = await _notificationPermissionService
+          .checkNotificationPermissionStatus();
+
+      if (!isGranted) {
+        await _notificationPermissionService.requestNotificationPermission();
+      }
+    } catch (e, stackTrace) {
+      print('Error ensuring notification permission: $e');
+      print('Stack trace: $stackTrace');
+    }
   }
 
   @override
@@ -92,13 +119,17 @@ class HomeMainController extends BaseController with WidgetsBindingObserver {
   // ── Personal Details ───────────────────────────────────────────────────────
   Future<void> fetchPersonalDetails() async {
     try {
-      if (!Get.isRegistered<ProjectRepository>(tag: (ProjectRepository).toString())) return;
+      if (!Get.isRegistered<ProjectRepository>(
+          tag: (ProjectRepository).toString())) return;
 
-      bool isLoggedIn = storageService.readBool(SharePreferenceConst.isLogin) ?? false;
-      isGuest.value = storageService.readBool(SharePreferenceConst.isGuest) ?? false;
+      bool isLoggedIn =
+          storageService.readBool(SharePreferenceConst.isLogin) ?? false;
+      isGuest.value =
+          storageService.readBool(SharePreferenceConst.isGuest) ?? false;
       if (!isLoggedIn) return;
 
-      var response = await repository.sendGetApiNoParamRequest(get_personal_details);
+      var response =
+          await repository.sendGetApiNoParamRequest(get_personal_details);
 
       Map<String, dynamic> responseData;
       if (response != null && response.data != null) {
@@ -113,12 +144,14 @@ class HomeMainController extends BaseController with WidgetsBindingObserver {
 
       bool success = responseData['success'] ?? false;
       if (success == true && responseData['data'] != null) {
-        Map<String, dynamic> data = responseData['data'] as Map<String, dynamic>;
+        Map<String, dynamic> data =
+            responseData['data'] as Map<String, dynamic>;
         if (data['is_notification'] != null) {
           bool isNotification = data['is_notification'] is bool
               ? data['is_notification'] as bool
               : data['is_notification'].toString().toLowerCase() == 'true';
-          await storageService.writeBool(SharePreferenceConst.isNotification, isNotification);
+          await storageService.writeBool(
+              SharePreferenceConst.isNotification, isNotification);
         }
       }
     } catch (e) {
@@ -128,7 +161,8 @@ class HomeMainController extends BaseController with WidgetsBindingObserver {
 
   // ── Profession Types (fully dynamic) ──────────────────────────────────────
   void fetchProfessionTypes() {
-    if (!Get.isRegistered<ProjectRepository>(tag: (ProjectRepository).toString())) {
+    if (!Get.isRegistered<ProjectRepository>(
+        tag: (ProjectRepository).toString())) {
       isLoading.value = false;
       return;
     }
@@ -164,7 +198,8 @@ class HomeMainController extends BaseController with WidgetsBindingObserver {
 
         // Parse into ProfessionCategory list preserving API order exactly
         final List<ProfessionCategory> categories = dataList.map((item) {
-          final model = ProfessionTypeModel.fromJson(item as Map<String, dynamic>);
+          final model =
+              ProfessionTypeModel.fromJson(item as Map<String, dynamic>);
           return ProfessionCategory(
             id: model.id,
             type: model.type,
@@ -174,7 +209,8 @@ class HomeMainController extends BaseController with WidgetsBindingObserver {
 
         // Reorder categories to: Fitness, Wellness, Food & Nutrition
         final List<ProfessionCategory> reorderedCategories = [];
-        final List<ProfessionCategory> remainingCategories = List.from(categories);
+        final List<ProfessionCategory> remainingCategories =
+            List.from(categories);
 
         // Add Fitness first with reordered sub-types
         final fitnessCategory = remainingCategories.firstWhereOrNull(
@@ -183,7 +219,8 @@ class HomeMainController extends BaseController with WidgetsBindingObserver {
         if (fitnessCategory != null) {
           // Reorder Fitness sub-types to: Personal trainer, Fitness coach, Fitness instructor
           final List<SubTypeModel> reorderedSubTypes = [];
-          final List<SubTypeModel> remainingSubTypes = List.from(fitnessCategory.subTypes);
+          final List<SubTypeModel> remainingSubTypes =
+              List.from(fitnessCategory.subTypes);
 
           // Add Personal trainer first
           final personalTrainer = remainingSubTypes.firstWhereOrNull(
@@ -232,7 +269,8 @@ class HomeMainController extends BaseController with WidgetsBindingObserver {
         if (wellnessCategory != null) {
           // Reorder Wellness sub-types to: Physiotherapist, Chiropractor, Osteopath, Sports therapist
           final List<SubTypeModel> reorderedSubTypes = [];
-          final List<SubTypeModel> remainingSubTypes = List.from(wellnessCategory.subTypes);
+          final List<SubTypeModel> remainingSubTypes =
+              List.from(wellnessCategory.subTypes);
 
           // Add Physiotherapist first
           final physiotherapist = remainingSubTypes.firstWhereOrNull(
@@ -263,8 +301,9 @@ class HomeMainController extends BaseController with WidgetsBindingObserver {
 
           // Add Sports therapist fourth
           final sportsTherapist = remainingSubTypes.firstWhereOrNull(
-            (sub) => sub.subType.toLowerCase().contains('sports therapist') ||
-                       sub.subType.toLowerCase().contains('sports therapy'),
+            (sub) =>
+                sub.subType.toLowerCase().contains('sports therapist') ||
+                sub.subType.toLowerCase().contains('sports therapy'),
           );
           if (sportsTherapist != null) {
             reorderedSubTypes.add(sportsTherapist);
@@ -286,8 +325,9 @@ class HomeMainController extends BaseController with WidgetsBindingObserver {
 
         // Add Food & Nutrition third
         final foodNutritionCategory = remainingCategories.firstWhereOrNull(
-          (cat) => cat.type.toLowerCase().contains('food') || 
-                   cat.type.toLowerCase().contains('nutrition'),
+          (cat) =>
+              cat.type.toLowerCase().contains('food') ||
+              cat.type.toLowerCase().contains('nutrition'),
         );
         if (foodNutritionCategory != null) {
           reorderedCategories.add(foodNutritionCategory);
@@ -310,12 +350,15 @@ class HomeMainController extends BaseController with WidgetsBindingObserver {
   // ── Notification Count ─────────────────────────────────────────────────────
   Future<void> fetchNotificationCount() async {
     try {
-      if (!Get.isRegistered<ProjectRepository>(tag: (ProjectRepository).toString())) return;
+      if (!Get.isRegistered<ProjectRepository>(
+          tag: (ProjectRepository).toString())) return;
 
-      bool isLoggedIn = storageService.readBool(SharePreferenceConst.isLogin) ?? false;
+      bool isLoggedIn =
+          storageService.readBool(SharePreferenceConst.isLogin) ?? false;
       if (!isLoggedIn) return;
 
-      var response = await repository.sendGetApiNoParamRequest(notifications_count);
+      var response =
+          await repository.sendGetApiNoParamRequest(notifications_count);
 
       Map<String, dynamic> responseData;
       if (response != null && response.data != null) {
@@ -330,7 +373,8 @@ class HomeMainController extends BaseController with WidgetsBindingObserver {
 
       bool success = responseData['success'] ?? false;
       if (success == true && responseData['data'] != null) {
-        Map<String, dynamic> data = responseData['data'] as Map<String, dynamic>;
+        Map<String, dynamic> data =
+            responseData['data'] as Map<String, dynamic>;
         totalCount.value = data['total_count'] ?? 0;
         unreadCount.value = data['unread_count'] ?? 0;
         readCount.value = data['readed_count'] ?? 0;
@@ -356,14 +400,17 @@ class HomeMainController extends BaseController with WidgetsBindingObserver {
 
     // Find the matching category from the dynamic list
     final matchedCategory = professionCategories.firstWhereOrNull(
-          (c) => c.type.toLowerCase() == category.toLowerCase(),
+      (c) => c.type.toLowerCase() == category.toLowerCase(),
     );
 
-    List<Map<String, dynamic>> subTypesArray = matchedCategory?.subTypes.map((subType) => {
-      'id': subType.id,
-      'sub_type': subType.subType,
-      'image': subType.image ?? '',
-    }).toList() ?? [];
+    List<Map<String, dynamic>> subTypesArray = matchedCategory?.subTypes
+            .map((subType) => {
+                  'id': subType.id,
+                  'sub_type': subType.subType,
+                  'image': subType.image ?? '',
+                })
+            .toList() ??
+        [];
 
     final args = {
       'category': category,
@@ -376,24 +423,31 @@ class HomeMainController extends BaseController with WidgetsBindingObserver {
     print('========================================');
     print('HOME MAIN CONTROLLER - PASSING ARGUMENTS');
     print('========================================');
-    print('Category: $category | Label: $label | Sub Type ID: ${subTypeId ?? "null"}');
+    print(
+        'Category: $category | Label: $label | Sub Type ID: ${subTypeId ?? "null"}');
     print('Sub Types Count: ${subTypesArray.length}');
     print('========================================');
 
     final categoryLower = category.toLowerCase();
     if (categoryLower.contains('wellness')) {
-      Get.to(() => AppointmentBookingScreen(), binding: AppointmentBinding(), arguments: args);
+      Get.to(() => AppointmentBookingScreen(),
+          binding: AppointmentBinding(), arguments: args);
     } else if (categoryLower.contains('fitness')) {
-      Get.to(() => const FitnessGoalScreen(), binding: FitnessGoalBinding(), arguments: args);
-    } else if (categoryLower.contains('food') || categoryLower.contains('nutrition')) {
-      Get.to(() => const NutritionGoalScreen(), binding: NutritionGoalBinding(), arguments: args);
+      Get.to(() => const FitnessGoalScreen(),
+          binding: FitnessGoalBinding(), arguments: args);
+    } else if (categoryLower.contains('food') ||
+        categoryLower.contains('nutrition')) {
+      Get.to(() => const NutritionGoalScreen(),
+          binding: NutritionGoalBinding(), arguments: args);
     } else {
-      Get.to(() => AppointmentBookingScreen(), binding: AppointmentBinding(), arguments: args);
+      Get.to(() => AppointmentBookingScreen(),
+          binding: AppointmentBinding(), arguments: args);
     }
   }
 
   // ── Review Dialog ──────────────────────────────────────────────────────────
-  void showReviewDialog(String professionalName, String professionalId, String bookingId) {
+  void showReviewDialog(
+      String professionalName, String professionalId, String bookingId) {
     final TextEditingController reviewController = TextEditingController();
     final RxInt rating = 0.obs;
     final RxBool isSubmitting = false.obs;
@@ -431,28 +485,29 @@ class HomeMainController extends BaseController with WidgetsBindingObserver {
                       ),
                       GestureDetector(
                         onTap: () => Get.back(),
-                        child: Icon(Icons.close, color: Colors.grey.shade600, size: 24),
+                        child: Icon(Icons.close,
+                            color: Colors.grey.shade600, size: 24),
                       ),
                     ],
                   ),
                   SizedBox(height: 24),
                   Obx(() => Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: List.generate(5, (index) {
-                      return GestureDetector(
-                        onTap: () => rating.value = index + 1,
-                        child: Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 4),
-                          child: SvgPicture.asset(
-                            AppAssets.rating_selected,
-                            color: index < rating.value
-                                ? AppColors.ratingSelectedColor
-                                : AppColors.unselectedTabColor,
-                          ),
-                        ),
-                      );
-                    }),
-                  )),
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: List.generate(5, (index) {
+                          return GestureDetector(
+                            onTap: () => rating.value = index + 1,
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 4),
+                              child: SvgPicture.asset(
+                                AppAssets.rating_selected,
+                                color: index < rating.value
+                                    ? AppColors.ratingSelectedColor
+                                    : AppColors.unselectedTabColor,
+                              ),
+                            ),
+                          );
+                        }),
+                      )),
                   SizedBox(height: 24),
                   Container(
                     decoration: BoxDecoration(
@@ -472,75 +527,84 @@ class HomeMainController extends BaseController with WidgetsBindingObserver {
                         border: InputBorder.none,
                         contentPadding: EdgeInsets.all(16),
                       ),
-                      style: AppTextStyles.regularTextStyle(fontSize: 14, color: AppColors.black),
+                      style: AppTextStyles.regularTextStyle(
+                          fontSize: 14, color: AppColors.black),
                     ),
                   ),
                 ],
               ),
             ),
             Obx(() => Container(
-              width: double.infinity,
-              height: 56,
-              decoration: BoxDecoration(
-                color: isSubmitting.value ? Colors.grey : AppColors.primaryColor,
-                borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(20),
-                  bottomRight: Radius.circular(20),
-                ),
-              ),
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: isSubmitting.value
-                      ? null
-                      : () async {
-                    if (rating.value == 0) {
-                      Get.snackbar('Rating Required', 'Please select a rating before submitting',
-                          snackPosition: SnackPosition.BOTTOM,
-                          backgroundColor: Colors.orange.shade100,
-                          duration: Duration(seconds: 2));
-                      return;
-                    }
-                    isSubmitting.value = true;
-                    try {
-                      await _submitReview(
-                        professionalId: professionalId,
-                        bookingId: bookingId,
-                        rating: rating.value,
-                        review: reviewController.text.trim(),
-                      );
-                      Get.back();
-                      Get.snackbar('Review Submitted', 'Thank you for your feedback!',
-                          snackPosition: SnackPosition.BOTTOM,
-                          backgroundColor: AppColors.primaryColor.withOpacity(0.2),
-                          duration: Duration(seconds: 2));
-                    } catch (e) {
-                      Get.snackbar('Error', 'Failed to submit review. Please try again.',
-                          snackPosition: SnackPosition.BOTTOM,
-                          backgroundColor: Colors.red.shade100,
-                          duration: Duration(seconds: 3));
-                    } finally {
-                      isSubmitting.value = false;
-                    }
-                  },
-                  borderRadius: BorderRadius.only(
-                    bottomLeft: Radius.circular(20),
-                    bottomRight: Radius.circular(20),
+                  width: double.infinity,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    color: isSubmitting.value
+                        ? Colors.grey
+                        : AppColors.primaryColor,
+                    borderRadius: BorderRadius.only(
+                      bottomLeft: Radius.circular(20),
+                      bottomRight: Radius.circular(20),
+                    ),
                   ),
-                  child: Center(
-                    child: isSubmitting.value
-                        ? SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white)),
-                    )
-                        : Text('Add review', style: AppTextStyles.buttonTextStyle()),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: isSubmitting.value
+                          ? null
+                          : () async {
+                              if (rating.value == 0) {
+                                Get.snackbar('Rating Required',
+                                    'Please select a rating before submitting',
+                                    snackPosition: SnackPosition.BOTTOM,
+                                    backgroundColor: Colors.orange.shade100,
+                                    duration: Duration(seconds: 2));
+                                return;
+                              }
+                              isSubmitting.value = true;
+                              try {
+                                await _submitReview(
+                                  professionalId: professionalId,
+                                  bookingId: bookingId,
+                                  rating: rating.value,
+                                  review: reviewController.text.trim(),
+                                );
+                                Get.back();
+                                Get.snackbar('Review Submitted',
+                                    'Thank you for your feedback!',
+                                    snackPosition: SnackPosition.BOTTOM,
+                                    backgroundColor:
+                                        AppColors.primaryColor.withOpacity(0.2),
+                                    duration: Duration(seconds: 2));
+                              } catch (e) {
+                                Get.snackbar('Error',
+                                    'Failed to submit review. Please try again.',
+                                    snackPosition: SnackPosition.BOTTOM,
+                                    backgroundColor: Colors.red.shade100,
+                                    duration: Duration(seconds: 3));
+                              } finally {
+                                isSubmitting.value = false;
+                              }
+                            },
+                      borderRadius: BorderRadius.only(
+                        bottomLeft: Radius.circular(20),
+                        bottomRight: Radius.circular(20),
+                      ),
+                      child: Center(
+                        child: isSubmitting.value
+                            ? SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                        Colors.white)),
+                              )
+                            : Text('Add review',
+                                style: AppTextStyles.buttonTextStyle()),
+                      ),
+                    ),
                   ),
-                ),
-              ),
-            )),
+                )),
           ],
         ),
       ),
@@ -561,11 +625,14 @@ class HomeMainController extends BaseController with WidgetsBindingObserver {
       "review": review.isEmpty ? "" : review,
     };
 
-    var response = await repository.sendPostApiRequest(() => requestData, professionals_rate_review, true);
+    var response = await repository.sendPostApiRequest(
+        () => requestData, professionals_rate_review, true);
 
     Map<String, dynamic> responseData;
     if (response != null && response.data != null) {
-      responseData = response.data is Map<String, dynamic> ? response.data : response.data as Map<String, dynamic>;
+      responseData = response.data is Map<String, dynamic>
+          ? response.data
+          : response.data as Map<String, dynamic>;
     } else if (response is Map<String, dynamic>) {
       responseData = response;
     } else {
@@ -586,6 +653,7 @@ class HomeMainController extends BaseController with WidgetsBindingObserver {
         },
       );
     }
-    if (!success) throw Exception(responseData['message'] ?? 'Failed to submit review');
+    if (!success)
+      throw Exception(responseData['message'] ?? 'Failed to submit review');
   }
 }

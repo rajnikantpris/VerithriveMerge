@@ -8,6 +8,7 @@ import '../../theme/font_sizes.dart';
 import '../../theme/fonts.dart';
 import '../../theme/hight_width_sizes.dart';
 import '../../theme/image_paths.dart';
+import '../../widgets/custom_app_bar.dart';
 import '../../widgets/custom_text_field.dart';
 import 'signup_person_details_controller.dart';
 
@@ -16,7 +17,18 @@ class SignupPersonDetailsView extends BaseView<SignupPersonDetailsController> {
 
   @override
   PreferredSizeWidget? appBar(BuildContext context) {
-    return null;
+    return CustomAppBar(
+      appBarTitleText: '',
+      isBackButtonEnabled: true,
+      isCenterTitle: false,
+      titleColor: AppColor.color000000,
+      titleFontSize: FontSizes.setFontValue_18,
+      titlefontFamily: AppFonts.rubikMedium,
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back, color: AppColor.color000000),
+        onPressed: controller.onBackPressed,
+      ),
+    );
   }
 
   @override
@@ -48,15 +60,23 @@ class SignupPersonDetailsView extends BaseView<SignupPersonDetailsController> {
                     ),
                   ),
                   SizedBox(height: HightWidthSizes.setValue_20),
-                  CustomTextField(
-                    label: 'Full name',
-                    hintText: 'Enter full name',
-                    controller: controller.fullNameController,
-                    icon: null,
-                    validator: (value) =>
-                        controller.validateNotEmpty(value, 'your full name'),
+                  Obx(
+                    () => controller.shouldShowFullNameField
+                        ? Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              CustomTextField(
+                                label: 'Full name',
+                                hintText: 'Enter full name',
+                                controller: controller.fullNameController,
+                                icon: null,
+                                validator: controller.validateFullName,
+                              ),
+                              SizedBox(height: HightWidthSizes.setValue_16),
+                            ],
+                          )
+                        : const SizedBox.shrink(),
                   ),
-                  SizedBox(height: HightWidthSizes.setValue_16),
                   _buildDateField(context),
                   SizedBox(height: HightWidthSizes.setValue_16),
                   _buildGenderField(context),
