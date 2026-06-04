@@ -8,13 +8,7 @@ class FirebaseTokenService {
 
   static Future<String?> getFCMToken() async {
     try {
-      // 1️⃣ Request permission
-      final settings = await _firebaseMessaging.requestPermission(
-        alert: true,
-        badge: true,
-        sound: true,
-        provisional: false,
-      );
+      final settings = await _firebaseMessaging.getNotificationSettings();
 
       if (settings.authorizationStatus != AuthorizationStatus.authorized &&
           settings.authorizationStatus != AuthorizationStatus.provisional) {

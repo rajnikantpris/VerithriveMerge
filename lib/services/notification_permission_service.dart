@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -5,8 +6,58 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 
+import '../routes/app_routes.dart';
+
 /// Service class for handling notification permissions across the application
 class NotificationPermissionService {
+  static Completer<void>? _ensureAfterFirstScreenCompleter;
+
+  /// Requests notification permission after the first screen is painted.
+  /// Safe to call from multiple screens; only schedules once per app session.
+  Future<void> ensurePermissionAfterFirstScreen() async {
+    if (_ensureAfterFirstScreenCompleter != null) {
+      return _ensureAfterFirstScreenCompleter!.future;
+    }
+
+    _ensureAfterFirstScreenCompleter = Completer<void>();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (Platform.isIOS) {
+        await _waitUntilPastSplash();
+      }
+      await _requestIfNeeded();
+      if (!_ensureAfterFirstScreenCompleter!.isCompleted) {
+        _ensureAfterFirstScreenCompleter!.complete();
+      }
+    });
+    return _ensureAfterFirstScreenCompleter!.future;
+  }
+
+  /// Waits until splash navigation has finished before showing the iOS prompt.
+  Future<void> _waitUntilPastSplash() async {
+    const maxAttempts = 50;
+    for (var attempt = 0; attempt < maxAttempts; attempt++) {
+      final route = Get.currentRoute;
+      if (route != Routes.splash) {
+        await Future.delayed(const Duration(milliseconds: 150));
+        return;
+      }
+      await Future.delayed(const Duration(milliseconds: 100));
+    }
+  }
+
+  Future<void> _requestIfNeeded() async {
+    try {
+      final isGranted = await checkNotificationPermissionStatus();
+      if (!isGranted) {
+        await requestNotificationPermission();
+      }
+    } catch (e, stackTrace) {
+      debugPrint(
+          'Error ensuring notification permission after first screen: $e');
+      debugPrint('Stack trace: $stackTrace');
+    }
+  }
+
   /// Request notification permission
   /// Returns true if permission is granted, false otherwise
   Future<bool> requestNotificationPermission() async {

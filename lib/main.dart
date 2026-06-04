@@ -64,7 +64,10 @@ Future<void> main() async {
     await Firebase.initializeApp(options: FirebaseConfig.getFirebaseOptions());
   }
 
-  FirebaseTokenService.getFCMToken();
+  // Android only: prefetch FCM token at startup (does not show a permission dialog).
+  if (Platform.isAndroid) {
+    FirebaseTokenService.getFCMToken();
+  }
 
   // Register the background message handler
   FirebaseMessaging.onBackgroundMessage(_firebaseBackgroundMessageHandler);

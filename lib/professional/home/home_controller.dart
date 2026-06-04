@@ -37,7 +37,6 @@ class HomeController extends BaseController {
 
   final NotificationPermissionService _notificationPermissionService =
       NotificationPermissionService();
-  bool _notificationPermissionRequested = false;
 
   // Get UserApiService if available
   UserApiService? get _userApiService =>
@@ -106,7 +105,11 @@ class HomeController extends BaseController {
   void onReady() {
     super.onReady();
     _maybeStartAuthenticatedFlows();
-    _ensureNotificationPermission();
+    _notificationPermissionService.ensurePermissionAfterFirstScreen().then((_) {
+      if (!_isGuestUser()) {
+        updateDeviceToken();
+      }
+    });
     // Handle pending notification if app was opened from terminated state via notification
     // This ensures proper navigation stack: Splash -> Home -> Chat
     _handlePendingNotification();
@@ -143,26 +146,6 @@ class HomeController extends BaseController {
     Future.delayed(const Duration(milliseconds: 300), () {
       ForegroundNotificationService.handlePendingNotificationIfAny();
     });
-  }
-
-  Future<void> _ensureNotificationPermission() async {
-    if (_notificationPermissionRequested) {
-      return;
-    }
-
-    _notificationPermissionRequested = true;
-
-    try {
-      final isGranted = await _notificationPermissionService
-          .checkNotificationPermissionStatus();
-
-      if (!isGranted) {
-        await _notificationPermissionService.requestNotificationPermission();
-      }
-    } catch (e, stackTrace) {
-      logError('Failed to ensure notification permission',
-          error: e, stackTrace: stackTrace);
-    }
   }
 
   /// Cancel a booking session

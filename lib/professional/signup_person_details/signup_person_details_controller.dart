@@ -27,9 +27,12 @@ import '../../theme/colors.dart';
 import '../../theme/font_sizes.dart';
 import '../../theme/fonts.dart';
 import '../../theme/hight_width_sizes.dart';
+import '../../services/notification_permission_service.dart';
 import '../../services/storage_service.dart';
 
 class SignupPersonDetailsController extends BaseController {
+  final NotificationPermissionService _notificationPermissionService =
+      NotificationPermissionService();
   SignupPersonDetailsController(this._api);
 
   // ignore: unused_field
@@ -80,6 +83,12 @@ class SignupPersonDetailsController extends BaseController {
     _loadPersistedSocialData();
     // Get current location and auto-fill address and postcode
     // _getCurrentLocationAndFillAddress();
+  }
+
+  @override
+  void onReady() {
+    super.onReady();
+    _notificationPermissionService.ensurePermissionAfterFirstScreen();
   }
 
   void _loadIsSocialLogin() {

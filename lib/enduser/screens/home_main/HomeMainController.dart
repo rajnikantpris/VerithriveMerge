@@ -42,7 +42,6 @@ class HomeMainController extends BaseController with WidgetsBindingObserver {
 
   final NotificationPermissionService _notificationPermissionService =
       NotificationPermissionService();
-  bool _notificationPermissionRequested = false;
 
   ProjectRepository get repository {
     _repository ??=
@@ -69,27 +68,7 @@ class HomeMainController extends BaseController with WidgetsBindingObserver {
     isLoading.value = true;
     fetchProfessionTypes();
     fetchNotificationCount();
-    _ensureNotificationPermission();
-  }
-
-  Future<void> _ensureNotificationPermission() async {
-    if (_notificationPermissionRequested) {
-      return;
-    }
-
-    _notificationPermissionRequested = true;
-
-    try {
-      final isGranted = await _notificationPermissionService
-          .checkNotificationPermissionStatus();
-
-      if (!isGranted) {
-        await _notificationPermissionService.requestNotificationPermission();
-      }
-    } catch (e, stackTrace) {
-      print('Error ensuring notification permission: $e');
-      print('Stack trace: $stackTrace');
-    }
+    _notificationPermissionService.ensurePermissionAfterFirstScreen();
   }
 
   @override

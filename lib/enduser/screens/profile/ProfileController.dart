@@ -19,9 +19,12 @@ import 'package:verithrive_dev/select_user/select_user_binding.dart';
 import 'package:verithrive_dev/select_user/select_user_view.dart';
 import 'package:verithrive_dev/services/social_auth_service.dart';
 import 'package:verithrive_dev/services/socket_service.dart' as prof_socket;
+import 'package:verithrive_dev/services/notification_permission_service.dart';
 import 'package:verithrive_dev/services/storage_service.dart';
 
 class ProfileController extends GetxController {
+  final NotificationPermissionService _notificationPermissionService =
+      NotificationPermissionService();
   StorageService? get _storageService =>
       Get.isRegistered<StorageService>() ? Get.find<StorageService>() : null;
   final formKey = GlobalKey<FormState>();
@@ -82,6 +85,12 @@ class ProfileController extends GetxController {
     _applySocialDataFromArguments(Get.arguments as Map<String, dynamic>?);
     _loadPersistedSocialData();
     _persistSocialFieldsToStorage();
+  }
+
+  @override
+  void onReady() {
+    super.onReady();
+    _notificationPermissionService.ensurePermissionAfterFirstScreen();
   }
 
   void _loadIsSocialLogin() {

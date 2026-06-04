@@ -197,10 +197,12 @@ class ForegroundNotificationService {
     const androidSettings =
         AndroidInitializationSettings('@mipmap/ic_launcher');
 
+    // Do not request iOS notification permission here — main() runs before splash.
+    // Permission is requested later via NotificationPermissionService on the first screen.
     const iosSettings = DarwinInitializationSettings(
-      requestAlertPermission: true,
-      requestBadgePermission: true,
-      requestSoundPermission: true,
+      requestAlertPermission: false,
+      requestBadgePermission: false,
+      requestSoundPermission: false,
     );
 
     const initSettings = InitializationSettings(
