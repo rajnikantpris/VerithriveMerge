@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -161,6 +162,15 @@ class SocialAuthService {
         }
       }
 
+      // Apple only sends name on first auth; generate a stable 6-letter fallback if missing
+      if (displayName.isEmpty) {
+        displayName = _generateAppleFallbackDisplayName();
+        debugPrint('Generated Apple fallback display name: $displayName');
+        if (storage != null) {
+          await storage.writeString(_appleUserNameKey, displayName);
+        }
+      }
+
       return {
         'id': credential.userIdentifier ?? '',
         'email': email,
@@ -242,6 +252,17 @@ class SocialAuthService {
     }
 
     return '';
+  }
+
+  static const _appleFallbackNameChars = 'abcdefghijklmnopqrstuvwxyz';
+
+  /// Six-letter alphabetic placeholder when Apple does not provide a name.
+  static String _generateAppleFallbackDisplayName() {
+    final random = Random();
+    return List.generate(
+      6,
+      (_) => _appleFallbackNameChars[random.nextInt(_appleFallbackNameChars.length)],
+    ).join();
   }
 
   /// Check if Apple Sign In is available
