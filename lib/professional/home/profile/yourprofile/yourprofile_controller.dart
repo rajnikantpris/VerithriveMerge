@@ -17,7 +17,7 @@ class YourProfileController extends BaseController {
     YourProfileItem(title: 'Qualifications & certifications'),
     YourProfileItem(title: 'Personal identification'),
     YourProfileItem(title: 'About you'),
-    YourProfileItem(title: 'Share profile'),
+    // YourProfileItem(title: 'Share profile'),
   ];
 
   void onItemTap(YourProfileItem item) {
@@ -33,13 +33,15 @@ class YourProfileController extends BaseController {
       Get.toNamed(Routes.personalIdentification);
     } else if (item.title == 'About you') {
       Get.toNamed(Routes.aboutYou);
-    } else if (item.title == 'Share profile') {
-      if (Get.isRegistered<HomeController>()) {
-        _shareViaOtherApps(Get.find<HomeController>().profileDetails.value!);
-      } else {
-        debugPrint('HomeController not registered, cannot share profile');
-      }
-    } else {
+    }
+    //else if (item.title == 'Share profile') {
+    //   if (Get.isRegistered<HomeController>()) {
+    //     _shareViaOtherApps(Get.find<HomeController>().profileDetails.value!);
+    //   } else {
+    //     debugPrint('HomeController not registered, cannot share profile');
+    //   }
+    // }
+    else {
       // Hook for future navigation or actions per item.
       debugPrint('Tapped on ${item.title}');
     }

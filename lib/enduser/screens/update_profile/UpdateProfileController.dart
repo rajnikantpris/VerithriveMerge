@@ -26,6 +26,7 @@ class UpdateProfileController extends BaseController {
   final StorageService _storageService = Get.find<StorageService>();
 
   final formKey = GlobalKey<FormState>();
+  final dobFieldKey = GlobalKey<FormFieldState<String>>();
 
   final fullNameController = TextEditingController();
   final dobController = TextEditingController();
@@ -278,8 +279,14 @@ class UpdateProfileController extends BaseController {
   }
 
   String? validateDOB(String? value) {
-    if (value == null || value.isEmpty) return 'Date of birth is required';
-    if (!RegExp(r'^\d{2}/\d{2}/\d{4}$').hasMatch(value)) {
+    // FormField value can lag behind controller when date is set programmatically
+    final dobText = (value == null || value.trim().isEmpty)
+        ? dobController.text.trim()
+        : value.trim();
+    if (dobText.isEmpty) {
+      return 'Please select your Date of Birth';
+    }
+    if (!RegExp(r'^\d{2}/\d{2}/\d{4}$').hasMatch(dobText)) {
       return 'Please enter date in DD/MM/YYYY format';
     }
 
@@ -287,7 +294,7 @@ class UpdateProfileController extends BaseController {
     if (selectedDob.value == null) {
       // Parse date from controller if selectedDob is not set
       try {
-        List<String> parts = value.split('/');
+        List<String> parts = dobText.split('/');
         if (parts.length == 3) {
           final day = int.parse(parts[0]);
           final month = int.parse(parts[1]);
@@ -369,10 +376,14 @@ class UpdateProfileController extends BaseController {
 
     if (picked != null) {
       selectedDob.value = picked;
-      dobController.text =
+      final formattedDob =
           '${picked.day.toString().padLeft(2, '0')}/${picked.month.toString().padLeft(2, '0')}/${picked.year}';
-      // Trigger validation to show age error immediately if needed
-      formKey.currentState?.validate();
+      dobController.text = formattedDob;
+      // Sync FormField state — controller.text alone does not update the field value
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        dobFieldKey.currentState?.didChange(formattedDob);
+        dobFieldKey.currentState?.validate();
+      });
     }
   }
 

@@ -16,36 +16,39 @@ import '../../core/values/sharePrefrenceConst.dart';
 import 'package:verithrive_dev/services/storage_service.dart';
 
 class UpdateProfileController extends BaseController {
-  final ProjectRepository _repository = Get.find(tag: (ProjectRepository).toString());
+  final ProjectRepository _repository =
+      Get.find(tag: (ProjectRepository).toString());
   final StorageService _storageService = Get.find<StorageService>();
-  
+
   final formKey = GlobalKey<FormState>();
-  
+
   final fullNameController = TextEditingController();
   final dobController = TextEditingController();
   final postcodeController = TextEditingController();
   final postcodeFocusNode = FocusNode();
-  
+
   final selectedGender = ''.obs;
   final selectedAddress = ''.obs;
   final selectedPostcode = ''.obs;
   final profileImage = Rx<File?>(null);
   final profileImageUrl = RxString(''); // For network image URL
-  final isProfilePictureRemoved = false.obs; // Track if user explicitly removed the picture
+  final isProfilePictureRemoved =
+      false.obs; // Track if user explicitly removed the picture
   final isLoading = false.obs;
   final latitude = 0.0.obs;
   final longitude = 0.0.obs;
 
   final ImagePicker _picker = ImagePicker();
-  final CameraStoragePermissionService _cameraStoragePermissionService = CameraStoragePermissionService();
+  final CameraStoragePermissionService _cameraStoragePermissionService =
+      CameraStoragePermissionService();
 
   // Selected address data
   final selectedLatitude = Rxn<double>();
   final selectedLongitude = Rxn<double>();
 
   // Gender options
-  final List<String> genderOptions = ['Male', 'Female','Prefer not to say'];
-  
+  final List<String> genderOptions = ['Male', 'Female', 'Prefer not to say'];
+
   // Marketing preferences
   final marketingOptions = ['Yes', 'No'];
   final selectedMarketingPreference = ''.obs;
@@ -53,7 +56,7 @@ class UpdateProfileController extends BaseController {
   // Validation error messages
   final genderError = RxString('');
   final addressError = RxString('');
-  
+
   // Track if user clicked "enter manually" for postcode
   final isManualEntry = false.obs;
 
@@ -66,7 +69,7 @@ class UpdateProfileController extends BaseController {
   // Fetch personal details from API
   void fetchPersonalDetails() {
     var service = _repository.sendGetApiNoParamRequest(get_personal_details);
-    
+
     callDataService(
       service,
       onSuccess: _handleGetPersonalDetailsSuccess,
@@ -79,8 +82,8 @@ class UpdateProfileController extends BaseController {
     try {
       Map<String, dynamic> responseData;
       if (baseResponse != null && baseResponse.data != null) {
-        responseData = baseResponse.data is Map<String, dynamic> 
-            ? baseResponse.data 
+        responseData = baseResponse.data is Map<String, dynamic>
+            ? baseResponse.data
             : baseResponse.data as Map<String, dynamic>;
       } else if (baseResponse is Map<String, dynamic>) {
         responseData = baseResponse;
@@ -89,17 +92,19 @@ class UpdateProfileController extends BaseController {
       }
 
       bool success = responseData['success'] ?? false;
-      
+
       if (success == true && responseData['data'] != null) {
-        Map<String, dynamic> data = responseData['data'] as Map<String, dynamic>;
-        
+        Map<String, dynamic> data =
+            responseData['data'] as Map<String, dynamic>;
+
         // Check if user is from social login and use social data if API doesn't have full_name or profile_picture
         bool isSocialLogin =
             _storageService.readBool(SharePreferenceConst.isSocialLogin) ??
                 false;
-        
+
         // Populate form fields
-        if (data['full_name'] != null && data['full_name'].toString().isNotEmpty) {
+        if (data['full_name'] != null &&
+            data['full_name'].toString().isNotEmpty) {
           fullNameController.text = data['full_name'].toString();
         } else if (isSocialLogin) {
           // Use social full name if API doesn't have it
@@ -110,18 +115,19 @@ class UpdateProfileController extends BaseController {
             fullNameController.text = socialFullName;
           }
         }
-        
+
         if (data['dob'] != null) {
           // Convert from YYYY-MM-DD to DD/MM/YYYY
           String dobString = data['dob'].toString();
           try {
             DateTime dobDate = DateTime.parse(dobString);
-            dobController.text = '${dobDate.day.toString().padLeft(2, '0')}/${dobDate.month.toString().padLeft(2, '0')}/${dobDate.year}';
+            dobController.text =
+                '${dobDate.day.toString().padLeft(2, '0')}/${dobDate.month.toString().padLeft(2, '0')}/${dobDate.year}';
           } catch (e) {
             print('Error parsing DOB: $e');
           }
         }
-        
+
         if (data['gender'] != null) {
           String gender = data['gender'].toString();
           // Handle special case for "prefer_not_to_say"
@@ -129,7 +135,8 @@ class UpdateProfileController extends BaseController {
             selectedGender.value = 'Prefer not to say';
           } else if (gender.isNotEmpty) {
             // Capitalize first letter for other genders
-            selectedGender.value = gender[0].toUpperCase() + gender.substring(1).toLowerCase();
+            selectedGender.value =
+                gender[0].toUpperCase() + gender.substring(1).toLowerCase();
           } else {
             selectedGender.value = '';
           }
@@ -138,35 +145,39 @@ class UpdateProfileController extends BaseController {
         // Populate marketing preference
         if (data['opt_status'] != null) {
           selectedMarketingPreference.value =
-              (data['opt_status'] == 1 || data['opt_status'] == true) ? 'Yes' : 'No';
+              (data['opt_status'] == 1 || data['opt_status'] == true)
+                  ? 'Yes'
+                  : 'No';
         }
-        
+
         if (data['postcode'] != null) {
           postcodeController.text = data['postcode'].toString();
           selectedPostcode.value = data['postcode'].toString();
         }
-        
+
         if (data['address'] != null) {
           selectedAddress.value = data['address'].toString();
         }
-        
+
         if (data['latitude'] != null) {
-          latitude.value = (data['latitude'] is num) 
-              ? (data['latitude'] as num).toDouble() 
+          latitude.value = (data['latitude'] is num)
+              ? (data['latitude'] as num).toDouble()
               : double.tryParse(data['latitude'].toString()) ?? 0.0;
           selectedLatitude.value = latitude.value;
         }
-        
+
         if (data['longitude'] != null) {
-          longitude.value = (data['longitude'] is num) 
-              ? (data['longitude'] as num).toDouble() 
+          longitude.value = (data['longitude'] is num)
+              ? (data['longitude'] as num).toDouble()
               : double.tryParse(data['longitude'].toString()) ?? 0.0;
           selectedLongitude.value = longitude.value;
         }
-        
-        if (data['profile_picture'] != null && data['profile_picture'].toString().isNotEmpty) {
+
+        if (data['profile_picture'] != null &&
+            data['profile_picture'].toString().isNotEmpty) {
           profileImageUrl.value = data['profile_picture'].toString();
-          isProfilePictureRemoved.value = false; // Reset removal flag when loading existing picture
+          isProfilePictureRemoved.value =
+              false; // Reset removal flag when loading existing picture
         } else if (isSocialLogin) {
           // Use social profile picture if API doesn't have it or returns empty string
           String socialProfilePicture = _storageService
@@ -232,7 +243,7 @@ class UpdateProfileController extends BaseController {
     }
     return null;
   }
-  
+
   String? validateAddressField() {
     if (selectedAddress.value.isEmpty) {
       return 'Address is required';
@@ -246,7 +257,8 @@ class UpdateProfileController extends BaseController {
   Future<void> selectDateOfBirth(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: DateTime.now().subtract(const Duration(days: 6570)), // 18 years ago
+      initialDate:
+          DateTime.now().subtract(const Duration(days: 6570)), // 18 years ago
       firstDate: DateTime(1900),
       lastDate: DateTime.now(),
       builder: (context, child) {
@@ -262,9 +274,10 @@ class UpdateProfileController extends BaseController {
         );
       },
     );
-    
+
     if (picked != null) {
-      dobController.text = '${picked.day.toString().padLeft(2, '0')}/${picked.month.toString().padLeft(2, '0')}/${picked.year}';
+      dobController.text =
+          '${picked.day.toString().padLeft(2, '0')}/${picked.month.toString().padLeft(2, '0')}/${picked.year}';
     }
   }
 
@@ -412,7 +425,7 @@ class UpdateProfileController extends BaseController {
       // Update latitude and longitude
       selectedLatitude.value = result['latitude'] as double?;
       selectedLongitude.value = result['longitude'] as double?;
-      
+
       // Update latitude and longitude for API calls
       if (result['latitude'] != null) {
         latitude.value = result['latitude'] as double;
@@ -420,7 +433,7 @@ class UpdateProfileController extends BaseController {
       if (result['longitude'] != null) {
         longitude.value = result['longitude'] as double;
       }
-      
+
       // Set address from map selection
       final address = result['address'] as String? ?? '';
       if (address.isNotEmpty) {
@@ -441,7 +454,7 @@ class UpdateProfileController extends BaseController {
   void enterManually() {
     // Toggle manual entry mode for postcode
     isManualEntry.value = !isManualEntry.value;
-    
+
     // If toggling back to non-editable mode, sync selectedPostcode with controller text
     if (!isManualEntry.value && postcodeController.text.isNotEmpty) {
       selectedPostcode.value = postcodeController.text;
@@ -455,7 +468,8 @@ class UpdateProfileController extends BaseController {
 
   Future<void> pickProfileImage() async {
     // Request storage permission using CameraStoragePermissionService
-    bool hasPermission = await _cameraStoragePermissionService.requestStoragePermission();
+    bool hasPermission =
+        await _cameraStoragePermissionService.requestStoragePermission();
     if (!hasPermission) {
       return; // Permission service handles the error messages
     }
@@ -467,11 +481,12 @@ class UpdateProfileController extends BaseController {
         maxHeight: 1024,
         imageQuality: 85,
       );
-      
+
       if (image != null) {
         profileImage.value = File(image.path);
         profileImageUrl.value = ''; // Clear URL when new image is selected
-        isProfilePictureRemoved.value = false; // Reset removal flag when new image is selected
+        isProfilePictureRemoved.value =
+            false; // Reset removal flag when new image is selected
       }
     } catch (e) {
       showResponseDialog(
@@ -486,7 +501,8 @@ class UpdateProfileController extends BaseController {
 
   Future<void> takePhoto() async {
     // Request camera permission using CameraStoragePermissionService
-    bool hasPermission = await _cameraStoragePermissionService.requestCameraPermission();
+    bool hasPermission =
+        await _cameraStoragePermissionService.requestCameraPermission();
     if (!hasPermission) {
       return; // Permission service handles the error messages
     }
@@ -498,11 +514,12 @@ class UpdateProfileController extends BaseController {
         maxHeight: 1024,
         imageQuality: 85,
       );
-      
+
       if (image != null) {
         profileImage.value = File(image.path);
         profileImageUrl.value = ''; // Clear URL when new image is selected
-        isProfilePictureRemoved.value = false; // Reset removal flag when new image is selected
+        isProfilePictureRemoved.value =
+            false; // Reset removal flag when new image is selected
       }
     } catch (e) {
       showResponseDialog(
@@ -562,7 +579,8 @@ class UpdateProfileController extends BaseController {
                   Get.back();
                   profileImage.value = null;
                   profileImageUrl.value = '';
-                  isProfilePictureRemoved.value = true; // Mark that picture should be removed
+                  isProfilePictureRemoved.value =
+                      true; // Mark that picture should be removed
                 },
               ),
           ],
@@ -575,7 +593,7 @@ class UpdateProfileController extends BaseController {
     // Clear previous errors
     genderError.value = '';
     addressError.value = '';
-    
+
     // Validate form fields
     if (!formKey.currentState!.validate()) {
       return;
@@ -605,7 +623,9 @@ class UpdateProfileController extends BaseController {
       data['full_name'] = fullNameController.text.trim();
       data['dob'] = getFormattedDOB() ?? '';
       //data['gender'] = getFormattedGender() ?? '';
-      data['gender'] =  (getFormattedGender() == "prefer not to say") ? "prefer_not_to_say" : getFormattedGender() ?? '';
+      data['gender'] = (getFormattedGender() == "prefer not to say")
+          ? "prefer_not_to_say"
+          : getFormattedGender() ?? '';
       data['postcode'] = postcodeController.text.trim();
       data['address'] = selectedAddress.value;
       data['latitude'] = latitude.value;
@@ -621,7 +641,7 @@ class UpdateProfileController extends BaseController {
       // Note: profile_picture will be added as file in multipart only if new image is selected
       return data;
     }
-    
+
     // Check if a new image is selected
     // Only use multipart request if a new image file is selected
     // If profileImage.value is null, use regular PUT request without image
@@ -659,14 +679,15 @@ class UpdateProfileController extends BaseController {
     }
   }
 
-  Future<void> _handleUpdatePersonalDetailsResponseSuccess(dynamic baseResponse) async {
+  Future<void> _handleUpdatePersonalDetailsResponseSuccess(
+      dynamic baseResponse) async {
     isLoading.value = false;
 
     try {
       Map<String, dynamic> responseData;
       if (baseResponse != null && baseResponse.data != null) {
-        responseData = baseResponse.data is Map<String, dynamic> 
-            ? baseResponse.data 
+        responseData = baseResponse.data is Map<String, dynamic>
+            ? baseResponse.data
             : baseResponse.data as Map<String, dynamic>;
       } else if (baseResponse is Map<String, dynamic>) {
         responseData = baseResponse;
@@ -675,15 +696,16 @@ class UpdateProfileController extends BaseController {
       }
 
       bool success = responseData['success'] ?? false;
-      String message = responseData['message'] ?? 'Profile updated successfully';
-      
+      String message =
+          responseData['message'] ?? 'Profile updated successfully';
+
       if (success == true) {
         // Reset removal flag after successful update
         if (isProfilePictureRemoved.value) {
           profileImageUrl.value = ''; // Clear the URL since picture was removed
           isProfilePictureRemoved.value = false; // Reset the flag
         }
-        
+
         showResponseDialog(
           message: message,
           title: 'Success',

@@ -178,12 +178,11 @@ class AppTextStyles {
     Color color = AppColors.blueColor,
   }) {
     return TextStyle(
-      fontFamily: 'Rubik',
-      fontSize: fontSize,
-      color: color,
-      fontWeight: FontWeight.w400,
-      decoration: TextDecoration.none
-    );
+        fontFamily: 'Rubik',
+        fontSize: fontSize,
+        color: color,
+        fontWeight: FontWeight.w400,
+        decoration: TextDecoration.none);
   }
 
   static TextStyle mediumTextStyle({
@@ -294,7 +293,6 @@ class AppTextStyles {
     );
   }
 
-
   // Helper Text Style
 /*  static TextStyle helperStyle = TextStyle(
     fontSize: 11,
@@ -309,8 +307,6 @@ class AppTextStyles {
     fontWeight: FontWeight.w500,
     color: AppColors.white,
   );
-
-
 
   static TextStyle clickTextStyle = TextStyle(
     fontSize: 14,

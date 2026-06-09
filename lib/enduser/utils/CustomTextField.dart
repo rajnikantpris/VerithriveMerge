@@ -55,118 +55,120 @@ class CustomTextField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textField = TextFormField(
-          key: formFieldKey,
-          controller: controller,
-          focusNode: focusNode,
-          obscureText: isPassword,
-          obscuringCharacter: '*',
-          keyboardType: keyboardType,
-          inputFormatters: inputFormatters,
-          validator: validator,
-          maxLines: maxLines,
-          enabled: enabled,
-          readOnly: readOnly,
-          onTap: onTap,
-          textCapitalization: textCapitalization,
-          onChanged: (value) {
-            if (onChanged != null) {
-              onChanged!(value);
-            }
-          },
-          style: textColor != null 
-              ? AppTextStyles.inputStyle(color: textColor!)
-              : AppTextStyles.inputStyle(),
-          decoration: InputDecoration(
-            hintText: hint,
-            hintStyle: AppTextStyles.hintStyle(),
-            prefixIcon: prefixIcon != null
-                ? Padding(
-              padding:  EdgeInsets.all(14),
-              child: prefixIcon,
-            )
-                : null,
-            suffixIcon: suffixIcon != null
-                ? Padding(
-              padding: (suffixIcon != null && prefixIcon != null) ? EdgeInsets.zero : EdgeInsets.all(14),
-              child: suffixIcon,
-            )
-                : null,
-            prefixIconConstraints: BoxConstraints(
-              minWidth: 0,
-              minHeight: 0,
-            ),
-            suffixIconConstraints: BoxConstraints(
-              minWidth: 0,
-              minHeight: 0,
-            ),
-            filled: true,
-            fillColor: hideLeftBorder ? Colors.transparent : AppColors.white,
-            contentPadding: EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 16,
-            ),
-            border: hideLeftBorder
-                ? OutlineInputBorder(
-                    borderRadius: borderRadius ?? BorderRadius.circular(8),
-                    borderSide: BorderSide.none,
-                  )
-                : OutlineInputBorder(
-                    borderRadius: borderRadius ?? BorderRadius.circular(8),
-                    borderSide: BorderSide(
-                      color: AppColors.lightGrey,
-                      width: 1,
-                    ),
-                  ),
-            enabledBorder: hideLeftBorder
-                ? OutlineInputBorder(
-                    borderRadius: borderRadius ?? BorderRadius.circular(8),
-                    borderSide: BorderSide.none,
-                  )
-                : OutlineInputBorder(
-                    borderRadius: borderRadius ?? BorderRadius.circular(8),
-                    borderSide: BorderSide(
-                      color: AppColors.lightGrey,
-                      width: 1,
-                    ),
-                  ),
-            focusedBorder: hideLeftBorder
-                ? OutlineInputBorder(
-                    borderRadius: borderRadius ?? BorderRadius.circular(8),
-                    borderSide: BorderSide.none,
-                  )
-                : OutlineInputBorder(
-                    borderRadius: borderRadius ?? BorderRadius.circular(8),
-                    borderSide: BorderSide(
-                      color: AppColors.blueColor,
-                      width: 1,
-                    ),
-                  ),
-            errorBorder: hideLeftBorder
-                ? OutlineInputBorder(
-                    borderRadius: borderRadius ?? BorderRadius.circular(8),
-                    borderSide: BorderSide.none,
-                  )
-                : OutlineInputBorder(
-                    borderRadius: borderRadius ?? BorderRadius.circular(8),
-                    borderSide: BorderSide(
-                      color: Colors.grey,
-                      width: 1,
-                    ),
-                  ),
-            focusedErrorBorder: hideLeftBorder
-                ? OutlineInputBorder(
-                    borderRadius: borderRadius ?? BorderRadius.circular(8),
-                    borderSide: BorderSide.none,
-                  )
-                : OutlineInputBorder(
-                    borderRadius: borderRadius ?? BorderRadius.circular(8),
-                    borderSide: BorderSide(
-                      color: Colors.grey,
-                      width: 1.5,
-                    ),
-                  ),
-          ),
-        );
+      key: formFieldKey,
+      controller: controller,
+      focusNode: focusNode,
+      obscureText: isPassword,
+      obscuringCharacter: '*',
+      keyboardType: keyboardType,
+      inputFormatters: inputFormatters,
+      validator: validator,
+      maxLines: maxLines,
+      enabled: enabled,
+      readOnly: readOnly,
+      onTap: onTap,
+      textCapitalization: textCapitalization,
+      onChanged: (value) {
+        if (onChanged != null) {
+          onChanged!(value);
+        }
+      },
+      style: textColor != null
+          ? AppTextStyles.inputStyle(color: textColor!)
+          : AppTextStyles.inputStyle(),
+      decoration: InputDecoration(
+        hintText: hint,
+        hintStyle: AppTextStyles.hintStyle(),
+        prefixIcon: prefixIcon != null
+            ? Padding(
+                padding: EdgeInsets.all(14),
+                child: prefixIcon,
+              )
+            : null,
+        suffixIcon: suffixIcon != null
+            ? Padding(
+                padding: (suffixIcon != null && prefixIcon != null)
+                    ? EdgeInsets.zero
+                    : EdgeInsets.all(14),
+                child: suffixIcon,
+              )
+            : null,
+        prefixIconConstraints: BoxConstraints(
+          minWidth: 0,
+          minHeight: 0,
+        ),
+        suffixIconConstraints: BoxConstraints(
+          minWidth: 0,
+          minHeight: 0,
+        ),
+        filled: true,
+        fillColor: hideLeftBorder ? Colors.transparent : AppColors.white,
+        contentPadding: EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 16,
+        ),
+        border: hideLeftBorder
+            ? OutlineInputBorder(
+                borderRadius: borderRadius ?? BorderRadius.circular(8),
+                borderSide: BorderSide.none,
+              )
+            : OutlineInputBorder(
+                borderRadius: borderRadius ?? BorderRadius.circular(8),
+                borderSide: BorderSide(
+                  color: AppColors.lightGrey,
+                  width: 1,
+                ),
+              ),
+        enabledBorder: hideLeftBorder
+            ? OutlineInputBorder(
+                borderRadius: borderRadius ?? BorderRadius.circular(8),
+                borderSide: BorderSide.none,
+              )
+            : OutlineInputBorder(
+                borderRadius: borderRadius ?? BorderRadius.circular(8),
+                borderSide: BorderSide(
+                  color: AppColors.lightGrey,
+                  width: 1,
+                ),
+              ),
+        focusedBorder: hideLeftBorder
+            ? OutlineInputBorder(
+                borderRadius: borderRadius ?? BorderRadius.circular(8),
+                borderSide: BorderSide.none,
+              )
+            : OutlineInputBorder(
+                borderRadius: borderRadius ?? BorderRadius.circular(8),
+                borderSide: BorderSide(
+                  color: AppColors.blueColor,
+                  width: 1,
+                ),
+              ),
+        errorBorder: hideLeftBorder
+            ? OutlineInputBorder(
+                borderRadius: borderRadius ?? BorderRadius.circular(8),
+                borderSide: BorderSide.none,
+              )
+            : OutlineInputBorder(
+                borderRadius: borderRadius ?? BorderRadius.circular(8),
+                borderSide: BorderSide(
+                  color: Colors.grey,
+                  width: 1,
+                ),
+              ),
+        focusedErrorBorder: hideLeftBorder
+            ? OutlineInputBorder(
+                borderRadius: borderRadius ?? BorderRadius.circular(8),
+                borderSide: BorderSide.none,
+              )
+            : OutlineInputBorder(
+                borderRadius: borderRadius ?? BorderRadius.circular(8),
+                borderSide: BorderSide(
+                  color: Colors.grey,
+                  width: 1.5,
+                ),
+              ),
+      ),
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

@@ -65,113 +65,40 @@ class PersonalDetailsView extends BaseView<PersonalDetailsController> {
         child: Column(
           children: [
             Expanded(
-              child: SingleChildScrollView(
-                padding: EdgeInsets.symmetric(
-                  horizontal: HightWidthSizes.setValue_16,
-                  vertical: HightWidthSizes.setValue_20,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Profile Picture Section
-                    _buildProfilePictureSection(context),
-                    SizedBox(height: HightWidthSizes.setValue_24),
+              child: GestureDetector(
+                behavior: HitTestBehavior.translucent,
+                onTap: () => FocusScope.of(context).unfocus(),
+                child: SingleChildScrollView(
+                  keyboardDismissBehavior:
+                      ScrollViewKeyboardDismissBehavior.onDrag,
+                  padding: EdgeInsets.symmetric(
+                    horizontal: HightWidthSizes.setValue_16,
+                    vertical: HightWidthSizes.setValue_20,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Profile Picture Section
+                      _buildProfilePictureSection(context),
+                      SizedBox(height: HightWidthSizes.setValue_24),
 
-                    // You are in field
-                    Text(
-                      'What sector are you in?*',
-                      style: TextStyle(
-                        fontFamily: AppFonts.rubikRegular,
-                        fontWeight: FontWeight.w400,
-                        fontSize: FontSizes.setFontValue_14,
-                        color: AppColor.color_2D2D2D,
-                      ),
-                    ),
-                    SizedBox(height: HightWidthSizes.setValue_5),
-                    Obx(
-                      () => DropdownButtonFormField2<String>(
-                        isExpanded: true,
-                        isDense: true,
-                        alignment: AlignmentDirectional.centerStart,
-                        value: controller.selectedProfessionType.value,
-                        decoration: _dropdownDecoration(),
-                        dropdownStyleData: DropdownStyleData(
-                          decoration: BoxDecoration(
-                            color: AppColor.white,
-                            borderRadius: BorderRadius.circular(
-                                HightWidthSizes.setValue_10),
-                          ),
+                      // You are in field
+                      Text(
+                        'What sector are you in?*',
+                        style: TextStyle(
+                          fontFamily: AppFonts.rubikRegular,
+                          fontWeight: FontWeight.w400,
+                          fontSize: FontSizes.setFontValue_14,
+                          color: AppColor.color_2D2D2D,
                         ),
-                        iconStyleData: IconStyleData(
-                          icon: AppImages.right_arrow_image(
-                            width: HightWidthSizes.setValue_16,
-                            height: HightWidthSizes.setValue_16,
-                          ),
-                        ),
-                        hint: Text(
-                          controller.isLoadingProfessionTypes.value
-                              ? 'Loading...'
-                              : 'Select here',
-                          style: TextStyle(
-                            fontFamily: AppFonts.rubikRegular,
-                            fontWeight: FontWeight.w400,
-                            fontSize: FontSizes.setFontValue_16,
-                            color: AppColor.color_9D9D9D,
-                          ),
-                        ),
-                        items: controller.professionTypes
-                            .map(
-                              (type) => DropdownMenuItem<String>(
-                                value: type,
-                                child: Text(
-                                  type,
-                                  style: TextStyle(
-                                    fontFamily: AppFonts.rubikRegular,
-                                    fontWeight: FontWeight.w400,
-                                    fontSize: FontSizes.setFontValue_16,
-                                    color: AppColor.color_2D2D2D,
-                                  ),
-                                ),
-                              ),
-                            )
-                            .toList(),
-                        onChanged: controller.isLoadingProfessionTypes.value
-                            ? null
-                            : controller.setProfessionType,
                       ),
-                    ),
-                    SizedBox(height: HightWidthSizes.setValue_16),
-
-                    // Select profession field
-                    Text(
-                      'Select profession*',
-                      style: TextStyle(
-                        fontFamily: AppFonts.rubikRegular,
-                        fontWeight: FontWeight.w400,
-                        fontSize: FontSizes.setFontValue_14,
-                        color: AppColor.color_2D2D2D,
-                      ),
-                    ),
-                    SizedBox(height: HightWidthSizes.setValue_5),
-                    Obx(
-                      () {
-                        // Get unique sub-types to avoid duplicates
-                        final uniqueSubTypes =
-                            controller.professionSubTypes.toSet().toList();
-
-                        // Ensure selected value is in the list, otherwise set to null
-                        final selectedValue =
-                            controller.selectedProfessionSubType.value;
-                        final validValue = selectedValue != null &&
-                                uniqueSubTypes.contains(selectedValue)
-                            ? selectedValue
-                            : null;
-
-                        return DropdownButtonFormField2<String>(
+                      SizedBox(height: HightWidthSizes.setValue_5),
+                      Obx(
+                        () => DropdownButtonFormField2<String>(
                           isExpanded: true,
                           isDense: true,
                           alignment: AlignmentDirectional.centerStart,
-                          value: validValue,
+                          value: controller.selectedProfessionType.value,
                           decoration: _dropdownDecoration(),
                           dropdownStyleData: DropdownStyleData(
                             decoration: BoxDecoration(
@@ -187,12 +114,9 @@ class PersonalDetailsView extends BaseView<PersonalDetailsController> {
                             ),
                           ),
                           hint: Text(
-                            controller.isLoadingProfessionSubTypes.value
+                            controller.isLoadingProfessionTypes.value
                                 ? 'Loading...'
-                                : controller.selectedProfessionType.value ==
-                                        null
-                                    ? 'Select profession type first'
-                                    : 'Select here',
+                                : 'Select here',
                             style: TextStyle(
                               fontFamily: AppFonts.rubikRegular,
                               fontWeight: FontWeight.w400,
@@ -200,12 +124,12 @@ class PersonalDetailsView extends BaseView<PersonalDetailsController> {
                               color: AppColor.color_9D9D9D,
                             ),
                           ),
-                          items: uniqueSubTypes
+                          items: controller.professionTypes
                               .map(
-                                (subType) => DropdownMenuItem<String>(
-                                  value: subType,
+                                (type) => DropdownMenuItem<String>(
+                                  value: type,
                                   child: Text(
-                                    subType,
+                                    type,
                                     style: TextStyle(
                                       fontFamily: AppFonts.rubikRegular,
                                       fontWeight: FontWeight.w400,
@@ -216,212 +140,293 @@ class PersonalDetailsView extends BaseView<PersonalDetailsController> {
                                 ),
                               )
                               .toList(),
-                          onChanged:
-                              controller.isLoadingProfessionSubTypes.value ||
-                                      controller.selectedProfessionType.value ==
-                                          null
-                                  ? null
-                                  : controller.setProfessionSubType,
-                        );
-                      },
-                    ),
-                    SizedBox(height: HightWidthSizes.setValue_16),
-
-                    // Full Name field
-                    CustomTextField(
-                      label: 'Full Name',
-                      hintText: 'Enter full name',
-                      controller: controller.fullNameController,
-                      validator: (value) =>
-                          controller.validateNotEmpty(value, 'full name'),
-                    ),
-                    SizedBox(height: HightWidthSizes.setValue_16),
-
-                    // Phone Number field
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Phone number',
-                          style: TextStyle(
-                            fontFamily: AppFonts.rubikRegular,
-                            fontWeight: FontWeight.w400,
-                            fontSize: FontSizes.setFontValue_14,
-                            color: AppColor.color_2D2D2D,
-                          ),
+                          onChanged: controller.isLoadingProfessionTypes.value
+                              ? null
+                              : controller.setProfessionType,
                         ),
-                        SizedBox(height: HightWidthSizes.setValue_5),
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Container(
-                              constraints: BoxConstraints(
-                                  minHeight: HightWidthSizes.setValue_45),
+                      ),
+                      SizedBox(height: HightWidthSizes.setValue_16),
+
+                      // Select profession field
+                      Text(
+                        'Select profession*',
+                        style: TextStyle(
+                          fontFamily: AppFonts.rubikRegular,
+                          fontWeight: FontWeight.w400,
+                          fontSize: FontSizes.setFontValue_14,
+                          color: AppColor.color_2D2D2D,
+                        ),
+                      ),
+                      SizedBox(height: HightWidthSizes.setValue_5),
+                      Obx(
+                        () {
+                          // Get unique sub-types to avoid duplicates
+                          final uniqueSubTypes =
+                              controller.professionSubTypes.toSet().toList();
+
+                          // Ensure selected value is in the list, otherwise set to null
+                          final selectedValue =
+                              controller.selectedProfessionSubType.value;
+                          final validValue = selectedValue != null &&
+                                  uniqueSubTypes.contains(selectedValue)
+                              ? selectedValue
+                              : null;
+
+                          return DropdownButtonFormField2<String>(
+                            isExpanded: true,
+                            isDense: true,
+                            alignment: AlignmentDirectional.centerStart,
+                            value: validValue,
+                            decoration: _dropdownDecoration(),
+                            dropdownStyleData: DropdownStyleData(
                               decoration: BoxDecoration(
                                 color: AppColor.white,
-                                borderRadius: BorderRadius.only(
-                                  topLeft: Radius.circular(
-                                    HightWidthSizes.setValue_10,
+                                borderRadius: BorderRadius.circular(
+                                    HightWidthSizes.setValue_10),
+                              ),
+                            ),
+                            iconStyleData: IconStyleData(
+                              icon: AppImages.right_arrow_image(
+                                width: HightWidthSizes.setValue_16,
+                                height: HightWidthSizes.setValue_16,
+                              ),
+                            ),
+                            hint: Text(
+                              controller.isLoadingProfessionSubTypes.value
+                                  ? 'Loading...'
+                                  : controller.selectedProfessionType.value ==
+                                          null
+                                      ? 'Select profession type first'
+                                      : 'Select here',
+                              style: TextStyle(
+                                fontFamily: AppFonts.rubikRegular,
+                                fontWeight: FontWeight.w400,
+                                fontSize: FontSizes.setFontValue_16,
+                                color: AppColor.color_9D9D9D,
+                              ),
+                            ),
+                            items: uniqueSubTypes
+                                .map(
+                                  (subType) => DropdownMenuItem<String>(
+                                    value: subType,
+                                    child: Text(
+                                      subType,
+                                      style: TextStyle(
+                                        fontFamily: AppFonts.rubikRegular,
+                                        fontWeight: FontWeight.w400,
+                                        fontSize: FontSizes.setFontValue_16,
+                                        color: AppColor.color_2D2D2D,
+                                      ),
+                                    ),
                                   ),
-                                  bottomLeft: Radius.circular(
-                                    HightWidthSizes.setValue_10,
+                                )
+                                .toList(),
+                            onChanged: controller
+                                        .isLoadingProfessionSubTypes.value ||
+                                    controller.selectedProfessionType.value ==
+                                        null
+                                ? null
+                                : controller.setProfessionSubType,
+                          );
+                        },
+                      ),
+                      SizedBox(height: HightWidthSizes.setValue_16),
+
+                      // Full Name field
+                      CustomTextField(
+                        label: 'Full Name',
+                        hintText: 'Enter full name',
+                        controller: controller.fullNameController,
+                        validator: (value) =>
+                            controller.validateNotEmpty(value, 'full name'),
+                      ),
+                      SizedBox(height: HightWidthSizes.setValue_16),
+
+                      // Phone Number field
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Phone number',
+                            style: TextStyle(
+                              fontFamily: AppFonts.rubikRegular,
+                              fontWeight: FontWeight.w400,
+                              fontSize: FontSizes.setFontValue_14,
+                              color: AppColor.color_2D2D2D,
+                            ),
+                          ),
+                          SizedBox(height: HightWidthSizes.setValue_5),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                constraints: BoxConstraints(
+                                    minHeight: HightWidthSizes.setValue_45),
+                                decoration: BoxDecoration(
+                                  color: AppColor.white,
+                                  borderRadius: BorderRadius.only(
+                                    topLeft: Radius.circular(
+                                      HightWidthSizes.setValue_10,
+                                    ),
+                                    bottomLeft: Radius.circular(
+                                      HightWidthSizes.setValue_10,
+                                    ),
+                                  ),
+                                  border: Border(
+                                    left: BorderSide(
+                                      color: AppColor.borderColor,
+                                      width: HightWidthSizes.setValue_1,
+                                    ),
+                                    top: BorderSide(
+                                      color: AppColor.borderColor,
+                                      width: HightWidthSizes.setValue_1,
+                                    ),
+                                    bottom: BorderSide(
+                                      color: AppColor.borderColor,
+                                      width: HightWidthSizes.setValue_1,
+                                    ),
                                   ),
                                 ),
-                                border: Border(
-                                  left: BorderSide(
-                                    color: AppColor.borderColor,
-                                    width: HightWidthSizes.setValue_1,
-                                  ),
-                                  top: BorderSide(
-                                    color: AppColor.borderColor,
-                                    width: HightWidthSizes.setValue_1,
-                                  ),
-                                  bottom: BorderSide(
-                                    color: AppColor.borderColor,
-                                    width: HightWidthSizes.setValue_1,
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: HightWidthSizes.setValue_12,
+                                  vertical: HightWidthSizes.setValue_14,
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.phone_outlined,
+                                      color: AppColor.color_9D9D9D,
+                                      size: HightWidthSizes.setValue_16,
+                                    ),
+                                    SizedBox(width: HightWidthSizes.setValue_8),
+                                    Text(
+                                      '+44',
+                                      style: TextStyle(
+                                        fontFamily: AppFonts.rubikRegular,
+                                        fontWeight: FontWeight.w400,
+                                        fontSize: FontSizes.setFontValue_15_5,
+                                        color: AppColor.color_2D2D2D,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Expanded(
+                                child: CustomTextField(
+                                  label: '',
+                                  hintText: 'Phone number',
+                                  controller: controller.phoneController,
+                                  keyboardType: TextInputType.phone,
+                                  inputFormatters: [
+                                    FilteringTextInputFormatter.digitsOnly
+                                  ],
+                                  showLabel: false,
+                                  borderRadius: BorderRadius.only(
+                                    topRight: Radius.circular(
+                                      HightWidthSizes.setValue_10,
+                                    ),
+                                    bottomRight: Radius.circular(
+                                      HightWidthSizes.setValue_10,
+                                    ),
                                   ),
                                 ),
                               ),
-                              padding: EdgeInsets.symmetric(
-                                horizontal: HightWidthSizes.setValue_12,
-                                vertical: HightWidthSizes.setValue_14,
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    Icons.phone_outlined,
-                                    color: AppColor.color_9D9D9D,
-                                    size: HightWidthSizes.setValue_16,
-                                  ),
-                                  SizedBox(width: HightWidthSizes.setValue_8),
-                                  Text(
-                                    '+44',
+                            ],
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: HightWidthSizes.setValue_16),
+
+                      // Date of Birth field
+                      CustomTextField(
+                        label: 'Date of Birth',
+                        hintText: 'dd/mm/yyyy',
+                        controller: controller.dobController,
+                        readOnly: true,
+                        onTap: () => controller.pickDate(context),
+                        suffixIcon: Padding(
+                          padding: EdgeInsets.only(
+                            right: HightWidthSizes.setValue_15,
+                            left: HightWidthSizes.setValue_25,
+                          ),
+                          child: AppImages.calender1_svg(
+                            width: HightWidthSizes.setValue_18,
+                            height: HightWidthSizes.setValue_18,
+                          ),
+                        ),
+                        validator: (value) => controller.validateAge(value),
+                      ),
+                      SizedBox(height: HightWidthSizes.setValue_16),
+
+                      // Gender field
+                      Text(
+                        'Gender',
+                        style: TextStyle(
+                          fontFamily: AppFonts.rubikRegular,
+                          fontWeight: FontWeight.w400,
+                          fontSize: FontSizes.setFontValue_14,
+                          color: AppColor.color_2D2D2D,
+                        ),
+                      ),
+                      SizedBox(height: HightWidthSizes.setValue_5),
+                      Obx(
+                        () => DropdownButtonFormField2<String>(
+                          isExpanded: true,
+                          isDense: true,
+                          alignment: AlignmentDirectional.centerStart,
+                          value: controller.selectedGender.value.isEmpty
+                              ? null
+                              : controller.selectedGender.value,
+                          decoration: _dropdownDecoration(),
+                          dropdownStyleData: DropdownStyleData(
+                            decoration: BoxDecoration(
+                              color: AppColor.white,
+                              borderRadius: BorderRadius.circular(
+                                  HightWidthSizes.setValue_10),
+                            ),
+                          ),
+                          iconStyleData: IconStyleData(
+                            icon: AppImages.right_arrow_image(
+                              width: HightWidthSizes.setValue_16,
+                              height: HightWidthSizes.setValue_16,
+                            ),
+                          ),
+                          hint: Text(
+                            'Select gender',
+                            style: TextStyle(
+                              fontFamily: AppFonts.rubikRegular,
+                              fontWeight: FontWeight.w400,
+                              fontSize: FontSizes.setFontValue_16,
+                              color: AppColor.color_9D9D9D,
+                            ),
+                          ),
+                          items: controller.genders
+                              .map(
+                                (gender) => DropdownMenuItem<String>(
+                                  value: gender,
+                                  child: Text(
+                                    gender,
                                     style: TextStyle(
                                       fontFamily: AppFonts.rubikRegular,
                                       fontWeight: FontWeight.w400,
-                                      fontSize: FontSizes.setFontValue_15_5,
+                                      fontSize: FontSizes.setFontValue_16,
                                       color: AppColor.color_2D2D2D,
                                     ),
                                   ),
-                                ],
-                              ),
-                            ),
-                            Expanded(
-                              child: CustomTextField(
-                                label: '',
-                                hintText: 'Phone number',
-                                controller: controller.phoneController,
-                                keyboardType: TextInputType.phone,
-                                inputFormatters: [
-                                  FilteringTextInputFormatter.digitsOnly
-                                ],
-                                showLabel: false,
-                                borderRadius: BorderRadius.only(
-                                  topRight: Radius.circular(
-                                    HightWidthSizes.setValue_10,
-                                  ),
-                                  bottomRight: Radius.circular(
-                                    HightWidthSizes.setValue_10,
-                                  ),
                                 ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: HightWidthSizes.setValue_16),
-
-                    // Date of Birth field
-                    CustomTextField(
-                      label: 'Date of Birth',
-                      hintText: 'dd/mm/yyyy',
-                      controller: controller.dobController,
-                      readOnly: true,
-                      onTap: () => controller.pickDate(context),
-                      suffixIcon: Padding(
-                        padding: EdgeInsets.only(
-                          right: HightWidthSizes.setValue_15,
-                          left: HightWidthSizes.setValue_25,
-                        ),
-                        child: AppImages.calender1_svg(
-                          width: HightWidthSizes.setValue_18,
-                          height: HightWidthSizes.setValue_18,
+                              )
+                              .toList(),
+                          onChanged: controller.setGender,
                         ),
                       ),
-                      validator: (value) =>
-                          controller.validateAge(value),
-                    ),
-                    SizedBox(height: HightWidthSizes.setValue_16),
+                      SizedBox(height: HightWidthSizes.setValue_16),
 
-                    // Gender field
-                    Text(
-                      'Gender',
-                      style: TextStyle(
-                        fontFamily: AppFonts.rubikRegular,
-                        fontWeight: FontWeight.w400,
-                        fontSize: FontSizes.setFontValue_14,
-                        color: AppColor.color_2D2D2D,
-                      ),
-                    ),
-                    SizedBox(height: HightWidthSizes.setValue_5),
-                    Obx(
-                      () => DropdownButtonFormField2<String>(
-                        isExpanded: true,
-                        isDense: true,
-                        alignment: AlignmentDirectional.centerStart,
-                        value: controller.selectedGender.value.isEmpty
-                            ? null
-                            : controller.selectedGender.value,
-                        decoration: _dropdownDecoration(),
-                        dropdownStyleData: DropdownStyleData(
-                          decoration: BoxDecoration(
-                            color: AppColor.white,
-                            borderRadius: BorderRadius.circular(
-                                HightWidthSizes.setValue_10),
-                          ),
-                        ),
-                        iconStyleData: IconStyleData(
-                          icon: AppImages.right_arrow_image(
-                            width: HightWidthSizes.setValue_16,
-                            height: HightWidthSizes.setValue_16,
-                          ),
-                        ),
-                        hint: Text(
-                          'Select gender',
-                          style: TextStyle(
-                            fontFamily: AppFonts.rubikRegular,
-                            fontWeight: FontWeight.w400,
-                            fontSize: FontSizes.setFontValue_16,
-                            color: AppColor.color_9D9D9D,
-                          ),
-                        ),
-                        items: controller.genders
-                            .map(
-                              (gender) => DropdownMenuItem<String>(
-                                value: gender,
-                                child: Text(
-                                  gender,
-                                  style: TextStyle(
-                                    fontFamily: AppFonts.rubikRegular,
-                                    fontWeight: FontWeight.w400,
-                                    fontSize: FontSizes.setFontValue_16,
-                                    color: AppColor.color_2D2D2D,
-                                  ),
-                                ),
-                              ),
-                            )
-                            .toList(),
-                        onChanged: controller.setGender,
-                      ),
-                    ),
-                    SizedBox(height: HightWidthSizes.setValue_16),
-
-                    // Marketing Preferences field
-                    _buildMarketingField(),
-                    SizedBox(height: HightWidthSizes.setValue_20),
-                  ],
+                      // Marketing Preferences field
+                      _buildMarketingField(),
+                      SizedBox(height: HightWidthSizes.setValue_20),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -612,7 +617,8 @@ class PersonalDetailsView extends BaseView<PersonalDetailsController> {
             dropdownStyleData: DropdownStyleData(
               decoration: BoxDecoration(
                 color: AppColor.white,
-                borderRadius: BorderRadius.circular(HightWidthSizes.setValue_10),
+                borderRadius:
+                    BorderRadius.circular(HightWidthSizes.setValue_10),
               ),
             ),
             iconStyleData: IconStyleData(

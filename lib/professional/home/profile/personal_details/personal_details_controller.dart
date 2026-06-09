@@ -582,7 +582,7 @@ class PersonalDetailsController extends BaseController {
 
   String? validateAge(String? value) {
     if (value == null || value.trim().isEmpty) {
-      return 'Please enter your date of birth';
+      return 'Please select your Date of Birth';
     }
 
     if (selectedDob.value == null) {

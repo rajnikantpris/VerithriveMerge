@@ -277,11 +277,15 @@ class ProfileController extends GetxController {
   }
 
   String? validateDOB(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Date of birth is required';
+    // FormField value can lag behind controller when date is set programmatically
+    final dobText = (value == null || value.trim().isEmpty)
+        ? dobController.text.trim()
+        : value.trim();
+    if (dobText.isEmpty) {
+      return 'Please select your Date of Birth';
     }
     // Validate date format DD/MM/YYYY
-    if (!RegExp(r'^\d{2}/\d{2}/\d{4}$').hasMatch(value)) {
+    if (!RegExp(r'^\d{2}/\d{2}/\d{4}$').hasMatch(dobText)) {
       return 'Please enter date in DD/MM/YYYY format';
     }
 
@@ -289,7 +293,7 @@ class ProfileController extends GetxController {
     if (selectedDob.value == null) {
       // Parse the date from the controller if selectedDob is not set
       try {
-        List<String> parts = value.split('/');
+        List<String> parts = dobText.split('/');
         if (parts.length == 3) {
           final day = int.parse(parts[0]);
           final month = int.parse(parts[1]);
@@ -393,10 +397,14 @@ class ProfileController extends GetxController {
 
     if (picked != null) {
       selectedDob.value = picked;
-      dobController.text =
+      final formattedDob =
           '${picked.day.toString().padLeft(2, '0')}/${picked.month.toString().padLeft(2, '0')}/${picked.year}';
-      // Validate DOB only — avoid validating other fields (e.g. full name)
-      dobFieldKey.currentState?.validate();
+      dobController.text = formattedDob;
+      // Sync FormField state — controller.text alone does not update the field value
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        dobFieldKey.currentState?.didChange(formattedDob);
+        dobFieldKey.currentState?.validate();
+      });
     }
   }
 
