@@ -24,6 +24,8 @@ abstract class AppText {
   static const String accept = "Accept";
   static const String acceptAndContinue = "Accept & continue";
   static const String proceedToPayment = "Proceed to payment";
+  static const String free = "Free";
+  static const String freeBookingSession = "Free Booking Session";
   static const String homepage = "Homepage";
 
   // Authentication
@@ -157,6 +159,7 @@ abstract class AppText {
   static const String filter = "Filter";
   static const String price = "Price";
   static const String perSession = "Per session";
+  static const String freeSession = "Free Session";
   static const String miles = "miles";
   static const String reviews = "Reviews";
 

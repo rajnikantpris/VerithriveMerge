@@ -1,9 +1,9 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:verithrive_dev/enduser/flavors/build_config.dart';
 import 'package:verithrive_dev/enduser/flavors/environment.dart';
 import 'package:verithrive_dev/enduser/network/pretty_dio_logger.dart';
 import 'package:verithrive_dev/enduser/network/request_headers.dart';
-
 
 class DioProvider {
   static final String baseUrl = BuildConfig.instance.config.baseUrl;
@@ -30,13 +30,17 @@ class DioProvider {
     if (_instance == null) {
       _instance = Dio(_options);
 
-      _instance!.interceptors.add(_prettyDioLogger);
-
+      if (kDebugMode) {
+        _instance!.interceptors.add(_prettyDioLogger);
+      }
+      // _instance!.interceptors.add(_prettyDioLogger);
       return _instance!;
     } else {
       _instance!.interceptors.clear();
-      _instance!.interceptors.add(_prettyDioLogger);
-
+      if (kDebugMode) {
+        _instance!.interceptors.add(_prettyDioLogger);
+      }
+      // _instance!.interceptors.add(_prettyDioLogger);
       return _instance!;
     }
   }
@@ -60,7 +64,10 @@ class DioProvider {
     _instance ??= httpDio;
     _instance!.interceptors.clear();
     _instance!.interceptors.add(RequestHeaderInterceptor());
-    _instance!.interceptors.add(_prettyDioLogger);
+    if (kDebugMode) {
+      _instance!.interceptors.add(_prettyDioLogger);
+    }
+    // _instance!.interceptors.add(_prettyDioLogger);
   }
 
   static String _buildContentType(String version) {

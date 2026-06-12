@@ -322,7 +322,7 @@ class BookingsScreen extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      '£${booking.price.toStringAsFixed(0)}',
+                      booking.price == 0 ? 'Free' : '£${booking.price.toStringAsFixed(0)}',
                       style: AppTextStyles.popinSemiboldTextStyle(
                         fontSize: 20,
                         color: priceColor,
@@ -405,12 +405,14 @@ class BookingsScreen extends StatelessWidget {
                   SizedBox(height: 12),
 
                 ],
+                if ( booking.uniqueTransactionId != null && booking.price > 0) ...[
                 CustomPaint(
                   size: Size(double.infinity, 1),
                   painter: DashedLinePainter(),
                 ),
-                SizedBox(height: 12),
-                if ( booking.uniqueTransactionId != null) ...[
+                SizedBox(height: 12),],
+                
+                if ( booking.uniqueTransactionId != null && booking.price > 0) ...[
                   Row(
                     children: [
 
@@ -481,7 +483,7 @@ class BookingsScreen extends StatelessWidget {
                 SizedBox(height: 12),
 
                 // Price Breakdown
-                if (booking.priceBreakdown != null) ...[
+                if (booking.priceBreakdown != null && booking.price > 0) ...[
                   Text(
                     'Price Breakdown',
                     style: AppTextStyles.popinRegularTextStyle(
@@ -547,10 +549,10 @@ class BookingsScreen extends StatelessWidget {
                           ),
                           SizedBox(height: 4),
                           Text(
-                            booking.paymentStatus?.replaceAll('_', ' ').capitalizeFirst ?? 'N/A',
+                            booking.price == 0 ? 'Free' : (booking.paymentStatus?.replaceAll('_', ' ').capitalizeFirst ?? 'N/A'),
                             style: AppTextStyles.mediumTextStyle(
                               fontSize: 14,
-                              color: isPast ? getPaymentStatusColor(booking.paymentStatus).withAlpha(400) : getPaymentStatusColor(booking.paymentStatus),
+                              color: booking.price == 0 ? priceColor : (isPast ? getPaymentStatusColor(booking.paymentStatus).withAlpha(400) : getPaymentStatusColor(booking.paymentStatus)),
                             ),
                           ),
                         ],
@@ -701,7 +703,10 @@ class BookingsScreen extends StatelessWidget {
                 SizedBox(height: 8),
 
                 // Cancel/Reschedule info (only for upcoming bookings)
+                
                 if (isUpcoming && booking.bookingStatus != 'in_progress') ...[
+                  
+                  if ( booking.price > 0) ...[
                   SizedBox(height: 16),
                   Container(
                     padding: EdgeInsets.all(12),
@@ -733,7 +738,7 @@ class BookingsScreen extends StatelessWidget {
                       ],
                     ),
                   ),
-                  SizedBox(height: 16),
+                  ],SizedBox(height: 16),
                   // Action buttons
                   Row(
                     children: [
@@ -795,7 +800,7 @@ class BookingsScreen extends StatelessWidget {
                     ],
                   ),
                 ],
-              ],
+             ],
             ),
           ),
         ),

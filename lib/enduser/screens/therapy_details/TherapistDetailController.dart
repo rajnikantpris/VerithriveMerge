@@ -348,17 +348,22 @@ class TherapistDetailController extends BaseController
           packages.value = packagesList.map((json) {
             // Extract both _id and service_format_id
             String? professionalServiceFormatIdValue = json['_id']?.toString() ?? json['id']?.toString();
-            String? serviceFormatIdValue = json['_id']?.toString();
-            
+            String? serviceFormatIdValue = json['service_format_id']?.toString() ?? json['_id']?.toString();
+
+            final parsedPrice = _parsePackagePrice(json['price']);
+            final isFree = parsedPrice == null;
+
             print('Service Format - _id: ${json['_id']}, service_format_id: ${json['service_format_id']}');
             print('  -> professional_service_format_id (_id): $professionalServiceFormatIdValue');
             print('  -> service_format_id: $serviceFormatIdValue');
-            
+            print('  -> price: ${json['price']}, isFree: $isFree');
+
             return ServicePackage(
               title: json['service_format_name']?.toString() ?? json['service_name']?.toString() ?? '',
               duration: json['duration_minutes']?.toString() ?? '',
-              price: (json['price'] as num?)?.toDouble() ?? 0.0,
-              discount: json['discount']?.toString(),
+              price: parsedPrice ?? 0.0,
+              isFree: isFree,
+              discount: json['offer_text']?.toString() ?? json['discount']?.toString(),
               service_format_date: json['service_format_date']?.toString(),
               serviceFormatId: serviceFormatIdValue, // service_format_id for summary screen
               professionalServiceFormatId: professionalServiceFormatIdValue, // _id for create-booking API
@@ -424,6 +429,17 @@ class TherapistDetailController extends BaseController
 
   Future<void> getPreferenceDetails() async {
     isGuest.value = _storageService?.readBool(SharePreferenceConst.isGuest) ?? false;
+  }
+
+  double? _parsePackagePrice(dynamic value) {
+    if (value == null) return null;
+    if (value is num) return value.toDouble();
+    if (value is String) {
+      final trimmed = value.trim();
+      if (trimmed.isEmpty) return null;
+      return double.tryParse(trimmed);
+    }
+    return null;
   }
 }
 

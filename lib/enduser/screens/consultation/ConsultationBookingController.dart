@@ -60,11 +60,13 @@ class ConsultationBookingController extends BaseController {
       super.onInit();
       _receiveArguments();
       
-      // Don't set current date here - let the service format date selection handle it
-      // Only set current month if no date is selected yet
+      // Set selectedDate to today if not provided in arguments
       if (selectedDate.value == null) {
         final now = DateTime.now();
+        final today = DateTime(now.year, now.month, now.day);
+        selectedDate.value = today;
         selectedMonth.value = DateTime(now.year, now.month, 1);
+        print('Set initial selected date to today: ${DateFormat('dd/MM/yyyy').format(today)}');
       } else {
         // Ensure selectedMonth matches the selectedDate month
         selectedMonth.value = DateTime(selectedDate.value!.year, selectedDate.value!.month, 1);
@@ -77,10 +79,11 @@ class ConsultationBookingController extends BaseController {
     } catch (e, stackTrace) {
       print('CRASH PREVENTED in onInit: $e');
       print('Stack trace: $stackTrace');
-      // Set safe defaults - only set month, not date
+      // Set safe defaults - set both month and today's date
       final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+      selectedDate.value = today;
       selectedMonth.value = DateTime(now.year, now.month, 1);
-      // Don't set selectedDate here - let API response handle it
     }
   }
 

@@ -7,6 +7,7 @@ class Therapist {
   final double rating;
   final int reviewCount;
   final double price;
+  final bool isFree;
   final bool isFavorite;
   final String availability;
   final int ratingsCount;
@@ -24,6 +25,7 @@ class Therapist {
     required this.rating,
     required this.reviewCount,
     required this.price,
+    this.isFree = false,
     this.isFavorite = false,
     this.availability = '',
     this.ratingsCount = 50,
@@ -38,6 +40,7 @@ class ServicePackage {
   final String title;
   final String duration;
   final double price;
+  final bool isFree;
   final String? discount;
   final String? service_format_date;
   final String? serviceFormatId; // service_format_id for summary screen
@@ -47,6 +50,7 @@ class ServicePackage {
     required this.title,
     required this.duration,
     required this.price,
+    this.isFree = false,
     this.discount,
     this.serviceFormatId,
     this.professionalServiceFormatId,

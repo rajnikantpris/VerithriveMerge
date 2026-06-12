@@ -6,6 +6,8 @@ import 'package:intl/intl.dart';
 import '../../api/api_response.dart';
 import '../../api/user_api_service.dart';
 import '../../common/base_controller.dart';
+import '../../models/bookings_list_model.dart';
+import '../../utils/logger.dart';
 import '../../services/notification_service.dart';
 import '../../services/analytics_service.dart';
 import '../../theme/hight_width_sizes.dart';
@@ -81,6 +83,9 @@ class CalendarController extends BaseController {
   // Dummy availability data
   final availabilities = <AvailabilityItem>[].obs;
 
+  // Upcoming booked sessions for the selected date
+  final upcomingSessions = <SessionData>[].obs;
+
   // Store raw availability data for calendar events
   final rawAvailabilities = <Map<String, dynamic>>[].obs;
 
@@ -97,6 +102,7 @@ class CalendarController extends BaseController {
       // Fetch service format and availability when date changes if not a guest
       if (_homeController != null && !_homeController!.isGuestUser()) {
         _fetchServiceFormatAvailability();
+        loadBookingsList();
       }
     });
     // Also scroll on initial load
@@ -106,6 +112,7 @@ class CalendarController extends BaseController {
     // Fetch service format and availability for current date on init if not a guest
     if (_homeController != null && !_homeController!.isGuestUser()) {
       _fetchServiceFormatAvailability();
+      loadBookingsList();
       // Load notification count from shared service
       _notificationService?.fetchNotificationCount();
     }
@@ -200,6 +207,220 @@ class CalendarController extends BaseController {
     hasUserSelectedDate.value = true;
     selectedDate.value = date;
     // Data will be fetched automatically by the ever() listener in onInit
+  }
+
+  /// Check if the selected date is in the past (before today)
+  bool get isSelectedDatePast {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final selected = DateTime(
+      selectedDate.value.year,
+      selectedDate.value.month,
+      selectedDate.value.day,
+    );
+    return selected.isBefore(today);
+  }
+
+  /// Load upcoming bookings for the selected date
+  Future<void> loadBookingsList({DateTime? date}) async {
+    final targetDate = date ??
+        (hasUserSelectedDate.value ? selectedDate.value : DateTime.now());
+
+    await callDataService(
+      _userApiService.getBookingsList(date: targetDate),
+      onSuccess: (response) {
+        try {
+          if (response.data is Map<String, dynamic>) {
+            final bookingsData = BookingsListData.fromJson(
+              response.data as Map<String, dynamic>,
+            );
+
+            if (bookingsData.upcomingBookings?.items != null &&
+                bookingsData.upcomingBookings!.items!.isNotEmpty) {
+              upcomingSessions.assignAll(
+                bookingsData.upcomingBookings!.items!
+                    .map((booking) => _convertBookingToSession(booking))
+                    .toList(),
+              );
+            } else {
+              upcomingSessions.clear();
+            }
+          }
+        } catch (e, stackTrace) {
+          logError('Error parsing bookings response',
+              error: e, stackTrace: stackTrace);
+        }
+      },
+      onError: (error, stack) {
+        logError('Failed to load bookings', error: error, stackTrace: stack);
+      },
+    );
+  }
+
+  SessionData _convertBookingToSession(BookingItem booking) {
+    final userId = booking.userId;
+    String timeRange = '';
+    String dateLabel = '';
+
+    if (booking.bookingTimeRange != null &&
+        booking.bookingTimeRange!.isNotEmpty) {
+      try {
+        final parts = booking.bookingTimeRange!.split(' - ');
+        if (parts.length == 2) {
+          final startPart = parts[0].trim();
+          final endPart = parts[1].trim();
+          final startParts = startPart.split(' ');
+          if (startParts.length >= 3) {
+            final startTime =
+                '${startParts[startParts.length - 2]} ${startParts[startParts.length - 1]}';
+            timeRange = '$startTime - $endPart';
+
+            final dateStr = startParts[0];
+            final dateParts = dateStr.split('/');
+            if (dateParts.length == 3) {
+              try {
+                final day = int.parse(dateParts[0]);
+                final month = int.parse(dateParts[1]);
+                final year = int.parse(dateParts[2]);
+                const months = [
+                  'January',
+                  'February',
+                  'March',
+                  'April',
+                  'May',
+                  'June',
+                  'July',
+                  'August',
+                  'September',
+                  'October',
+                  'November',
+                  'December',
+                ];
+                dateLabel = '$day ${months[month - 1]} $year';
+              } catch (e) {
+                dateLabel = dateStr;
+              }
+            }
+          }
+        }
+      } catch (e) {
+        // Fall through to other parsing methods
+      }
+    }
+
+    if (timeRange.isEmpty && booking.localEnd != null) {
+      try {
+        final parts = booking.localEnd!.split(' ');
+        if (parts.length == 2) {
+          final timePart = parts[1];
+          if (booking.serviceFormatSnapshot?.durationMinutes != null) {
+            final duration = booking.serviceFormatSnapshot!.durationMinutes!;
+            final endTimeParts = timePart.split(':');
+            if (endTimeParts.length == 2) {
+              final endHour = int.parse(endTimeParts[0]);
+              final endMinute = int.parse(endTimeParts[1]);
+              final endTotalMinutes = endHour * 60 + endMinute;
+              final startTotalMinutes = endTotalMinutes - duration;
+              final startHour = (startTotalMinutes ~/ 60) % 24;
+              final startMinute = startTotalMinutes % 60;
+              final startTime = _formatTime12Hour(startHour, startMinute);
+              final endTime = _formatTime12Hour(endHour, endMinute);
+              timeRange = '$startTime - $endTime';
+            } else {
+              timeRange = timePart;
+            }
+          } else {
+            final timeParts = timePart.split(':');
+            if (timeParts.length == 2) {
+              final hour = int.parse(timeParts[0]);
+              final minute = int.parse(timeParts[1]);
+              timeRange = _formatTime12Hour(hour, minute);
+            } else {
+              timeRange = timePart;
+            }
+          }
+        }
+      } catch (e) {
+        if (booking.bookingStart != null && booking.bookingEnd != null) {
+          try {
+            final start = DateTime.parse(booking.bookingStart!);
+            final end = DateTime.parse(booking.bookingEnd!);
+            final startLocal = start.toLocal();
+            final endLocal = end.toLocal();
+            final startTime =
+                _formatTime12Hour(startLocal.hour, startLocal.minute);
+            final endTime = _formatTime12Hour(endLocal.hour, endLocal.minute);
+            timeRange = '$startTime - $endTime';
+          } catch (e2) {
+            timeRange = 'Time unavailable';
+          }
+        }
+      }
+    } else if (booking.bookingStart != null && booking.bookingEnd != null) {
+      try {
+        final start = DateTime.parse(booking.bookingStart!);
+        final end = DateTime.parse(booking.bookingEnd!);
+        final startLocal = start.toLocal();
+        final endLocal = end.toLocal();
+        final startTime = _formatTime12Hour(startLocal.hour, startLocal.minute);
+        final endTime = _formatTime12Hour(endLocal.hour, endLocal.minute);
+        timeRange = '$startTime - $endTime';
+      } catch (e) {
+        timeRange = 'Time unavailable';
+      }
+    }
+
+    if (timeRange.isEmpty) {
+      timeRange = 'Time unavailable';
+    }
+
+    if (dateLabel.isEmpty && booking.bookingDateLocal != null) {
+      try {
+        final parsedDate = DateTime.parse(booking.bookingDateLocal!);
+        const months = [
+          'January',
+          'February',
+          'March',
+          'April',
+          'May',
+          'June',
+          'July',
+          'August',
+          'September',
+          'October',
+          'November',
+          'December',
+        ];
+        dateLabel =
+            '${parsedDate.day} ${months[parsedDate.month - 1]} ${parsedDate.year}';
+      } catch (e) {
+        dateLabel = booking.bookingDateLocal ?? '';
+      }
+    }
+
+    final serviceName = booking.serviceFormatSnapshot?.name ?? 'Session';
+
+    return SessionData(
+      id: booking.id ?? '',
+      title: serviceName,
+      name: booking.userName ?? 'Client',
+      timeRange: timeRange,
+      dateLabel: dateLabel,
+      isInProgress: booking.status == 'in_progress',
+      durationMinutes: booking.serviceFormatSnapshot?.durationMinutes,
+      userId: userId,
+    );
+  }
+
+  String _formatTime12Hour(int hour24, int minute) {
+    final hour12 = hour24 == 0
+        ? 12
+        : hour24 > 12
+            ? hour24 - 12
+            : hour24;
+    final period = hour24 < 12 ? 'AM' : 'PM';
+    final minuteStr = minute.toString().padLeft(2, '0');
+    return '$hour12:$minuteStr $period';
   }
 
   /// Format date to DD/MM/YYYY format
@@ -454,29 +675,39 @@ class CalendarController extends BaseController {
 
             if (formats.isNotEmpty) {
               serviceFormats.value = formats;
-              
+
               // Get professional details from HomeController
               final profile = _homeController?.profileDetails.value;
               final professionalId = profile?.professionTypeId ?? '';
               final professionalName = profile?.profession_name ?? '';
-              
+
               // Analytics: Log service format list view
-              final analyticsItems = formats.map((format) =>
-                AnalyticsService.instance.buildItem(
-                  itemId: format.id.isNotEmpty ? format.id : '',
-                  itemName: professionalName.isNotEmpty ? professionalName : (format.name.isNotEmpty ? format.name : ''),
-                  itemCategory: professionalName.isNotEmpty ? professionalName : 'service_format',
-                  itemCategory2: format.name,
-                  itemVariant: format.isBundle ? 'bundle' : 'standard',
-                  price: double.tryParse(format.price.replaceAll(RegExp(r'[^0-9.]'), '')) ?? 0.0,
-                  quantity: 1,
-                ),
-              ).toList();
+              final analyticsItems = formats
+                  .map(
+                    (format) => AnalyticsService.instance.buildItem(
+                      itemId: format.id.isNotEmpty ? format.id : '',
+                      itemName: professionalName.isNotEmpty
+                          ? professionalName
+                          : (format.name.isNotEmpty ? format.name : ''),
+                      itemCategory: professionalName.isNotEmpty
+                          ? professionalName
+                          : 'service_format',
+                      itemCategory2: format.name,
+                      itemVariant: format.isBundle ? 'bundle' : 'standard',
+                      price: double.tryParse(format.price
+                              .replaceAll(RegExp(r'[^0-9.]'), '')) ??
+                          0.0,
+                      quantity: 1,
+                    ),
+                  )
+                  .toList();
 
               AnalyticsService.instance.logViewItemListEvent(
                 items: analyticsItems,
-                itemListId: professionalId.isNotEmpty ? professionalId : 'unknown',
-                itemListName: professionalName.isNotEmpty ? professionalName : 'unknown',
+                itemListId:
+                    professionalId.isNotEmpty ? professionalId : 'unknown',
+                itemListName:
+                    professionalName.isNotEmpty ? professionalName : 'unknown',
                 extraParams: {
                   'currency': 'GBP',
                 },
@@ -497,13 +728,12 @@ class CalendarController extends BaseController {
         // If availability is present in response (even if empty), update the list
         if (availabilitiesList != null) {
           if (availabilitiesList.isEmpty) {
-            // Clear dummy data if API returns empty array
+            // Only clear the selected-date list; keep month calendar dots.
             availabilities.clear();
-            rawAvailabilities.clear();
           } else {
-            // Store raw availability data for calendar events
-            rawAvailabilities.value =
-                availabilitiesList.whereType<Map<String, dynamic>>().toList();
+            _mergeRawAvailabilities(
+              availabilitiesList.whereType<Map<String, dynamic>>().toList(),
+            );
 
             final availList = availabilitiesList
                 .map((item) {
@@ -573,16 +803,43 @@ class CalendarController extends BaseController {
 
   /// Get event colors for a specific date based on availability
   List<Color> getEventColorsForDate(DateTime date) {
+    rawAvailabilities.length;
     final colors = <Color>[];
 
     for (final availability in rawAvailabilities) {
       if (_isDateInAvailability(date, availability)) {
-        // Use green color for available dates
         colors.add(Colors.green);
       }
     }
 
     return colors;
+  }
+
+  void _mergeRawAvailabilities(List<Map<String, dynamic>> newItems) {
+    if (newItems.isEmpty) return;
+
+    for (final item in newItems) {
+      final id = item['id']?.toString() ?? item['_id']?.toString();
+      if (id == null || id.isEmpty) {
+        rawAvailabilities.add(item);
+        continue;
+      }
+
+      final existingIndex = rawAvailabilities.indexWhere(
+        (availability) =>
+            (availability['id']?.toString() ??
+                availability['_id']?.toString()) ==
+            id,
+      );
+
+      if (existingIndex >= 0) {
+        rawAvailabilities[existingIndex] = item;
+      } else {
+        rawAvailabilities.add(item);
+      }
+    }
+
+    rawAvailabilities.refresh();
   }
 
   /// Delete service format by ID

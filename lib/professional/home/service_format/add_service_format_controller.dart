@@ -346,8 +346,7 @@ class AddServiceFormatController extends BaseController {
       fieldErrors.refresh();
       return 'Please enter a valid number';
     }
-    // Validate that price is greater than 0
-    if (priceValue <= 0) {
+    if (priceValue < 0) {
       fieldErrors['price_$index'] = 'Price must be greater than 0';
       fieldErrors.refresh();
       return 'Price must be greater than 0';
@@ -364,8 +363,8 @@ class AddServiceFormatController extends BaseController {
     }
     final format = serviceFormats[index];
     if (format.timePerSession == null || format.timePerSession!.isEmpty) {
-      fieldErrors['timePerSession_$index'] = 'Time per session is required';
-      fieldErrors.refresh();
+      // fieldErrors['timePerSession_$index'] = 'Time per session is required';
+      // fieldErrors.refresh();
       return 'Time per session is required';
     }
     fieldErrors.remove('timePerSession_$index');
@@ -391,8 +390,7 @@ class AddServiceFormatController extends BaseController {
       fieldErrors.refresh();
       return 'Please enter a valid number';
     }
-    // Validate that bundle price is greater than 0
-    if (bundlePriceValue <= 0) {
+    if (bundlePriceValue < 0) {
       fieldErrors['bundlePrice_$index'] = 'Bundle price must be greater than 0';
       fieldErrors.refresh();
       return 'Bundle price must be greater than 0';

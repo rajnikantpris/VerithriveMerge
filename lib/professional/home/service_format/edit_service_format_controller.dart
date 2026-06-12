@@ -151,10 +151,15 @@ class EditServiceFormatController extends BaseController {
       return 'Price is required';
     }
     final priceValue = int.tryParse(price);
-    if (priceValue == null || priceValue <= 0) {
+    if (priceValue == null) {
       fieldErrors['price'] = 'Please enter a valid price';
       fieldErrors.refresh();
       return 'Please enter a valid price';
+    }
+    if (priceValue < 0) {
+      fieldErrors['price'] = 'Price cannot be negative';
+      fieldErrors.refresh();
+      return 'Price cannot be negative';
     }
     fieldErrors.remove('price');
     fieldErrors.refresh();

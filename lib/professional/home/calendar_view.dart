@@ -266,11 +266,7 @@ class CalendarTab extends BaseView<CalendarController> {
                 SizedBox(height: HightWidthSizes.setValue_12),
                 _AvailabilitySection(controller: controller),
                 SizedBox(height: HightWidthSizes.setValue_12),
-                _EmptyStateSection(
-                  title: 'Booked slots',
-                  placeholder: 'No slots booked yet',
-                  onAdd: () {},
-                ),
+                _UpcomingBookingsSection(controller: controller),
               ],
             ),
           ),
@@ -563,6 +559,239 @@ class _MonthDay {
   final bool isCurrentMonth;
 }
 
+class _UpcomingBookingsSection extends StatelessWidget {
+  const _UpcomingBookingsSection({required this.controller});
+
+  final CalendarController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(() {
+      if (controller.isSelectedDatePast) {
+        return const SizedBox.shrink();
+      }
+
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            margin: EdgeInsets.only(
+              left: HightWidthSizes.setValue_10,
+              right: HightWidthSizes.setValue_10,
+              bottom: HightWidthSizes.setValue_15,
+            ),
+            child: Text(
+              'Booked slots',
+              style: TextStyle(
+                fontFamily: AppFonts.rubikRegular,
+                fontWeight: FontWeight.w400,
+                color: AppColor.color_2D2D2D,
+                fontSize: FontSizes.setFontValue_16,
+              ),
+            ),
+          ),
+          if (controller.upcomingSessions.isNotEmpty)
+            Container(
+              margin: EdgeInsets.only(
+                left: HightWidthSizes.setValue_10,
+                right: HightWidthSizes.setValue_10,
+              ),
+              child: Column(
+                children: controller.upcomingSessions
+                    .map(
+                      (session) => Padding(
+                        padding: EdgeInsets.only(
+                          bottom: HightWidthSizes.setValue_12,
+                        ),
+                        child: _UpcomingBookingCard(session: session),
+                      ),
+                    )
+                    .toList(),
+              ),
+            )
+          else
+            Container(
+              margin: EdgeInsets.only(
+                left: HightWidthSizes.setValue_10,
+                right: HightWidthSizes.setValue_10,
+              ),
+              child: Container(
+                width: double.infinity,
+                height: HightWidthSizes.setValue_100,
+                decoration: BoxDecoration(
+                  color: AppColor.color_F7F7F7,
+                  borderRadius: BorderRadius.circular(
+                    HightWidthSizes.setValue_10,
+                  ),
+                ),
+                child: Center(
+                  child: Text(
+                    'No booked slots',
+                    style: TextStyle(
+                      fontFamily: AppFonts.rubikRegular,
+                      fontWeight: FontWeight.w400,
+                      color: Color(0x80263238),
+                      fontSize: FontSizes.setFontValue_14,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      );
+    });
+  }
+}
+
+class _UpcomingBookingCard extends StatelessWidget {
+  const _UpcomingBookingCard({required this.session});
+
+  final SessionData session;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(HightWidthSizes.setValue_14),
+        border: Border.all(color: AppColor.color_ECECEC),
+        boxShadow: [
+          BoxShadow(
+            color: AppColor.color_ECECEC,
+            blurRadius: HightWidthSizes.setValue_3,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: double.infinity,
+            padding: EdgeInsets.only(
+              left: HightWidthSizes.setValue_14,
+              right: HightWidthSizes.setValue_14,
+              top: HightWidthSizes.setValue_10,
+              bottom: HightWidthSizes.setValue_10,
+            ),
+            decoration: BoxDecoration(
+              color: AppColor.color_0045B5_0A,
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(HightWidthSizes.setValue_14),
+                topRight: Radius.circular(HightWidthSizes.setValue_14),
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(
+                    session.title,
+                    style: TextStyle(
+                      fontFamily: AppFonts.poppinsBold,
+                      fontWeight: FontWeight.w700,
+                      color: AppColor.color_414141,
+                      fontSize: FontSizes.setFontValue_14,
+                    ),
+                  ),
+                ),
+                if (session.isInProgress)
+                  Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: HightWidthSizes.setValue_8,
+                      vertical: HightWidthSizes.setValue_4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColor.color_0045B5,
+                      borderRadius: BorderRadius.circular(
+                        HightWidthSizes.setValue_4,
+                      ),
+                    ),
+                    child: Text(
+                      'In Progress',
+                      style: TextStyle(
+                        fontFamily: AppFonts.rubikRegular,
+                        fontWeight: FontWeight.w400,
+                        color: AppColor.white,
+                        fontSize: FontSizes.setFontValue_12,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          SizedBox(height: HightWidthSizes.setValue_12),
+          Padding(
+            padding: EdgeInsets.only(
+              left: HightWidthSizes.setValue_14,
+              right: HightWidthSizes.setValue_14,
+              bottom: HightWidthSizes.setValue_12,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    AppImages.user_list_svg(
+                      width: HightWidthSizes.setValue_15,
+                      height: HightWidthSizes.setValue_15,
+                    ),
+                    SizedBox(width: HightWidthSizes.setValue_5),
+                    Text(
+                      session.name,
+                      style: TextStyle(
+                        fontFamily: AppFonts.rubikRegular,
+                        fontWeight: FontWeight.w400,
+                        color: AppColor.color_414141,
+                        fontSize: FontSizes.setFontValue_14,
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: HightWidthSizes.setValue_5),
+                Row(
+                  children: [
+                    AppImages.clock_list_svg(
+                      width: HightWidthSizes.setValue_15,
+                      height: HightWidthSizes.setValue_15,
+                    ),
+                    SizedBox(width: HightWidthSizes.setValue_5),
+                    Text(
+                      session.timeRange,
+                      style: TextStyle(
+                        fontFamily: AppFonts.rubikRegular,
+                        fontWeight: FontWeight.w400,
+                        color: AppColor.color_898989,
+                        fontSize: FontSizes.setFontValue_14,
+                      ),
+                    ),
+                    SizedBox(width: HightWidthSizes.setValue_10),
+                    AppImages.calender_list_svg(
+                      width: HightWidthSizes.setValue_15,
+                      height: HightWidthSizes.setValue_15,
+                    ),
+                    SizedBox(width: HightWidthSizes.setValue_5),
+                    Text(
+                      session.dateLabel,
+                      style: TextStyle(
+                        fontFamily: AppFonts.rubikRegular,
+                        fontWeight: FontWeight.w400,
+                        color: AppColor.color_898989,
+                        fontSize: FontSizes.setFontValue_14,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _EmptyStateSection extends StatelessWidget {
   const _EmptyStateSection({
     required this.title,
@@ -728,6 +957,19 @@ List<_MonthDay> _buildMonthDays(DateTime reference) {
 }
 
 const _monthWeekdayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+String _getDisplayPrice(String price) {
+  // Remove currency symbols and whitespace
+  final cleanedPrice = price.replaceAll(RegExp(r'[£,\s]'), '');
+  // Parse to number
+  final priceValue = num.tryParse(cleanedPrice);
+  // If price is 0, show "Free"
+  if (priceValue != null && priceValue == 0) {
+    return 'Free';
+  }
+  // Otherwise show the original price
+  return price;
+}
 
 class _ServiceFormatSection extends StatelessWidget {
   const _ServiceFormatSection({required this.controller});
@@ -1078,7 +1320,7 @@ class _ServiceFormatCard extends StatelessWidget {
                     if (serviceFormat.isBundle)
                       SizedBox(height: HightWidthSizes.setValue_4),
                     Text(
-                      serviceFormat.price,
+                      _getDisplayPrice(serviceFormat.price),
                       style: TextStyle(
                         fontFamily: AppFonts.poppinsSemiBold,
                         fontWeight: FontWeight.w600,
@@ -1218,8 +1460,8 @@ class _AvailabilitySection extends StatelessWidget {
                       return;
                     }
                     // Navigate if approved and has subscription
-                    
-                     AnalyticsService.instance.logEvent(
+
+                    AnalyticsService.instance.logEvent(
                       name: 'add_service_availability_tap',
                       parameters: {
                         'screen_name': 'CalendarView',
@@ -1229,7 +1471,7 @@ class _AvailabilitySection extends StatelessWidget {
                         'page_category': 'calendar',
                       },
                     );
-                    
+
                     Get.toNamed(Routes.createAvailability);
                   },
                   icon: Icon(
@@ -1317,7 +1559,6 @@ class _AvailabilitySection extends StatelessWidget {
                   },
                   onDelete: () {
                     // Analytics: Log delete availability tap event
-                  
 
                     _showDeleteAvailabilityDialog(
                       availability.availableFrom,
@@ -1677,16 +1918,16 @@ void _showDeleteAvailabilityDialog(
                   child: ElevatedButton(
                     onPressed: () {
                       Navigator.of(context).pop();
-                        AnalyticsService.instance.logEvent(
-                      name: 'delete_availability_tap',
-                      parameters: {
-                        'screen_name': 'CalendarView',
-                        'screen_class': 'CalendarView',
-                        'element_text': 'delete availability',
-                        'element_location': 'button_tap_cta',
-                        'page_category': 'calendar',
-                      },
-                    );
+                      AnalyticsService.instance.logEvent(
+                        name: 'delete_availability_tap',
+                        parameters: {
+                          'screen_name': 'CalendarView',
+                          'screen_class': 'CalendarView',
+                          'element_text': 'delete availability',
+                          'element_location': 'button_tap_cta',
+                          'page_category': 'calendar',
+                        },
+                      );
                       onConfirm();
                     },
                     style: ElevatedButton.styleFrom(

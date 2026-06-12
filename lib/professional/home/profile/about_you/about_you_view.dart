@@ -12,6 +12,14 @@ class AboutYouView extends BaseView<AboutYouController> {
   const AboutYouView({super.key});
 
   @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).unfocus(),
+      child: super.build(context),
+    );
+  }
+
+  @override
   PreferredSizeWidget? appBar(BuildContext context) {
     return PreferredSize(
       preferredSize: const Size.fromHeight(kToolbarHeight + 1),
@@ -57,12 +65,17 @@ class AboutYouView extends BaseView<AboutYouController> {
       key: controller.formKey,
       child: Container(
         color: AppColor.white,
-        child: SingleChildScrollView(
-          padding: EdgeInsets.symmetric(
-            horizontal: HightWidthSizes.setValue_16,
-            vertical: HightWidthSizes.setValue_20,
-          ),
-          child: Column(
+        child: GestureDetector(
+          behavior: HitTestBehavior.translucent,
+          onTap: () => FocusScope.of(context).unfocus(),
+          child: SingleChildScrollView(
+            keyboardDismissBehavior:
+                ScrollViewKeyboardDismissBehavior.onDrag,
+            padding: EdgeInsets.symmetric(
+              horizontal: HightWidthSizes.setValue_16,
+              vertical: HightWidthSizes.setValue_20,
+            ),
+            child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
@@ -91,7 +104,10 @@ class AboutYouView extends BaseView<AboutYouController> {
                     child: TextFormField(
                       controller: controller.aboutYouController,
                       maxLines: 6,
+                      textInputAction: TextInputAction.done,
                       onChanged: controller.onAboutYouChanged,
+                      onFieldSubmitted: (_) =>
+                          FocusScope.of(context).unfocus(),
                       validator: controller.validateAboutYou,
                       decoration: InputDecoration(
                         border: InputBorder.none,
@@ -128,6 +144,7 @@ class AboutYouView extends BaseView<AboutYouController> {
               SizedBox(height: HightWidthSizes.setValue_20),
             ],
           ),
+        ),
         ),
       ),
     );
@@ -173,7 +190,10 @@ class AboutYouView extends BaseView<AboutYouController> {
                 ),
               ),
               onPressed: controller.hasValidData.value
-                  ? controller.onUpdateDetails
+                  ? () {
+                      FocusScope.of(context).unfocus();
+                      controller.onUpdateDetails();
+                    }
                   : null,
               child: Text(
                 'Update details',

@@ -392,23 +392,28 @@ class TherapistListingScreen extends StatelessWidget {
                             color: AppColors.black,
                           ),
                         ),
-                        RichText(
-                          text: TextSpan(
-                            children: [
-                              TextSpan(
-                                text: '£${therapist.price}/',
+                        (therapist.isFree || therapist.price == 0)
+                            ? Text(
+                                AppText.freeSession,
                                 style: AppTextStyles.priceSemiboldStyle(),
-                              ),
-                              TextSpan(
-                                text: AppText.perSession,
-                                style: AppTextStyles.regularTextStyle(
-                                  fontSize: 12,
-                                  color: AppColors.color9D9D9D,
+                              )
+                            : RichText(
+                                text: TextSpan(
+                                  children: [
+                                    TextSpan(
+                                      text: '£${therapist.price % 1 == 0 ? therapist.price.toInt() : therapist.price.toStringAsFixed(2)}/',
+                                      style: AppTextStyles.priceSemiboldStyle(),
+                                    ),
+                                    TextSpan(
+                                      text: AppText.perSession,
+                                      style: AppTextStyles.regularTextStyle(
+                                        fontSize: 12,
+                                        color: AppColors.color9D9D9D,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                            ],
-                          ),
-                        ),
                       ],
                     ),
                   ],

@@ -6,6 +6,8 @@ import 'package:verithrive_dev/enduser/network/exceptions/not_found_exception.da
 import 'package:verithrive_dev/enduser/routes/app_routes.dart';
 import 'package:verithrive_dev/enduser/screens/payment/PaymentMethodBinding.dart';
 import 'package:verithrive_dev/enduser/screens/payment/PaymentMethodScreen.dart';
+import 'package:verithrive_dev/enduser/screens/payment_success/PaymentSuccessBinding.dart';
+import 'package:verithrive_dev/enduser/screens/payment_success/PaymentSuccessScreen.dart';
 import 'package:verithrive_dev/services/analytics_service.dart';
 import '../../core/base/base_controller.dart';
 import '../../data/repository/project_repository.dart';
@@ -32,6 +34,8 @@ class SummaryController extends BaseController {
   var serviceFormatId = ''.obs; // service_format_id for API call
   var bookingId = ''.obs; // booking_id for update-booking API in edit mode
   var isEditMode = false.obs; // Flag to indicate edit mode
+
+  bool get isFree => price.value == 0;
   
   // Timer for booking expiry
   Timer? _expiryTimer;
@@ -139,7 +143,12 @@ class SummaryController extends BaseController {
         serviceName.value = arguments['service_name'] as String;
       }
       if (arguments['price'] != null) {
-        price.value = (arguments['price'] as num).toDouble();
+        final rawPrice = arguments['price'];
+        if (rawPrice is String && rawPrice.trim().isEmpty) {
+          price.value = 0.0;
+        } else if (rawPrice is num) {
+          price.value = rawPrice.toDouble();
+        }
       }
       if (arguments['location'] != null) {
         location.value = arguments['location'] as String;
@@ -288,31 +297,31 @@ class SummaryController extends BaseController {
       String message = responseData['message'] ?? 'Booking validated successfully';
       
       if (success == true) {
-        // Analytics: Log beginning of checkout process
-        
-
-        // Navigate to payment screen with all booking data
-        final summaryArgs = Get.arguments as Map<String, dynamic>?;
-        Get.to(
-          () => PaymentMethodScreen(),
-          binding: PaymentMethodBinding(),
-          arguments: {
-            'selected_date': selectedDate.value,
-            'from_time': fromTime.value,
-            'until_time': untilTime.value,
-            'service_name': serviceName.value,
-            'price': price.value,
-            'location': location.value,
-            'professional_id': professionalId.value,
-            'service_format_id': serviceFormatId.value,
-            'professional_service_format_id': professionalServiceFormatId.value,
-            'booking_id': bookingId.value,
-            'is_edit_mode': isEditMode.value,
-            'category': summaryArgs?['category'] ?? 'wellness',
-            'item_variant': summaryArgs?['item_variant'] ?? '',
-            'item_brand': summaryArgs?['item_brand'] ?? '',
-          },
-        );
+        if (isFree) {
+          callCreateBookingAPI();
+        } else {
+          final summaryArgs = Get.arguments as Map<String, dynamic>?;
+          Get.to(
+            () => PaymentMethodScreen(),
+            binding: PaymentMethodBinding(),
+            arguments: {
+              'selected_date': selectedDate.value,
+              'from_time': fromTime.value,
+              'until_time': untilTime.value,
+              'service_name': serviceName.value,
+              'price': price.value,
+              'location': location.value,
+              'professional_id': professionalId.value,
+              'service_format_id': serviceFormatId.value,
+              'professional_service_format_id': professionalServiceFormatId.value,
+              'booking_id': bookingId.value,
+              'is_edit_mode': isEditMode.value,
+              'category': summaryArgs?['category'] ?? 'wellness',
+              'item_variant': summaryArgs?['item_variant'] ?? '',
+              'item_brand': summaryArgs?['item_brand'] ?? '',
+            },
+          );
+        }
       } else {
         // Show error dialog
         showResponseDialog(
@@ -367,6 +376,144 @@ class SummaryController extends BaseController {
       );
     }
 
+  }
+
+  void callCreateBookingAPI() {
+    if (professionalId.value.isEmpty) {
+      showResponseDialog(
+        message: 'Professional ID is missing',
+        title: 'Error',
+        isError: true,
+        showButton: true,
+        onOkPressed: () {},
+      );
+      return;
+    }
+
+    if (professionalServiceFormatId.value.isEmpty) {
+      showResponseDialog(
+        message: 'Service format ID is missing',
+        title: 'Error',
+        isError: true,
+        showButton: true,
+        onOkPressed: () {},
+      );
+      return;
+    }
+
+    if (fromTime.value == null || untilTime.value == null) {
+      showResponseDialog(
+        message: 'Please select from and until times',
+        title: 'Error',
+        isError: true,
+        showButton: true,
+        onOkPressed: () {},
+      );
+      return;
+    }
+
+    Map<String, dynamic> toJson() {
+      String formattedDate = DateFormat('dd/MM/yyyy').format(selectedDate.value);
+
+      String formatTime24Hour(TimeOfDay time) {
+        return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
+      }
+
+      final Map<String, dynamic> data = <String, dynamic>{};
+      data['professional_id'] = professionalId.value;
+      data['professional_service_format_id'] = professionalServiceFormatId.value;
+      data['date'] = formattedDate;
+      data['from_time'] = formatTime24Hour(fromTime.value!);
+      data['to_time'] = formatTime24Hour(untilTime.value!);
+
+      print('========================================');
+      print('Create Booking API Request:');
+      print(data);
+      print('========================================');
+
+      return data;
+    }
+
+    var service = _repository.sendPostApiRequest(toJson, create_booking, true);
+    callDataService(
+      service,
+      onSuccess: _handleCreateBookingSuccess,
+      onError: _handleCreateBookingError,
+      isShowLoading: true,
+    );
+  }
+
+  Future<void> _handleCreateBookingSuccess(dynamic baseResponse) async {
+    try {
+      Map<String, dynamic> responseData;
+      if (baseResponse != null && baseResponse.data != null) {
+        responseData = baseResponse.data is Map<String, dynamic>
+            ? baseResponse.data
+            : baseResponse.data as Map<String, dynamic>;
+      } else if (baseResponse is Map<String, dynamic>) {
+        responseData = baseResponse;
+      } else {
+        throw Exception('Invalid response format');
+      }
+
+      bool success = responseData['success'] ?? false;
+      String message = responseData['message'] ?? 'Booking created successfully';
+
+      if (success == true) {
+        final summaryArgs = Get.arguments as Map<String, dynamic>?;
+        final category = summaryArgs?['category'] as String? ?? 'wellness';
+        final itemVariant = summaryArgs?['item_variant']?.toString() ?? '';
+        final itemBrand = summaryArgs?['item_brand']?.toString() ?? '';
+        final successBookingId = responseData['data']?['booking_id']?.toString() ??
+            responseData['data']?['_id']?.toString() ??
+            bookingId.value;
+
+        Get.offAll(
+          () => PaymentSuccessScreen(),
+          binding: PaymentSuccessBinding(),
+          arguments: {
+            'professional_id': professionalId.value,
+            'service_name': serviceName.value,
+            'price': price.value,
+            'booking_id': successBookingId.isNotEmpty
+                ? successBookingId
+                : DateTime.now().millisecondsSinceEpoch.toString(),
+            'category': category,
+            'consultation_type': serviceName.value,
+            'item_variant': itemVariant,
+            'item_brand': itemBrand,
+          },
+        );
+      } else {
+        showResponseDialog(
+          message: message,
+          title: 'Error',
+          isError: true,
+          showButton: true,
+          onOkPressed: () {},
+        );
+      }
+    } catch (e) {
+      showResponseDialog(
+        message: "Error processing response: $e",
+        title: 'Error',
+        isError: true,
+        showButton: true,
+        onOkPressed: () {},
+      );
+    }
+  }
+
+  void _handleCreateBookingError(dynamic e) {
+    if (e is BaseException) {
+      showResponseDialog(
+        message: e.message,
+        title: 'Error',
+        isError: true,
+        showButton: true,
+        onOkPressed: () {},
+      );
+    }
   }
   
   @override

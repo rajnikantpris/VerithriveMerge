@@ -410,7 +410,9 @@ class TherapistDetailScreen extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        '£${package.price}',
+                        (package.isFree || package.price == 0)
+                            ? 'Free'
+                            : '£${package.price % 1 == 0 ? package.price.toInt() : package.price.toStringAsFixed(2)}',
                         style: AppTextStyles.mediumTextStyle(fontSize: 16,color: AppColors.black),
                       ),
                       const SizedBox(width: 12),
@@ -649,14 +651,13 @@ class TherapistDetailScreen extends StatelessWidget {
           // Analytics: Log chat tap event
           final args = Get.arguments as Map<String, dynamic>?;
           final category = args?['category'] as String? ?? 'wellness';
-          final therapist = Get.find<TherapistDetailController>().therapist.value;
 
           AnalyticsService.instance.logEvent(
             name: 'chat_tap',
             parameters: {
               'screen_name': 'TherapistDetailScreen',
               'screen_class': 'TherapistDetailScreen',
-              'element_text': therapist.name ?? '',
+              'element_text': 'chat',
               'element_location': 'button_tap_cta',
               'page_category': category,
             },

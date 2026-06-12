@@ -157,13 +157,15 @@ class SummaryScreen extends StatelessWidget {
                   ),
                 ),
               ),
-              Text(
-                '£${controller.price.value.toStringAsFixed(2)}',
+              Obx(() => Text(
+                controller.isFree
+                    ? AppText.free
+                    : '£${controller.price.value.toStringAsFixed(2)}',
                 style: AppTextStyles.popinSemiboldTextStyle(
                   fontSize: 20,
                   color: AppColors.color2D3648,
                 ),
-              ),
+              )),
             ],
           ),
       
@@ -215,32 +217,37 @@ class SummaryScreen extends StatelessWidget {
       
           SizedBox(height: 20),
       
-          // Info Box
-          Container(
-            padding: EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: AppColors.primaryColor.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          Obx(() {
+            if (controller.isFree) return const SizedBox.shrink();
+            return Column(
               children: [
-                SvgPicture.asset(AppAssets.info),
-                SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    AppText.cancelRescheduleInfo,
-                    style: AppTextStyles.regularTextStyle(
-                      fontSize: 12,
-                      color: AppColors.blueColor,
-                    ),
+                Container(
+                  padding: EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SvgPicture.asset(AppAssets.info),
+                      SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          AppText.cancelRescheduleInfo,
+                          style: AppTextStyles.regularTextStyle(
+                            fontSize: 12,
+                            color: AppColors.blueColor,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
+                SizedBox(height: 20),
               ],
-            ),
-          ),
-      
-          SizedBox(height: 20),
+            );
+          }),
       
           // Action Buttons
           Row(
@@ -313,13 +320,15 @@ class SummaryScreen extends StatelessWidget {
           elevation: 0,
           padding: EdgeInsets.symmetric(vertical: 15)
         ),
-        child: Text(
-          AppText.proceedToPayment,
+        child: Obx(() => Text(
+          controller.isFree
+              ? AppText.freeBookingSession
+              : AppText.proceedToPayment,
           style: AppTextStyles.mediumTextStyle(
             fontSize: 16,
             color: AppColors.white,
           ),
-        ),
+        )),
       ),
     );
   }

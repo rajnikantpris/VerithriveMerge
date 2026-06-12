@@ -1056,6 +1056,8 @@ class ForegroundNotificationService {
         payload.contains("'type': 'booking_ended'") ||
         payload.contains('type: booking_started') ||
         payload.contains("'type': 'booking_started'") ||
+        payload.contains('type: booking_completed_review') ||
+        payload.contains("'type': 'booking_completed_review'") ||
         payload.contains('type: booking_start_reminder') ||
         payload.contains("'type': 'booking_start_reminder'") ||
         payload.contains('type: booking_end_reminder') ||
@@ -1111,7 +1113,9 @@ class ForegroundNotificationService {
         payload.contains('type: booking_one_day_reminder') ||
         payload.contains("'type': 'booking_one_day_reminder'") ||
         payload.contains('type: booking_one_hour_reminder') ||
-        payload.contains("'type': 'booking_one_hour_reminder'") ||
+        payload.contains("'type': 'booking_one_hour_reminder'") ||  
+        payload.contains('type: booking_completed_review') ||
+        payload.contains("'type': 'booking_completed_review'") ||
         payload.contains('type: booking_end_reminder') ||
         payload.contains("'type': 'booking_end_reminder'") ||
         payload.contains('type: booking_ended') ||

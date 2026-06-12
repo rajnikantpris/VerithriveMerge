@@ -420,6 +420,9 @@ class TherapistController extends BaseController {
               return null;
             }
             
+            final parsedPrice = _parseDouble(json['price']);
+            final isFree = parsedPrice == null || parsedPrice == 0;
+
             // Parse according to updated API response structure
             final therapist = Therapist(
               id: json['id']?.toString() ?? json['_id']?.toString() ?? '',
@@ -436,7 +439,8 @@ class TherapistController extends BaseController {
                        _parseDouble(json['distance']) ?? 0.0,
               rating: _parseDouble(json['rating']) ?? 0.0,
               reviewCount: _parseInt(json['review_count']) ?? 0,
-              price: _parseDouble(json['price']) ?? 0.0,
+              price: parsedPrice ?? 0.0,
+              isFree: isFree,
               isFavorite: json['is_saved'] as bool? ?? false,
               services: (json['services'] as List?)?.map((e) => e.toString()).toList() ?? [],
               packages: (json['packages'] as List?)?.map((pkg) {
@@ -712,6 +716,7 @@ class TherapistController extends BaseController {
         rating: therapist.rating,
         reviewCount: therapist.reviewCount,
         price: therapist.price,
+        isFree: therapist.isFree,
         isFavorite: isFavorite,
         availability: therapist.availability,
         ratingsCount: therapist.ratingsCount,
@@ -735,6 +740,7 @@ class TherapistController extends BaseController {
         rating: therapist.rating,
         reviewCount: therapist.reviewCount,
         price: therapist.price,
+        isFree: therapist.isFree,
         isFavorite: isFavorite,
         availability: therapist.availability,
         ratingsCount: therapist.ratingsCount,
