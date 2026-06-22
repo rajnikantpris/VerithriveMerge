@@ -1,12 +1,13 @@
-// var bareUrl = 'http://192.168.0.126:4142/api/v3/user/';
-// var socketUrl = 'http://27.54.168.101:4142';
-// var bareUrl = 'http://27.54.168.101:4142/api/v3/user/';
 
-var bareUrl = 'https://adminportal.verithrive.co.uk/api/api/v3/user/';
-var socketUrl = 'https://adminportal.verithrive.co.uk';
 
-//var bareUrl = 'http://18.135.255.93:4142/api/v2/user/';
-//var socketUrl = 'http://192.168.0.51:4142';
+// var bareUrl = 'https://adminportal.verithrive.co.uk/api/api/v3/user/';
+// var socketUrl = 'https://adminportal.verithrive.co.uk';
+
+var bareUrl = 'http://13.134.187.156:4142/api/api/v3/user/';
+var socketUrl = 'http://13.134.187.156:4142';
+
+// var bareUrl = 'http://192.168.0.14:4142/api/api/v3/user/';
+// var socketUrl = 'http://192.168.0.14:4142';
 
 
 // Global variables for Google Sign-In
