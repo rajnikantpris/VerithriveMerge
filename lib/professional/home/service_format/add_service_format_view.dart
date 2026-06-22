@@ -366,6 +366,7 @@ class AddServiceFormatView extends BaseView<AddServiceFormatController> {
                           hintTextColor: Color(0xFF828282), // #828282
                           hintTextFontFamily: AppFonts.poppinsRegular,
                           hintTextFontSize: FontSizes.setFontValue_12,
+                          prefixText: '£',
                           validator: (value) =>
                               controller.validateBundlePrice(index),
                           onChanged: (value) {
@@ -532,6 +533,7 @@ class AddServiceFormatView extends BaseView<AddServiceFormatController> {
                           hintTextColor: Color(0xFF828282), // #828282
                           hintTextFontFamily: AppFonts.poppinsRegular,
                           hintTextFontSize: FontSizes.setFontValue_12,
+                          prefixText: '£',
                           validator: (value) => controller.validatePrice(index),
                           onChanged: (value) {
                             // Update the value first

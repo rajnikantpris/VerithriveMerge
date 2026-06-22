@@ -139,7 +139,7 @@ class _VerithriveAppState extends State<VerithriveApp>
       designSize: const Size(375, 812),
       minTextAdapt: true,
       builder: (_, __) => GetMaterialApp(
-        title: 'Verithrive Professional',
+        title: 'Verithrive',
         theme: AppTheme.light,
         darkTheme: AppTheme.dark,
         themeMode: ThemeMode.system,

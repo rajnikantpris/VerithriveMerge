@@ -32,6 +32,8 @@ class CustomTextField extends StatefulWidget {
     this.hintTextFontFamily,
     this.hintTextFontSize,
     this.borderRadius,
+    this.prefix,
+    this.prefixText,
   });
 
   final String label;
@@ -57,6 +59,8 @@ class CustomTextField extends StatefulWidget {
   final String? hintTextFontFamily;
   final double? hintTextFontSize;
   final BorderRadius? borderRadius;
+  final Widget? prefix;
+  final String? prefixText;
 
   @override
   State<CustomTextField> createState() => _CustomTextFieldState();
@@ -264,6 +268,14 @@ class _CustomTextFieldState extends State<CustomTextField> {
                           size: HightWidthSizes.setValue_16,
                         )
                       : null,
+                  prefix: widget.prefix,
+                  prefixText: widget.prefixText,
+                  prefixStyle: TextStyle(
+                    fontFamily: AppFonts.rubikRegular,
+                    fontWeight: FontWeight.w400,
+                    fontSize: FontSizes.setFontValue_16,
+                    color: AppColor.color_0E1027,
+                  ),
                   suffixIcon: widget.suffixIcon,
                   filled: true,
                   fillColor: AppColor.white,

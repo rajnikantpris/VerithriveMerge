@@ -182,6 +182,7 @@ class EditServiceFormatView extends BaseView<EditServiceFormatController> {
                       hintTextColor: Color(0xFF828282), // #828282
                       hintTextFontFamily: AppFonts.poppinsRegular,
                       hintTextFontSize: FontSizes.setFontValue_12,
+                      prefixText: '£',
                       validator: (value) => controller.validatePrice(),
                       onChanged: (value) {
                         controller.updatePrice(value);
