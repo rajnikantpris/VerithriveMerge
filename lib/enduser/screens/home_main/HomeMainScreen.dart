@@ -10,6 +10,7 @@ import 'package:verithrive_dev/enduser/utils/app_assets.dart';
 import 'package:verithrive_dev/enduser/utils/app_colors.dart';
 import 'package:verithrive_dev/enduser/utils/app_text_styles.dart';
 import 'package:verithrive_dev/services/analytics_service.dart';
+import 'package:verithrive_dev/utils/screen.dart';
 import '../../core/widget/animated_loader.dart';
 import '../../core/widget/common_widgets.dart';
 import '../../utils/AppText.dart';
@@ -30,7 +31,7 @@ class _HomeMainScreenState extends State<HomeMainScreen> {
   void initState() {
     super.initState();
     controller = Get.find<HomeMainController>(tag: 'home');
-    
+
     // Log screen view analytics
     WidgetsBinding.instance.addPostFrameCallback((_) {
       AnalyticsService.instance.logScreenView(
@@ -47,7 +48,8 @@ class _HomeMainScreenState extends State<HomeMainScreen> {
     final lower = type.toLowerCase();
     if (lower.contains('wellness')) return AppColors.wellnessTextColor;
     if (lower.contains('fitness')) return AppColors.fitnessTextColor;
-    if (lower.contains('food') || lower.contains('nutrition')) return AppColors.foodnutritionTextColor;
+    if (lower.contains('food') || lower.contains('nutrition'))
+      return AppColors.foodnutritionTextColor;
     return AppColors.color4c4c4c;
   }
 
@@ -56,7 +58,8 @@ class _HomeMainScreenState extends State<HomeMainScreen> {
     final lower = type.toLowerCase();
     if (lower.contains('wellness')) return AppColors.wellnessBgColor;
     if (lower.contains('fitness')) return AppColors.fitnessBgColor;
-    if (lower.contains('food') || lower.contains('nutrition')) return AppColors.foodnutritionBgColor;
+    if (lower.contains('food') || lower.contains('nutrition'))
+      return AppColors.foodnutritionBgColor;
     return AppColors.white;
   }
 
@@ -65,7 +68,8 @@ class _HomeMainScreenState extends State<HomeMainScreen> {
     final lower = type.toLowerCase();
     if (lower.contains('wellness')) return 'wellness';
     if (lower.contains('fitness')) return 'fitness';
-    if (lower.contains('food') || lower.contains('nutrition')) return 'food_nutrition';
+    if (lower.contains('food') || lower.contains('nutrition'))
+      return 'food_nutrition';
     return lower;
   }
 
@@ -83,110 +87,112 @@ class _HomeMainScreenState extends State<HomeMainScreen> {
         title: Row(children: [Image.asset(AppAssets.home_logo, height: 32)]),
         actions: [
           Obx(() => Stack(
-            children: [
-              IconButton(
-                icon: SvgPicture.asset(AppAssets.proicons_bell),
-                onPressed: () {
-                  if (!controller.isGuest.value) {
-                    Get.to(
+                children: [
+                  IconButton(
+                    icon: SvgPicture.asset(AppAssets.proicons_bell),
+                    onPressed: () {
+                      if (!controller.isGuest.value) {
+                        Get.to(
                           () => NotificationScreen(),
-                      binding: NotificationBinding(),
-                    );
-                  } else {
-                    // CommonUtils.getIntance().toastMessage("Please login to access notifications");
-                    Get.to(
+                          binding: NotificationBinding(),
+                        );
+                      } else {
+                        // CommonUtils.getIntance().toastMessage("Please login to access notifications");
+                        Get.to(
                           () => LoginView(),
-                      binding: LoginBinding(),
-                    );
-                  }
-                },
-              ),
-              if (controller.unreadCount.value > 0)
-                Positioned(
-                  right: 8,
-                  top: 8,
-                  child: Container(
-                    padding: EdgeInsets.all(2),
-                    decoration: BoxDecoration(
-                      color: Colors.red,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    constraints: BoxConstraints(minWidth: 16, minHeight: 16),
-                    child: Text(
-                      controller.unreadCount.value > 99
-                          ? '99+'
-                          : controller.unreadCount.value.toString(),
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
+                          binding: LoginBinding(),
+                        );
+                      }
+                    },
                   ),
-                ),
-            ],
-          )),
+                  if (controller.unreadCount.value > 0)
+                    Positioned(
+                      right: 8,
+                      top: 8,
+                      child: Container(
+                        padding: EdgeInsets.all(2),
+                        decoration: BoxDecoration(
+                          color: Colors.red,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        constraints:
+                            BoxConstraints(minWidth: 16, minHeight: 16),
+                        child: Text(
+                          controller.unreadCount.value > 99
+                              ? '99+'
+                              : controller.unreadCount.value.toString(),
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),
+                ],
+              )),
         ],
       ),
       body: Obx(
-            () => controller.isLoading.value
+        () => controller.isLoading.value
             ? Center(
-          child: AnimatedLoader(
-            assetPath: AppAssets.loader1,
-            width: 80,
-            height: 80,
-            color: AppColors.primaryColor,
-            duration: const Duration(seconds: 2),
-          ),
-        )
+                child: AnimatedLoader(
+                  assetPath: AppAssets.loader1,
+                  width: 80,
+                  height: 80,
+                  color: AppColors.primaryColor,
+                  duration: const Duration(seconds: 2),
+                ),
+              )
             : SingleChildScrollView(
-          padding: EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                AppText.whoCanWeHelp,
-                style: AppTextStyles.boldTextStyle(
-                  fontSize: 32,
-                  color: AppColors.color4c4c4c,
+                padding: EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      AppText.whoCanWeHelp,
+                      style: AppTextStyles.boldTextStyle(
+                        fontSize: 32,
+                        color: AppColors.color4c4c4c,
+                      ),
+                    ),
+                    SizedBox(height: 32),
+
+                    // ── Fully dynamic: one section per category in API order ──
+                    Obx(() {
+                      if (controller.professionCategories.isEmpty) {
+                        return SizedBox.shrink();
+                      }
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children:
+                            controller.professionCategories.map((category) {
+                          return _buildDynamicSection(
+                            category.type, // title from API
+                            _textColorForType(category.type),
+                            category.subTypes, // sub_types in API order
+                            _categoryKeyForType(category.type),
+                            _bgColorForType(category.type),
+                          );
+                        }).toList(),
+                      );
+                    }),
+                  ],
                 ),
               ),
-              SizedBox(height: 32),
-
-              // ── Fully dynamic: one section per category in API order ──
-              Obx(() {
-                if (controller.professionCategories.isEmpty) {
-                  return SizedBox.shrink();
-                }
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: controller.professionCategories.map((category) {
-                    return _buildDynamicSection(
-                      category.type,                          // title from API
-                      _textColorForType(category.type),
-                      category.subTypes,                      // sub_types in API order
-                      _categoryKeyForType(category.type),
-                      _bgColorForType(category.type),
-                    );
-                  }).toList(),
-                );
-              }),
-            ],
-          ),
-        ),
       ),
     );
   }
 
   // ── Section builder ────────────────────────────────────────────────────────
   Widget _buildDynamicSection(
-      String title,
-      Color textColor,
-      List<SubTypeModel> subTypes,
-      String categoryKey,
-      Color bgColor,
-      ) {
+    String title,
+    Color textColor,
+    List<SubTypeModel> subTypes,
+    String categoryKey,
+    Color bgColor,
+  ) {
     if (subTypes.isEmpty) return SizedBox.shrink();
 
     return Column(
@@ -212,12 +218,13 @@ class _HomeMainScreenState extends State<HomeMainScreen> {
 
   // ── Card builder ───────────────────────────────────────────────────────────
   Widget _dynamicCard(
-      String categoryKey,
-      SubTypeModel subType,
-      Color bgColor,
-      ) {
+    String categoryKey,
+    SubTypeModel subType,
+    Color bgColor,
+  ) {
     return InkWell(
-      onTap: () => controller.onCardTap(categoryKey, subType.subType, subType.id),
+      onTap: () =>
+          controller.onCardTap(categoryKey, subType.subType, subType.id),
       child: Container(
         padding: EdgeInsets.all(2),
         decoration: BoxDecoration(
@@ -232,7 +239,7 @@ class _HomeMainScreenState extends State<HomeMainScreen> {
             Text(
               subType.subType,
               textAlign: TextAlign.center,
-              style: AppTextStyles.homeTextStyle(fontSize: 12),
+              style: AppTextStyles.homeTextStyle(fontSize: 11.ss),
             ),
           ],
         ),
@@ -279,7 +286,7 @@ class _HomeMainScreenState extends State<HomeMainScreen> {
                   strokeWidth: 2,
                   value: loadingProgress.expectedTotalBytes != null
                       ? loadingProgress.cumulativeBytesLoaded /
-                      loadingProgress.expectedTotalBytes!
+                          loadingProgress.expectedTotalBytes!
                       : null,
                 ),
               ),
@@ -287,7 +294,8 @@ class _HomeMainScreenState extends State<HomeMainScreen> {
           },
           errorBuilder: (context, error, stackTrace) {
             print('Image load error for $url: $error');
-            return SizedBox(height: 40, width: 40); // empty box, no asset fallback
+            return SizedBox(
+                height: 40, width: 40); // empty box, no asset fallback
           },
         );
       }
@@ -305,11 +313,14 @@ class _HomeMainScreenState extends State<HomeMainScreen> {
   String _getAssetPathForSubType(String subTypeName) {
     final lower = subTypeName.toLowerCase();
     if (lower.contains('chiropractor')) return AppAssets.chiro;
-    if (lower.contains('physiotherapist') || lower.contains('physiotherapy')) return AppAssets.physio_therapy;
-    if (lower.contains('sports therapist') || lower.contains('sports therapy')) return AppAssets.sports_therapy;
+    if (lower.contains('physiotherapist') || lower.contains('physiotherapy'))
+      return AppAssets.physio_therapy;
+    if (lower.contains('sports therapist') || lower.contains('sports therapy'))
+      return AppAssets.sports_therapy;
     if (lower.contains('osteopath')) return AppAssets.chiro;
     if (lower.contains('personal trainer')) return AppAssets.personal_trainer;
-    if (lower.contains('fitness instructor')) return AppAssets.fitness_instructor;
+    if (lower.contains('fitness instructor'))
+      return AppAssets.fitness_instructor;
     if (lower.contains('fitness coach')) return AppAssets.fitness_coach;
     if (lower.contains('nutritionist')) return AppAssets.nutritionist;
     if (lower.contains('dietician')) return AppAssets.Dietician;

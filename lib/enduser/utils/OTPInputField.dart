@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:verithrive_dev/utils/screen.dart';
 
 import 'app_colors.dart';
 
@@ -79,12 +81,12 @@ class OTPInputFieldState extends State<OTPInputField> {
   void _onChanged(String value, int index) {
     // Get current OTP after any change
     String currentOTP = _controllers.map((c) => c.text).join();
-    
+
     // Call onChanged callback if provided (for any change)
     if (widget.onChanged != null) {
       widget.onChanged!(currentOTP);
     }
-    
+
     if (value.isNotEmpty) {
       if (index < widget.length - 1) {
         _focusNodes[index + 1].requestFocus();
@@ -113,7 +115,7 @@ class OTPInputFieldState extends State<OTPInputField> {
       controller.clear();
     }
     _focusNodes[0].requestFocus();
-    
+
     // Call onChanged callback if provided (for clear operation)
     if (widget.onChanged != null) {
       widget.onChanged!(''); // Empty string when cleared
@@ -156,11 +158,12 @@ class OTPInputFieldState extends State<OTPInputField> {
                     : (hasText
                         ? (widget.filledBorderColor ?? AppColors.black)
                         : widget.borderColor);
-                
+
                 return TextField(
                   controller: _controllers[index],
                   focusNode: _focusNodes[index],
                   textAlign: TextAlign.center,
+                  textAlignVertical: TextAlignVertical.center,
                   keyboardType: TextInputType.number,
                   maxLength: 1,
                   style: widget.textStyle,
@@ -175,14 +178,14 @@ class OTPInputFieldState extends State<OTPInputField> {
                       borderRadius: BorderRadius.circular(widget.borderRadius),
                       borderSide: BorderSide(
                         color: borderColor,
-                        width: hasFocus ? 1 : 1,
+                        width: 1,
                       ),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(widget.borderRadius),
                       borderSide: BorderSide(
                         color: borderColor,
-                        width: hasFocus ? 1 : 1,
+                        width: 1,
                       ),
                     ),
                     focusedBorder: OutlineInputBorder(
@@ -192,7 +195,7 @@ class OTPInputFieldState extends State<OTPInputField> {
                         width: 2,
                       ),
                     ),
-                    contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                    contentPadding: EdgeInsets.zero,
                   ),
                   onChanged: (value) => _onChanged(value, index),
                 );
