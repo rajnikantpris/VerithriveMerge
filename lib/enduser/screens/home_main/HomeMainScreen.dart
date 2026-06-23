@@ -250,9 +250,13 @@ class _HomeMainScreenState extends State<HomeMainScreen> {
   // ── Image builder: network only ───────────────────────────────────────────
   Widget _buildImageWidget(String? imageUrl, String subTypeName) {
     // Normalise URL: ensure https so iOS/Android don't block http
+    // Skip conversion for specific server that doesn't support HTTPS
     String? url = imageUrl?.trim();
     if (url != null && url.isNotEmpty && url.startsWith('http://')) {
-      url = url.replaceFirst('http://', 'https://');
+      // Don't convert to HTTPS for this specific server
+      if (!url.contains('13.134.187.156')) {
+        url = url.replaceFirst('http://', 'https://');
+      }
     }
 
     if (url != null && url.isNotEmpty) {
