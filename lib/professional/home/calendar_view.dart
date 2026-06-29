@@ -1046,35 +1046,35 @@ class _ServiceFormatSection extends StatelessWidget {
                     }
 
                     // 3. Check if user has active subscription
-                    // if (!isSubscription) {
-                    //   // Check if user is already on subscription screen - don't show redundant dialog
-                    //   if (Get.currentRoute == Routes.profileSubscription) {
-                    //     return;
-                    //   }
-                    //
-                    //   // Show subscription dialog if not subscribed
-                    //   // showResponseDialog(
-                    //   //   title: 'Subscription Required',
-                    //   //   message: 'You need an active subscription to add service formats. Please subscribe to access this feature.',
-                    //   //   isError: false,
-                    //   //   showButton: true,
-                    //   // );
-                    //
-                    //   showConfirmationDialog(
-                    //     title: 'Subscription Required',
-                    //     message:
-                    //         'Your profile has been approved. Please proceed with subscription payment to activate your account.',
-                    //     onYesPressed: () {
-                    //       Get.toNamed(Routes.profileSubscription);
-                    //     },
-                    //     onNoPressed: () {
-                    //       // Dismiss dialog without checking other logic
-                    //     },
-                    //     yesText: 'Subscribe',
-                    //     noText: 'Later',
-                    //   );
-                    //   return;
-                    // }
+                    if (!isSubscription) {
+                      // Check if user is already on subscription screen - don't show redundant dialog
+                      if (Get.currentRoute == Routes.profileSubscription) {
+                        return;
+                      }
+
+                      // Show subscription dialog if not subscribed
+                      // showResponseDialog(
+                      //   title: 'Subscription Required',
+                      //   message: 'You need an active subscription to add service formats. Please subscribe to access this feature.',
+                      //   isError: false,
+                      //   showButton: true,
+                      // );
+
+                      showConfirmationDialog(
+                        title: 'Subscription Required',
+                        message:
+                            'Your profile has been approved. Please proceed with subscription payment to activate your account.',
+                        onYesPressed: () {
+                          Get.toNamed(Routes.profileSubscription);
+                        },
+                        onNoPressed: () {
+                          // Dismiss dialog without checking other logic
+                        },
+                        yesText: 'Subscribe',
+                        noText: 'Later',
+                      );
+                      return;
+                    }
 
                     // 4. Navigate if approved and has subscription
                     Get.toNamed(
@@ -1431,34 +1431,34 @@ class _AvailabilitySection extends StatelessWidget {
                     }
 
                     // 2. Check if user has active subscription
-                    // if (!isSubscription) {
-                    //   // Check if user is already on subscription screen - don't show redundant dialog
-                    //   if (Get.currentRoute == Routes.profileSubscription) {
-                    //     return;
-                    //   }
-                    //
-                    //   // Show subscription dialog if not subscribed
-                    //   // showResponseDialog(
-                    //   //   title: 'Subscription Required',
-                    //   //   message: 'You need an active subscription to add availability. Please subscribe to access this feature.',
-                    //   //   isError: false,
-                    //   //   showButton: true,
-                    //   // );
-                    //   showConfirmationDialog(
-                    //     title: 'Subscription Required',
-                    //     message:
-                    //         'Your profile has been approved. Please proceed with subscription payment to activate your account.',
-                    //     onYesPressed: () {
-                    //       Get.toNamed(Routes.profileSubscription);
-                    //     },
-                    //     onNoPressed: () {
-                    //       // Dismiss dialog without checking other logic
-                    //     },
-                    //     yesText: 'Subscribe',
-                    //     noText: 'Later',
-                    //   );
-                    //   return;
-                    // }
+                    if (!isSubscription) {
+                      // Check if user is already on subscription screen - don't show redundant dialog
+                      if (Get.currentRoute == Routes.profileSubscription) {
+                        return;
+                      }
+
+                      // Show subscription dialog if not subscribed
+                      // showResponseDialog(
+                      //   title: 'Subscription Required',
+                      //   message: 'You need an active subscription to add availability. Please subscribe to access this feature.',
+                      //   isError: false,
+                      //   showButton: true,
+                      // );
+                      showConfirmationDialog(
+                        title: 'Subscription Required',
+                        message:
+                            'Your profile has been approved. Please proceed with subscription payment to activate your account.',
+                        onYesPressed: () {
+                          Get.toNamed(Routes.profileSubscription);
+                        },
+                        onNoPressed: () {
+                          // Dismiss dialog without checking other logic
+                        },
+                        yesText: 'Subscribe',
+                        noText: 'Later',
+                      );
+                      return;
+                    }
                     // Navigate if approved and has subscription
 
                     AnalyticsService.instance.logEvent(
