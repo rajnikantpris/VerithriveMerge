@@ -22,9 +22,11 @@ import '../../utils/OTPInputField.dart';
 
 class OTPController extends BaseController {
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
-  final GlobalKey otpFieldKey = GlobalKey();
+  final GlobalKey<OTPInputFieldState> otpFieldKey =
+      GlobalKey<OTPInputFieldState>();
 
-  final ProjectRepository _repository = Get.find(tag: (ProjectRepository).toString());
+  final ProjectRepository _repository =
+      Get.find(tag: (ProjectRepository).toString());
   final StorageService? _storageService =
       Get.isRegistered<StorageService>() ? Get.find<StorageService>() : null;
 
@@ -43,6 +45,9 @@ class OTPController extends BaseController {
   String? userEmail = "";
   String? userPhone = "";
   String? userPassword = "";
+  String? _pendingOtp;
+
+  String? get initialOtp => _pendingOtp;
 
   @override
   void onInit() {
@@ -57,6 +62,7 @@ class OTPController extends BaseController {
       if (Get.arguments['otp'] != null) {
         String receivedOtp = Get.arguments['otp'].toString();
         if (receivedOtp.isNotEmpty) {
+          _pendingOtp = receivedOtp;
           _autoFillOTP(receivedOtp);
         }
       }
@@ -65,7 +71,7 @@ class OTPController extends BaseController {
     } else {
       type = "";
     }
-    
+
     // If email not in arguments, try to get from storage
     if (userEmail == null || userEmail!.isEmpty) {
       final storage = _storageService;
@@ -74,7 +80,7 @@ class OTPController extends BaseController {
         userEmail = value;
       }
     }
-    
+
     // If phone not in arguments, try to get from storage
     if (userPhone == null || userPhone!.isEmpty) {
       final storage = _storageService;
@@ -83,7 +89,7 @@ class OTPController extends BaseController {
         userPhone = value;
       }
     }
-    
+
     startTimer();
   }
 
@@ -118,19 +124,16 @@ class OTPController extends BaseController {
   }
 
   void _autoFillOTP(String otp) {
-    otpValue.value = otp;
-    onOTPCompleted(otp);
-    // Use WidgetsBinding to ensure the widget tree is built before accessing state
+    final sanitized = otp.replaceAll(RegExp(r'[^0-9]'), '');
+    if (sanitized.isEmpty) return;
+
+    final otpDigits =
+        sanitized.length > 6 ? sanitized.substring(0, 6) : sanitized;
+    _pendingOtp = otpDigits;
+    otpValue.value = otpDigits;
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final state = otpFieldKey.currentState;
-      if (state != null) {
-        // Use dynamic to call setOTP method on the state
-        try {
-          (state as dynamic).setOTP(otp);
-        } catch (e) {
-          print('Error auto-filling OTP: $e');
-        }
-      }
+      otpFieldKey.currentState?.setOTP(otpDigits);
     });
   }
 
@@ -153,10 +156,9 @@ class OTPController extends BaseController {
     String emailToUse = userEmail ?? '';
     if (emailToUse.isEmpty) {
       final storage = _storageService;
-      emailToUse =
-          storage?.readString(SharePreferenceConst.email) ?? '';
+      emailToUse = storage?.readString(SharePreferenceConst.email) ?? '';
     }
-    
+
     if (emailToUse.isEmpty) {
       showResponseDialog(
         message: 'Email not found. Please register again.',
@@ -194,8 +196,9 @@ class OTPController extends BaseController {
       data['user_type'] = 'normal';
       return data;
     }
-    
-    var service = _repository.sendPostApiRequest(toJson, forgot_password_verify_otp, false);
+
+    var service = _repository.sendPostApiRequest(
+        toJson, forgot_password_verify_otp, false);
 
     callDataService(
       service,
@@ -215,8 +218,9 @@ class OTPController extends BaseController {
       data['mobile_number'] = userPhone;
       return data;
     }
-    
-    var service = _repository.sendPostApiRequest(toJson, verify_otp_and_register, false);
+
+    var service =
+        _repository.sendPostApiRequest(toJson, verify_otp_and_register, false);
 
     callDataService(
       service,
@@ -232,8 +236,8 @@ class OTPController extends BaseController {
     try {
       Map<String, dynamic> responseData;
       if (baseResponse != null && baseResponse.data != null) {
-        responseData = baseResponse.data is Map<String, dynamic> 
-            ? baseResponse.data 
+        responseData = baseResponse.data is Map<String, dynamic>
+            ? baseResponse.data
             : baseResponse.data as Map<String, dynamic>;
       } else if (baseResponse is Map<String, dynamic>) {
         responseData = baseResponse;
@@ -242,20 +246,19 @@ class OTPController extends BaseController {
       }
 
       LoginModel response = LoginModel.fromJson(responseData);
-      
+
       if (response.success == true && response.data != null) {
         LoginData loginData = response.data!;
         User? user = loginData.user;
 
         // Analytics: Log successful sign up verification
-        
 
         final storage = _storageService;
 
         if (storage != null) {
           // Save login status
           await storage.writeBool(SharePreferenceConst.isLogin, true);
-          
+
           // Save token
           await storage.writeString(
               SharePreferenceConst.access_token, loginData.token);
@@ -281,7 +284,7 @@ class OTPController extends BaseController {
             await storage.writeString(
                 SharePreferenceConst.TimeZone, user.timezone!);
           }
-          
+
           // Email verification fields
           if (user.emailVerifiedAt != null) {
             await storage.writeString(
@@ -291,7 +294,7 @@ class OTPController extends BaseController {
             await storage.writeBool(
                 SharePreferenceConst.isEmailVerified, user.isEmailVerified!);
           }
-          
+
           // User type and experience
           if (user.userType != null) {
             await storage.writeString(
@@ -301,7 +304,7 @@ class OTPController extends BaseController {
             await storage.writeInt(
                 SharePreferenceConst.totalExperience, user.totalExperience!);
           }
-          
+
           // Boolean flags
           if (user.isOtpVerified != null) {
             await storage.writeBool(
@@ -340,7 +343,8 @@ class OTPController extends BaseController {
                 SharePreferenceConst.isWorkFull, user.isWorkFull!);
           }
           if (user.isPersonalIdentification != null) {
-            await storage.writeBool(SharePreferenceConst.isPersonalIdentification,
+            await storage.writeBool(
+                SharePreferenceConst.isPersonalIdentification,
                 user.isPersonalIdentification!);
           }
           if (user.isAboutYou != null) {
@@ -363,13 +367,13 @@ class OTPController extends BaseController {
             await storage.writeBool(
                 SharePreferenceConst.isPayment, user.isPayment!);
           }
-          
+
           // Token version
           if (user.tokenVersion != null) {
             await storage.writeInt(
                 SharePreferenceConst.tokenVersion, user.tokenVersion!);
           }
-          
+
           // Timestamps
           if (user.createdAt != null) {
             await storage.writeString(
@@ -383,10 +387,10 @@ class OTPController extends BaseController {
             await storage.writeString(
                 SharePreferenceConst.lastLoginAt, user.lastLoginAt!);
           }
-          
+
           // Save complete user object as JSON for easy retrieval
           await storage.writeString(
-            SharePreferenceConst.userData, 
+            SharePreferenceConst.userData,
             jsonEncode(user.toJson()),
           );
         }
@@ -454,14 +458,15 @@ class OTPController extends BaseController {
     }
   }
 
-  Future<void> _handleForgotPasswordVerifyOTPResponseSuccess(dynamic baseResponse) async {
+  Future<void> _handleForgotPasswordVerifyOTPResponseSuccess(
+      dynamic baseResponse) async {
     isLoading.value = false;
 
     try {
       Map<String, dynamic> responseData;
       if (baseResponse != null && baseResponse.data != null) {
-        responseData = baseResponse.data is Map<String, dynamic> 
-            ? baseResponse.data 
+        responseData = baseResponse.data is Map<String, dynamic>
+            ? baseResponse.data
             : baseResponse.data as Map<String, dynamic>;
       } else if (baseResponse is Map<String, dynamic>) {
         responseData = baseResponse;
@@ -474,7 +479,6 @@ class OTPController extends BaseController {
 
       if (success == true) {
         // Analytics: Log successful forgot password OTP verification
-        
 
         // Show success message and navigate to create password screen
         showResponseDialog(
@@ -555,7 +559,7 @@ class OTPController extends BaseController {
 
     // Clear the OTP input fields
     otpValue.value = '';
-    
+
     // Clear all text controllers in the OTP input field
     final otpFieldState = otpFieldKey.currentState;
     if (otpFieldState != null && otpFieldState is OTPInputFieldState) {
@@ -568,10 +572,9 @@ class OTPController extends BaseController {
     String emailToUse = userEmail ?? '';
     if (emailToUse.isEmpty) {
       final storage = _storageService;
-      emailToUse =
-          storage?.readString(SharePreferenceConst.email) ?? '';
+      emailToUse = storage?.readString(SharePreferenceConst.email) ?? '';
     }
-    
+
     if (emailToUse.isEmpty) {
       showResponseDialog(
         message: 'Email not found. Please register again.',
@@ -602,8 +605,9 @@ class OTPController extends BaseController {
         data['user_type'] = 'normal';
         return data;
       }
-      
-      var service = _repository.sendPostApiRequest(toJson, forgot_password_send_otp, false);
+
+      var service = _repository.sendPostApiRequest(
+          toJson, forgot_password_send_otp, false);
 
       callDataService(
         service,
@@ -618,7 +622,7 @@ class OTPController extends BaseController {
         data['user_type'] = 'normal';
         return data;
       }
-      
+
       var service = _repository.sendPostApiRequest(toJson, send_otp, false);
 
       callDataService(
@@ -637,8 +641,8 @@ class OTPController extends BaseController {
       // Parse the response
       Map<String, dynamic> responseData;
       if (baseResponse != null && baseResponse.data != null) {
-        responseData = baseResponse.data is Map<String, dynamic> 
-            ? baseResponse.data 
+        responseData = baseResponse.data is Map<String, dynamic>
+            ? baseResponse.data
             : baseResponse.data as Map<String, dynamic>;
       } else if (baseResponse is Map<String, dynamic>) {
         responseData = baseResponse;
@@ -648,19 +652,19 @@ class OTPController extends BaseController {
 
       bool success = responseData['success'] ?? false;
       String message = responseData['message'] ?? 'OTP sent successfully';
-      
+
       // Extract OTP from response data if available
       String? receivedOtp;
       if (responseData['data'] != null && responseData['data'] is Map) {
         receivedOtp = responseData['data']['otp']?.toString();
       }
-      
+
       if (success == true) {
         // Auto-fill OTP if received
         if (receivedOtp != null && receivedOtp.isNotEmpty) {
           _autoFillOTP(receivedOtp);
         }
-        
+
         showResponseDialog(
           message: message,
           title: 'Success',

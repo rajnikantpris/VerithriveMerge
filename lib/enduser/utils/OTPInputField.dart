@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:verithrive_dev/utils/screen.dart';
 
 import 'app_colors.dart';
 
@@ -18,6 +16,7 @@ class OTPInputField extends StatefulWidget {
   final Color fillColor;
   final TextStyle textStyle;
   final GlobalKey? fieldKey;
+  final String? initialOTP;
 
   const OTPInputField({
     Key? key,
@@ -38,6 +37,7 @@ class OTPInputField extends StatefulWidget {
       color: Colors.black,
     ),
     this.fieldKey,
+    this.initialOTP,
   }) : super(key: fieldKey ?? key);
 
   @override
@@ -45,165 +45,188 @@ class OTPInputField extends StatefulWidget {
 }
 
 class OTPInputFieldState extends State<OTPInputField> {
-  late List<TextEditingController> _controllers;
-  late List<FocusNode> _focusNodes;
+  late final TextEditingController _controller;
+  late final FocusNode _focusNode;
 
   @override
   void initState() {
     super.initState();
-    _controllers = List.generate(
-      widget.length,
-      (index) => TextEditingController(),
-    );
-    _focusNodes = List.generate(
-      widget.length,
-      (index) {
-        final focusNode = FocusNode();
-        focusNode.addListener(() {
-          setState(() {});
-        });
-        return focusNode;
-      },
-    );
+    _controller = TextEditingController();
+    _focusNode = FocusNode()..addListener(() => setState(() {}));
+    _controller.addListener(_syncFromController);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _focusNode.requestFocus();
+
+      final initialOTP = widget.initialOTP;
+      if (initialOTP != null && initialOTP.isNotEmpty) {
+        _fillOTP(initialOTP);
+      }
+    });
+  }
+
+  void _syncFromController() {
+    final digits = _sanitizeOTP(_controller.text);
+    if (digits.length > widget.length) {
+      _fillOTP(digits);
+      return;
+    }
+    setState(() {});
   }
 
   @override
   void dispose() {
-    for (var controller in _controllers) {
-      controller.dispose();
-    }
-    for (var node in _focusNodes) {
-      node.dispose();
-    }
+    _controller.removeListener(_syncFromController);
+    _controller.dispose();
+    _focusNode.dispose();
     super.dispose();
   }
 
-  void _onChanged(String value, int index) {
-    // Get current OTP after any change
-    String currentOTP = _controllers.map((c) => c.text).join();
+  String _sanitizeOTP(String raw) {
+    return raw.replaceAll(RegExp(r'[^0-9]'), '');
+  }
 
-    // Call onChanged callback if provided (for any change)
-    if (widget.onChanged != null) {
-      widget.onChanged!(currentOTP);
-    }
+  void _fillOTP(String rawOtp) {
+    final digits = _sanitizeOTP(rawOtp);
+    if (digits.isEmpty) return;
 
-    if (value.isNotEmpty) {
-      if (index < widget.length - 1) {
-        _focusNodes[index + 1].requestFocus();
-      } else {
-        _focusNodes[index].unfocus();
-        // Get complete OTP
-        if (currentOTP.length == widget.length) {
-          widget.onCompleted(currentOTP);
-        }
-      }
+    final otp = digits.length > widget.length
+        ? digits.substring(0, widget.length)
+        : digits;
+
+    _controller.value = TextEditingValue(
+      text: otp,
+      selection: TextSelection.collapsed(offset: otp.length),
+    );
+
+    widget.onChanged?.call(otp);
+
+    if (otp.length == widget.length) {
+      _focusNode.unfocus();
+      TextInput.finishAutofillContext(shouldSave: false);
+      widget.onCompleted(otp);
+    } else {
+      setState(() {});
     }
   }
 
-  void _onKeyEvent(RawKeyEvent event, int index) {
-    if (event is RawKeyDownEvent) {
-      if (event.logicalKey == LogicalKeyboardKey.backspace) {
-        if (_controllers[index].text.isEmpty && index > 0) {
-          _focusNodes[index - 1].requestFocus();
-        }
-      }
+  void _onInputChanged(String value) {
+    final digits = _sanitizeOTP(value);
+    final otp = digits.length > widget.length
+        ? digits.substring(0, widget.length)
+        : digits;
+
+    if (_controller.text != otp) {
+      _controller.value = TextEditingValue(
+        text: otp,
+        selection: TextSelection.collapsed(offset: otp.length),
+      );
+    }
+
+    widget.onChanged?.call(otp);
+
+    if (otp.length == widget.length) {
+      _focusNode.unfocus();
+      TextInput.finishAutofillContext(shouldSave: false);
+      widget.onCompleted(otp);
+    } else {
+      setState(() {});
     }
   }
 
   void clearOTP() {
-    for (var controller in _controllers) {
-      controller.clear();
-    }
-    _focusNodes[0].requestFocus();
-
-    // Call onChanged callback if provided (for clear operation)
-    if (widget.onChanged != null) {
-      widget.onChanged!(''); // Empty string when cleared
-    }
+    _controller.clear();
+    _focusNode.requestFocus();
+    widget.onChanged?.call('');
+    setState(() {});
   }
 
-  String getOTP() {
-    return _controllers.map((c) => c.text).join();
-  }
+  String getOTP() => _controller.text;
 
-  void setOTP(String otp) {
-    if (otp.length == widget.length) {
-      for (int i = 0; i < widget.length && i < otp.length; i++) {
-        _controllers[i].text = otp[i];
-      }
-      setState(() {});
-      // Trigger the onCompleted callback
-      widget.onCompleted(otp);
-    }
+  void setOTP(String otp) => _fillOTP(otp);
+
+  int get _activeIndex {
+    final length = _controller.text.length;
+    if (!_focusNode.hasFocus) return -1;
+    return length >= widget.length ? widget.length - 1 : length;
   }
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: List.generate(widget.length, (index) {
-        return SizedBox(
-          width: widget.fieldWidth,
-          height: widget.fieldHeight,
-          child: RawKeyboardListener(
-            focusNode: FocusNode(),
-            onKey: (event) => _onKeyEvent(event, index),
-            child: ValueListenableBuilder<TextEditingValue>(
-              valueListenable: _controllers[index],
-              builder: (context, value, child) {
-                final hasText = value.text.isNotEmpty;
-                final hasFocus = _focusNodes[index].hasFocus;
-                final borderColor = hasFocus
-                    ? widget.focusedBorderColor
-                    : (hasText
-                        ? (widget.filledBorderColor ?? AppColors.black)
-                        : widget.borderColor);
+    final otp = _controller.text;
 
-                return TextField(
-                  controller: _controllers[index],
-                  focusNode: _focusNodes[index],
-                  textAlign: TextAlign.center,
-                  textAlignVertical: TextAlignVertical.center,
+    return AutofillGroup(
+      child: GestureDetector(
+        onTap: () => _focusNode.requestFocus(),
+        behavior: HitTestBehavior.opaque,
+        child: SizedBox(
+          height: widget.fieldHeight,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: List.generate(widget.length, (index) {
+                  final hasDigit = index < otp.length;
+                  final isActive = index == _activeIndex;
+                  final borderColor = isActive
+                      ? widget.focusedBorderColor
+                      : (hasDigit
+                          ? (widget.filledBorderColor ?? AppColors.black)
+                          : widget.borderColor);
+
+                  return Container(
+                    width: widget.fieldWidth,
+                    height: widget.fieldHeight,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: widget.fillColor,
+                      borderRadius:
+                          BorderRadius.circular(widget.borderRadius),
+                      border: Border.all(
+                        color: borderColor,
+                        width: isActive ? 2 : 1,
+                      ),
+                    ),
+                    child: Text(
+                      hasDigit ? otp[index] : '',
+                      style: widget.textStyle,
+                    ),
+                  );
+                }),
+              ),
+              // Hidden field receives keyboard OTP autofill and manual input.
+              Positioned.fill(
+                child: TextField(
+                  controller: _controller,
+                  focusNode: _focusNode,
+                  autofillHints: const [AutofillHints.oneTimeCode],
                   keyboardType: TextInputType.number,
-                  maxLength: 1,
-                  style: widget.textStyle,
+                  textInputAction: TextInputAction.done,
+                  enableSuggestions: false,
+                  autocorrect: false,
+                  showCursor: false,
+                  style: const TextStyle(
+                    color: Colors.transparent,
+                    fontSize: 1,
+                  ),
+                  cursorColor: Colors.transparent,
+                  decoration: const InputDecoration(
+                    border: InputBorder.none,
+                    counterText: '',
+                  ),
                   inputFormatters: [
                     FilteringTextInputFormatter.digitsOnly,
+                    LengthLimitingTextInputFormatter(widget.length),
                   ],
-                  decoration: InputDecoration(
-                    counterText: '',
-                    filled: true,
-                    fillColor: widget.fillColor,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(widget.borderRadius),
-                      borderSide: BorderSide(
-                        color: borderColor,
-                        width: 1,
-                      ),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(widget.borderRadius),
-                      borderSide: BorderSide(
-                        color: borderColor,
-                        width: 1,
-                      ),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(widget.borderRadius),
-                      borderSide: BorderSide(
-                        color: borderColor,
-                        width: 2,
-                      ),
-                    ),
-                    contentPadding: EdgeInsets.zero,
-                  ),
-                  onChanged: (value) => _onChanged(value, index),
-                );
-              },
-            ),
+                  onChanged: _onInputChanged,
+                ),
+              ),
+            ],
           ),
-        );
-      }),
+        ),
+      ),
     );
   }
 }

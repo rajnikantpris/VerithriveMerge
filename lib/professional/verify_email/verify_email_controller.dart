@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:get/get.dart';
+import 'package:verithrive_dev/enduser/utils/OTPInputField.dart';
 import '../../api/api_response.dart';
 import '../../api/user_api_service.dart';
 import '../../common/base_controller.dart';
@@ -29,14 +30,11 @@ class VerifyEmailController extends BaseController {
   late final String userType;
   late final String nextRoute;
   late final Map<String, dynamic> navigationArgs;
-  final codeControllers = List<TextEditingController>.generate(
-    6,
-    (_) => TextEditingController(),
-  );
-  final focusNodes = List<FocusNode>.generate(
-    6,
-    (_) => FocusNode(debugLabel: 'otp'),
-  );
+  final GlobalKey<OTPInputFieldState> otpFieldKey =
+      GlobalKey<OTPInputFieldState>();
+  String? _pendingOtp;
+
+  String? get initialOtp => _pendingOtp;
 
   RxBool isVerifying = false.obs;
   RxBool isResending = false.obs;
@@ -59,7 +57,7 @@ class VerifyEmailController extends BaseController {
     // Auto-fill OTP if provided in arguments
     final otp = args['otp'] as String?;
     if (otp != null && otp.isNotEmpty && !isClosed) {
-      // Use SchedulerBinding to fill OTP after the first frame is rendered
+      _pendingOtp = otp;
       SchedulerBinding.instance.addPostFrameCallback((_) {
         if (!isClosed) {
           _fillOtp(otp);
@@ -73,21 +71,12 @@ class VerifyEmailController extends BaseController {
   @override
   void onClose() {
     _resendTimer?.cancel();
-    // Clear controllers before disposing to prevent access after disposal
-    for (final c in codeControllers) {
-      c.clear();
-      c.dispose();
-    }
-    for (final f in focusNodes) {
-      f.unfocus();
-      f.dispose();
-    }
     super.onClose();
   }
 
   String get otpCode => otpValue.value;
 
-  bool get isOtpComplete => otpCode.length == codeControllers.length;
+  bool get isOtpComplete => otpCode.length == 6;
   bool get canResend => resendSecondsLeft.value == 0 && !isResending.value;
   String get resendLabel {
     final seconds = resendSecondsLeft.value;
@@ -95,35 +84,21 @@ class VerifyEmailController extends BaseController {
     return 'Send it again';
   }
 
-  void handleChange(int index, String value) {
-    if (value.isNotEmpty && index < focusNodes.length - 1) {
-      focusNodes[index + 1].requestFocus();
-    }
-    if (value.isEmpty && index > 0) {
-      focusNodes[index - 1].requestFocus();
-    }
-    otpValue.value = codeControllers.map((c) => c.text).join();
+  void onOtpChanged(String otp) {
+    otpValue.value = otp;
   }
 
-  /// Fill OTP fields with the provided OTP string
   void _fillOtp(String otp) {
     if (isClosed) return;
-    final otpDigits = otp.split('');
-    for (int i = 0; i < codeControllers.length && i < otpDigits.length; i++) {
-      if (!isClosed) {
-        codeControllers[i].text = otpDigits[i];
-      }
-    }
-    // Update the OTP value
-    if (!isClosed) {
-      otpValue.value = codeControllers.map((c) => c.text).join();
-      // Move focus to the last field
-      if (otpDigits.length >= codeControllers.length) {
-        focusNodes[codeControllers.length - 1].requestFocus();
-      } else if (otpDigits.isNotEmpty) {
-        focusNodes[otpDigits.length].requestFocus();
-      }
-    }
+
+    final sanitized = otp.replaceAll(RegExp(r'[^0-9]'), '');
+    if (sanitized.isEmpty) return;
+
+    final otpDigits =
+        sanitized.length > 6 ? sanitized.substring(0, 6) : sanitized;
+    _pendingOtp = otpDigits;
+    otpValue.value = otpDigits;
+    otpFieldKey.currentState?.setOTP(otpDigits);
   }
 
   Future<void> submitOtp() async {
@@ -327,16 +302,8 @@ class VerifyEmailController extends BaseController {
   }
 
   Future<void> resendOtp() async {
-    // Clear the OTP input fields
     otpValue.value = '';
-    for (final c in codeControllers) {
-      c.clear();
-    }
-
-    // Move focus back to the first OTP field
-    if (focusNodes.isNotEmpty) {
-      focusNodes[0].requestFocus();
-    }
+    otpFieldKey.currentState?.clearOTP();
 
     // Use forgot password API if this is a forgot password flow, otherwise use registration API
     final Future<ApiResponse<dynamic>> otpFuture =

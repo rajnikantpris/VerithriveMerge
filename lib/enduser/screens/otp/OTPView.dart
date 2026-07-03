@@ -19,7 +19,7 @@ class OTPView extends GetView<OTPController> {
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon:  SvgPicture.asset(AppAssets.back),
+          icon: SvgPicture.asset(AppAssets.back),
           onPressed: () => Get.back(),
         ),
       ),
@@ -32,7 +32,7 @@ class OTPView extends GetView<OTPController> {
               const SizedBox(height: 20),
 
               // Title
-               Text(
+              Text(
                 AppText.enterOTP,
                 style: AppTextStyles.titleStyleBlack(),
               ),
@@ -42,9 +42,8 @@ class OTPView extends GetView<OTPController> {
               // Subtitle
               Text(
                 AppText.otpDescription,
-                style: AppTextStyles.regularTextStyle(
-                  color: AppColors.greyText
-                ),
+                style:
+                    AppTextStyles.regularTextStyle(color: AppColors.greyText),
               ),
 
               const SizedBox(height: 40),
@@ -52,6 +51,7 @@ class OTPView extends GetView<OTPController> {
               // OTP Input Fields
               OTPInputField(
                 fieldKey: controller.otpFieldKey,
+                initialOTP: controller.initialOtp,
                 length: 6,
                 fieldWidth: 50,
                 fieldHeight: 50,
@@ -62,89 +62,84 @@ class OTPView extends GetView<OTPController> {
                 focusedBorderColor: AppColors.primaryColor,
                 fillColor: Colors.white,
                 textStyle: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.black
-                ),
+                    fontSize: 20,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.black),
               ),
 
               const SizedBox(height: 20),
 
               // Resend OTP
               Obx(() => Row(
-                children: [
-                  Text(
-                    AppText.noCodeYet,
-                    style: AppTextStyles.regularTextStyle(
-                      color: AppColors.color454545
-                    ),
-                  ),
-                  GestureDetector(
-                    onTap: controller.canResend.value
-                        ? controller.resendOTP
-                        : null,
-                    child: Text(
-                      AppText.sendItAgain,
-                      style: AppTextStyles.semiboldTextStyle(
-                        color: AppColors.primaryColor,
-                        fontSize: 14
+                    children: [
+                      Text(
+                        AppText.noCodeYet,
+                        style: AppTextStyles.regularTextStyle(
+                            color: AppColors.color454545),
                       ),
-                    ),
-                  ),
-                  if (!controller.canResend.value) ...[
-                    const SizedBox(width: 8),
-                    Text(
-                      controller.timerDisplay,
-                      style: AppTextStyles.semiboldTextStyle(
-                          color: AppColors.primaryColor,
-                          fontSize: 14
+                      GestureDetector(
+                        onTap: controller.canResend.value
+                            ? controller.resendOTP
+                            : null,
+                        child: Text(
+                          AppText.sendItAgain,
+                          style: AppTextStyles.semiboldTextStyle(
+                              color: AppColors.primaryColor, fontSize: 14),
+                        ),
                       ),
-                    ),
-                  ],
-                ],
-              )),
+                      if (!controller.canResend.value) ...[
+                        const SizedBox(width: 8),
+                        Text(
+                          controller.timerDisplay,
+                          style: AppTextStyles.semiboldTextStyle(
+                              color: AppColors.primaryColor, fontSize: 14),
+                        ),
+                      ],
+                    ],
+                  )),
 
               const SizedBox(height: 32),
 
               // Continue Button (Moved to top)
               Obx(() => SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: (controller.isLoading.value || !controller.isOTPComplete)
-                      ? null
-                      : controller.verifyOTP,
-                //  onPressed:controller.verifyOTP,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor:  AppColors.primaryColor,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+                    width: double.infinity,
+                    height: 50,
+                    child: ElevatedButton(
+                      onPressed: (controller.isLoading.value ||
+                              !controller.isOTPComplete)
+                          ? null
+                          : controller.verifyOTP,
+                      //  onPressed:controller.verifyOTP,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primaryColor,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        elevation: 0,
+                        disabledBackgroundColor: AppColors.otpBtnBlur,
+                      ),
+                      child: controller.isLoading.value
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                color: AppColors.white,
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : Text(
+                              AppText.continueText,
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontFamily: "Rubik",
+                                fontWeight: FontWeight.w500,
+                                color: controller.isOTPComplete
+                                    ? AppColors.white
+                                    : AppColors.white,
+                              ),
+                            ),
                     ),
-                    elevation: 0,
-                    disabledBackgroundColor: AppColors.otpBtnBlur,
-                  ),
-                  child: controller.isLoading.value
-                      ? const SizedBox(
-                    height: 20,
-                    width: 20,
-                    child: CircularProgressIndicator(
-                      color: AppColors.white,
-                      strokeWidth: 2,
-                    ),
-                  )
-                      : Text(
-                    AppText.continueText,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontFamily: "Rubik",
-                      fontWeight: FontWeight.w500,
-                      color: controller.isOTPComplete
-                          ? AppColors.white
-                          : AppColors.white,
-                    ),
-                  ),
-                ),
-              )),
+                  )),
 
               const Spacer(),
             ],

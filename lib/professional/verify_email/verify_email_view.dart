@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:verithrive_dev/enduser/utils/OTPInputField.dart';
 
 import '../../common/base_view.dart';
 import '../../theme/colors.dart';
@@ -142,41 +143,23 @@ class VerifyEmailView extends BaseView<VerifyEmailController> {
   }
 
   Widget _buildOtpFields(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: List.generate(
-        controller.codeControllers.length,
-        (index) => SizedBox(
-          width: HightWidthSizes.setValue_46,
-          child: TextField(
-            controller: controller.codeControllers[index],
-            focusNode: controller.focusNodes[index],
-            keyboardType: TextInputType.number,
-            textAlign: TextAlign.center,
-            maxLength: 1,
-            decoration: InputDecoration(
-              counterText: '',
-              contentPadding: EdgeInsets.zero,
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(HightWidthSizes.setValue_8),
-                borderSide: const BorderSide(
-                  color: AppColor.color_B3B3B3,
-                  width: 1,
-                ),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(HightWidthSizes.setValue_8),
-                borderSide: const BorderSide(
-                  color: AppColor.color_B3B3B3,
-                  width: 1,
-                ),
-              ),
-              fillColor: AppColor.white,
-              filled: true,
-            ),
-            onChanged: (value) => controller.handleChange(index, value),
-          ),
-        ),
+    return OTPInputField(
+      fieldKey: controller.otpFieldKey,
+      initialOTP: controller.initialOtp,
+      length: 6,
+      fieldWidth: HightWidthSizes.setValue_46,
+      fieldHeight: HightWidthSizes.setValue_46,
+      borderRadius: HightWidthSizes.setValue_8,
+      onCompleted: controller.onOtpChanged,
+      onChanged: controller.onOtpChanged,
+      borderColor: AppColor.color_B3B3B3,
+      focusedBorderColor: AppColor.color_2FC4B2,
+      fillColor: AppColor.white,
+      textStyle: TextStyle(
+        fontFamily: AppFonts.rubikMedium,
+        fontWeight: FontWeight.w600,
+        fontSize: FontSizes.setFontValue_20,
+        color: AppColor.color000000,
       ),
     );
   }
