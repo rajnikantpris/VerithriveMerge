@@ -30,95 +30,112 @@ class ConsultationBookingScreen extends StatelessWidget {
         title: Text(
           AppText.consultationInPerson,
           style: AppTextStyles.mediumTextStyle(
-            fontSize: 20,
-            color: AppColors.black
-          ),
+              fontSize: 20, color: AppColors.black),
         ),
         centerTitle: false,
       ),
       body: Column(
         children: [
-
           Container(
             margin: EdgeInsets.all(10),
             decoration: BoxDecoration(
-              border:Border.all(color: AppColors.grey),
-              borderRadius: BorderRadius.circular(10)
-            ),
-            child: Column(children: [
-              // Calendar Header
-              Obx(() => Container(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Obx(() {
-                      final now = DateTime.now();
-                      final currentMonth = DateTime(now.year, now.month, 1);
-                      final canGoPrevious = controller.selectedMonth.value.isAfter(currentMonth) || 
-                                           controller.selectedMonth.value.isAtSameMomentAs(currentMonth);
-                      return IconButton(
-                        icon: Icon(Icons.chevron_left, 
-                          color: canGoPrevious ? AppColors.black : AppColors.grey),
-                        onPressed: canGoPrevious ? controller.previousMonth : null,
-                      );
-                    }),
-                    Text(
-                      controller.getFormattedMonth(),
-                      style: AppTextStyles.popinSemiboldTextStyle(
-                        fontSize: 16,
-                        color: AppColors.blueColor,
+                border: Border.all(color: AppColors.grey),
+                borderRadius: BorderRadius.circular(10)),
+            child: Column(
+              children: [
+                // Calendar Header
+                Obx(() => Container(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Obx(() {
+                            final now = DateTime.now();
+                            final currentMonth =
+                                DateTime(now.year, now.month, 1);
+                            final canGoPrevious = controller.selectedMonth.value
+                                    .isAfter(currentMonth) ||
+                                controller.selectedMonth.value
+                                    .isAtSameMomentAs(currentMonth);
+                            return IconButton(
+                              icon: Icon(Icons.chevron_left,
+                                  color: canGoPrevious
+                                      ? AppColors.black
+                                      : AppColors.grey),
+                              onPressed: canGoPrevious
+                                  ? controller.previousMonth
+                                  : null,
+                            );
+                          }),
+                          Text(
+                            controller.getFormattedMonth(),
+                            style: AppTextStyles.popinSemiboldTextStyle(
+                              fontSize: 16,
+                              color: AppColors.blueColor,
+                            ),
+                          ),
+                          IconButton(
+                            icon: Icon(Icons.chevron_right,
+                                color: AppColors.black),
+                            onPressed: controller.nextMonth,
+                          ),
+                        ],
                       ),
+                    )),
+
+                SizedBox(height: 12),
+
+                // Available Days - Horizontal Scrollable
+                Obx(() {
+                  // Rebuild dots when availability data changes
+                  controller.rawAvailabilities.length;
+                  controller.confirmedAvailableDates.length;
+                  controller.confirmedUnavailableDates.length;
+                  controller.serviceFormatDates.length;
+                  controller.selectedMonth.value;
+                  controller.selectedDate.value;
+
+                  return SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: _buildAvailableDays(),
                     ),
-                    IconButton(
-                      icon: Icon(Icons.chevron_right, color: AppColors.black),
-                      onPressed: controller.nextMonth,
-                    ),
-                  ],
+                  );
+                }),
+
+                SizedBox(
+                  height: 10,
                 ),
-              )),
 
-              SizedBox(height: 12),
-
-              // Available Days - Horizontal Scrollable
-              Obx(() => SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: _buildAvailableDays(),
+                Container(
+                  width: 50,
+                  height: 5,
+                  decoration: BoxDecoration(
+                      color: AppColors.lightGrey,
+                      borderRadius: BorderRadius.circular(50)),
                 ),
-              )),
 
-              SizedBox(height: 10,),
-              
-              Container(
-                width: 50,
-                height: 5,
-                decoration: BoxDecoration(
-                  color: AppColors.lightGrey,
-                  borderRadius: BorderRadius.circular(50)
+                SizedBox(
+                  height: 10,
                 ),
-              ),
-
-              SizedBox(height: 10,),
-              
-            ],),
+              ],
+            ),
           ),
 
           SizedBox(height: 20),
 
           // Legend
           Container(
-            padding: EdgeInsets.symmetric(horizontal: 20,vertical: 10),
+            padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
             margin: EdgeInsets.symmetric(horizontal: 10),
             decoration: BoxDecoration(
-                border:Border.all(color: AppColors.grey),
-                borderRadius: BorderRadius.circular(10)
-            ),
+                border: Border.all(color: AppColors.grey),
+                borderRadius: BorderRadius.circular(10)),
             child: Row(
               children: [
-                _buildLegendItem(
-                    AppColors.availableColor, AppText.available),
+                _buildLegendItem(AppColors.availableColor, AppText.available),
                 SizedBox(width: 20),
-                _buildLegendItem(AppColors.unavailableColor, AppText.unavailable),
+                _buildLegendItem(
+                    AppColors.unavailableColor, AppText.unavailable),
               ],
             ),
           ),
@@ -139,37 +156,36 @@ class ConsultationBookingScreen extends StatelessWidget {
                   ),
                 );
               }
-              
+
               if (controller.timeSlots.isEmpty) {
                 return Center(
                   child: Padding(
                     padding: EdgeInsets.all(20),
                     child: Obx(() => Text(
-                      controller.apiMessage.value.isNotEmpty 
-                          ? controller.apiMessage.value 
-                          : 'No time slots available for this date',
-                      style: AppTextStyles.regularTextStyle(
-                        fontSize: 16,
-                        color: AppColors.greyText,
-                      ),
-                      textAlign: TextAlign.center,
-                    )),
+                          controller.apiMessage.value.isNotEmpty
+                              ? controller.apiMessage.value
+                              : 'No time slots available for this date',
+                          style: AppTextStyles.regularTextStyle(
+                            fontSize: 16,
+                            color: AppColors.greyText,
+                          ),
+                          textAlign: TextAlign.center,
+                        )),
                   ),
                 );
               }
-              
+
               return Container(
                 padding: EdgeInsets.symmetric(horizontal: 20),
                 child: ListView.builder(
                   itemCount: controller.timeSlots.length,
                   itemBuilder: (context, index) {
-                    return _buildTimeSlot(controller.timeSlots[index],index);
+                    return _buildTimeSlot(controller.timeSlots[index], index);
                   },
                 ),
               );
             }),
           ),
-
         ],
       ),
     );
@@ -178,11 +194,20 @@ class ConsultationBookingScreen extends StatelessWidget {
   List<Widget> _buildAvailableDays() {
     List<Widget> days = [];
     List<DateTime> availableDays = controller.getAvailableDays();
-    List<String> dayNames = [AppText.sun, AppText.mon, AppText.tue, AppText.wed, AppText.thu, AppText.fri, AppText.sat];
+    List<String> dayNames = [
+      AppText.sun,
+      AppText.mon,
+      AppText.tue,
+      AppText.wed,
+      AppText.thu,
+      AppText.fri,
+      AppText.sat
+    ];
 
     for (int i = 0; i < availableDays.length; i++) {
       DateTime day = availableDays[i];
-      String dayName = dayNames[day.weekday % 7]; // Get day name based on weekday
+      String dayName =
+          dayNames[day.weekday % 7]; // Get day name based on weekday
       bool isSelected = controller.isDaySelected(day);
 
       days.add(
@@ -220,8 +245,8 @@ class ConsultationBookingScreen extends StatelessWidget {
                   width: 8,
                   height: 8,
                   decoration: BoxDecoration(
-                    color: controller.hasServiceFormatAvailable(day) 
-                        ? AppColors.greenDotColor 
+                    color: controller.hasServiceFormatAvailable(day)
+                        ? AppColors.greenDotColor
                         : AppColors.redDotColor,
                     shape: BoxShape.circle,
                   ),
@@ -259,7 +284,7 @@ class ConsultationBookingScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildTimeSlot(String time,int index) {
+  Widget _buildTimeSlot(String time, int index) {
     return Obx(() {
       bool isAvailable = controller.isSlotAvailable(time);
       bool isSelected = controller.isSlotSelected(time);
@@ -268,7 +293,6 @@ class ConsultationBookingScreen extends StatelessWidget {
 
       return Column(
         children: [
-
           Container(
             height: 0.5,
             color: AppColors.grey,
@@ -285,7 +309,8 @@ class ConsultationBookingScreen extends StatelessWidget {
                     time,
                     style: AppTextStyles.regularTextStyle(
                       fontSize: 12,
-                      color: isDisabled ? AppColors.grey : AppColors.color757575,
+                      color:
+                          isDisabled ? AppColors.grey : AppColors.color757575,
                     ),
                   ),
                 ),
@@ -293,10 +318,12 @@ class ConsultationBookingScreen extends StatelessWidget {
                 // Horizontal slot container
                 Expanded(
                   child: GestureDetector(
-                    onTap: isAvailable ? () => controller.selectTimeSlot(time) : null,
+                    onTap: isAvailable
+                        ? () => controller.selectTimeSlot(time)
+                        : null,
                     child: Container(
                       margin: EdgeInsets.only(left: 8),
-                 /*     decoration: BoxDecoration(
+                      /*     decoration: BoxDecoration(
                         border: Border(
                           top: BorderSide(
                             color: AppColors.grey,
@@ -310,37 +337,37 @@ class ConsultationBookingScreen extends StatelessWidget {
                           color: isSelected
                               ? AppColors.primaryColor
                               : isAvailable
-                              ? AppColors.availableColor
-                              : isDisabled
-                              ? AppColors.unavailableColor
-                              : AppColors.unavailableColor,
+                                  ? AppColors.availableColor
+                                  : isDisabled
+                                      ? AppColors.unavailableColor
+                                      : AppColors.unavailableColor,
                           borderRadius: BorderRadius.circular(8),
                           border: isSelected
                               ? Border(
-                            left: BorderSide(
-                              color: AppColors.primaryColor,
-                              width: 4,
-                            ),
-                          )
+                                  left: BorderSide(
+                                    color: AppColors.primaryColor,
+                                    width: 4,
+                                  ),
+                                )
                               : isUnavailable
-                              ? Border(
-                            left: BorderSide(
-                              color: Colors.red.shade400,
-                              width: 4,
-                            ),
-                          )
-                              : null,
+                                  ? Border(
+                                      left: BorderSide(
+                                        color: Colors.red.shade400,
+                                        width: 4,
+                                      ),
+                                    )
+                                  : null,
                         ),
                         alignment: Alignment.centerLeft,
                         padding: EdgeInsets.only(left: 16),
                         child: isUnavailable
                             ? Text(
-                          AppText.unavailable,
-                          style: AppTextStyles.regularTextStyle(
-                            fontSize: 12,
-                            color: AppColors.black,
-                          ),
-                        )
+                                AppText.unavailable,
+                                style: AppTextStyles.regularTextStyle(
+                                  fontSize: 12,
+                                  color: AppColors.black,
+                                ),
+                              )
                             : null,
                       ),
                     ),
@@ -350,9 +377,11 @@ class ConsultationBookingScreen extends StatelessWidget {
             ),
           ),
 
-          SizedBox(height: 10,),
+          SizedBox(
+            height: 10,
+          ),
 
-         // (index == controller.timeSlots.length - 1) ? SizedBox(height: 10,) : SizedBox(),
+          // (index == controller.timeSlots.length - 1) ? SizedBox(height: 10,) : SizedBox(),
         ],
       );
     });
