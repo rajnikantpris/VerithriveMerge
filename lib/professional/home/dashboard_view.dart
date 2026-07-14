@@ -422,7 +422,7 @@ class _WeekCalendar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: HightWidthSizes.setValue_65,
+      height: HightWidthSizes.setValue_72,
       child: Obx(() {
         final weekDates = controller.monthDates;
         return ListView.separated(
@@ -432,6 +432,8 @@ class _WeekCalendar extends StatelessWidget {
             final date = weekDates[index];
             final label = _weekdayLabel(date);
             final selected = _isSameDay(date, controller.selectedDate.value);
+            final showDot = controller.shouldShowBookingDot(date);
+            final hasBooking = controller.hasBookingOnDate(date);
             return Container(
               margin: EdgeInsets.only(
                 left: HightWidthSizes.setValue_2,
@@ -443,6 +445,11 @@ class _WeekCalendar extends StatelessWidget {
                   label: label,
                   day: date.day.toString(),
                   selected: selected,
+                  bookingDotColor: showDot
+                      ? (hasBooking
+                          ? AppColor.greenText
+                          : AppColor.color_E74C3C)
+                      : null,
                 ),
               ),
             );
@@ -466,7 +473,7 @@ class _MonthCalendar extends StatelessWidget {
     return Obx(() {
       final selected = controller.selectedDate.value;
       final monthDays = _buildMonthDays(selected);
-      final sampleEvents = <int, List<Color>>{};
+      controller.bookingPresenceByDate.length;
 
       return Column(
         children: [
@@ -532,7 +539,7 @@ class _MonthCalendar extends StatelessWidget {
               final isSelected = _isSameDay(day.date, selected);
               final isCurrentMonth = day.isCurrentMonth;
               final dotColors = isCurrentMonth
-                  ? (sampleEvents[day.date.day] ?? const <Color>[])
+                  ? controller.getEventColorsForDate(day.date)
                   : const <Color>[];
 
               final textColor = isSelected
@@ -573,7 +580,7 @@ class _MonthCalendar extends StatelessWidget {
                     ),
                     SizedBox(
                       height: HightWidthSizes.setValue_14,
-                      child: dotColors.isNotEmpty
+                      child: isCurrentMonth && dotColors.isNotEmpty
                           ? Padding(
                               padding: EdgeInsets.only(
                                 top: HightWidthSizes.setValue_6,
@@ -632,11 +639,13 @@ class _DatePill extends StatelessWidget {
     required this.label,
     required this.day,
     required this.selected,
+    this.bookingDotColor,
   });
 
   final String label;
   final String day;
   final bool selected;
+  final Color? bookingDotColor;
 
   @override
   Widget build(BuildContext context) {
@@ -668,7 +677,7 @@ class _DatePill extends StatelessWidget {
                     fontSize: FontSizes.setFontValue_14,
                   ),
           ),
-          SizedBox(height: HightWidthSizes.setValue_8),
+          SizedBox(height: HightWidthSizes.setValue_4),
           Text(
             day,
             style: selected
@@ -684,6 +693,19 @@ class _DatePill extends StatelessWidget {
                     color: AppColor.color_32435F,
                     fontSize: FontSizes.setFontValue_14,
                   ),
+          ),
+          SizedBox(height: HightWidthSizes.setValue_4),
+          SizedBox(
+            width: HightWidthSizes.setValue_6,
+            height: HightWidthSizes.setValue_6,
+            child: bookingDotColor != null
+                ? Container(
+                    decoration: BoxDecoration(
+                      color: bookingDotColor,
+                      shape: BoxShape.circle,
+                    ),
+                  )
+                : const SizedBox.shrink(),
           ),
         ],
       ),

@@ -20,14 +20,17 @@ import '../cart/CartController.dart';
 class SummaryController extends BaseController {
   // Get cart controller to access booking data
   final CartController cartController = Get.find<CartController>();
-  final ProjectRepository _repository = Get.find<ProjectRepository>(tag: (ProjectRepository).toString());
-  
+  final ProjectRepository _repository =
+      Get.find<ProjectRepository>(tag: (ProjectRepository).toString());
+
   // Booking details from cart
   var selectedDate = DateTime.now().obs;
   var fromTime = Rxn<TimeOfDay>();
   var untilTime = Rxn<TimeOfDay>();
   var serviceName = 'Consultation - in person'.obs;
   var price = 30.0.obs;
+  var platformFeePercent = 0.0.obs; // fee_value from API (e.g. 2 = 2%)
+  var isPlatformFeeLoading = false.obs;
   var location = 'Lorem Ipsum,*******'.obs;
   var professionalId = ''.obs;
   var professionalServiceFormatId = ''.obs;
@@ -36,12 +39,17 @@ class SummaryController extends BaseController {
   var isEditMode = false.obs; // Flag to indicate edit mode
 
   bool get isFree => price.value == 0;
-  
+
+  /// Platform fee amount = service price × fee_value%
+  double get platformFee =>
+      (price.value * platformFeePercent.value) / 100;
+
+  double get totalPrice => price.value + platformFee;
+
   // Timer for booking expiry
   Timer? _expiryTimer;
   var expiryTime = '15:00'.obs; // Display format MM:SS
   var remainingSeconds = 900.obs; // 15 minutes in seconds (15 * 60)
-
 
   @override
   void onInit() {
@@ -60,32 +68,37 @@ class SummaryController extends BaseController {
     });
     // Start the expiry timer when screen opens
     _startExpiryTimer();
+    // Fetch platform fee for itemized price breakdown
+    if (!isFree && professionalId.value.isNotEmpty) {
+      isPlatformFeeLoading.value = true;
+      callPlatformFeeAPI();
+    }
   }
-  
+
   // Calculate duration in minutes from fromTime to untilTime
   int _calculateDurationMinutes() {
     if (fromTime.value == null || untilTime.value == null) {
       return 15; // Default to 15 minutes if times are not set
     }
-    
+
     int fromMinutes = fromTime.value!.hour * 60 + fromTime.value!.minute;
     int untilMinutes = untilTime.value!.hour * 60 + untilTime.value!.minute;
-    
+
     // Handle case where until time is on next day (shouldn't happen in normal flow)
     int duration = untilMinutes - fromMinutes;
     if (duration < 0) {
       duration += 24 * 60; // Add 24 hours in minutes
     }
-    
+
     return duration > 0 ? duration : 15; // Default to 15 if invalid
   }
-  
+
   // Start the expiry timer
   void _startExpiryTimer() {
     // Set timer to 15 minutes (as per requirement)
     remainingSeconds.value = 15 * 60; // 15 minutes in seconds
     _updateExpiryTimeDisplay();
-    
+
     // Start countdown timer
     _expiryTimer = Timer.periodic(Duration(seconds: 1), (timer) {
       if (remainingSeconds.value > 0) {
@@ -98,14 +111,15 @@ class SummaryController extends BaseController {
       }
     });
   }
-  
+
   // Update expiry time display format (MM:SS)
   void _updateExpiryTimeDisplay() {
     int minutes = remainingSeconds.value ~/ 60;
     int seconds = remainingSeconds.value % 60;
-    expiryTime.value = '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+    expiryTime.value =
+        '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
   }
-  
+
   // Handle timer expiration
   void _onTimerExpired() {
     // Show message and navigate back
@@ -119,13 +133,13 @@ class SummaryController extends BaseController {
       },
     );
   }
-  
+
   // Cancel timer (call when proceeding to payment or leaving screen)
   void _cancelTimer() {
     _expiryTimer?.cancel();
     _expiryTimer = null;
   }
-  
+
   void _receiveArguments() {
     final arguments = Get.arguments;
     if (arguments != null && arguments is Map<String, dynamic>) {
@@ -162,7 +176,8 @@ class SummaryController extends BaseController {
       }
       if (arguments['professional_service_format_id'] != null) {
         // Store _id for passing to payment screen (for create-booking API)
-        professionalServiceFormatId.value = arguments['professional_service_format_id'] as String;
+        professionalServiceFormatId.value =
+            arguments['professional_service_format_id'] as String;
       }
       if (arguments['booking_id'] != null) {
         // Store booking_id for passing to payment screen (for update-booking API in edit mode)
@@ -174,7 +189,7 @@ class SummaryController extends BaseController {
       }
     }
   }
-  
+
   // Format time to string
   String formatTime(TimeOfDay? time) {
     if (time == null) return '';
@@ -183,7 +198,7 @@ class SummaryController extends BaseController {
     final period = time.period == DayPeriod.am ? 'AM' : 'PM';
     return '$hour:$minute $period';
   }
-  
+
   // Get formatted date and time
   String getFormattedDateTime() {
     final from = fromTime.value ?? TimeOfDay(hour: 14, minute: 0);
@@ -191,7 +206,7 @@ class SummaryController extends BaseController {
     final date = DateFormat('dd/MM/yyyy').format(selectedDate.value);
     return '$date  ${formatTime(from)}-${formatTime(until)}';
   }
-  
+
   // Get formatted date
   String getFormattedDate() {
     return DateFormat('dd/MM/yyyy').format(selectedDate.value);
@@ -209,16 +224,25 @@ class SummaryController extends BaseController {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final args = Get.arguments as Map<String, dynamic>?;
       final category = args?['category'] as String? ?? 'wellness';
-      final itemPrice = AnalyticsService.validatePrice(cartController.price.value);
+      final itemPrice =
+          AnalyticsService.validatePrice(cartController.price.value);
       final consultationType = cartController.consultationType.value;
 
       AnalyticsService.instance.logRemoveFromCartEvent(
         item: AnalyticsService.instance.buildItem(
-          itemId: cartController.professionalId.value.isNotEmpty ? cartController.professionalId.value : '',
-          itemName: cartController.itemVariant.value.isNotEmpty ? cartController.itemVariant.value : (cartController.serviceName.value.isNotEmpty ? cartController.serviceName.value : ''),
+          itemId: cartController.professionalId.value.isNotEmpty
+              ? cartController.professionalId.value
+              : '',
+          itemName: cartController.itemVariant.value.isNotEmpty
+              ? cartController.itemVariant.value
+              : (cartController.serviceName.value.isNotEmpty
+                  ? cartController.serviceName.value
+                  : ''),
           itemCategory: category,
           itemCategory2: cartController.serviceName.value,
-          itemVariant: consultationType.isNotEmpty ? consultationType : serviceName.value,
+          itemVariant: consultationType.isNotEmpty
+              ? consultationType
+              : serviceName.value,
           itemBrand: consultationType.isNotEmpty ? consultationType : category,
           price: itemPrice,
           quantity: 1,
@@ -227,7 +251,7 @@ class SummaryController extends BaseController {
         currency: 'GBP',
       );
     });
-    
+
     // Cancel timer when removing booking
     _cancelTimer();
     // Implementation for removing booking
@@ -242,36 +266,117 @@ class SummaryController extends BaseController {
     // Call validate booking window API
     callValidateBookingWindowAPI();
   }
-  
+
+  // GET /professional/platform-fee?professional_id=...
+  void callPlatformFeeAPI() {
+    if (professionalId.value.isEmpty) return;
+
+    isPlatformFeeLoading.value = true;
+
+    Map<String, dynamic> toJson() {
+      final Map<String, dynamic> data = <String, dynamic>{};
+      data['professional_id'] = professionalId.value;
+
+      print('========================================');
+      print('Platform Fee API Request (GET):');
+      print(data);
+      print('========================================');
+
+      return data;
+    }
+
+    var service = _repository.sendGetApiWithParamRequest(
+      toJson,
+      professional_platform_fee,
+      true,
+    );
+    callDataService(
+      service,
+      onSuccess: _handlePlatformFeeSuccess,
+      onError: _handlePlatformFeeError,
+      isShowLoading: false,
+    );
+  }
+
+  Future<void> _handlePlatformFeeSuccess(dynamic baseResponse) async {
+    try {
+      Map<String, dynamic> responseData;
+      if (baseResponse != null && baseResponse.data != null) {
+        responseData = baseResponse.data is Map<String, dynamic>
+            ? baseResponse.data
+            : baseResponse.data as Map<String, dynamic>;
+      } else if (baseResponse is Map<String, dynamic>) {
+        responseData = baseResponse;
+      } else {
+        return;
+      }
+
+      final dynamic data = responseData['data'] ?? responseData;
+      if (data is! Map) return;
+
+      final map = Map<String, dynamic>.from(data);
+
+      // fee_value is a percentage (e.g. 2 => 2% of service price)
+      final feePercent = _parseAmount(map['fee_value']);
+      if (feePercent != null) {
+        platformFeePercent.value = feePercent;
+      }
+    } catch (e) {
+      print('Error parsing platform fee response: $e');
+    } finally {
+      isPlatformFeeLoading.value = false;
+    }
+  }
+
+  void _handlePlatformFeeError(dynamic e) {
+    // Keep existing service price; treat missing fee as 0.
+    print('Platform fee API error: $e');
+    isPlatformFeeLoading.value = false;
+  }
+
+  double? _parseAmount(dynamic value) {
+    if (value == null) return null;
+    if (value is num) return value.toDouble();
+    if (value is String) {
+      final cleaned = value.replaceAll(RegExp(r'[£,\s]'), '');
+      return double.tryParse(cleaned);
+    }
+    return null;
+  }
+
   // Call validate booking window API
   void callValidateBookingWindowAPI() {
     Map<String, dynamic> toJson() {
       final Map<String, dynamic> data = <String, dynamic>{};
-      
+
       // Format date as DD/MM/YYYY
-      String formattedDate = DateFormat('dd/MM/yyyy').format(selectedDate.value);
-      
+      String formattedDate =
+          DateFormat('dd/MM/yyyy').format(selectedDate.value);
+
       // Format to_time as HH:mm
       String formattedToTime = '';
       if (untilTime.value != null) {
         final time = untilTime.value!;
-        formattedToTime = '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
+        formattedToTime =
+            '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
       }
-      
+
       data['professional_id'] = professionalId.value;
-      data['service_format_id'] = serviceFormatId.value.isNotEmpty ? serviceFormatId.value : "";
+      data['service_format_id'] =
+          serviceFormatId.value.isNotEmpty ? serviceFormatId.value : "";
       data['date'] = formattedDate;
       data['to_time'] = formattedToTime;
-      
+
       print('========================================');
       print('Validate Booking Window API Request:');
       print(data);
       print('========================================');
-      
+
       return data;
     }
-    
-    var service = _repository.sendPostApiRequest(toJson, validate_booking_window, true);
+
+    var service =
+        _repository.sendPostApiRequest(toJson, validate_booking_window, true);
     callDataService(
       service,
       onSuccess: _handleValidateBookingWindowSuccess,
@@ -279,7 +384,7 @@ class SummaryController extends BaseController {
       isShowLoading: true,
     );
   }
-  
+
   Future<void> _handleValidateBookingWindowSuccess(dynamic baseResponse) async {
     try {
       Map<String, dynamic> responseData;
@@ -294,8 +399,9 @@ class SummaryController extends BaseController {
       }
 
       bool success = responseData['success'] ?? false;
-      String message = responseData['message'] ?? 'Booking validated successfully';
-      
+      String message =
+          responseData['message'] ?? 'Booking validated successfully';
+
       if (success == true) {
         if (isFree) {
           callCreateBookingAPI();
@@ -309,11 +415,14 @@ class SummaryController extends BaseController {
               'from_time': fromTime.value,
               'until_time': untilTime.value,
               'service_name': serviceName.value,
-              'price': price.value,
+              'price': totalPrice,
+              'service_price': price.value,
+              'platform_fee': platformFee,
               'location': location.value,
               'professional_id': professionalId.value,
               'service_format_id': serviceFormatId.value,
-              'professional_service_format_id': professionalServiceFormatId.value,
+              'professional_service_format_id':
+                  professionalServiceFormatId.value,
               'booking_id': bookingId.value,
               'is_edit_mode': isEditMode.value,
               'category': summaryArgs?['category'] ?? 'wellness',
@@ -342,16 +451,16 @@ class SummaryController extends BaseController {
       );
     }
   }
-  
+
   void _handleValidateBookingWindowErrorOld(dynamic e) {
     String errorMessage = "An error occurred. Please try again.";
-    
+
     if (e is NotFoundException) {
       errorMessage = e.message;
     } else if (e is Exception) {
       errorMessage = e.toString();
     }
-    
+
     showResponseDialog(
       message: errorMessage,
       title: 'Error',
@@ -362,9 +471,7 @@ class SummaryController extends BaseController {
   }
 
   void _handleValidateBookingWindowError(dynamic e) {
-    if(e is BaseException) {
-
-
+    if (e is BaseException) {
       showResponseDialog(
         message: e.message,
         title: 'Error',
@@ -375,7 +482,6 @@ class SummaryController extends BaseController {
         },
       );
     }
-
   }
 
   void callCreateBookingAPI() {
@@ -413,7 +519,8 @@ class SummaryController extends BaseController {
     }
 
     Map<String, dynamic> toJson() {
-      String formattedDate = DateFormat('dd/MM/yyyy').format(selectedDate.value);
+      String formattedDate =
+          DateFormat('dd/MM/yyyy').format(selectedDate.value);
 
       String formatTime24Hour(TimeOfDay time) {
         return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
@@ -421,7 +528,8 @@ class SummaryController extends BaseController {
 
       final Map<String, dynamic> data = <String, dynamic>{};
       data['professional_id'] = professionalId.value;
-      data['professional_service_format_id'] = professionalServiceFormatId.value;
+      data['professional_service_format_id'] =
+          professionalServiceFormatId.value;
       data['date'] = formattedDate;
       data['from_time'] = formatTime24Hour(fromTime.value!);
       data['to_time'] = formatTime24Hour(untilTime.value!);
@@ -457,16 +565,18 @@ class SummaryController extends BaseController {
       }
 
       bool success = responseData['success'] ?? false;
-      String message = responseData['message'] ?? 'Booking created successfully';
+      String message =
+          responseData['message'] ?? 'Booking created successfully';
 
       if (success == true) {
         final summaryArgs = Get.arguments as Map<String, dynamic>?;
         final category = summaryArgs?['category'] as String? ?? 'wellness';
         final itemVariant = summaryArgs?['item_variant']?.toString() ?? '';
         final itemBrand = summaryArgs?['item_brand']?.toString() ?? '';
-        final successBookingId = responseData['data']?['booking_id']?.toString() ??
-            responseData['data']?['_id']?.toString() ??
-            bookingId.value;
+        final successBookingId =
+            responseData['data']?['booking_id']?.toString() ??
+                responseData['data']?['_id']?.toString() ??
+                bookingId.value;
 
         Get.offAll(
           () => PaymentSuccessScreen(),
@@ -515,7 +625,7 @@ class SummaryController extends BaseController {
       );
     }
   }
-  
+
   @override
   void onClose() {
     // Cancel timer when leaving the screen

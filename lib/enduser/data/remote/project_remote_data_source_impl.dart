@@ -13,14 +13,15 @@ import '../../utils/FirebaseTokenManager.dart';
 import '../../utils/api_services.dart';
 import '../../utils/auth_service.dart';
 
-class ProjectRemoteDataSourceImpl extends BaseRemoteSource implements ProjectRemoteDataSource {
-
+class ProjectRemoteDataSourceImpl extends BaseRemoteSource
+    implements ProjectRemoteDataSource {
   // Helper method to check if API call is allowed in guest mode
   Future<bool> _canMakeApiCallOld(String apiName) async {
     bool canCall = await AuthService.canMakeApiCall(apiName);
     if (!canCall) {
       print('API Call Blocked: $apiName (Guest mode restriction)');
-      throw Exception('Authentication required. Please login to access this feature.');
+      throw Exception(
+          'Authentication required. Please login to access this feature.');
     }
     return true;
   }
@@ -39,20 +40,20 @@ class ProjectRemoteDataSourceImpl extends BaseRemoteSource implements ProjectRem
     }
   }
 
-
   @override
   Future sendPostApiRequest(
-      Map<String, dynamic> Function() toJson,
-      String apiName,
-      bool isToken,
-      ) async {
+    Map<String, dynamic> Function() toJson,
+    String apiName,
+    bool isToken,
+  ) async {
     // Check if API call is allowed in guest mode
-  //  await _canMakeApiCall(apiName);
-    
+    //  await _canMakeApiCall(apiName);
+
     var endpoint = "$bareUrl$apiName";
 
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
-    String? token = sharedPreferences.getString(SharePreferenceConst.access_token);
+    String? token =
+        sharedPreferences.getString(SharePreferenceConst.access_token);
     String timezone = await _getCurrentTimezone();
 
     // Get device information
@@ -107,14 +108,15 @@ class ProjectRemoteDataSourceImpl extends BaseRemoteSource implements ProjectRem
 
   @override
   Future sendPostApiRequestNew(
-      Map<String, dynamic> Function() toJson,
-      String apiName,
-      bool isToken,
-      ) async {
+    Map<String, dynamic> Function() toJson,
+    String apiName,
+    bool isToken,
+  ) async {
     var endpoint = "$bareUrl$apiName";
 
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
-    String? token = sharedPreferences.getString(SharePreferenceConst.access_token);
+    String? token =
+        sharedPreferences.getString(SharePreferenceConst.access_token);
     String timezone = await _getCurrentTimezone();
 
     // Get device information
@@ -163,21 +165,22 @@ class ProjectRemoteDataSourceImpl extends BaseRemoteSource implements ProjectRem
   }
 
   @override
-  Future sendGetApiRequest(Map<String, dynamic> Function() toJson,String apiName) async {
+  Future sendGetApiRequest(
+      Map<String, dynamic> Function() toJson, String apiName) async {
     var endpoint = "$bareUrl$apiName";
-    
+
     String timezone = await _getCurrentTimezone();
-    
+
     // Prepare headers
     Map<String, dynamic> headers = {
       'accept': "application/json",
     };
-    
+
     // Add timezone header
     headers['timezone'] = timezone;
-    
+
     var dioCall = dioClient.post(
-      endpoint, 
+      endpoint,
       queryParameters: toJson(),
       options: Options(headers: headers),
     );
@@ -189,30 +192,30 @@ class ProjectRemoteDataSourceImpl extends BaseRemoteSource implements ProjectRem
     }
   }
 
-  dynamic _parseApiResponse(
-      Response<dynamic> response) {
+  dynamic _parseApiResponse(Response<dynamic> response) {
     return response;
   }
 
   @override
   Future sendGetApiNoParamRequest(String apiName) async {
     // Check if API call is allowed in guest mode
-   // await _canMakeApiCall(apiName);
-    
+    // await _canMakeApiCall(apiName);
+
     var endpoint = "$bareUrl$apiName";
 
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
     String timezone = await _getCurrentTimezone();
-    String? token = sharedPreferences.getString(SharePreferenceConst.access_token);
+    String? token =
+        sharedPreferences.getString(SharePreferenceConst.access_token);
 
     // Prepare headers
     Map<String, dynamic> headers = {
       'accept': "application/json",
     };
-    
+
     // Add timezone header
     headers['timezone'] = timezone;
-    
+
     // Add token for authenticated requests
     if (token != null && token.isNotEmpty) {
       headers["Authorization"] = "Bearer $token";
@@ -228,24 +231,26 @@ class ProjectRemoteDataSourceImpl extends BaseRemoteSource implements ProjectRem
   }
 
   @override
-  Future sendGetApiWithParamRequest(Map<String, dynamic> Function() toJson, String apiName, bool isToken) async {
+  Future sendGetApiWithParamRequest(Map<String, dynamic> Function() toJson,
+      String apiName, bool isToken) async {
     // Check if API call is allowed in guest mode
     // await _canMakeApiCall(apiName);
-    
+
     var endpoint = "$bareUrl$apiName";
 
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
     String timezone = await _getCurrentTimezone();
-    String? token = sharedPreferences.getString(SharePreferenceConst.access_token);
+    String? token =
+        sharedPreferences.getString(SharePreferenceConst.access_token);
 
     // Prepare headers
     Map<String, dynamic> headers = {
       'accept': "application/json",
     };
-    
+
     // Add timezone header
     headers['timezone'] = timezone;
-    
+
     // Add token for authenticated requests
     if (isToken) {
       if (token != null && token.isNotEmpty) {
@@ -254,7 +259,7 @@ class ProjectRemoteDataSourceImpl extends BaseRemoteSource implements ProjectRem
     }
 
     var dioCall = dioClient.get(
-      endpoint, 
+      endpoint,
       queryParameters: toJson(),
       options: Options(headers: headers),
     );
@@ -267,14 +272,16 @@ class ProjectRemoteDataSourceImpl extends BaseRemoteSource implements ProjectRem
   }
 
   @override
-  Future sendPutApiRequest(Map<String, dynamic> Function() toJson,String apiName,bool isToken) async {
+  Future sendPutApiRequest(Map<String, dynamic> Function() toJson,
+      String apiName, bool isToken) async {
     // Check if API call is allowed in guest mode
-   // await _canMakeApiCall(apiName);
-    
+    // await _canMakeApiCall(apiName);
+
     var endpoint = "$bareUrl$apiName";
 
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
-    String? token = sharedPreferences.getString(SharePreferenceConst.access_token);
+    String? token =
+        sharedPreferences.getString(SharePreferenceConst.access_token);
     String timezone = await _getCurrentTimezone();
 
     // Prepare headers for JSON content
@@ -286,15 +293,15 @@ class ProjectRemoteDataSourceImpl extends BaseRemoteSource implements ProjectRem
     // Add timezone header
     headers['timezone'] = timezone;
 
-    if(isToken){
+    if (isToken) {
       if (token != null && token.isNotEmpty) {
         headers["Authorization"] = "Bearer $token";
       }
     }
-    
+
     // Send raw JSON data using PUT method
     var dioCall = dioClient.put(
-      endpoint, 
+      endpoint,
       data: toJson.call(), // Dio will automatically serialize Map to JSON
       options: Options(headers: headers),
     );
@@ -315,16 +322,17 @@ class ProjectRemoteDataSourceImpl extends BaseRemoteSource implements ProjectRem
     String? imageFieldName,
   }) async {
     // Check if API call is allowed in guest mode
-   // await _canMakeApiCall(apiName);
-    
+    // await _canMakeApiCall(apiName);
+
     var endpoint = "$bareUrl$apiName";
 
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
-    String? token = sharedPreferences.getString(SharePreferenceConst.access_token);
+    String? token =
+        sharedPreferences.getString(SharePreferenceConst.access_token);
     String timezone = await _getCurrentTimezone();
 
     List<String> deviceData = await CommonUtils.getIntance().getDeviceData();
-   // String? deviceToken = await FirebaseMessaging.instance.getToken();
+    // String? deviceToken = await FirebaseMessaging.instance.getToken();
 
     String? deviceToken = await FirebaseTokenService.getFCMToken();
 
@@ -389,19 +397,20 @@ class ProjectRemoteDataSourceImpl extends BaseRemoteSource implements ProjectRem
 
   @override
   Future sendMultipartApiRequestNew(
-      Map<String, dynamic> Function() toJson,
-      String apiName,
-      bool isToken, {
-        File? imageFile,
-        String? imageFieldName,
-      }) async {
+    Map<String, dynamic> Function() toJson,
+    String apiName,
+    bool isToken, {
+    File? imageFile,
+    String? imageFieldName,
+  }) async {
     // Check if API call is allowed in guest mode
     // await _canMakeApiCall(apiName);
 
     var endpoint = "$bareUrl$apiName";
 
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
-    String? token = sharedPreferences.getString(SharePreferenceConst.access_token);
+    String? token =
+        sharedPreferences.getString(SharePreferenceConst.access_token);
     String timezone = await _getCurrentTimezone();
 
     List<String> deviceData = await CommonUtils.getIntance().getDeviceData();
@@ -474,11 +483,12 @@ class ProjectRemoteDataSourceImpl extends BaseRemoteSource implements ProjectRem
   }) async {
     // Check if API call is allowed in guest mode
     // await _canMakeApiCall(apiName);
-    
+
     var endpoint = "$bareUrl$apiName";
 
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
-    String? token = sharedPreferences.getString(SharePreferenceConst.access_token);
+    String? token =
+        sharedPreferences.getString(SharePreferenceConst.access_token);
     String timezone = await _getCurrentTimezone();
 
     // Prepare headers for multipart form data
@@ -530,12 +540,13 @@ class ProjectRemoteDataSourceImpl extends BaseRemoteSource implements ProjectRem
   @override
   Future sendDeleteApiRequest(String apiName, bool isToken) async {
     // Check if API call is allowed in guest mode
-   // await _canMakeApiCall(apiName);
-    
+    // await _canMakeApiCall(apiName);
+
     var endpoint = "$bareUrl$apiName";
 
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
-    String? token = sharedPreferences.getString(SharePreferenceConst.access_token);
+    String? token =
+        sharedPreferences.getString(SharePreferenceConst.access_token);
     String timezone = await _getCurrentTimezone();
 
     // Prepare headers for JSON content
@@ -547,15 +558,15 @@ class ProjectRemoteDataSourceImpl extends BaseRemoteSource implements ProjectRem
     // Add timezone header
     headers['timezone'] = timezone;
 
-    if(isToken){
+    if (isToken) {
       if (token != null && token.isNotEmpty) {
         headers["Authorization"] = "Bearer $token";
       }
     }
-    
+
     // Send DELETE request
     var dioCall = dioClient.delete(
-      endpoint, 
+      endpoint,
       options: Options(headers: headers),
     );
     try {
@@ -565,5 +576,4 @@ class ProjectRemoteDataSourceImpl extends BaseRemoteSource implements ProjectRem
       rethrow;
     }
   }
-
 }

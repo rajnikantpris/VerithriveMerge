@@ -1,5 +1,3 @@
-
-
 // var bareUrl = 'https://adminportal.verithrive.co.uk/api/api/v3/user/';
 // var socketUrl = 'https://adminportal.verithrive.co.uk';
 
@@ -8,7 +6,6 @@ var socketUrl = 'https://dev.verithrive.co.uk/';
 
 // var bareUrl = 'http://192.168.0.14:4142/api/api/v3/user/';
 // var socketUrl = 'http://192.168.0.14:4142';
-
 
 // Global variables for Google Sign-In
 String? serverClientIdGlb;
@@ -54,6 +51,7 @@ const validate_booking_window = "validate-booking-window";
 const bookings_list = "bookings/list";
 const notifications_list = "notifications/list";
 const update_booking = "update-booking";
+const professional_platform_fee = "professional/platform-fee";
 
 const chat_inbox = "chat/inbox";
 const chat_messages = "chat/messages/{room_id}";

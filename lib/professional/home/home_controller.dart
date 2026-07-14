@@ -62,6 +62,10 @@ class HomeController extends BaseController {
   final cancelledSessions = <SessionData>[].obs;
   final pastSessions = <SessionData>[].obs;
 
+  /// Date key (`yyyy-MM-dd`) → whether that day has any booking.
+  final bookingPresenceByDate = <String, bool>{}.obs;
+  bool _isLoadingMonthBookingDots = false;
+
   // Profile details
   final profileDetails = Rxn<ProfileDetailsModel>();
   bool _stripeOnboardingDialogShown = false;
@@ -135,6 +139,7 @@ class HomeController extends BaseController {
     loadProfileDetails(showStripeDialog: true);
     updateDeviceToken();
     loadBookingsList();
+    loadMonthBookingDots();
     _notificationService?.fetchNotificationCount();
     _connectSocket();
   }
@@ -301,6 +306,8 @@ class HomeController extends BaseController {
     // have been skipped while the week view was offstage.
     if (!showMonthView.value) {
       _scrollToSelectedDate();
+    } else if (!_isGuestUser()) {
+      loadMonthBookingDots();
     }
   }
 
@@ -312,12 +319,18 @@ class HomeController extends BaseController {
     hasUserSelectedDate.value = true;
     selectedDate.value = _shiftMonth(-1);
     // loadBookingsList() will be called automatically via ever(selectedDate) listener
+    if (!_isGuestUser()) {
+      loadMonthBookingDots();
+    }
   }
 
   void goToNextMonth() {
     hasUserSelectedDate.value = true;
     selectedDate.value = _shiftMonth(1);
     // loadBookingsList() will be called automatically via ever(selectedDate) listener
+    if (!_isGuestUser()) {
+      loadMonthBookingDots();
+    }
   }
 
   List<DateTime> get monthDates {
@@ -422,6 +435,11 @@ class HomeController extends BaseController {
               pastSessions.clear();
             }
 
+            _setBookingPresence(
+              targetDate,
+              _hasAnyBooking(bookingsData),
+            );
+
             logInfo(
               'Bookings loaded: ${bookingsData.upcomingBookings?.total ?? 0} upcoming, '
               '${bookingsData.cancelledBookings?.total ?? 0} cancelled, '
@@ -446,6 +464,95 @@ class HomeController extends BaseController {
         logError('Failed to load bookings', error: error, stackTrace: stack);
       },
     );
+  }
+
+  String _bookingDateKey(DateTime date) =>
+      '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+
+  bool _hasAnyBooking(BookingsListData data) {
+    return (data.upcomingBookings?.items?.isNotEmpty ?? false) ||
+        (data.cancelledBookings?.items?.isNotEmpty ?? false) ||
+        (data.pastBookings?.items?.isNotEmpty ?? false);
+  }
+
+  void _setBookingPresence(DateTime date, bool hasBooking) {
+    bookingPresenceByDate[_bookingDateKey(date)] = hasBooking;
+    bookingPresenceByDate.refresh();
+  }
+
+  bool _isTodayOrFuture(DateTime date) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final dateOnly = DateTime(date.year, date.month, date.day);
+    return !dateOnly.isBefore(today);
+  }
+
+  /// Green = booking exists, Red = no booking.
+  /// Dots are only shown for today and future dates.
+  List<Color> getEventColorsForDate(DateTime date) {
+    bookingPresenceByDate.length;
+    if (!_isTodayOrFuture(date)) return const <Color>[];
+
+    final hasBooking = bookingPresenceByDate[_bookingDateKey(date)] == true;
+    return [
+      hasBooking ? AppColor.greenText : AppColor.color_E74C3C,
+    ];
+  }
+
+  /// Whether any booking exists on [date] (today/future only).
+  bool hasBookingOnDate(DateTime date) {
+    bookingPresenceByDate.length;
+    if (!_isTodayOrFuture(date)) return false;
+    return bookingPresenceByDate[_bookingDateKey(date)] == true;
+  }
+
+  /// Whether a booking status dot should be shown for [date].
+  bool shouldShowBookingDot(DateTime date) => _isTodayOrFuture(date);
+
+  /// Prefetch booking presence for today + future days in the visible month.
+  Future<void> loadMonthBookingDots({DateTime? month}) async {
+    if (_isGuestUser() || _isLoadingMonthBookingDots) return;
+
+    final apiService = _userApiService;
+    if (apiService == null) return;
+
+    final reference = month ?? selectedDate.value;
+    final daysInMonth = DateTime(reference.year, reference.month + 1, 0).day;
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    _isLoadingMonthBookingDots = true;
+
+    try {
+      final datesToLoad = <DateTime>[];
+      for (int day = 1; day <= daysInMonth; day++) {
+        final date = DateTime(reference.year, reference.month, day);
+        if (!date.isBefore(today)) {
+          datesToLoad.add(date);
+        }
+      }
+
+      if (datesToLoad.isEmpty) return;
+
+      await Future.wait(
+        datesToLoad.map((date) async {
+          try {
+            final response = await apiService.getBookingsList(date: date);
+            if (response.success && response.data is Map<String, dynamic>) {
+              final bookingsData = BookingsListData.fromJson(
+                response.data as Map<String, dynamic>,
+              );
+              _setBookingPresence(date, _hasAnyBooking(bookingsData));
+            } else {
+              _setBookingPresence(date, false);
+            }
+          } catch (e) {
+            logError('Failed to load booking dot for $date', error: e);
+          }
+        }),
+      );
+    } finally {
+      _isLoadingMonthBookingDots = false;
+    }
   }
 
   /// Convert BookingItem to SessionData

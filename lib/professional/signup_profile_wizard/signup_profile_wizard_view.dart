@@ -134,14 +134,35 @@ class SignupProfileWizardView extends BaseView<SignupProfileWizardController> {
           }),
         ),
         SizedBox(height: HightWidthSizes.setValue_12),
-        Text(
-          steps[activeIndex],
-          style: TextStyle(
-            fontFamily: AppFonts.rubikBold,
-            fontWeight: FontWeight.w700,
-            fontSize: FontSizes.setFontValue_20,
-            color: AppColor.color_2D2D2D,
+        // Text(
+        //   steps[activeIndex],
+        //   style: TextStyle(
+        //     fontFamily: AppFonts.rubikBold,
+        //     fontWeight: FontWeight.w700,
+        //     fontSize: FontSizes.setFontValue_20,
+        //     color: AppColor.color_2D2D2D,
+        //   ),
+        Column(children: [
+          Text(
+            steps[activeIndex],
+            style: TextStyle(
+              fontFamily: AppFonts.rubikMedium,
+              fontWeight: FontWeight.w500,
+              fontSize: FontSizes.setFontValue_18,
+              color: AppColor.color_2D3648,
+            ),
           ),
+          (steps[activeIndex] == 3)?
+          Text(
+            'CIMSPA Endorsed Personal Training Qualifications',
+            style: TextStyle(
+              fontFamily: AppFonts.rubikItalic,
+              fontWeight: FontWeight.w500,
+              fontSize: FontSizes.setFontValue_10,
+              color: AppColor.color_2D3648,
+            ),
+          ):SizedBox(),
+        ]
         ),
       ],
     );
@@ -730,9 +751,10 @@ class SignupProfileWizardView extends BaseView<SignupProfileWizardController> {
                       ),
                       SizedBox(height: HightWidthSizes.setValue_2),
                       Text(
-                        '(Degrees, Professional Certifications, First Aid, Training)',
+                        // '(Degrees, Professional Certifications, First Aid, Training)',
+                        '(CIMSPA Endorsed Personal Training Qualifications)',
                         style: TextStyle(
-                          fontFamily: AppFonts.rubikRegular,
+                          fontFamily: AppFonts.rubikItalic,
                           fontWeight: FontWeight.w400,
                           fontSize: FontSizes.setFontValue_9,
                           color: AppColor.color_2D2D2D,
@@ -870,7 +892,8 @@ class SignupProfileWizardView extends BaseView<SignupProfileWizardController> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _label('School/University*'),
+        _label('Awarding Body/University/Institution*'),
+        // _label('School/University*'),
         SizedBox(height: HightWidthSizes.setValue_6),
         _buildSearchableCollegeDropdown(
           context,
@@ -879,7 +902,8 @@ class SignupProfileWizardView extends BaseView<SignupProfileWizardController> {
         ),
         SizedBox(height: HightWidthSizes.setValue_14),
         CustomTextField(
-          label: 'Degree/Certificate*',
+          // label: 'Degree/Certificate*',
+          label: 'Qualification Name*',
           hintText: 'Enter here',
           controller: qualification.degreeController,
           icon: null,
@@ -888,7 +912,7 @@ class SignupProfileWizardView extends BaseView<SignupProfileWizardController> {
             if (!controller.qualificationsHasValidated.value) {
               return null;
             }
-            return controller.validateNotEmpty(value, 'degree/certificate');
+            return controller.validateNotEmpty(value, 'qualification name');
           },
           onChanged: (value) =>
               controller.onDegreeCertificateChanged(value, index),
@@ -1595,7 +1619,7 @@ class SignupProfileWizardView extends BaseView<SignupProfileWizardController> {
                       return null;
                     }
                     return controller.validateNotEmpty(
-                        value, 'school/university');
+                        value, 'awarding body,university,institution');
                   },
                   onChanged: (text) =>
                       controller.onCollegeUniversityTextChanged(

@@ -284,7 +284,7 @@ class _WeekCalendar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: HightWidthSizes.setValue_65,
+      height: HightWidthSizes.setValue_72,
       child: Obx(() {
         final weekDates = controller.monthDates;
         return ListView.separated(
@@ -294,6 +294,7 @@ class _WeekCalendar extends StatelessWidget {
             final date = weekDates[index];
             final label = _weekdayLabel(date);
             final selected = _isSameDay(date, controller.selectedDate.value);
+            final hasAvailability = controller.hasAvailabilityOnDate(date);
             return Container(
               margin: EdgeInsets.only(
                 left: HightWidthSizes.setValue_2,
@@ -305,6 +306,9 @@ class _WeekCalendar extends StatelessWidget {
                   label: label,
                   day: date.day.toString(),
                   selected: selected,
+                  availabilityDotColor: hasAvailability
+                      ? AppColor.greenText
+                      : AppColor.color_E74C3C,
                 ),
               ),
             );
@@ -434,7 +438,7 @@ class _MonthCalendar extends StatelessWidget {
                     ),
                     SizedBox(
                       height: HightWidthSizes.setValue_14,
-                      child: dotColors.isNotEmpty
+                      child: isCurrentMonth && dotColors.isNotEmpty
                           ? Padding(
                               padding: EdgeInsets.only(
                                 top: HightWidthSizes.setValue_6,
@@ -493,11 +497,13 @@ class _DatePill extends StatelessWidget {
     required this.label,
     required this.day,
     required this.selected,
+    required this.availabilityDotColor,
   });
 
   final String label;
   final String day;
   final bool selected;
+  final Color availabilityDotColor;
 
   @override
   Widget build(BuildContext context) {
@@ -529,7 +535,7 @@ class _DatePill extends StatelessWidget {
                     fontSize: FontSizes.setFontValue_14,
                   ),
           ),
-          SizedBox(height: HightWidthSizes.setValue_8),
+          SizedBox(height: HightWidthSizes.setValue_4),
           Text(
             day,
             style: selected
@@ -545,6 +551,15 @@ class _DatePill extends StatelessWidget {
                     color: AppColor.color_32435F,
                     fontSize: FontSizes.setFontValue_14,
                   ),
+          ),
+          SizedBox(height: HightWidthSizes.setValue_4),
+          Container(
+            width: HightWidthSizes.setValue_6,
+            height: HightWidthSizes.setValue_6,
+            decoration: BoxDecoration(
+              color: availabilityDotColor,
+              shape: BoxShape.circle,
+            ),
           ),
         ],
       ),

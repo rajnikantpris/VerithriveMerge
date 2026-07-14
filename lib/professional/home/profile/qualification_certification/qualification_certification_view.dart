@@ -40,15 +40,26 @@ class QualificationCertificationView
             onPressed: () => Get.back(),
           ),
           centerTitle: true,
-          title: Text(
-            'Qualification & certification',
-            style: TextStyle(
-              fontFamily: AppFonts.rubikMedium,
-              fontWeight: FontWeight.w500,
-              fontSize: FontSizes.setFontValue_18,
-              color: AppColor.color_2D3648,
+          title: Column(children: [
+            Text(
+              'Qualification & certification',
+              style: TextStyle(
+                fontFamily: AppFonts.rubikMedium,
+                fontWeight: FontWeight.w500,
+                fontSize: FontSizes.setFontValue_18,
+                color: AppColor.color_2D3648,
+              ),
             ),
-          ),
+            Text(
+              'CIMSPA Endorsed Personal Training Qualifications',
+              style: TextStyle(
+                fontFamily: AppFonts.rubikItalic,
+                fontWeight: FontWeight.w500,
+                fontSize: FontSizes.setFontValue_10,
+                color: AppColor.color_2D3648,
+              ),
+            )
+          ],),
         ),
       ),
     );
@@ -92,9 +103,10 @@ class QualificationCertificationView
                           ),
                           SizedBox(height: HightWidthSizes.setValue_2),
                           Text(
-                            '(Degrees, Professional Certifications, First Aid, Training)',
+                            // '(Degrees, Professional Certifications, First Aid, Training)',
+                            '(CIMSPA Endorsed Personal Training Qualifications)',
                             style: TextStyle(
-                              fontFamily: AppFonts.rubikRegular,
+                              fontFamily: AppFonts.rubikItalic,
                               fontWeight: FontWeight.w400,
                               fontSize: FontSizes.setFontValue_9,
                               color: AppColor.color_2D2D2D,
@@ -240,7 +252,7 @@ class QualificationCertificationView
                       return null;
                     }
                     return controller.validateNotEmpty(
-                        value, 'school/university');
+                        value, 'awarding body,university,institution');
                   },
                 ),
                 if (showDropdown)
@@ -366,7 +378,8 @@ class QualificationCertificationView
       children: [
         // School/University field
         Text(
-          'School/University*',
+          // 'School/Universit*',
+          'Awarding Body / University / Institution*',
           style: TextStyle(
             fontFamily: AppFonts.rubikRegular,
             fontWeight: FontWeight.w400,
@@ -384,7 +397,8 @@ class QualificationCertificationView
 
         // Degree/Certificate field
         CustomTextField(
-          label: 'Degree/Certificate*',
+          // label: 'Degree/Certificate*',
+          label: 'Qualification Name*',
           hintText: 'Enter here',
           controller: qualification.degreeController,
           validator: (value) {
@@ -392,7 +406,7 @@ class QualificationCertificationView
             if (!controller.hasValidated.value) {
               return null;
             }
-            return controller.validateNotEmpty(value, 'degree/certificate');
+            return controller.validateNotEmpty(value, 'qualification name');
           },
         ),
         SizedBox(height: HightWidthSizes.setValue_14),

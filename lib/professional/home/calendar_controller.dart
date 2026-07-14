@@ -10,6 +10,7 @@ import '../../models/bookings_list_model.dart';
 import '../../utils/logger.dart';
 import '../../services/notification_service.dart';
 import '../../services/analytics_service.dart';
+import '../../theme/colors.dart';
 import '../../theme/hight_width_sizes.dart';
 import '../../widgets/response_dialog.dart';
 import 'home_controller.dart';
@@ -801,18 +802,25 @@ class CalendarController extends BaseController {
     return '${months[selectedDate.value.month - 1]} ${selectedDate.value.year}';
   }
 
-  /// Get event colors for a specific date based on availability
+  /// Green = has availability, Red = not available.
   List<Color> getEventColorsForDate(DateTime date) {
     rawAvailabilities.length;
-    final colors = <Color>[];
 
-    for (final availability in rawAvailabilities) {
-      if (_isDateInAvailability(date, availability)) {
-        colors.add(Colors.green);
-      }
-    }
+    final hasAvailability = rawAvailabilities.any(
+      (availability) => _isDateInAvailability(date, availability),
+    );
 
-    return colors;
+    return [
+      hasAvailability ? AppColor.greenText : AppColor.color_E74C3C,
+    ];
+  }
+
+  /// Whether the professional has availability on [date].
+  bool hasAvailabilityOnDate(DateTime date) {
+    rawAvailabilities.length;
+    return rawAvailabilities.any(
+      (availability) => _isDateInAvailability(date, availability),
+    );
   }
 
   void _mergeRawAvailabilities(List<Map<String, dynamic>> newItems) {

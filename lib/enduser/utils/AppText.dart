@@ -197,6 +197,9 @@ abstract class AppText {
 
   // Summary
   static const String summary = "Summary";
+  static const String servicePrice = "Service Price";
+  static const String platformFee = "Platform Fee";
+  static const String total = "Total";
 
   // Day Names
   static const String sun = "Sun";

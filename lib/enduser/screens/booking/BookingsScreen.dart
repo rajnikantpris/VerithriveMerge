@@ -322,7 +322,7 @@ class BookingsScreen extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      booking.price == 0 ? 'Free' : '£${booking.price.toStringAsFixed(0)}',
+                      booking.price == 0 ? 'Free' : '£${booking.price}',
                       style: AppTextStyles.popinSemiboldTextStyle(
                         fontSize: 20,
                         color: priceColor,

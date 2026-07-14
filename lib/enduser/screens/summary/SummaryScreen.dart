@@ -12,7 +12,8 @@ import '../cart/CartController.dart';
 
 class SummaryScreen extends StatelessWidget {
   final SummaryController controller = Get.put(SummaryController());
-  final CartController cartController = Get.find<CartController>(); // Keep for time picker functionality
+  final CartController cartController =
+      Get.find<CartController>(); // Keep for time picker functionality
 
   @override
   Widget build(BuildContext context) {
@@ -20,7 +21,7 @@ class SummaryScreen extends StatelessWidget {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final args = Get.arguments as Map<String, dynamic>?;
       final category = args?['category'] as String? ?? 'wellness';
-      
+
       AnalyticsService.instance.logScreenView(
         screenName: 'SummaryScreen',
         screenClass: 'SummaryScreen',
@@ -38,12 +39,24 @@ class SummaryScreen extends StatelessWidget {
 
       AnalyticsService.instance.logViewCartEvent(
         item: AnalyticsService.instance.buildItem(
-          itemId: cartController.professionalId.value.isNotEmpty ? cartController.professionalId.value : 'unknown',
-          itemName: itemVariant.isNotEmpty ? itemVariant : (cartController.serviceName.value.isNotEmpty ? cartController.serviceName.value : 'unknown'),
+          itemId: cartController.professionalId.value.isNotEmpty
+              ? cartController.professionalId.value
+              : 'unknown',
+          itemName: itemVariant.isNotEmpty
+              ? itemVariant
+              : (cartController.serviceName.value.isNotEmpty
+                  ? cartController.serviceName.value
+                  : 'unknown'),
           itemCategory: category,
           itemCategory2: cartController.serviceName.value,
-          itemVariant: itemVariant.isNotEmpty ? itemVariant : cartController.consultationType.value,
-          itemBrand: itemBrand.isNotEmpty ? itemBrand : (cartController.consultationType.value.isNotEmpty ? cartController.consultationType.value : category),
+          itemVariant: itemVariant.isNotEmpty
+              ? itemVariant
+              : cartController.consultationType.value,
+          itemBrand: itemBrand.isNotEmpty
+              ? itemBrand
+              : (cartController.consultationType.value.isNotEmpty
+                  ? cartController.consultationType.value
+                  : category),
           price: cartController.price.value,
           quantity: 1,
         ),
@@ -66,75 +79,85 @@ class SummaryScreen extends StatelessWidget {
         title: Text(
           AppText.summary,
           style: AppTextStyles.mediumTextStyle(
-            fontSize: 20,
-            color: AppColors.black
-          ),
+              fontSize: 20, color: AppColors.black),
         ),
         centerTitle: true,
       ),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.all(20),
-        child: Column(
-          children: [
-            // Complete Booking Expiry
-            Container(
-              padding: EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: AppColors.lightGreyF5F7F8,
-                borderRadius: BorderRadius.circular(10),
+      body: Obx(() {
+        if (controller.isPlatformFeeLoading.value) {
+          return const Center(
+            child: CircularProgressIndicator(),
+          );
+        }
+
+        return SingleChildScrollView(
+          padding: EdgeInsets.all(20),
+          child: Column(
+            children: [
+              // Complete Booking Expiry
+              Container(
+                padding: EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: AppColors.lightGreyF5F7F8,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Obx(() => Text.rich(
+                      TextSpan(
+                        text: AppText.completeBookingExpiry,
+                        style: AppTextStyles.regularTextStyle(
+                          fontSize: 15,
+                          color: AppColors.blueColor,
+                        ),
+                        children: [
+                          TextSpan(
+                              text: '${controller.expiryTime.value}.',
+                              style: AppTextStyles.mediumTextStyle(
+                                fontSize: 15,
+                                color: AppColors.blueColor,
+                              )),
+                        ],
+                      ),
+                    )),
               ),
-              child: Obx(() => Text.rich(
-                TextSpan(
-                  text: AppText.completeBookingExpiry,
-                  style: AppTextStyles.regularTextStyle(
-                    fontSize: 15,
-                    color: AppColors.blueColor,
-                  ),
-                  children: [
-                    TextSpan(
-                      text: '${controller.expiryTime.value}.',
-                      style: AppTextStyles.mediumTextStyle(
-                        fontSize: 15,
-                        color: AppColors.blueColor,
-                      )
+
+              SizedBox(height: 20),
+
+              // Time Selection Display (Read-only)
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildTimeDisplay(
+                      label: AppText.from,
+                      time: controller.fromTime,
                     ),
-                  ],
-                ),
-              )),
-            ),
-
-            SizedBox(height: 20),
-
-            // Time Selection Display (Read-only)
-            Row(
-              children: [
-                Expanded(
-                  child: _buildTimeDisplay(
-                    label: AppText.from,
-                    time: controller.fromTime,
                   ),
-                ),
-                SizedBox(width: 16),
-                Expanded(
-                  child: _buildTimeDisplay(
-                    label: AppText.until,
-                    time: controller.untilTime,
+                  SizedBox(width: 16),
+                  Expanded(
+                    child: _buildTimeDisplay(
+                      label: AppText.until,
+                      time: controller.untilTime,
+                    ),
                   ),
-                ),
-              ],
-            ),
+                ],
+              ),
 
-            SizedBox(height: 20),
+              SizedBox(height: 20),
 
-            Card(
-              color: AppColors.white,
-              elevation: 4,
-              child: _buildSummarySection(),
-            ),
-          ],
-        ),
-      ),
-      bottomNavigationBar: _buildBottomButton(),
+              Card(
+                color: AppColors.white,
+                elevation: 4,
+                child: _buildSummarySection(),
+              ),
+            ],
+          ),
+        );
+      }),
+      bottomNavigationBar: Obx(() {
+        if (controller.isPlatformFeeLoading.value) {
+          return const SizedBox.shrink();
+        }
+        return _buildBottomButton();
+      }),
     );
   }
 
@@ -158,27 +181,86 @@ class SummaryScreen extends StatelessWidget {
                 ),
               ),
               Obx(() => Text(
-                controller.isFree
-                    ? AppText.free
-                    : '£${controller.price.value.toStringAsFixed(2)}',
-                style: AppTextStyles.popinSemiboldTextStyle(
-                  fontSize: 20,
-                  color: AppColors.color2D3648,
-                ),
-              )),
+                    controller.isFree
+                        ? AppText.free
+                        : '£${controller.totalPrice.toStringAsFixed(2)}',
+                    style: AppTextStyles.popinSemiboldTextStyle(
+                      fontSize: 20,
+                      color: AppColors.color2D3648,
+                    ),
+                  )),
             ],
           ),
-      
+
           SizedBox(height: 16),
-      
+
+          CustomPaint(
+            size: Size(double.infinity, 1),
+            painter: DashedLinePainter(),
+          ),
+
+          SizedBox(height: 12),
+
+          Text(
+            "Price breakdown",
+            style: AppTextStyles.popinRegularTextStyle(
+              fontSize: 14,
+              color: AppColors.color9D9D9D,
+            ),
+          ),
+
+          SizedBox(height: 4),
+
+          Obx(() {
+            if (controller.isFree) {
+              return Align(
+                alignment: Alignment.centerRight,
+                child: Text(
+                  AppText.free,
+                  style: AppTextStyles.popinSemiboldTextStyle(
+                    fontSize: 20,
+                    color: AppColors.color2D3648,
+                  ),
+                ),
+              );
+            }
+
+            return Column(
+              children: [
+                _buildPriceRow(
+                  AppText.servicePrice,
+                  '£${controller.price.value.toStringAsFixed(2)}',
+                ),
+                SizedBox(height: 8),
+                _buildPriceRow(
+                  AppText.platformFee,
+                  '£${controller.platformFee.toStringAsFixed(2)}',
+                ),
+                // SizedBox(height: 12),
+                // CustomPaint(
+                //   size: Size(double.infinity, 1),
+                //   painter: DashedLinePainter(),
+                // ),
+                // SizedBox(height: 12),
+                // _buildPriceRow(
+                //   AppText.total,
+                //   '£${controller.totalPrice.toStringAsFixed(2)}',
+                //   isTotal: true,
+                // ),
+              ],
+            );
+          }),
+
+          SizedBox(height: 12),
+
           // Dashed Divider
           CustomPaint(
             size: Size(double.infinity, 1),
             painter: DashedLinePainter(),
           ),
-      
+
           SizedBox(height: 16),
-      
+
           // Date & Time
           Text(
             AppText.dateTime,
@@ -189,15 +271,15 @@ class SummaryScreen extends StatelessWidget {
           ),
           SizedBox(height: 4),
           Obx(() => Text(
-            controller.getFormattedDateTime(),
-            style: AppTextStyles.regularTextStyle(
-              fontSize: 14,
-              color: AppColors.color2B2B2B,
-            ),
-          )),
-      
+                controller.getFormattedDateTime(),
+                style: AppTextStyles.regularTextStyle(
+                  fontSize: 14,
+                  color: AppColors.color2B2B2B,
+                ),
+              )),
+
           SizedBox(height: 16),
-      
+
           // Location
           Text(
             AppText.location,
@@ -208,15 +290,15 @@ class SummaryScreen extends StatelessWidget {
           ),
           SizedBox(height: 4),
           Obx(() => Text(
-            controller.location.value,
-            style: AppTextStyles.regularTextStyle(
-              fontSize: 14,
-              color: AppColors.color2B2B2B,
-            ),
-          )),
-      
+                controller.location.value,
+                style: AppTextStyles.regularTextStyle(
+                  fontSize: 14,
+                  color: AppColors.color2B2B2B,
+                ),
+              )),
+
           SizedBox(height: 20),
-      
+
           Obx(() {
             if (controller.isFree) return const SizedBox.shrink();
             return Column(
@@ -248,7 +330,7 @@ class SummaryScreen extends StatelessWidget {
               ],
             );
           }),
-      
+
           // Action Buttons
           Row(
             children: [
@@ -259,14 +341,13 @@ class SummaryScreen extends StatelessWidget {
                   label: Text(
                     'Edit booking',
                     style: TextStyle(
-                      fontFamily: 'Rubik',
-                      fontSize: 14,
-                      color: AppColors.primaryColor,
-                      fontWeight: FontWeight.w400,
-                      decoration: TextDecoration.underline,
-                      decorationColor: AppColors.primaryColor,
-                      decorationThickness: 1
-                    ),
+                        fontFamily: 'Rubik',
+                        fontSize: 14,
+                        color: AppColors.primaryColor,
+                        fontWeight: FontWeight.w400,
+                        decoration: TextDecoration.underline,
+                        decorationColor: AppColors.primaryColor,
+                        decorationThickness: 1),
                   ),
                   style: OutlinedButton.styleFrom(
                     side: BorderSide(color: AppColors.primaryColor),
@@ -305,6 +386,38 @@ class SummaryScreen extends StatelessWidget {
     );
   }
 
+  Widget _buildPriceRow(String label, String amount, {bool isTotal = false}) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: isTotal
+              ? AppTextStyles.popinSemiboldTextStyle(
+                  fontSize: 16,
+                  color: AppColors.color2D3648,
+                )
+              : AppTextStyles.regularTextStyle(
+                  fontSize: 14,
+                  color: AppColors.color2B2B2B,
+                ),
+        ),
+        Text(
+          amount,
+          style: isTotal
+              ? AppTextStyles.popinSemiboldTextStyle(
+                  fontSize: 20,
+                  color: AppColors.color2D3648,
+                )
+              : AppTextStyles.mediumTextStyle(
+                  fontSize: 14,
+                  color: AppColors.color2B2B2B,
+                ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildBottomButton() {
     return Container(
       width: double.infinity,
@@ -313,22 +426,21 @@ class SummaryScreen extends StatelessWidget {
       child: ElevatedButton(
         onPressed: controller.proceedToPayment,
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primaryColor,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          elevation: 0,
-          padding: EdgeInsets.symmetric(vertical: 15)
-        ),
+            backgroundColor: AppColors.primaryColor,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            elevation: 0,
+            padding: EdgeInsets.symmetric(vertical: 15)),
         child: Obx(() => Text(
-          controller.isFree
-              ? AppText.freeBookingSession
-              : AppText.proceedToPayment,
-          style: AppTextStyles.mediumTextStyle(
-            fontSize: 16,
-            color: AppColors.white,
-          ),
-        )),
+              controller.isFree
+                  ? AppText.freeBookingSession
+                  : AppText.proceedToPayment,
+              style: AppTextStyles.mediumTextStyle(
+                fontSize: 16,
+                color: AppColors.white,
+              ),
+            )),
       ),
     );
   }
@@ -353,7 +465,8 @@ class SummaryScreen extends StatelessWidget {
               decoration: BoxDecoration(
                 border: Border.all(color: Colors.grey.shade300),
                 borderRadius: BorderRadius.circular(8),
-                color: Colors.grey.shade50, // Slightly different background to indicate read-only
+                color: Colors.grey
+                    .shade50, // Slightly different background to indicate read-only
               ),
               child: Row(
                 children: [
@@ -373,4 +486,3 @@ class SummaryScreen extends StatelessWidget {
         ));
   }
 }
-
