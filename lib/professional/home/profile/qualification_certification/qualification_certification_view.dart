@@ -53,9 +53,10 @@ class QualificationCertificationView
             Text(
               'CIMSPA Endorsed Personal Training Qualifications',
               style: TextStyle(
+                fontStyle: FontStyle.italic,
                 fontFamily: AppFonts.rubikItalic,
                 fontWeight: FontWeight.w500,
-                fontSize: FontSizes.setFontValue_10,
+                fontSize: FontSizes.setFontValue_8,
                 color: AppColor.color_2D3648,
               ),
             )
@@ -106,9 +107,10 @@ class QualificationCertificationView
                             // '(Degrees, Professional Certifications, First Aid, Training)',
                             '(CIMSPA Endorsed Personal Training Qualifications)',
                             style: TextStyle(
+                              fontStyle: FontStyle.italic,
                               fontFamily: AppFonts.rubikItalic,
                               fontWeight: FontWeight.w400,
-                              fontSize: FontSizes.setFontValue_9,
+                              fontSize: FontSizes.setFontValue_8,
                               color: AppColor.color_2D2D2D,
                               height: 1.4,
                             ),
