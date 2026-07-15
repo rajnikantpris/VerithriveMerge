@@ -26,12 +26,12 @@ class UserApiService extends GetxService {
 
 
   // Base URL for the API
-  static const String baseUrl = 'https://dev.verithrive.co.uk/api/api/v3/professional/';
-  static const String socketUrl = 'https://dev.verithrive.co.uk';
+  // static const String baseUrl = 'https://dev.verithrive.co.uk/api/api/v3/professional/';
+  // static const String socketUrl = 'https://dev.verithrive.co.uk';
 
 
-  // static const String socketUrl = 'https://adminportal.verithrive.co.uk';
-  // static const String baseUrl = 'https://adminportal.verithrive.co.uk/api/api/v3/professional/';
+  static const String socketUrl = 'https://adminportal.verithrive.co.uk';
+  static const String baseUrl = 'https://adminportal.verithrive.co.uk/api/api/v3/professional/';
 
   /// Get the socket base URL (same server, different port/path)
   /// Extracts the protocol, host, and port from the API baseUrl
