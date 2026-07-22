@@ -87,17 +87,22 @@ class TherapistDetailScreen extends StatelessWidget {
         actions: [
           IconButton(
             icon: SvgPicture.asset(AppAssets.share),
-            onPressed: () {
+            onPressed: () async {
               final id = controller.professionalId ??
                   controller.therapist.value.id;
               if (id.isEmpty) return;
               final name = controller.therapist.value.name;
               final url = DeepLinkService.buildProfileShareUrl(id);
-              Share.share(
+              final box = context.findRenderObject() as RenderBox?;
+              final origin = (box != null && box.hasSize)
+                  ? box.localToGlobal(Offset.zero) & box.size
+                  : const Rect.fromLTWH(0, 0, 1, 1);
+              await Share.share(
                 name.isNotEmpty
                     ? 'Check out $name on Verithrive:\n$url'
                     : 'Check out this professional on Verithrive:\n$url',
                 subject: 'Professional Profile',
+                sharePositionOrigin: origin,
               );
             },
           ),

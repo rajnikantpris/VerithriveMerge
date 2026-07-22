@@ -20,7 +20,7 @@ class YourProfileController extends BaseController {
     YourProfileItem(title: 'Share profile'),
   ];
 
-  void onItemTap(YourProfileItem item) {
+  void onItemTap(YourProfileItem item, {BuildContext? context}) {
     if (item.title == 'Personal details') {
       Get.toNamed(Routes.personalDetails);
     } else if (item.title == 'Address') {
@@ -34,18 +34,25 @@ class YourProfileController extends BaseController {
     } else if (item.title == 'About you') {
       Get.toNamed(Routes.aboutYou);
     } else if (item.title == 'Share profile') {
-      if (Get.isRegistered<HomeController>()) {
-        _shareViaOtherApps(Get.find<HomeController>().profileDetails.value!);
-      } else {
+      if (!Get.isRegistered<HomeController>()) {
         debugPrint('HomeController not registered, cannot share profile');
+        return;
       }
+      final profile = Get.find<HomeController>().profileDetails.value;
+      if (profile == null) {
+        debugPrint('Profile details not loaded, cannot share profile');
+        return;
+      }
+      _shareViaOtherApps(profile, context: context ?? Get.context);
     } else {
-      // Hook for future navigation or actions per item.
       debugPrint('Tapped on ${item.title}');
     }
   }
 
-  void _shareViaOtherApps(ProfileDetailsModel profile) {
+  Future<void> _shareViaOtherApps(
+    ProfileDetailsModel profile, {
+    BuildContext? context,
+  }) async {
     final String profileId = profile.id ?? '';
     if (profileId.isEmpty) {
       debugPrint('Cannot share profile: missing profile id');
@@ -53,10 +60,29 @@ class YourProfileController extends BaseController {
     }
 
     final String profileText = _generateProfileText(profile, profileId);
-    Share.share(
-      profileText,
-      subject: 'Professional Profile',
-    );
+
+    // iOS (especially iPad) requires a non-zero sharePositionOrigin or the
+    // share sheet never appears.
+    final Rect origin = _shareOrigin(context);
+
+    try {
+      await Share.share(
+        profileText,
+        subject: 'Professional Profile',
+        sharePositionOrigin: origin,
+      );
+    } catch (e) {
+      debugPrint('Share profile failed: $e');
+    }
+  }
+
+  Rect _shareOrigin(BuildContext? context) {
+    final RenderBox? box = context?.findRenderObject() as RenderBox?;
+    if (box != null && box.hasSize) {
+      return box.localToGlobal(Offset.zero) & box.size;
+    }
+    // Safe fallback for iPhone / when render box is unavailable.
+    return const Rect.fromLTWH(0, 0, 1, 1);
   }
 
   String _generateProfileText(ProfileDetailsModel profile, String profileId) {
@@ -82,7 +108,7 @@ class YourProfileController extends BaseController {
       buffer.writeln('Experience: ${profile.totalExperience} years');
     }
 
-    if (profile.email?.isNotEmpty == true && !profile.isEmailHidden!) {
+    if (profile.email?.isNotEmpty == true && !(profile.isEmailHidden ?? false)) {
       buffer.writeln('Email: ${profile.email}');
     }
 

@@ -69,7 +69,7 @@ class YourProfileView extends BaseView<YourProfileController> {
         itemBuilder: (context, index) {
           final item = controller.items[index];
           return InkWell(
-            onTap: () => controller.onItemTap(item),
+            onTap: () => controller.onItemTap(item, context: context),
             child: Padding(
               padding: EdgeInsets.symmetric(
                 vertical: HightWidthSizes.setValue_14,

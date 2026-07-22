@@ -8,5 +8,9 @@
 	<array>
 		<string>Default</string>
 	</array>
+	<key>com.apple.developer.associated-domains</key>
+	<array>
+		<string>applinks:dev.verithrive.co.uk</string>
+	</array>
 </dict>
 </plist>
