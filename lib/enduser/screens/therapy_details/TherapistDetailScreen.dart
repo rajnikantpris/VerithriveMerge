@@ -93,9 +93,9 @@ class TherapistDetailScreen extends StatelessWidget {
               if (id.isEmpty) return;
               final name = controller.therapist.value.name;
               final url = DeepLinkService.buildProfileShareUrl(id);
-              final box = context.findRenderObject() as RenderBox?;
-              final origin = (box != null && box.hasSize)
-                  ? box.localToGlobal(Offset.zero) & box.size
+              final renderObject = context.findRenderObject();
+              final origin = (renderObject is RenderBox && renderObject.hasSize)
+                  ? renderObject.localToGlobal(Offset.zero) & renderObject.size
                   : const Rect.fromLTWH(0, 0, 1, 1);
               await Share.share(
                 name.isNotEmpty

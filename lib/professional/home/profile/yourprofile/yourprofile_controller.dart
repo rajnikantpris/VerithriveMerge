@@ -77,11 +77,15 @@ class YourProfileController extends BaseController {
   }
 
   Rect _shareOrigin(BuildContext? context) {
-    final RenderBox? box = context?.findRenderObject() as RenderBox?;
-    if (box != null && box.hasSize) {
-      return box.localToGlobal(Offset.zero) & box.size;
+    try {
+      final renderObject = context?.findRenderObject();
+      if (renderObject is RenderBox && renderObject.hasSize) {
+        return renderObject.localToGlobal(Offset.zero) & renderObject.size;
+      }
+    } catch (e) {
+      debugPrint('Share origin fallback: $e');
     }
-    // Safe fallback for iPhone / when render box is unavailable.
+    // Safe fallback for ListView / Sliver contexts (not RenderBox).
     return const Rect.fromLTWH(0, 0, 1, 1);
   }
 
