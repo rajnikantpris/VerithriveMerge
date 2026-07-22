@@ -17,6 +17,7 @@ import 'theme/app_theme.dart';
 import 'theme/colors.dart';
 import 'common/firebase_config.dart';
 import 'services/foreground_notification_service.dart';
+import 'services/deep_link_service.dart';
 import 'services/analytics_service.dart';
 
 // lib/main.dart file
@@ -77,6 +78,9 @@ Future<void> main() async {
 
   // Setup foreground + background-tap message handlers
   ForegroundNotificationService.setupForegroundMessageHandler();
+
+  // App Links / Universal Links (professional profile share)
+  await DeepLinkService.instance.init();
 
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,

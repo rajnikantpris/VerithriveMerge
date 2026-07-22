@@ -8,8 +8,10 @@ import 'TherapistDetailController.dart';
 class TherapyDetailBinding extends Bindings {
   @override
   void dependencies() {
-    Get.lazyPut<ProjectRemoteDataSource>(() => ProjectRemoteDataSourceImpl(), tag: (ProjectRemoteDataSource).toString());
-    Get.lazyPut<ProjectRepository>(() => ProjectRepositoryImpl(), tag: (ProjectRepository).toString());
+    Get.lazyPut<ProjectRemoteDataSource>(() => ProjectRemoteDataSourceImpl(),
+        tag: (ProjectRemoteDataSource).toString());
+    Get.lazyPut<ProjectRepository>(() => ProjectRepositoryImpl(),
+        tag: (ProjectRepository).toString());
     Get.put(TherapistDetailController());
   }
 }

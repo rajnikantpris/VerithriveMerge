@@ -1,28 +1,47 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:verithrive_dev/enduser/core/values/sharePrefrenceConst.dart'
-as enduser_prefs;
+    as enduser_prefs;
 import 'package:verithrive_dev/enduser/screens/main/MainScreen.dart'
-as enduser_main;
+    as enduser_main;
 import 'package:verithrive_dev/enduser/screens/profile/ProfileBinding.dart'
-as enduser_profile_binding;
+    as enduser_profile_binding;
 import 'package:verithrive_dev/enduser/screens/profile/ProfileView.dart'
-as enduser_profile_view;
+    as enduser_profile_view;
+import 'package:verithrive_dev/services/deep_link_service.dart';
 
 import '../../common/base_controller.dart';
 import '../../routes/app_routes.dart';
 
 class SplashController extends BaseController {
-  /// Show the splash then check login status and navigate accordingly.
+  Timer? _navigationTimer;
+
   @override
   void onReady() {
     super.onReady();
-    Future.delayed(const Duration(seconds: 2), _checkLoginAndNavigate);
+    _navigationTimer?.cancel();
+    _navigationTimer = Timer(const Duration(seconds: 2), () {
+      if (isClosed) return;
+      _checkLoginAndNavigate();
+    });
+  }
+
+  @override
+  void onClose() {
+    _navigationTimer?.cancel();
+    _navigationTimer = null;
+    super.onClose();
   }
 
   Future<void> _checkLoginAndNavigate() async {
+    if (isClosed) return;
+
     final prefs = await SharedPreferences.getInstance();
+    if (isClosed) return;
+
     final token = prefs.getString('access_token') ?? '';
 
     if (token.isEmpty) {
@@ -35,56 +54,51 @@ class SplashController extends BaseController {
     final userType = prefs.getString('userType') ?? '';
     final userId = prefs.getString('user_id') ?? '';
 
-    // Additional check: if we have professional-specific data, treat as professional
     final hasProfessionalFlags = prefs.containsKey('is_profile_created') ||
         prefs.containsKey('is_work_full') ||
         prefs.containsKey('is_professional_services');
 
-    debugPrint('Splash: userType=$userType, userId=$userId, hasProfessionalFlags=$hasProfessionalFlags');
+    debugPrint(
+      'Splash: userType=$userType, userId=$userId, hasProfessionalFlags=$hasProfessionalFlags',
+    );
 
-    // Determine user type with multiple fallback checks
     final isProfessional = userType == 'professional' ||
         (userType.isEmpty && hasProfessionalFlags) ||
-        (userType.isEmpty && userId.isNotEmpty && _checkIfProfessionalUserId(prefs));
+        (userType.isEmpty &&
+            userId.isNotEmpty &&
+            _checkIfProfessionalUserId(prefs));
 
     if (isProfessional) {
       debugPrint('Splash: Navigating to professional flow');
       _navigateBasedOnUserFlags(prefs);
       return;
-    } else {
-      debugPrint('Splash: Navigating to end user flow');
-      final isPersonalDetailsCompleted = prefs.getBool(
-        enduser_prefs.SharePreferenceConst.isPersonalDetails,
-      ) ??
-          false;
-
-      if (isPersonalDetailsCompleted) {
-        Get.offAll(() => enduser_main.MainScreen());
-      } else {
-        Get.offAll(
-              () => const enduser_profile_view.ProfileView(),
-          binding: enduser_profile_binding.ProfileBinding(),
-        );
-      }
     }
 
-    // final isLogin =
-    //     prefs.getBool(enduser_prefs.SharePreferenceConst.isLogin) ?? false;
-    //
-    // if (!isLogin) {
-    //   Get.offAll(
-    //     () => const enduser_onboarding_screen.OnboardingScreen(),
-    //     binding: enduser_onboarding.OnboardingBinding(),
-    //   );
-    //   return;
-    // }
+    debugPrint('Splash: Navigating to end user flow');
+    final isPersonalDetailsCompleted = prefs.getBool(
+          enduser_prefs.SharePreferenceConst.isPersonalDetails,
+        ) ??
+        false;
 
-
+    if (isPersonalDetailsCompleted) {
+      Get.offAll(() => enduser_main.MainScreen());
+      // Open deep-link profile AFTER MainScreen is mounted (avoids offAll wiping it).
+      _openPendingDeepLinkAfterMain();
+    } else {
+      Get.offAll(
+        () => const enduser_profile_view.ProfileView(),
+        binding: enduser_profile_binding.ProfileBinding(),
+      );
+    }
   }
 
-  /// Additional check to determine if user is professional based on stored data
+  void _openPendingDeepLinkAfterMain() {
+    Future<void>.delayed(const Duration(milliseconds: 600), () {
+      DeepLinkService.instance.handlePendingProfileIfAny();
+    });
+  }
+
   bool _checkIfProfessionalUserId(SharedPreferences prefs) {
-    // Check for professional-specific keys that wouldn't exist for end users
     final professionalKeys = [
       'is_profile_created',
       'is_work_full',
@@ -100,9 +114,7 @@ class SplashController extends BaseController {
     return professionalKeys.any((key) => prefs.containsKey(key));
   }
 
-  /// Navigate based on user flags in priority order (same as login controller)
   void _navigateBasedOnUserFlags(SharedPreferences prefs) {
-    // Read all user flags from storage
     final isProfileCreated = prefs.getBool('is_profile_created') ?? false;
     final isWorkFull = prefs.getBool('is_work_full') ?? false;
     final isProfessionalServices =
@@ -111,13 +123,9 @@ class SplashController extends BaseController {
     final isPersonalIdentification =
         prefs.getBool('is_personal_identification') ?? false;
     final isAboutYou = prefs.getBool('is_about_you') ?? false;
-    final isPayment = prefs.getBool('is_payment') ?? false;
     final isPersonalDetails = prefs.getBool('is_personal_details') ?? false;
     final isTermCondition = prefs.getBool('is_term_condition') ?? false;
 
-    // Priority order: check flags in sequence and navigate to first incomplete step
-
-    // Step 1: Check if personal details are needed
     if (isPersonalDetails != true) {
       if (Get.currentRoute != Routes.signupPersonDetails) {
         Get.offAllNamed(Routes.signupPersonDetails);
@@ -125,7 +133,6 @@ class SplashController extends BaseController {
       return;
     }
 
-    // Step 2: Check if terms and conditions are needed
     if (isTermCondition != true) {
       if (Get.currentRoute != Routes.signupTermsConditions) {
         Get.offAllNamed(Routes.signupTermsConditions);
@@ -133,7 +140,6 @@ class SplashController extends BaseController {
       return;
     }
 
-    // Step 3: Check if profile creation is needed (step 0)
     if (isProfileCreated != true) {
       if (Get.currentRoute != Routes.signupProfileWizard) {
         Get.offAllNamed(
@@ -144,7 +150,6 @@ class SplashController extends BaseController {
       return;
     }
 
-    // Step 4: Check if work address is needed (step 1)
     if (isWorkFull != true) {
       if (Get.currentRoute != Routes.signupProfileWizard) {
         Get.offAllNamed(
@@ -155,7 +160,6 @@ class SplashController extends BaseController {
       return;
     }
 
-    // Step 5: Check if professional services are needed (step 2)
     if (isProfessionalServices != true) {
       if (Get.currentRoute != Routes.signupProfileWizard) {
         Get.offAllNamed(
@@ -166,7 +170,6 @@ class SplashController extends BaseController {
       return;
     }
 
-    // Step 6: Check if qualifications are needed (step 3)
     if (isQualification != true) {
       if (Get.currentRoute != Routes.signupProfileWizard) {
         Get.offAllNamed(
@@ -177,7 +180,6 @@ class SplashController extends BaseController {
       return;
     }
 
-    // Step 7: Check if personal identification is needed (step 4)
     if (isPersonalIdentification != true) {
       if (Get.currentRoute != Routes.signupProfileWizard) {
         Get.offAllNamed(
@@ -188,7 +190,6 @@ class SplashController extends BaseController {
       return;
     }
 
-    // Step 8: Check if about you is needed (step 5)
     if (isAboutYou != true) {
       if (Get.currentRoute != Routes.signupProfileWizard) {
         Get.offAllNamed(
@@ -199,15 +200,6 @@ class SplashController extends BaseController {
       return;
     }
 
-    // Step 9: Check if payment/subscription is needed
-    // if (isPayment != true) {
-    //   if (Get.currentRoute != Routes.subscription) {
-    //     Get.offAllNamed(Routes.subscription);
-    //   }
-    //   return;
-    // }
-
-    // All steps completed - navigate to home
     if (Get.currentRoute != Routes.home) {
       Get.offAllNamed(Routes.home);
     }

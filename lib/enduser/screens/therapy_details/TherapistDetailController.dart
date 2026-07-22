@@ -11,8 +11,9 @@ import 'package:verithrive_dev/services/analytics_service.dart';
 
 class TherapistDetailController extends BaseController
     with GetSingleTickerProviderStateMixin {
-  final ProjectRepository _repository = Get.find(tag: (ProjectRepository).toString());
- final StorageService? _storageService =
+  final ProjectRepository _repository =
+      Get.find(tag: (ProjectRepository).toString());
+  final StorageService? _storageService =
       Get.isRegistered<StorageService>() ? Get.find<StorageService>() : null;
   // Store initial therapist from arguments (for fallback)
   Therapist? initialTherapist;
@@ -70,7 +71,6 @@ class TherapistDetailController extends BaseController
 
   RxBool isGuest = false.obs;
 
-
   @override
   void onInit() {
     super.onInit();
@@ -84,17 +84,31 @@ class TherapistDetailController extends BaseController
     print('========================================');
 
     getPreferenceDetails();
-    
+
     if (arguments is Map<String, dynamic>) {
       initialTherapist = arguments['therapist'] as Therapist?;
       category = arguments['category'] as String?;
+      // Deep link / share: professionalId may be passed without a Therapist object
+      professionalId = arguments['professionalId'] as String? ??
+          initialTherapist?.id;
 
-      // Get professional ID from therapist
       if (initialTherapist != null) {
-        professionalId = initialTherapist!.id;
-        // Set initial therapist data while loading
         therapist.value = initialTherapist!;
         print('Professional ID from Map: $professionalId');
+      } else if (professionalId != null && professionalId!.isNotEmpty) {
+        therapist.value = Therapist(
+          id: professionalId!,
+          name: 'Loading...',
+          imageUrl: '',
+          specialty: '',
+          distance: 0.0,
+          rating: 0.0,
+          reviewCount: 0,
+          price: 0.0,
+          services: [],
+          packages: [],
+        );
+        print('Professional ID from deep link: $professionalId');
       }
     } else if (arguments is Therapist) {
       initialTherapist = arguments;
@@ -109,7 +123,7 @@ class TherapistDetailController extends BaseController
     // Sync selected index with tab controller (update immediately for IndexedStack)
     tabController.addListener(() {
       selectedTabIndex.value = tabController.index;
-      
+
       // Analytics: Log secondary navigation tap event
       String elementText = '';
       switch (tabController.index) {
@@ -126,7 +140,7 @@ class TherapistDetailController extends BaseController
           elementText = 'Unknown';
           break;
       }
-      
+
       // Get dynamic page category from navigation arguments
       String pageCategory = 'wellness';
       try {
@@ -136,7 +150,7 @@ class TherapistDetailController extends BaseController
         // Fallback to wellness if arguments are not available
         pageCategory = 'wellness';
       }
-      
+
       AnalyticsService.instance.logEvent(
         name: 'secondary_nav_tap',
         parameters: {
@@ -164,7 +178,7 @@ class TherapistDetailController extends BaseController
   void fetchProfessionalDetails() {
     // Append the ID to the endpoint URL path
     String endpointWithId = "$professionals_details/$professionalId";
-    
+
     Map<String, dynamic> toJson() {
       // Return empty map since ID is in the URL path
       return <String, dynamic>{};
@@ -178,7 +192,8 @@ class TherapistDetailController extends BaseController
     print('========================================');
 
     // Use GET request with id in URL path and authorization token
-    var service = _repository.sendGetApiWithParamRequest(toJson, endpointWithId, true);
+    var service =
+        _repository.sendGetApiWithParamRequest(toJson, endpointWithId, true);
     callDataService(
       service,
       onSuccess: _handleProfessionalDetailsSuccess,
@@ -204,38 +219,51 @@ class TherapistDetailController extends BaseController
       String message = responseData['message'] ?? '';
 
       if (success == true && responseData['data'] != null) {
-        Map<String, dynamic> dataMap = responseData['data'] as Map<String, dynamic>;
+        Map<String, dynamic> dataMap =
+            responseData['data'] as Map<String, dynamic>;
 
         // Analytics: Log professional profile view
-        
-        
+
         // Parse professional data
         if (dataMap['professional'] != null) {
-          Map<String, dynamic> professional = dataMap['professional'] as Map<String, dynamic>;
+          Map<String, dynamic> professional =
+              dataMap['professional'] as Map<String, dynamic>;
 
           // Update therapist observable
           therapist.value = Therapist(
             id: professional['_id']?.toString() ?? professionalId ?? '',
-            name: professional['full_name']?.toString() ?? initialTherapist?.name ?? 'Unknown',
+            name: professional['full_name']?.toString() ??
+                initialTherapist?.name ??
+                'Unknown',
             imageUrl: professional['image']?.toString() ??
-                     professional['profile_image']?.toString() ??
-                     initialTherapist?.imageUrl ?? '',
-            specialty: professional['profession_sub_type_details']?['sub_type']?.toString() ??
-                      professional['profession_sub_type']?.toString() ??
-                      initialTherapist?.specialty ?? '',
+                professional['profile_image']?.toString() ??
+                initialTherapist?.imageUrl ??
+                '',
+            specialty: professional['profession_sub_type_details']?['sub_type']
+                    ?.toString() ??
+                professional['profession_sub_type']?.toString() ??
+                initialTherapist?.specialty ??
+                '',
             distance: initialTherapist?.distance ?? 0.0,
             rating: (professional['rating']?['average'] as num?)?.toDouble() ??
-                   professional['rating'] as double? ??
-                   initialTherapist?.rating ?? 0.0,
+                professional['rating'] as double? ??
+                initialTherapist?.rating ??
+                0.0,
             reviewCount: (professional['rating']?['count'] as num?)?.toInt() ??
-                        professional['review_count'] as int? ??
-                        initialTherapist?.reviewCount ?? 0,
+                professional['review_count'] as int? ??
+                initialTherapist?.reviewCount ??
+                0,
             price: initialTherapist?.price ?? 0.0,
-            isFavorite: professional['is_saved'] as bool? ?? initialTherapist?.isFavorite ?? false,
+            isFavorite: professional['is_saved'] as bool? ??
+                initialTherapist?.isFavorite ??
+                false,
             availability: 'Available for next 7 days',
-            ratingsCount: (professional['rating']?['count'] as num?)?.toInt() ?? 0,
-            yearsExperience: (professional['total_experience'] as num?)?.toInt() ??
-                            (professional['experience'] as num?)?.toInt() ?? 0,
+            ratingsCount:
+                (professional['rating']?['count'] as num?)?.toInt() ?? 0,
+            yearsExperience:
+                (professional['total_experience'] as num?)?.toInt() ??
+                    (professional['experience'] as num?)?.toInt() ??
+                    0,
             bookingsCount: 0, // Not in API response
             services: [],
             packages: [],
@@ -243,33 +271,44 @@ class TherapistDetailController extends BaseController
 
           // Store other professional details
           description.value = professional['description']?.toString() ?? '';
-          availability_text.value = professional['availability_text']?.toString() ?? '';
+          availability_text.value =
+              professional['availability_text']?.toString() ?? '';
           experience.value = (professional['experience'] as num?)?.toInt() ?? 0;
-          totalExperience.value = (professional['total_experience'] as num?)?.toInt() ?? 0;
-          booking_count.value = (professional['booking_count'] as num?)?.toInt() ?? 0;
+          totalExperience.value =
+              (professional['total_experience'] as num?)?.toInt() ?? 0;
+          booking_count.value =
+              (professional['booking_count'] as num?)?.toInt() ?? 0;
           email.value = professional['email']?.toString() ?? '';
           mobileNumber.value = professional['mobile_number']?.toString() ?? '';
           gender.value = professional['gender']?.toString() ?? '';
-          professionType.value = professional['profession_type_details']?['type']?.toString() ?? '';
-          professionSubType.value = professional['profession_sub_type_details']?['sub_type']?.toString() ?? '';
+          professionType.value =
+              professional['profession_type_details']?['type']?.toString() ??
+                  '';
+          professionSubType.value = professional['profession_sub_type_details']
+                      ?['sub_type']
+                  ?.toString() ??
+              '';
 
           // Parse rating
           if (professional['rating'] != null && professional['rating'] is Map) {
-            Map<String, dynamic> ratingData = professional['rating'] as Map<String, dynamic>;
-            averageRating.value = (ratingData['average'] as num?)?.toDouble() ?? 0.0;
+            Map<String, dynamic> ratingData =
+                professional['rating'] as Map<String, dynamic>;
+            averageRating.value =
+                (ratingData['average'] as num?)?.toDouble() ?? 0.0;
             ratingCount.value = (ratingData['count'] as num?)?.toInt() ?? 0;
           }
         }
 
         // Parse address (full_address is at the same level as professional in dataMap)
         if (dataMap['full_address'] != null) {
-          Map<String, dynamic>? fullAddress = dataMap['full_address'] as Map<String, dynamic>?;
+          Map<String, dynamic>? fullAddress =
+              dataMap['full_address'] as Map<String, dynamic>?;
           if (fullAddress != null) {
             address.value = fullAddress['address']?.toString() ?? '';
             postcode.value = fullAddress['postcode']?.toString() ?? '';
             latitude.value = fullAddress['latitude']?.toString() ?? '';
             longitude.value = fullAddress['longitude']?.toString() ?? '';
-            
+
             print('========================================');
             print('Address Parsed:');
             print('Address: ${address.value}');
@@ -287,7 +326,10 @@ class TherapistDetailController extends BaseController
             return ServiceItem(
               serviceId: json['service_id']?.toString() ?? '',
               serviceName: json['service_name']?.toString() ?? '',
-              subServices: (json['sub_services'] as List?)?.map((e) => e.toString()).toList() ?? [],
+              subServices: (json['sub_services'] as List?)
+                      ?.map((e) => e.toString())
+                      .toList() ??
+                  [],
             );
           }).toList();
 
@@ -313,12 +355,15 @@ class TherapistDetailController extends BaseController
 
         // Parse qualifications
         if (dataMap['qualifications'] != null) {
-          List<dynamic> qualificationsList = dataMap['qualifications'] as List<dynamic>;
+          List<dynamic> qualificationsList =
+              dataMap['qualifications'] as List<dynamic>;
           qualifications.value = qualificationsList.map((json) {
             return Qualification(
               id: json['_id']?.toString() ?? '',
-              schoolOrUniversity: json['school_or_university']?.toString() ?? '',
-              degreeOrCertificate: json['degree_or_certificate']?.toString() ?? '',
+              schoolOrUniversity:
+                  json['school_or_university']?.toString() ?? '',
+              degreeOrCertificate:
+                  json['degree_or_certificate']?.toString() ?? '',
               expiryDate: json['expiry_date']?.toString() ?? '',
               certificateFile: json['certificate_file']?.toString() ?? '',
               createdAt: json['created_at']?.toString() ?? '',
@@ -329,7 +374,8 @@ class TherapistDetailController extends BaseController
 
         // Parse personal identifications
         if (dataMap['personal_identifications'] != null) {
-          List<dynamic> identificationsList = dataMap['personal_identifications'] as List<dynamic>;
+          List<dynamic> identificationsList =
+              dataMap['personal_identifications'] as List<dynamic>;
           personalIdentifications.value = identificationsList.map((json) {
             return PersonalIdentification(
               id: json['_id']?.toString() ?? '',
@@ -344,29 +390,40 @@ class TherapistDetailController extends BaseController
 
         // Parse professional service format (packages)
         if (dataMap['professional_service_format'] != null) {
-          List<dynamic> packagesList = dataMap['professional_service_format'] as List<dynamic>;
+          List<dynamic> packagesList =
+              dataMap['professional_service_format'] as List<dynamic>;
           packages.value = packagesList.map((json) {
             // Extract both _id and service_format_id
-            String? professionalServiceFormatIdValue = json['_id']?.toString() ?? json['id']?.toString();
-            String? serviceFormatIdValue = json['service_format_id']?.toString() ?? json['_id']?.toString();
+            String? professionalServiceFormatIdValue =
+                json['_id']?.toString() ?? json['id']?.toString();
+            String? serviceFormatIdValue =
+                json['service_format_id']?.toString() ??
+                    json['_id']?.toString();
 
             final parsedPrice = _parsePackagePrice(json['price']);
             final isFree = parsedPrice == null;
 
-            print('Service Format - _id: ${json['_id']}, service_format_id: ${json['service_format_id']}');
-            print('  -> professional_service_format_id (_id): $professionalServiceFormatIdValue');
+            print(
+                'Service Format - _id: ${json['_id']}, service_format_id: ${json['service_format_id']}');
+            print(
+                '  -> professional_service_format_id (_id): $professionalServiceFormatIdValue');
             print('  -> service_format_id: $serviceFormatIdValue');
             print('  -> price: ${json['price']}, isFree: $isFree');
 
             return ServicePackage(
-              title: json['service_format_name']?.toString() ?? json['service_name']?.toString() ?? '',
+              title: json['service_format_name']?.toString() ??
+                  json['service_name']?.toString() ??
+                  '',
               duration: json['duration_minutes']?.toString() ?? '',
               price: parsedPrice ?? 0.0,
               isFree: isFree,
-              discount: json['offer_text']?.toString() ?? json['discount']?.toString(),
+              discount: json['offer_text']?.toString() ??
+                  json['discount']?.toString(),
               service_format_date: json['service_format_date']?.toString(),
-              serviceFormatId: serviceFormatIdValue, // service_format_id for summary screen
-              professionalServiceFormatId: professionalServiceFormatIdValue, // _id for create-booking API
+              serviceFormatId:
+                  serviceFormatIdValue, // service_format_id for summary screen
+              professionalServiceFormatId:
+                  professionalServiceFormatIdValue, // _id for create-booking API
             );
           }).toList();
 
@@ -428,7 +485,8 @@ class TherapistDetailController extends BaseController
   }
 
   Future<void> getPreferenceDetails() async {
-    isGuest.value = _storageService?.readBool(SharePreferenceConst.isGuest) ?? false;
+    isGuest.value =
+        _storageService?.readBool(SharePreferenceConst.isGuest) ?? false;
   }
 
   double? _parsePackagePrice(dynamic value) {
@@ -443,8 +501,7 @@ class TherapistDetailController extends BaseController
   }
 }
 
-mixin z {
-}
+mixin z {}
 
 // Models for API response
 class ServiceItem {

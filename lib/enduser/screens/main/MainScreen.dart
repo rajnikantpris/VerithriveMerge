@@ -7,6 +7,7 @@ import 'package:verithrive_dev/enduser/screens/login/LoginBinding.dart';
 import 'package:verithrive_dev/enduser/screens/login/LoginView.dart';
 import 'package:verithrive_dev/enduser/utils/app_assets.dart';
 import 'package:verithrive_dev/enduser/utils/app_colors.dart';
+import 'package:verithrive_dev/services/deep_link_service.dart';
 import 'package:verithrive_dev/services/foreground_notification_service.dart';
 import '../../utils/AppText.dart';
 import '../../utils/app_text_styles.dart';
@@ -60,7 +61,7 @@ class _MainScreenState extends State<MainScreen> {
     } else {
       _tabController = Get.put(MainTabController());
     }
-    
+
     // Initialize all controllers at startup
     Get.put(HomeMainController(), tag: 'home');
     Get.put(BookingsController(), tag: 'bookings');
@@ -84,36 +85,41 @@ class _MainScreenState extends State<MainScreen> {
       // Handle pending review dialog from foreground notifications received during splash
       ForegroundNotificationService.handlePendingReviewDialogIfAny();
 
+      // Open professional profile if app was launched via share deep link
+      DeepLinkService.instance.handlePendingProfileIfAny();
+
       final args = Get.arguments;
       if (args is Map && args['openTab'] is int) {
         final int openTab = args['openTab'] as int;
         _tabController.setTab(openTab);
-        if (openTab == 1 && Get.isRegistered<BookingsController>(tag: 'bookings')) {
+        if (openTab == 1 &&
+            Get.isRegistered<BookingsController>(tag: 'bookings')) {
           Get.find<BookingsController>(tag: 'bookings').refreshData();
         }
       }
     });
   }
-  
+
   void _ensureDependenciesRegistered() {
     // Ensure ProjectRepository is registered
-    if (!Get.isRegistered<ProjectRepository>(tag: (ProjectRepository).toString())) {
+    if (!Get.isRegistered<ProjectRepository>(
+        tag: (ProjectRepository).toString())) {
       Get.lazyPut<ProjectRepository>(
         () => ProjectRepositoryImpl(),
         tag: (ProjectRepository).toString(),
         fenix: true,
       );
     }
-    
+
     // Ensure ProjectRemoteDataSource is registered (required by ProjectRepository)
-    if (!Get.isRegistered<ProjectRemoteDataSource>(tag: (ProjectRemoteDataSource).toString())) {
+    if (!Get.isRegistered<ProjectRemoteDataSource>(
+        tag: (ProjectRemoteDataSource).toString())) {
       Get.lazyPut<ProjectRemoteDataSource>(
         () => ProjectRemoteDataSourceImpl(),
         tag: (ProjectRemoteDataSource).toString(),
         fenix: true,
       );
     }
-    
   }
 
   Future<void> onTabTapped(int index) async {
@@ -139,7 +145,7 @@ class _MainScreenState extends State<MainScreen> {
         elementText = 'Unknown';
         break;
     }
-    
+
     AnalyticsService.instance.logEvent(
       name: 'global_nav_tap',
       parameters: {
@@ -156,7 +162,7 @@ class _MainScreenState extends State<MainScreen> {
     if (_tabController.currentIndex.value != index) {
       bool isGuest =
           _storageService.readBool(SharePreferenceConst.isGuest) ?? false;
-      
+
       if (isGuest) {
         // Restrict access to bookings, messages, saved, and profile tabs for guests
         if (index == 1 || index == 2 || index == 3 || index == 4) {
@@ -175,17 +181,16 @@ class _MainScreenState extends State<MainScreen> {
               featureName = 'Profile';
               break;
           }
-          
 
-        //  CommonUtils.getIntance().toastMessage("Please login to access "+featureName);
+          //  CommonUtils.getIntance().toastMessage("Please login to access "+featureName);
 
           Get.to(
-                () => const LoginView(),
+            () => const LoginView(),
             binding: LoginBinding(),
           );
-          
+
           // Check if login route is already active to prevent multiple navigations
-    /*      if (!Get.currentRoute.startsWith('/login')) {
+          /*      if (!Get.currentRoute.startsWith('/login')) {
             // Redirect to login screen
             Get.toNamed(AppRoutes.login);
           }*/
@@ -234,7 +239,7 @@ class _MainScreenState extends State<MainScreen> {
 
   Widget _buildNavItem(int index, String iconAsset, String label) {
     bool isSelected = _tabController.currentIndex.value == index;
-    
+
     return Expanded(
       child: Material(
         color: Colors.transparent,
@@ -251,8 +256,8 @@ class _MainScreenState extends State<MainScreen> {
               children: [
                 SvgPicture.asset(
                   iconAsset,
-                  color: isSelected 
-                      ? AppColors.primaryColor 
+                  color: isSelected
+                      ? AppColors.primaryColor
                       : AppColors.unselectedTabColor,
                   width: 24,
                   height: 24,
@@ -282,46 +287,47 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     return Obx(() => Scaffold(
-      body: IndexedStack(index: _tabController.currentIndex.value, children: pages),
-      bottomNavigationBar: Container(
-        height: 80,
-        decoration: BoxDecoration(
-          color: AppColors.white,
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(20),
-            topRight: Radius.circular(20),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.05),
-              spreadRadius: 0,
-              blurRadius: 5,
-              offset: Offset(0, -2),
+          body: IndexedStack(
+              index: _tabController.currentIndex.value, children: pages),
+          bottomNavigationBar: Container(
+            height: 80,
+            decoration: BoxDecoration(
+              color: AppColors.white,
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(20),
+                topRight: Radius.circular(20),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.grey.withOpacity(0.05),
+                  spreadRadius: 0,
+                  blurRadius: 5,
+                  offset: Offset(0, -2),
+                ),
+                BoxShadow(
+                  color: Colors.grey.withOpacity(0.05),
+                  spreadRadius: 0,
+                  blurRadius: 5,
+                  offset: Offset(0, -1),
+                ),
+              ],
             ),
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.05),
-              spreadRadius: 0,
-              blurRadius: 5,
-              offset: Offset(0, -1),
+            child: ClipRRect(
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(25),
+                topRight: Radius.circular(25),
+              ),
+              child: Row(
+                children: [
+                  _buildNavItem(0, AppAssets.home, AppText.home),
+                  _buildNavItem(1, AppAssets.booking, AppText.bookings),
+                  _buildNavItem(2, AppAssets.messages, AppText.messages),
+                  _buildNavItem(3, AppAssets.saved, AppText.saved),
+                  _buildNavItem(4, AppAssets.profile_tab, AppText.profile),
+                ],
+              ),
             ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(25),
-            topRight: Radius.circular(25),
           ),
-          child: Row(
-            children: [
-              _buildNavItem(0, AppAssets.home, AppText.home),
-              _buildNavItem(1, AppAssets.booking, AppText.bookings),
-              _buildNavItem(2, AppAssets.messages, AppText.messages),
-              _buildNavItem(3, AppAssets.saved, AppText.saved),
-              _buildNavItem(4, AppAssets.profile_tab, AppText.profile),
-            ],
-          ),
-        ),
-      ),
-    ));
+        ));
   }
 }

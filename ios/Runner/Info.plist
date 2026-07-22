@@ -32,6 +32,16 @@
 				<string>com.googleusercontent.apps.950187352283-lhn5htutdmvj4t9323ovk3b1495m9j4t</string>
 			</array>
 		</dict>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>com.app.verithrive.profile</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>verithrive</string>
+			</array>
+		</dict>
 	</array>
 	<key>CFBundleVersion</key>
 	<string>$(FLUTTER_BUILD_NUMBER)</string>

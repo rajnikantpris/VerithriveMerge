@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:verithrive_dev/enduser/screens/consultation/ConsultationBinding.dart';
 import 'package:verithrive_dev/enduser/screens/consultation/ConsultationBookingScreen.dart';
 import 'package:verithrive_dev/enduser/screens/login/LoginBinding.dart';
@@ -14,6 +15,7 @@ import '../../utils/app_colors.dart';
 import '../../utils/app_text_styles.dart';
 import '../../models/Conversation.dart';
 import '../../../services/analytics_service.dart';
+import '../../../services/deep_link_service.dart';
 import 'TherapistDetailController.dart';
 
 class TherapistDetailScreen extends StatelessWidget {
@@ -86,7 +88,17 @@ class TherapistDetailScreen extends StatelessWidget {
           IconButton(
             icon: SvgPicture.asset(AppAssets.share),
             onPressed: () {
-              // TODO: implement share
+              final id = controller.professionalId ??
+                  controller.therapist.value.id;
+              if (id.isEmpty) return;
+              final name = controller.therapist.value.name;
+              final url = DeepLinkService.buildProfileShareUrl(id);
+              Share.share(
+                name.isNotEmpty
+                    ? 'Check out $name on Verithrive:\n$url'
+                    : 'Check out this professional on Verithrive:\n$url',
+                subject: 'Professional Profile',
+              );
             },
           ),
         ],

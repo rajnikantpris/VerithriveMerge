@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../common/base_controller.dart';
 import '../../../../routes/app_routes.dart';
 import '../../../../models/profile_details_model.dart';
+import '../../../../services/deep_link_service.dart';
 import '../../home_controller.dart';
 
 class YourProfileController extends BaseController {
@@ -17,7 +17,7 @@ class YourProfileController extends BaseController {
     YourProfileItem(title: 'Qualifications & certifications'),
     YourProfileItem(title: 'Personal identification'),
     YourProfileItem(title: 'About you'),
-    // YourProfileItem(title: 'Share profile'),
+    YourProfileItem(title: 'Share profile'),
   ];
 
   void onItemTap(YourProfileItem item) {
@@ -33,30 +33,35 @@ class YourProfileController extends BaseController {
       Get.toNamed(Routes.personalIdentification);
     } else if (item.title == 'About you') {
       Get.toNamed(Routes.aboutYou);
-    }
-    //else if (item.title == 'Share profile') {
-    //   if (Get.isRegistered<HomeController>()) {
-    //     _shareViaOtherApps(Get.find<HomeController>().profileDetails.value!);
-    //   } else {
-    //     debugPrint('HomeController not registered, cannot share profile');
-    //   }
-    // }
-    else {
+    } else if (item.title == 'Share profile') {
+      if (Get.isRegistered<HomeController>()) {
+        _shareViaOtherApps(Get.find<HomeController>().profileDetails.value!);
+      } else {
+        debugPrint('HomeController not registered, cannot share profile');
+      }
+    } else {
       // Hook for future navigation or actions per item.
       debugPrint('Tapped on ${item.title}');
     }
   }
 
   void _shareViaOtherApps(ProfileDetailsModel profile) {
-    final String profileText = _generateProfileText(profile);
+    final String profileId = profile.id ?? '';
+    if (profileId.isEmpty) {
+      debugPrint('Cannot share profile: missing profile id');
+      return;
+    }
+
+    final String profileText = _generateProfileText(profile, profileId);
     Share.share(
       profileText,
       subject: 'Professional Profile',
     );
   }
 
-  String _generateProfileText(ProfileDetailsModel profile) {
+  String _generateProfileText(ProfileDetailsModel profile, String profileId) {
     final StringBuffer buffer = StringBuffer();
+    final String profileUrl = DeepLinkService.buildProfileShareUrl(profileId);
 
     buffer.writeln('Professional Profile');
     buffer.writeln('');
@@ -95,6 +100,9 @@ class YourProfileController extends BaseController {
       buffer.writeln(profile.description);
     }
 
+    buffer.writeln('');
+    buffer.writeln('View profile:');
+    buffer.writeln(profileUrl);
     buffer.writeln('');
     buffer.writeln('Shared via Verithrive App');
 
