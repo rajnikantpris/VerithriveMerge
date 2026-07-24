@@ -81,21 +81,28 @@ class SplashController extends BaseController {
         false;
 
     if (isPersonalDetailsCompleted) {
+      final route = Get.currentRoute.toLowerCase();
+      final onTherapistDetail = route.contains('therapistdetail');
+
+      // Detail was pushed on Splash — rebuild stack as Main → Detail.
+      // Never leave Splash under Detail (Back would show Splash).
+      if (onTherapistDetail) {
+        debugPrint(
+          'Splash: Detail on top of Splash — reanchor Main under Detail',
+        );
+        DeepLinkService.instance.reanchorProfileOnMain();
+        return;
+      }
+
       Get.offAll(() => enduser_main.MainScreen());
-      // Open deep-link profile AFTER MainScreen is mounted (avoids offAll wiping it).
-      _openPendingDeepLinkAfterMain();
+      // MainScreen.initState is the single place that opens a pending deep link.
+      // Do not also call handlePending here — that caused Detail to open twice.
     } else {
       Get.offAll(
         () => const enduser_profile_view.ProfileView(),
         binding: enduser_profile_binding.ProfileBinding(),
       );
     }
-  }
-
-  void _openPendingDeepLinkAfterMain() {
-    Future<void>.delayed(const Duration(milliseconds: 600), () {
-      DeepLinkService.instance.handlePendingProfileIfAny();
-    });
   }
 
   bool _checkIfProfessionalUserId(SharedPreferences prefs) {

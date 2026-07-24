@@ -62,12 +62,7 @@ class _MainScreenState extends State<MainScreen> {
       _tabController = Get.put(MainTabController());
     }
 
-    // Initialize all controllers at startup
-    Get.put(HomeMainController(), tag: 'home');
-    Get.put(BookingsController(), tag: 'bookings');
-    Get.put(MessagesController(), tag: 'messages');
-    Get.put(SavedController(), tag: 'saved');
-    Get.put(ProfileMainController(), tag: 'profile');
+    _ensureTabControllersRegistered(forceRecreate: true);
 
     // Load initial data for home screen
     Get.find<HomeMainController>(tag: 'home').refreshData();
@@ -85,8 +80,11 @@ class _MainScreenState extends State<MainScreen> {
       // Handle pending review dialog from foreground notifications received during splash
       ForegroundNotificationService.handlePendingReviewDialogIfAny();
 
-      // Open professional profile if app was launched via share deep link
-      DeepLinkService.instance.handlePendingProfileIfAny();
+      // Open professional profile if app was launched via share deep link.
+      // This is the ONLY place that consumes pending deep links after Main is up.
+      Future<void>.delayed(const Duration(milliseconds: 350), () {
+        DeepLinkService.instance.handlePendingProfileIfAny();
+      });
 
       final args = Get.arguments;
       if (args is Map && args['openTab'] is int) {
@@ -98,6 +96,22 @@ class _MainScreenState extends State<MainScreen> {
         }
       }
     });
+  }
+
+  void _ensureTabControllersRegistered({bool forceRecreate = false}) {
+    void ensure<T extends GetxController>(T Function() create, String tag) {
+      if (Get.isRegistered<T>(tag: tag)) {
+        if (!forceRecreate) return;
+        Get.delete<T>(tag: tag, force: true);
+      }
+      Get.put(create(), tag: tag);
+    }
+
+    ensure(() => HomeMainController(), 'home');
+    ensure(() => BookingsController(), 'bookings');
+    ensure(() => MessagesController(), 'messages');
+    ensure(() => SavedController(), 'saved');
+    ensure(() => ProfileMainController(), 'profile');
   }
 
   void _ensureDependenciesRegistered() {
@@ -204,6 +218,7 @@ class _MainScreenState extends State<MainScreen> {
     }
 
     // Refresh data when switching tabs
+    _ensureTabControllersRegistered();
     switch (index) {
       case 0:
         // Home screen - call notification count API every time
@@ -212,28 +227,34 @@ class _MainScreenState extends State<MainScreen> {
         }
         break;
       case 1:
-        Get.find<BookingsController>(tag: 'bookings').refreshData();
+        if (Get.isRegistered<BookingsController>(tag: 'bookings')) {
+          Get.find<BookingsController>(tag: 'bookings').refreshData();
+        }
         break;
       case 2:
-        Get.find<MessagesController>(tag: 'messages').refreshData();
+        if (Get.isRegistered<MessagesController>(tag: 'messages')) {
+          Get.find<MessagesController>(tag: 'messages').refreshData();
+        }
         break;
       case 3:
-        Get.find<SavedController>(tag: 'saved').refreshData();
+        if (Get.isRegistered<SavedController>(tag: 'saved')) {
+          Get.find<SavedController>(tag: 'saved').refreshData();
+        }
         break;
       case 4:
-        Get.find<ProfileMainController>(tag: 'profile').refreshData();
+        if (Get.isRegistered<ProfileMainController>(tag: 'profile')) {
+          Get.find<ProfileMainController>(tag: 'profile').refreshData();
+        }
         break;
     }
   }
 
   @override
   void dispose() {
-    // Clean up controllers when MainScreen is disposed
-    Get.delete<HomeMainController>(tag: 'home');
-    Get.delete<BookingsController>(tag: 'bookings');
-    Get.delete<MessagesController>(tag: 'messages');
-    Get.delete<SavedController>(tag: 'saved');
-    Get.delete<ProfileMainController>(tag: 'profile');
+    // Do NOT Get.delete tab controllers here.
+    // Get.offAll(MainScreen) (e.g. deep-link back) creates the new MainScreen
+    // first, then disposes the old one — deleting here would wipe the new
+    // controllers and crash on the next tab tap ("BookingsController not found").
     super.dispose();
   }
 

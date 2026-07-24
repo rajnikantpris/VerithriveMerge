@@ -85,11 +85,12 @@ class TherapistDetailController extends BaseController
 
     getPreferenceDetails();
 
-    if (arguments is Map<String, dynamic>) {
-      initialTherapist = arguments['therapist'] as Therapist?;
-      category = arguments['category'] as String?;
+    if (arguments is Map) {
+      final map = Map<String, dynamic>.from(arguments as Map);
+      initialTherapist = map['therapist'] as Therapist?;
+      category = map['category'] as String?;
       // Deep link / share: professionalId may be passed without a Therapist object
-      professionalId = arguments['professionalId'] as String? ??
+      professionalId = map['professionalId'] as String? ??
           initialTherapist?.id;
 
       if (initialTherapist != null) {

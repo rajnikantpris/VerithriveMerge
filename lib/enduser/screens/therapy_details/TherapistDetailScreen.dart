@@ -23,13 +23,16 @@ class TherapistDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Put controller and pass the therapist via arguments from listing screen
+    // Controller is created in TherapyDetailBinding (fresh per navigation).
     final TherapistDetailController controller =
-    Get.put(TherapistDetailController());
+        Get.find<TherapistDetailController>();
 
     // Log screen view analytics
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final args = Get.arguments as Map<String, dynamic>?;
+      final rawArgs = Get.arguments;
+      final args = rawArgs is Map
+          ? Map<String, dynamic>.from(rawArgs)
+          : null;
       final category = args?['category'] as String? ?? 'wellness';
       
       AnalyticsService.instance.logScreenView(
@@ -42,7 +45,10 @@ class TherapistDetailScreen extends StatelessWidget {
 
     // Log view_item analytics when therapist details are displayed
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final args = Get.arguments as Map<String, dynamic>?;
+      final rawArgs = Get.arguments;
+      final args = rawArgs is Map
+          ? Map<String, dynamic>.from(rawArgs)
+          : null;
       final category = args?['category'] as String? ?? 'wellness';
       final therapistArg = args?['therapist'];
       final therapistId = therapistArg?.id?.toString() ?? controller.therapist.value.id;
@@ -70,7 +76,19 @@ class TherapistDetailScreen extends StatelessWidget {
       );
     });
 
-    return Scaffold(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) return;
+        // System/gesture back — never land on Splash.
+        if (DeepLinkService.instance.openedFromDeepLink) {
+          DeepLinkService.instance.navigateBackFromProfile();
+        } else {
+          DeepLinkService.instance.markProfileRouteClosed();
+          Get.back();
+        }
+      },
+      child: Scaffold(
       backgroundColor: AppColors.white,
       appBar: AppBar(
         backgroundColor: AppColors.white,
@@ -82,7 +100,14 @@ class TherapistDetailScreen extends StatelessWidget {
         scrolledUnderElevation: 4,
         leading: IconButton(
           icon: SvgPicture.asset(AppAssets.back),
-          onPressed: () => Get.back(),
+          onPressed: () {
+            if (DeepLinkService.instance.openedFromDeepLink) {
+              DeepLinkService.instance.navigateBackFromProfile();
+            } else {
+              DeepLinkService.instance.markProfileRouteClosed();
+              Get.back();
+            }
+          },
         ),
         actions: [
           IconButton(
@@ -129,6 +154,7 @@ class TherapistDetailScreen extends StatelessWidget {
               ),
             )),
       bottomNavigationBar: _buildBottomChatButton(),
+    ),
     );
   }
 
@@ -309,58 +335,13 @@ class TherapistDetailScreen extends StatelessWidget {
   }
 
   Widget _buildTabsSection(TherapistDetailController controller) {
-    return Container(
-      padding:  EdgeInsets.all(10),
-      margin: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: AppColors.lightGreyF5F7F8,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        children: [
-          SizedBox(height: 20),
-          Container(
-            padding: const EdgeInsets.all(5),
-            decoration: BoxDecoration(
-              color: AppColors.lightGreyEEEEEE,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: TabBar(
-              controller: controller.tabController,
-              labelColor: AppColors.black,
-              unselectedLabelColor: AppColors.greyText,
-              indicator: BoxDecoration(
-                color: AppColors.white,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              indicatorSize: TabBarIndicatorSize.tab,
-              dividerColor: Colors.transparent,
-              isScrollable: false, // Make tabs equal width
-              tabAlignment: TabAlignment.fill, // Fill available space equally
-              labelPadding: EdgeInsets.symmetric(horizontal: 8),
-              labelStyle: AppTextStyles.mediumTextStyle(fontSize: 14,color: AppColors.blueColor),
-              unselectedLabelStyle: AppTextStyles.regularTextStyle(fontSize: 12,color: AppColors.greyText),
-              tabs: const [
-                Tab(text: AppText.services),
-                Tab(text: AppText.about),
-                Tab(text: AppText.qualifications),
-              ],
-            ),
-          ),
-          SizedBox(height: 20),
-          // Use LayoutBuilder to get available height, but let content expand naturally
-          Obx(() {
-            int selectedIndex = controller.selectedTabIndex.value;
-            return IndexedStack(
-              index: selectedIndex,
-              children: [
-                _buildServicesTab(controller),
-                _buildAboutTab(controller),
-                _buildQualificationsTab(controller),
-              ],
-            );
-          }),
-        ],
+    return DefaultTabController(
+      length: 3,
+      child: _TherapistDetailTabs(
+        detailController: controller,
+        servicesTab: _buildServicesTab(controller),
+        aboutTab: _buildAboutTab(controller),
+        qualificationsTab: _buildQualificationsTab(controller),
       ),
     );
   }
@@ -435,7 +416,10 @@ class TherapistDetailScreen extends StatelessWidget {
                       const SizedBox(width: 12),
                       ElevatedButton(
                         onPressed: () {
-                          final _bookingArgs = Get.arguments as Map<String, dynamic>?;
+                          final rawBookingArgs = Get.arguments;
+                          final _bookingArgs = rawBookingArgs is Map
+                              ? Map<String, dynamic>.from(rawBookingArgs)
+                              : null;
                           final _bookingCategory = _bookingArgs?['category'] as String? ?? '';
 
                           // Analytics: Log select_item event for booking option
@@ -666,7 +650,10 @@ class TherapistDetailScreen extends StatelessWidget {
       child: ElevatedButton(
         onPressed: () {
           // Analytics: Log chat tap event
-          final args = Get.arguments as Map<String, dynamic>?;
+          final rawArgs = Get.arguments;
+          final args = rawArgs is Map
+              ? Map<String, dynamic>.from(rawArgs)
+              : null;
           final category = args?['category'] as String? ?? 'wellness';
 
           AnalyticsService.instance.logEvent(
@@ -732,6 +719,115 @@ class TherapistDetailScreen extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Owns a [DefaultTabController]-backed TabBar so GetX controller dispose
+/// cannot leave TabBar with a disposed/null TabController (deep-link race).
+class _TherapistDetailTabs extends StatefulWidget {
+  const _TherapistDetailTabs({
+    required this.detailController,
+    required this.servicesTab,
+    required this.aboutTab,
+    required this.qualificationsTab,
+  });
+
+  final TherapistDetailController detailController;
+  final Widget servicesTab;
+  final Widget aboutTab;
+  final Widget qualificationsTab;
+
+  @override
+  State<_TherapistDetailTabs> createState() => _TherapistDetailTabsState();
+}
+
+class _TherapistDetailTabsState extends State<_TherapistDetailTabs> {
+  TabController? _tabController;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final controller = DefaultTabController.of(context);
+    if (!identical(_tabController, controller)) {
+      _tabController?.removeListener(_onTabChanged);
+      _tabController = controller;
+      _tabController?.addListener(_onTabChanged);
+    }
+  }
+
+  void _onTabChanged() {
+    final tabController = _tabController;
+    if (tabController == null || tabController.indexIsChanging) return;
+    widget.detailController.selectedTabIndex.value = tabController.index;
+  }
+
+  @override
+  void dispose() {
+    _tabController?.removeListener(_onTabChanged);
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(10),
+      margin: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: AppColors.lightGreyF5F7F8,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        children: [
+          const SizedBox(height: 20),
+          Container(
+            padding: const EdgeInsets.all(5),
+            decoration: BoxDecoration(
+              color: AppColors.lightGreyEEEEEE,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: TabBar(
+              labelColor: AppColors.black,
+              unselectedLabelColor: AppColors.greyText,
+              indicator: BoxDecoration(
+                color: AppColors.white,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              indicatorSize: TabBarIndicatorSize.tab,
+              dividerColor: Colors.transparent,
+              isScrollable: false,
+              tabAlignment: TabAlignment.fill,
+              labelPadding: const EdgeInsets.symmetric(horizontal: 8),
+              labelStyle: AppTextStyles.mediumTextStyle(
+                fontSize: 14,
+                color: AppColors.blueColor,
+              ),
+              unselectedLabelStyle: AppTextStyles.regularTextStyle(
+                fontSize: 12,
+                color: AppColors.greyText,
+              ),
+              tabs: const [
+                Tab(text: AppText.services),
+                Tab(text: AppText.about),
+                Tab(text: AppText.qualifications),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+          Obx(() {
+            final selectedIndex =
+                widget.detailController.selectedTabIndex.value;
+            return IndexedStack(
+              index: selectedIndex,
+              children: [
+                widget.servicesTab,
+                widget.aboutTab,
+                widget.qualificationsTab,
+              ],
+            );
+          }),
+        ],
       ),
     );
   }

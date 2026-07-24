@@ -8,8 +8,27 @@ import 'package:verithrive_dev/enduser/screens/therapy_list/TherapistController.
 class TherapyBinding extends Bindings {
   @override
   void dependencies() {
-    Get.lazyPut<ProjectRemoteDataSource>(() => ProjectRemoteDataSourceImpl(), tag: (ProjectRemoteDataSource).toString());
-    Get.lazyPut<ProjectRepository>(() => ProjectRepositoryImpl(), tag: (ProjectRepository).toString());
+    final remoteTag = (ProjectRemoteDataSource).toString();
+    final repoTag = (ProjectRepository).toString();
+
+    if (!Get.isRegistered<ProjectRemoteDataSource>(tag: remoteTag)) {
+      Get.lazyPut<ProjectRemoteDataSource>(
+        () => ProjectRemoteDataSourceImpl(),
+        tag: remoteTag,
+        fenix: true,
+      );
+    }
+    if (!Get.isRegistered<ProjectRepository>(tag: repoTag)) {
+      Get.lazyPut<ProjectRepository>(
+        () => ProjectRepositoryImpl(),
+        tag: repoTag,
+        fenix: true,
+      );
+    }
+
+    if (Get.isRegistered<TherapistController>()) {
+      Get.delete<TherapistController>(force: true);
+    }
     Get.put(TherapistController());
   }
 }
