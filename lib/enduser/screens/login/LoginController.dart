@@ -564,6 +564,7 @@ class LoginController extends BaseController {
 
           if (isPersonalDetailsCompleted) {
             Get.offAll(() => MainScreen());
+            // MainScreen.initState opens any pending deep link once.
           } else {
             Get.offAll(
               () => const ProfileView(),
