@@ -28,8 +28,10 @@ class DeepLinkService {
 
   static final DeepLinkService instance = DeepLinkService._();
 
+  // static const String profileShareBaseUrl =
+  //     'https://dev.verithrive.co.uk/profile_view';
   static const String profileShareBaseUrl =
-      'https://dev.verithrive.co.uk/profile_view';
+      'https://adminportal.verithrive.co.uk/profile_view';
 
   static const String profileCustomSchemeBaseUrl = 'verithrive://profile_view';
 
