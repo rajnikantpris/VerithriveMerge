@@ -9,14 +9,17 @@ import '../../../services/analytics_service.dart';
 import 'PaymentSuccessController.dart';
 
 class PaymentSuccessScreen extends StatelessWidget {
-  final PaymentSuccessController controller = Get.put(PaymentSuccessController());
+  final PaymentSuccessController controller =
+      Get.put(PaymentSuccessController());
 
   @override
   Widget build(BuildContext context) {
     // Log purchase analytics when successful payment page is loaded
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final args = Get.arguments as Map<String, dynamic>?;
-      final category = AnalyticsService.validateCurrency(args?['category'] as String? ?? 'wellness') == 'GBP'
+      final category = AnalyticsService.validateCurrency(
+                  args?['category'] as String? ?? 'wellness') ==
+              'GBP'
           ? (args?['category'] as String? ?? 'wellness')
           : (args?['category'] as String? ?? 'wellness');
       final resolvedCategory = args?['category'] as String? ?? 'wellness';
@@ -25,7 +28,8 @@ class PaymentSuccessScreen extends StatelessWidget {
       final serviceName = args?['service_name']?.toString() ?? '';
       final itemPrice = AnalyticsService.validatePrice(args?['price']);
       // booking_id is the canonical transaction ID — consistent with the booking confirmation email
-      final transactionId = args?['booking_id']?.toString() ?? DateTime.now().millisecondsSinceEpoch.toString();
+      final transactionId = args?['booking_id']?.toString() ??
+          DateTime.now().millisecondsSinceEpoch.toString();
       final consultationType = args?['consultation_type']?.toString() ?? '';
       final itemVariant = args?['item_variant']?.toString() ?? '';
       final itemBrand = args?['item_brand']?.toString() ?? '';
@@ -33,11 +37,19 @@ class PaymentSuccessScreen extends StatelessWidget {
       AnalyticsService.instance.logPurchaseEvent(
         item: AnalyticsService.instance.buildItem(
           itemId: professionalId.isNotEmpty ? professionalId : 'unknown',
-          itemName: itemVariant.isNotEmpty ? itemVariant : (serviceName.isNotEmpty ? serviceName : 'unknown'),
+          itemName: itemVariant.isNotEmpty
+              ? itemVariant
+              : (serviceName.isNotEmpty ? serviceName : 'unknown'),
           itemCategory: resolvedCategory,
-          itemCategory2: consultationType.isNotEmpty ? consultationType : serviceName,
-          itemVariant: consultationType.isNotEmpty ? consultationType : serviceName,
-          itemBrand: itemBrand.isNotEmpty ? itemBrand : (consultationType.isNotEmpty ? consultationType : resolvedCategory),
+          itemCategory2:
+              consultationType.isNotEmpty ? consultationType : serviceName,
+          itemVariant:
+              consultationType.isNotEmpty ? consultationType : serviceName,
+          itemBrand: itemBrand.isNotEmpty
+              ? itemBrand
+              : (consultationType.isNotEmpty
+                  ? consultationType
+                  : resolvedCategory),
           price: itemPrice,
           quantity: 1,
         ),
@@ -58,11 +70,8 @@ class PaymentSuccessScreen extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-
-        Image.asset(AppAssets.thank_you),
-
+          Image.asset(AppAssets.thank_you),
           SizedBox(height: 50),
-
           Text(
             AppText.paymentSuccessful,
             style: AppTextStyles.popinSemiboldTextStyle(
@@ -70,9 +79,7 @@ class PaymentSuccessScreen extends StatelessWidget {
               color: AppColors.primaryColor,
             ),
           ),
-
           SizedBox(height: 20),
-
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Text(
@@ -84,10 +91,7 @@ class PaymentSuccessScreen extends StatelessWidget {
               textAlign: TextAlign.center,
             ),
           ),
-
           SizedBox(height: 20),
-
-
           InkWell(
             onTap: () {
               controller.goToHomepage();
@@ -98,21 +102,25 @@ class PaymentSuccessScreen extends StatelessWidget {
                 Text(
                   AppText.homepage,
                   style: TextStyle(
-                    fontFamily: 'Rubik',
-                    fontSize: 16,
-                    color: AppColors.primaryColor,
-                    fontWeight: FontWeight.w500,
-                    decoration: TextDecoration.underline,
-                    decorationColor: AppColors.primaryColor,
-                    decorationThickness: 1
-                  ),
+                      fontFamily: 'Rubik',
+                      fontSize: 16,
+                      color: AppColors.primaryColor,
+                      fontWeight: FontWeight.w500,
+                      decoration: TextDecoration.underline,
+                      decorationColor: AppColors.primaryColor,
+                      decorationThickness: 1),
                 ),
-                SizedBox(width: 5,),
-                Icon(Icons.arrow_forward, color: AppColors.primaryColor,size: 20,)
+                SizedBox(
+                  width: 5,
+                ),
+                Icon(
+                  Icons.arrow_forward,
+                  color: AppColors.primaryColor,
+                  size: 20,
+                )
               ],
             ),
           ),
-
         ],
       ),
     );

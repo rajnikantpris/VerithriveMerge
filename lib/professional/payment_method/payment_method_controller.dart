@@ -97,9 +97,8 @@ class PaymentMethodController extends BaseController {
 
   Future<void> confirmPayment() async {
     // Get professional details from HomeController
-    final homeController = Get.isRegistered<HomeController>()
-        ? Get.find<HomeController>()
-        : null;
+    final homeController =
+        Get.isRegistered<HomeController>() ? Get.find<HomeController>() : null;
     final profile = homeController?.profileDetails.value;
     final professionName = profile?.profession_name ?? '';
     final stripeAccountId = profile?.stripeConnectAccountId ?? '';
@@ -107,8 +106,10 @@ class PaymentMethodController extends BaseController {
     await AnalyticsService.instance.logPurchaseEvent(
       item: AnalyticsService.instance.buildItem(
         itemId: selectedPlanId.isNotEmpty ? selectedPlanId : '',
-        itemName: selectedPlanName.isNotEmpty ? selectedPlanName : 'subscription',
-        itemCategory: professionName.isNotEmpty ? professionName : 'subscription',
+        itemName:
+            selectedPlanName.isNotEmpty ? selectedPlanName : 'subscription',
+        itemCategory:
+            professionName.isNotEmpty ? professionName : 'subscription',
         itemVariant: selectedPlanName.toLowerCase(),
         itemBrand: 'subscription',
         price: selectedPlanPrice,
@@ -146,19 +147,21 @@ class PaymentMethodController extends BaseController {
             final checkoutUrl = paymentData['checkout_url']?.toString();
 
             if (checkoutUrl != null && checkoutUrl.isNotEmpty) {
-
               // Open Stripe Checkout in WebView
               final result =
                   await Get.to(() => PaymentWebViewScreen(url: checkoutUrl));
 
               // When returning from WebView, check result and navigate if successful
               if (result == 'success') {
-
                 await AnalyticsService.instance.logPurchaseEvent(
                   item: AnalyticsService.instance.buildItem(
                     itemId: selectedPlanId.isNotEmpty ? selectedPlanId : '',
-                    itemName: selectedPlanName.isNotEmpty ? selectedPlanName : 'subscription',
-                    itemCategory: professionName.isNotEmpty ? professionName : 'subscription',
+                    itemName: selectedPlanName.isNotEmpty
+                        ? selectedPlanName
+                        : 'subscription',
+                    itemCategory: professionName.isNotEmpty
+                        ? professionName
+                        : 'subscription',
                     itemVariant: selectedPlanName.toLowerCase(),
                     itemBrand: 'subscription',
                     price: selectedPlanPrice,
@@ -167,10 +170,12 @@ class PaymentMethodController extends BaseController {
                   transactionId: selectedStripePriceId.isNotEmpty
                       ? selectedStripePriceId
                       : stripeAccountId.isNotEmpty
-                      ? stripeAccountId
-                      : selectedPlanId.isNotEmpty
-                      ? '${selectedPlanId}_${DateTime.now().millisecondsSinceEpoch}'
-                      : DateTime.now().millisecondsSinceEpoch.toString(),
+                          ? stripeAccountId
+                          : selectedPlanId.isNotEmpty
+                              ? '${selectedPlanId}_${DateTime.now().millisecondsSinceEpoch}'
+                              : DateTime.now()
+                                  .millisecondsSinceEpoch
+                                  .toString(),
                   value: selectedPlanPrice,
                   currency: 'GBP',
                 );
@@ -221,7 +226,6 @@ class PaymentMethodController extends BaseController {
   }
 
   Future<void> _checkPaymentStatusAndNavigate(UserModel? user) async {
-
     // Extract user flags and ensure is_payment is true
     final userFlags = _extractUserFlagsFromModel(user);
     userFlags['is_payment'] = true;

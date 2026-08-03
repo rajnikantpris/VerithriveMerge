@@ -134,8 +134,9 @@ class SubscriptionController extends BaseController {
       final planNameLower = planName.toLowerCase();
       final billingCycleLower = billingCycle.toLowerCase();
 
-      final isYearly =
-          planNameLower.contains('year') || billingCycleLower.contains('yearly') || billingCycleLower.contains('year');
+      final isYearly = planNameLower.contains('year') ||
+          billingCycleLower.contains('yearly') ||
+          billingCycleLower.contains('year');
       final isQuarterly = planNameLower.contains('quarter') ||
           (billingCycleLower.contains('quarterly') && !isYearly);
       final isMonthly = planNameLower.contains('month') ||
@@ -145,7 +146,8 @@ class SubscriptionController extends BaseController {
       String? perMonthLabel;
       String? promoLabel;
 
-      final billingCycleCount = int.tryParse(item['billing_cycle_count']?.toString() ?? '1') ?? 1;
+      final billingCycleCount =
+          int.tryParse(item['billing_cycle_count']?.toString() ?? '1') ?? 1;
       int months;
       if (billingCycleLower == 'monthly') {
         months = billingCycleCount;
@@ -258,8 +260,10 @@ class SubscriptionController extends BaseController {
     // Analytics: Log professional subscription plan selected / begin_checkout
     AnalyticsService.instance.logBeginCheckoutEvent(
       item: AnalyticsService.instance.buildItem(
-        itemId: selectedPlanId.value.isNotEmpty ? selectedPlanId.value : 'unknown',
-        itemName: selectedPlan.title.isNotEmpty ? selectedPlan.title : 'subscription',
+        itemId:
+            selectedPlanId.value.isNotEmpty ? selectedPlanId.value : 'unknown',
+        itemName:
+            selectedPlan.title.isNotEmpty ? selectedPlan.title : 'subscription',
         itemCategory: 'professional',
         itemVariant: selectedPlan.title.toLowerCase(),
         itemBrand: 'verithrive',

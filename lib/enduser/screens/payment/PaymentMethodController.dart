@@ -20,8 +20,9 @@ import '../../routes/app_routes.dart';
 import 'PaymentMethodType.dart';
 
 class PaymentMethodController extends BaseController {
-  final ProjectRepository _repository = Get.find(tag: (ProjectRepository).toString());
-  
+  final ProjectRepository _repository =
+      Get.find(tag: (ProjectRepository).toString());
+
   // Observable variables
   var selectedPaymentMethod = Rxn<PaymentMethodType>();
   var cardNumber = ''.obs;
@@ -30,7 +31,7 @@ class PaymentMethodController extends BaseController {
   var cardHolderName = ''.obs;
   var saveCardDetails = false.obs;
   var isLoading = false.obs;
-  
+
   // Booking details from summary
   var selectedDate = DateTime.now().obs;
   var fromTime = Rxn<TimeOfDay>();
@@ -39,7 +40,8 @@ class PaymentMethodController extends BaseController {
   var price = 30.0.obs;
   var location = 'Lorem Ipsum,*******'.obs;
   var professionalId = ''.obs;
-  var serviceFormatId = ''.obs; // service_format_id (for reference, not used in API)
+  var serviceFormatId =
+      ''.obs; // service_format_id (for reference, not used in API)
   var professionalServiceFormatId = ''.obs; // _id (used in create-booking API)
   var bookingId = ''.obs; // booking_id for update-booking API in edit mode
   var isEditMode = false.obs; // Flag to indicate edit mode
@@ -69,7 +71,7 @@ class PaymentMethodController extends BaseController {
       cardHolderName.value = cardHolderNameController.text;
     });
   }
-  
+
   void _receiveArguments() {
     final arguments = Get.arguments;
     if (arguments != null && arguments is Map<String, dynamic>) {
@@ -104,8 +106,10 @@ class PaymentMethodController extends BaseController {
         dynamic serviceFormatData = arguments['professional_service_format_id'];
         if (serviceFormatData is Map<String, dynamic>) {
           // If it's an object, extract _id
-          professionalServiceFormatId.value = serviceFormatData['_id']?.toString() ?? 
-                                             serviceFormatData['id']?.toString() ?? '';
+          professionalServiceFormatId.value =
+              serviceFormatData['_id']?.toString() ??
+                  serviceFormatData['id']?.toString() ??
+                  '';
         } else if (serviceFormatData is String) {
           // If it's already a string (the _id), use it directly
           professionalServiceFormatId.value = serviceFormatData;
@@ -147,7 +151,7 @@ class PaymentMethodController extends BaseController {
     cvvController.clear();
     cardHolderNameController.clear();
     saveCardDetails.value = false;
-    
+
     // Also clear the observables
     cardNumber.value = '';
     expiryDate.value = '';
@@ -207,12 +211,18 @@ class PaymentMethodController extends BaseController {
 
       AnalyticsService.instance.logBeginCheckoutEvent(
         item: AnalyticsService.instance.buildItem(
-          itemId: professionalId.value.isNotEmpty ? professionalId.value : 'unknown',
-          itemName: itemVariant.isNotEmpty ? itemVariant : (serviceName.value.isNotEmpty ? serviceName.value : 'unknown'),
+          itemId: professionalId.value.isNotEmpty
+              ? professionalId.value
+              : 'unknown',
+          itemName: itemVariant.isNotEmpty
+              ? itemVariant
+              : (serviceName.value.isNotEmpty ? serviceName.value : 'unknown'),
           itemCategory: category,
           itemCategory2: serviceName.value,
           itemVariant: itemVariant.isNotEmpty ? itemVariant : serviceName.value,
-          itemBrand: itemBrand.isNotEmpty ? itemBrand : (serviceName.value.isNotEmpty ? serviceName.value : category),
+          itemBrand: itemBrand.isNotEmpty
+              ? itemBrand
+              : (serviceName.value.isNotEmpty ? serviceName.value : category),
           price: price.value,
           quantity: 1,
         ),
@@ -223,7 +233,7 @@ class PaymentMethodController extends BaseController {
     // Call create-booking API (edit mode is handled in SummaryController)
     callCreateBookingAPI();
   }
-  
+
   // Call create booking API
   void callCreateBookingAPI() {
     // Validate required fields
@@ -237,7 +247,7 @@ class PaymentMethodController extends BaseController {
       );
       return;
     }
-    
+
     if (professionalServiceFormatId.value.isEmpty) {
       showResponseDialog(
         message: 'Service format ID is missing',
@@ -248,7 +258,7 @@ class PaymentMethodController extends BaseController {
       );
       return;
     }
-    
+
     if (fromTime.value == null || untilTime.value == null) {
       showResponseDialog(
         message: 'Please select from and until times',
@@ -259,36 +269,39 @@ class PaymentMethodController extends BaseController {
       );
       return;
     }
-    
+
     Map<String, dynamic> toJson() {
       // Format date as DD/MM/YYYY
-      String formattedDate = DateFormat('dd/MM/yyyy').format(selectedDate.value);
-      
+      String formattedDate =
+          DateFormat('dd/MM/yyyy').format(selectedDate.value);
+
       // Format time as HH:mm (24-hour format)
       String formatTime24Hour(TimeOfDay time) {
         return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
       }
-      
+
       final Map<String, dynamic> data = <String, dynamic>{};
       data['professional_id'] = professionalId.value;
       // professional_service_format_id should be the _id from service format object
-      data['professional_service_format_id'] = professionalServiceFormatId.value;
+      data['professional_service_format_id'] =
+          professionalServiceFormatId.value;
       data['date'] = formattedDate;
       data['from_time'] = formatTime24Hour(fromTime.value!);
       data['to_time'] = formatTime24Hour(untilTime.value!);
-      
+
       print('========================================');
       print('Create Booking API Request:');
-      print('professional_service_format_id (_id): ${professionalServiceFormatId.value}');
+      print(
+          'professional_service_format_id (_id): ${professionalServiceFormatId.value}');
       print(data);
       print('========================================');
-      
+
       return data;
     }
-    
+
     // Set loading state
     isLoading.value = true;
-    
+
     var service = _repository.sendPostApiRequest(toJson, create_booking, true);
     callDataService(
       service,
@@ -297,12 +310,12 @@ class PaymentMethodController extends BaseController {
       isShowLoading: true, // We'll show custom loading UI
     );
   }
-  
+
   Future<void> _handleCreateBookingSuccess(dynamic baseResponse) async {
     try {
       // Stop loading
       isLoading.value = false;
-      
+
       Map<String, dynamic> responseData;
       if (baseResponse != null && baseResponse.data != null) {
         responseData = baseResponse.data is Map<String, dynamic>
@@ -315,27 +328,30 @@ class PaymentMethodController extends BaseController {
       }
 
       bool success = responseData['success'] ?? false;
-      String message = responseData['message'] ?? 'Booking created successfully';
-      
+      String message =
+          responseData['message'] ?? 'Booking created successfully';
+
       if (success == true) {
         String? checkoutUrl;
-        if (responseData['data'] != null && 
+        if (responseData['data'] != null &&
             responseData['data']['payment_link'] != null) {
           checkoutUrl = responseData['data']['payment_link']['checkout_url'];
         }
 
         if (checkoutUrl != null && checkoutUrl.isNotEmpty) {
           // Navigate to WebView
-          final result = await Get.to(() => PaymentEndWebViewScreen(url: checkoutUrl!));
-          
+          final result =
+              await Get.to(() => PaymentEndWebViewScreen(url: checkoutUrl!));
+
           if (result == 'success') {
             final args = Get.arguments as Map<String, dynamic>?;
             final category = args?['category'] as String? ?? 'wellness';
             final itemVariant = args?['item_variant']?.toString() ?? '';
             final itemBrand = args?['item_brand']?.toString() ?? '';
-            final successBookingId = responseData['data']?['booking_id']?.toString() ??
-                responseData['data']?['_id']?.toString() ??
-                bookingId.value;
+            final successBookingId =
+                responseData['data']?['booking_id']?.toString() ??
+                    responseData['data']?['_id']?.toString() ??
+                    bookingId.value;
             Get.offAll(
               () => PaymentSuccessScreen(),
               binding: PaymentSuccessBinding(),
@@ -343,7 +359,9 @@ class PaymentMethodController extends BaseController {
                 'professional_id': professionalId.value,
                 'service_name': serviceName.value,
                 'price': price.value,
-                'booking_id': successBookingId.isNotEmpty ? successBookingId : DateTime.now().millisecondsSinceEpoch.toString(),
+                'booking_id': successBookingId.isNotEmpty
+                    ? successBookingId
+                    : DateTime.now().millisecondsSinceEpoch.toString(),
                 'category': category,
                 'consultation_type': serviceName.value,
                 'item_variant': itemVariant,
@@ -380,17 +398,18 @@ class PaymentMethodController extends BaseController {
       );
     }
   }
-  
+
   void _handleCreateBookingErrorOld(dynamic e) {
     // Stop loading
     isLoading.value = false;
-    
-    String errorMessage = 'An error occurred while creating booking. Please try again.';
-    
+
+    String errorMessage =
+        'An error occurred while creating booking. Please try again.';
+
     if (e != null && e.toString().isNotEmpty) {
       errorMessage = e.toString();
     }
-    
+
     showResponseDialog(
       message: errorMessage,
       title: 'Error',
@@ -403,9 +422,7 @@ class PaymentMethodController extends BaseController {
   void _handleCreateBookingError(dynamic e) {
     isLoading.value = false;
 
-    if(e is BaseException) {
-
-
+    if (e is BaseException) {
       showResponseDialog(
         message: e.message,
         title: 'Error',
@@ -416,7 +433,5 @@ class PaymentMethodController extends BaseController {
         },
       );
     }
-
   }
-  
 }

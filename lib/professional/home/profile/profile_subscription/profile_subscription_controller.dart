@@ -8,6 +8,7 @@ import '../../../../api/user_api_service.dart';
 import '../../../../common/base_controller.dart';
 import '../../../../models/subscription_plan_model.dart';
 import '../../../../routes/app_routes.dart';
+import '../../../../services/analytics_service.dart';
 import '../../../../theme/colors.dart';
 import '../../../../theme/fonts.dart';
 import '../../../../theme/font_sizes.dart';
@@ -449,6 +450,21 @@ class ProfileSubscriptionController extends BaseController {
         return;
       }
     }
+
+    // Analytics: Log professional subscription plan selected / begin_checkout
+    AnalyticsService.instance.logBeginCheckoutEvent(
+      item: AnalyticsService.instance.buildItem(
+        itemId: plan.id!.isNotEmpty ? plan.id! : 'unknown',
+        itemName: plan.name.isNotEmpty ? plan.name : 'subscription',
+        itemCategory: 'professional',
+        itemVariant: plan.name.toLowerCase(),
+        itemBrand: 'verithrive',
+        price: plan.price,
+        quantity: 1,
+      ),
+      value: plan.price,
+      currency: 'GBP',
+    );
 
     // Navigate to payment method screen with plan ID, name, price, and stripe price ID
     Get.toNamed(

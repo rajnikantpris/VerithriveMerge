@@ -4,14 +4,15 @@ import 'package:flutter/foundation.dart';
 /// Service to handle Firebase Analytics logging across the app.
 class AnalyticsService {
   AnalyticsService._();
-  
+
   /// Singleton instance for easy access.
   static final AnalyticsService instance = AnalyticsService._();
 
   final FirebaseAnalytics _analytics = FirebaseAnalytics.instance;
 
   /// Observer to automatically track screen transitions in [GetMaterialApp] or [MaterialApp].
-  FirebaseAnalyticsObserver get observer => FirebaseAnalyticsObserver(analytics: _analytics);
+  FirebaseAnalyticsObserver get observer =>
+      FirebaseAnalyticsObserver(analytics: _analytics);
 
   /// Log a button tap / CTA interaction event.
   ///
@@ -39,7 +40,7 @@ class AnalyticsService {
   }
 
   /// Log a custom event.
-  /// 
+  ///
   /// [name] is the event name (use snake_case, max 40 chars).
   /// [parameters] are additional key-value pairs to log (e.g., product_id, category).
   Future<void> logEvent({
@@ -49,14 +50,15 @@ class AnalyticsService {
     try {
       // Event name validation: max 40 characters, only alphanumeric and underscores.
       final validName = name.replaceAll(RegExp(r'[^a-zA-Z0-9_]'), '_').take(40);
-      
+
       await _analytics.logEvent(
         name: validName,
         parameters: parameters,
       );
-      
+
       if (kDebugMode) {
-        print('Analytics: Logged event [$validName] with parameters $parameters');
+        print(
+            'Analytics: Logged event [$validName] with parameters $parameters');
       }
     } catch (e) {
       if (kDebugMode) {
@@ -75,8 +77,9 @@ class AnalyticsService {
     try {
       final parameters = <String, Object>{};
       if (pageCategory != null) parameters['page_category'] = pageCategory;
-      if (elementLocation != null) parameters['element_location'] = elementLocation;
-      
+      if (elementLocation != null)
+        parameters['element_location'] = elementLocation;
+
       await _analytics.logEvent(
         name: 'screen_view',
         parameters: {
@@ -85,18 +88,20 @@ class AnalyticsService {
           ...parameters,
         },
       );
-      
+
       if (kDebugMode) {
         final allParameters = {
           'screen_name': screenName,
           if (screenClass != null) 'screen_class': screenClass,
           ...parameters,
         };
-        print('Analytics: Logged screen view [$screenName] with parameters ${allParameters.isEmpty ? '' : allParameters}');
+        print(
+            'Analytics: Logged screen view [$screenName] with parameters ${allParameters.isEmpty ? '' : allParameters}');
       }
     } catch (e) {
       if (kDebugMode) {
-        print('Analytics Error: Could not log screen view [$screenName]. Error: $e');
+        print(
+            'Analytics Error: Could not log screen view [$screenName]. Error: $e');
       }
     }
   }
@@ -122,7 +127,8 @@ class AnalyticsService {
       await _analytics.setUserProperty(name: name, value: value);
     } catch (e) {
       if (kDebugMode) {
-        print('Analytics Error: Could not set user property [$name]. Error: $e');
+        print(
+            'Analytics Error: Could not set user property [$name]. Error: $e');
       }
     }
   }
@@ -175,7 +181,8 @@ class AnalyticsService {
       }
 
       if (kDebugMode) {
-        final planPart = (plan != null && plan.isNotEmpty) ? ', user_plan: $plan' : '';
+        final planPart =
+            (plan != null && plan.isNotEmpty) ? ', user_plan: $plan' : '';
         print(
           'Analytics: Set user profile { user_login_state: $loginState, user_id: $userId, user_registration_type: $registrationType, user_city: $city, user_persona: $persona$planPart }',
         );
@@ -198,15 +205,19 @@ class AnalyticsService {
     if (!isProfessional) return 'end_user';
     final raw = professionName?.trim().toLowerCase() ?? '';
     if (raw.isEmpty) return 'professional';
-    if (raw.contains('wellness') || raw.contains('therapy') ||
-        raw.contains('therapist') || raw.contains('sport')) {
+    if (raw.contains('wellness') ||
+        raw.contains('therapy') ||
+        raw.contains('therapist') ||
+        raw.contains('sport')) {
       return 'professional_wellness';
     }
-    if (raw.contains('fitness') || raw.contains('trainer') ||
+    if (raw.contains('fitness') ||
+        raw.contains('trainer') ||
         raw.contains('personal train')) {
       return 'professional_fitness';
     }
-    if (raw.contains('food & nutrition') || raw.contains('nutritionist') ||
+    if (raw.contains('food & nutrition') ||
+        raw.contains('nutritionist') ||
         raw.contains('food')) {
       return 'professional_nutrition';
     }
@@ -250,32 +261,55 @@ class AnalyticsService {
     String finalName = itemName;
 
     final category = itemCategory?.toLowerCase() ?? '';
-    if (category == 'fitness' || category.contains('trainer') || category.contains('coach')) {
+    if (category == 'fitness' ||
+        category.contains('trainer') ||
+        category.contains('coach')) {
       finalBrand = 'Fitness';
-    } else if (category == 'wellness' || category.contains('therapist') || category.contains('physio')) {
+    } else if (category == 'wellness' ||
+        category.contains('therapist') ||
+        category.contains('physio')) {
       finalBrand = 'Wellness';
-    } else if (category == 'food_nutrition' || category == 'food & nutrition' || category.contains('nutrition') || category.contains('diet')) {
+    } else if (category == 'food_nutrition' ||
+        category == 'food & nutrition' ||
+        category.contains('nutrition') ||
+        category.contains('diet')) {
       finalBrand = 'Food & Nutrition';
     }
 
     // Standardize Name if it matches one of the known sub-types
     final nameLower = itemName.toLowerCase();
     if (finalBrand == 'Fitness') {
-      if (nameLower.contains('trainer')) finalName = 'Personal Trainer';
-      else if (nameLower.contains('coach')) finalName = 'Fitness Coach';
-      else if (nameLower.contains('instructor')) finalName = 'Fitness Instructor';
-      else if (finalName == 'unknown' || finalName.isEmpty || finalName == 'fitness') finalName = 'Personal Trainer'; // Default
+      if (nameLower.contains('trainer'))
+        finalName = 'Personal Trainer';
+      else if (nameLower.contains('coach'))
+        finalName = 'Fitness Coach';
+      else if (nameLower.contains('instructor'))
+        finalName = 'Fitness Instructor';
+      else if (finalName == 'unknown' ||
+          finalName.isEmpty ||
+          finalName == 'fitness') finalName = 'Personal Trainer'; // Default
     } else if (finalBrand == 'Wellness') {
-      if (nameLower.contains('physio')) finalName = 'Physiotherapist';
-      else if (nameLower.contains('chiro')) finalName = 'Chiropractor';
-      else if (nameLower.contains('osteo')) finalName = 'Osteopath';
-      else if (nameLower.contains('sport')) finalName = 'Sports Therapist';
-      else if (finalName == 'unknown' || finalName.isEmpty || finalName == 'wellness') finalName = 'Sports Therapist'; // Default
+      if (nameLower.contains('physio'))
+        finalName = 'Physiotherapist';
+      else if (nameLower.contains('chiro'))
+        finalName = 'Chiropractor';
+      else if (nameLower.contains('osteo'))
+        finalName = 'Osteopath';
+      else if (nameLower.contains('sport'))
+        finalName = 'Sports Therapist';
+      else if (finalName == 'unknown' ||
+          finalName.isEmpty ||
+          finalName == 'wellness') finalName = 'Sports Therapist'; // Default
     } else if (finalBrand == 'Food & Nutrition') {
-      if (nameLower.contains('diet')) finalName = 'Dietitian';
-      else if (nameLower.contains('nutrition')) finalName = 'Nutritionist';
-      else if (nameLower.contains('chef')) finalName = 'Private Chef';
-      else if (finalName == 'unknown' || finalName.isEmpty || finalName == 'food_nutrition') finalName = 'Nutritionist'; // Default
+      if (nameLower.contains('diet'))
+        finalName = 'Dietitian';
+      else if (nameLower.contains('nutrition'))
+        finalName = 'Nutritionist';
+      else if (nameLower.contains('chef'))
+        finalName = 'Private Chef';
+      else if (finalName == 'unknown' ||
+          finalName.isEmpty ||
+          finalName == 'food_nutrition') finalName = 'Nutritionist'; // Default
     }
 
     return AnalyticsEventItem(
@@ -303,16 +337,18 @@ class AnalyticsService {
         itemListName: itemListName,
       );
       if (kDebugMode) {
-        final itemDetails = items.map((i) => {
-          'item_id': i.itemId,
-          'item_name': i.itemName,
-          'item_category': i.itemCategory,
-          'item_category2': i.itemCategory2,
-          'item_variant': i.itemVariant,
-          'item_brand': i.itemBrand,
-          'price': i.price,
-          'quantity': i.quantity,
-        }).toList();
+        final itemDetails = items
+            .map((i) => {
+                  'item_id': i.itemId,
+                  'item_name': i.itemName,
+                  'item_category': i.itemCategory,
+                  'item_category2': i.itemCategory2,
+                  'item_variant': i.itemVariant,
+                  'item_brand': i.itemBrand,
+                  'price': i.price,
+                  'quantity': i.quantity,
+                })
+            .toList();
         print(
           'Analytics: view_item_list logged '
           '{ item_list_id: $itemListId, item_list_name: $itemListName, '
@@ -419,7 +455,8 @@ class AnalyticsService {
         items: [item],
       );
       if (kDebugMode) {
-        print('Analytics: remove_from_cart logged (${item.itemName}, value: $validatedValue $validatedCurrency)');
+        print(
+            'Analytics: remove_from_cart logged (${item.itemName}, value: $validatedValue $validatedCurrency)');
       }
     } catch (e) {
       if (kDebugMode) print('Analytics Error: remove_from_cart. $e');
@@ -465,7 +502,8 @@ class AnalyticsService {
       final validatedCurrency = validateCurrency(currency);
       if (validatedValue <= 0.0) {
         if (kDebugMode) {
-          print('Analytics Warning: purchase event value is £0.00 — check price passed to logPurchaseEvent (transactionId: $transactionId)');
+          print(
+              'Analytics Warning: purchase event value is £0.00 — check price passed to logPurchaseEvent (transactionId: $transactionId)');
         }
       }
       await _analytics.logPurchase(
