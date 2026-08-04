@@ -24,6 +24,12 @@
 	<string>$(FLUTTER_BUILD_NAME)</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
+	<key>FacebookAppID</key>
+	<string>1369810814662926</string>
+	<key>FacebookClientToken</key>
+	<string>0eb55f49ffa0a9e8bb472e49c938440a</string>
+	<key>FacebookDisplayName</key>
+	<string>Verithrive</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
@@ -44,6 +50,14 @@
 				<string>verithrive</string>
 			</array>
 		</dict>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>fb1369810814662926</string>
+			</array>
+		</dict>
 	</array>
 	<key>CFBundleVersion</key>
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
@@ -55,6 +69,10 @@
 	<array>
 		<string>google</string>
 		<string>com.googleusercontent.apps.950187352283-lhn5htutdmvj4t9323ovk3b1495m9j4t</string>
+		<string>fbapi</string>
+		<string>fb-messenger-share-api</string>
+		<string>fbauth2</string>
+		<string>fbshareextension</string>
 	</array>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>

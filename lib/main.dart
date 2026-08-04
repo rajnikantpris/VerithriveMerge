@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:facebook_app_events/facebook_app_events.dart';
 import 'dart:io';
 import 'package:verithrive_dev/enduser/flavors/build_config.dart'
     as enduser_build;
@@ -19,6 +20,8 @@ import 'common/firebase_config.dart';
 import 'services/foreground_notification_service.dart';
 import 'services/deep_link_service.dart';
 import 'services/analytics_service.dart';
+
+final facebookAppEvents = FacebookAppEvents();
 
 // lib/main.dart file
 
@@ -81,6 +84,9 @@ Future<void> main() async {
 
   // App Links / Universal Links (professional profile share)
   await DeepLinkService.instance.init();
+
+  // Facebook App Events
+  await facebookAppEvents.activateApp();
 
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
