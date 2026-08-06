@@ -28,6 +28,7 @@ class DefaultFirebaseOptions {
 
   }
 
+  // Production
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyA3bLE4gYWARW3FoaNTtNYbuxgDeSsqRH0',
@@ -35,6 +36,15 @@ class DefaultFirebaseOptions {
     messagingSenderId: '950187352283',
     projectId: 'verithrive---app---prod',
   );
+
+  // Development
+  //
+  // static const FirebaseOptions android = FirebaseOptions(
+  //   apiKey: 'AIzaSyDjdom-8K5VyqYV_zFUtPX_Zabk3r-C6XQ',
+  //   appId: '1:616853878729:android:981ded7c32ec4320e25a18',
+  //   messagingSenderId: '616853878729',
+  //   projectId: 'verithrive-5380e',
+  // );
 
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyA3bLE4gYWARW3FoaNTtNYbuxgDeSsqRH0',

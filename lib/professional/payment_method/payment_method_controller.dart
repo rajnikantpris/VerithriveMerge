@@ -103,28 +103,28 @@ class PaymentMethodController extends BaseController {
     final professionName = profile?.profession_name ?? '';
     final stripeAccountId = profile?.stripeConnectAccountId ?? '';
 
-    await AnalyticsService.instance.logPurchaseEvent(
-      item: AnalyticsService.instance.buildItem(
-        itemId: selectedPlanId.isNotEmpty ? selectedPlanId : '',
-        itemName:
-            selectedPlanName.isNotEmpty ? selectedPlanName : 'subscription',
-        itemCategory:
-            professionName.isNotEmpty ? professionName : 'subscription',
-        itemVariant: selectedPlanName.toLowerCase(),
-        itemBrand: 'subscription',
-        price: selectedPlanPrice,
-        quantity: 1,
-      ),
-      transactionId: selectedStripePriceId.isNotEmpty
-          ? selectedStripePriceId
-          : stripeAccountId.isNotEmpty
-              ? stripeAccountId
-              : selectedPlanId.isNotEmpty
-                  ? '${selectedPlanId}_${DateTime.now().millisecondsSinceEpoch}'
-                  : DateTime.now().millisecondsSinceEpoch.toString(),
-      value: selectedPlanPrice,
-      currency: 'GBP',
-    );
+    // await AnalyticsService.instance.logPurchaseEvent(
+    //   item: AnalyticsService.instance.buildItem(
+    //     itemId: selectedPlanId.isNotEmpty ? selectedPlanId : '',
+    //     itemName:
+    //         selectedPlanName.isNotEmpty ? selectedPlanName : 'subscription',
+    //     itemCategory:
+    //         professionName.isNotEmpty ? professionName : 'subscription',
+    //     itemVariant: selectedPlanName.toLowerCase(),
+    //     itemBrand: 'subscription',
+    //     price: selectedPlanPrice,
+    //     quantity: 1,
+    //   ),
+    //   transactionId: selectedStripePriceId.isNotEmpty
+    //       ? selectedStripePriceId
+    //       : stripeAccountId.isNotEmpty
+    //           ? stripeAccountId
+    //           : selectedPlanId.isNotEmpty
+    //               ? '${selectedPlanId}_${DateTime.now().millisecondsSinceEpoch}'
+    //               : DateTime.now().millisecondsSinceEpoch.toString(),
+    //   value: selectedPlanPrice,
+    //   currency: 'GBP',
+    // );
 
     if (selectedMethodId.value.isEmpty ||
         selectedPlanId.isEmpty ||
