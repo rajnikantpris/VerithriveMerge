@@ -75,6 +75,7 @@ class ProfileDetailsModel {
   final bool? hasAvailabilityToday;
   final bool? isSubscription;
   final String? registrationType;
+  final String? planNameSnapshot;
 
   const ProfileDetailsModel({
     this.id,
@@ -151,6 +152,7 @@ class ProfileDetailsModel {
     this.hasAvailabilityToday,
     this.isSubscription,
     this.registrationType,
+    this.planNameSnapshot,
   });
 
   factory ProfileDetailsModel.fromJson(Map<String, dynamic> json) {
@@ -250,6 +252,7 @@ class ProfileDetailsModel {
       hasAvailabilityToday: data['has_availability_today'] as bool?,
       isSubscription: data['is_subscription'] as bool?,
       registrationType: data['registration_type'] as String?,
+      planNameSnapshot: _planNameSnapshotFrom(data['subscription']),
     );
   }
 
@@ -276,6 +279,18 @@ class ProfileDetailsModel {
     if (trimmed.isEmpty) return null;
     final withoutTicks = trimmed.replaceAll('`', '').trim();
     return withoutTicks.isEmpty ? null : withoutTicks;
+  }
+
+  static String? _planNameSnapshotFrom(dynamic subscription) {
+    if (subscription is! Map<String, dynamic>) return null;
+    final snapshot = subscription['plan_name_snapshot']?.toString().trim();
+    if (snapshot != null && snapshot.isNotEmpty) return snapshot;
+    final nested = subscription['subscription_id'];
+    if (nested is Map<String, dynamic>) {
+      final planName = nested['plan_name']?.toString().trim();
+      if (planName != null && planName.isNotEmpty) return planName;
+    }
+    return null;
   }
 
   Map<String, dynamic> toJson() => <String, dynamic>{
@@ -330,5 +345,7 @@ class ProfileDetailsModel {
           'is_subscription': isSubscription,
         if (registrationType != null)
           'registration_type': registrationType,
+        if (planNameSnapshot != null)
+          'plan_name_snapshot': planNameSnapshot,
       };
 }

@@ -49,6 +49,12 @@ class SignupController extends BaseController {
     super.onInit();
     // Initialize formKey to ensure a new key is created each time
     formKey = GlobalKey<FormState>();
+    AnalyticsService.instance.logScreenView(
+      screenName: 'ProfessionalSignupScreen',
+      screenClass: 'SignupView',
+      pageCategory: 'register',
+      elementLocation: 'view',
+    );
     // Ask for notification permission when signup screen opens
     // _requestNotificationPermission();
   }
@@ -758,16 +764,6 @@ class SignupController extends BaseController {
     //   Get.offAllNamed(Routes.subscription);
     //   return;
     // }
-
-    await AnalyticsService.instance.setUserProfile(
-      loginState: 'logged_in',
-      userId: user?.id,
-      city: await getCityFromAddress(user!.address.toString()),
-      persona: AnalyticsService.resolvePersona(
-        professionName: user.profession_name,
-      ),
-      registrationType: socialType,
-    );
 
     // All steps completed - navigate to home
     Get.offAllNamed(Routes.home);

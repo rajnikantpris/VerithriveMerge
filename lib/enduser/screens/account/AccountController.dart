@@ -14,6 +14,7 @@ import '../../utils/api_services.dart';
 import '../../utils/common_dialog.dart';
 import '../../network/exceptions/base_exception.dart';
 import 'package:verithrive_dev/services/storage_service.dart';
+import 'package:verithrive_dev/services/analytics_service.dart';
 
 class AccountController extends BaseController {
   final ProjectRepository _repository = Get.find(tag: (ProjectRepository).toString());
@@ -87,6 +88,14 @@ class AccountController extends BaseController {
                 width: double.infinity,
                 child: TextButton(
                   onPressed: () {
+                    AnalyticsService.instance.logButtonTap(
+                      eventName: 'delete_account_tap',
+                      screenName: 'AccountScreen',
+                      screenClass: 'AccountScreen',
+                      elementText: 'Yes, delete',
+                      elementLocation: 'button_tap_cta',
+                      pageCategory: 'profile',
+                    );
                     Get.back();
                     deleteAccount();
                   },

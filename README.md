@@ -14,7 +14,7 @@ A Flutter-based mobile application connecting end-users with fitness, wellness, 
 
 ### Setup & Build
 
-For setup instructions, build guides, and troubleshooting, see [PROJECT_DOCUMENTATION.md](./PROJECT_DOCUMENTATION.md).
+For setup instructions, build guides, and troubleshooting, see [PROJECT_DOCUMENTATION.md](docs/PROJECT_DOCUMENTATION.md).
 
 ## Quick Start
 
@@ -24,4 +24,4 @@ For setup instructions, build guides, and troubleshooting, see [PROJECT_DOCUMENT
 4. Configure environment files (see documentation)
 5. Run the app: `flutter run`
 
-For full details, check the [project documentation](./PROJECT_DOCUMENTATION.md).
+For full details, check the [project documentation](docs/PROJECT_DOCUMENTATION.md).

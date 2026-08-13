@@ -709,9 +709,10 @@ class CalendarController extends BaseController {
                     professionalId.isNotEmpty ? professionalId : 'unknown',
                 itemListName:
                     professionalName.isNotEmpty ? professionalName : 'unknown',
-                extraParams: {
-                  'currency': 'GBP',
-                },
+                currency: 'GBP',
+                screenName: 'ProfessionalCalendarScreen',
+                screenClass: 'CalendarTab',
+                pageCategory: 'calendar',
               );
             }
           }

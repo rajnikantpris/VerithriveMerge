@@ -32,6 +32,9 @@ class FitnessGoalController extends BaseController {
   String? label;
   List<Map<String, dynamic>>? subTypesArray;
   String? type;
+
+  String get analyticsPageCategory =>
+      AnalyticsService.pageCategoryFromProfession(category ?? 'fitness');
   
   // API Data
   var services = <ServiceModel>[].obs;
@@ -199,7 +202,7 @@ class FitnessGoalController extends BaseController {
             'screen_class': 'FitnessGoalScreen',
             'element_text': subServiceName,
             'element_location': 'option_tap',
-            'page_category': 'fitness',
+            'page_category': analyticsPageCategory,
           },
         );
       }
@@ -254,6 +257,17 @@ class FitnessGoalController extends BaseController {
   ];
 
   void onSkip() {
+    AnalyticsService.instance.logEvent(
+      name: 'skip_tap',
+      parameters: {
+        'screen_name': 'FitnessGoalScreen',
+        'screen_class': 'FitnessGoalScreen',
+        'element_text': 'skip',
+        'element_location': 'button_tap_cta',
+        'page_category': analyticsPageCategory,
+      },
+    );
+
     if (onTrainerStep.value) {
       // On trainer step, skip means proceed without preference
       onSubmit();

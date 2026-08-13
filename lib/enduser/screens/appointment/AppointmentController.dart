@@ -40,6 +40,18 @@ class AppointmentController extends GetxController {
         );
       }
     }
+
+    // No is selected by default — log non_hurry_tap on screen open
+    AnalyticsService.instance.logEvent(
+      name: 'non_hurry_tap',
+      parameters: {
+        'screen_name': 'AppointmentBookingScreen',
+        'screen_class': 'AppointmentBookingScreen',
+        'element_text': 'hurry no',
+        'element_location': 'button_tap_cta',
+        'page_category': 'wellness',
+      },
+    );
   }
 
   void toggleAppointmentType(bool isLast) {

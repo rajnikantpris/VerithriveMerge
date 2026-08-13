@@ -1,3 +1,4 @@
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -95,6 +96,22 @@ class PaymentMethodController extends BaseController {
     selectedMethodId.value = methodId;
   }
 
+  /// Maps profession_name to sheet page_category: wellness | fitness | food & nutrition.
+  String _pageCategoryFromProfession(String professionName) {
+    final raw = professionName.trim().toLowerCase();
+    if (raw.contains('fitness') ||
+        raw.contains('trainer') ||
+        raw.contains('coach')) {
+      return 'fitness';
+    }
+    if (raw.contains('food') ||
+        raw.contains('nutrition') ||
+        raw.contains('diet')) {
+      return 'food & nutrition';
+    }
+    return 'wellness';
+  }
+
   Future<void> confirmPayment() async {
     // Get professional details from HomeController
     final homeController =
@@ -102,6 +119,7 @@ class PaymentMethodController extends BaseController {
     final profile = homeController?.profileDetails.value;
     final professionName = profile?.profession_name ?? '';
     final stripeAccountId = profile?.stripeConnectAccountId ?? '';
+    final pageCategory = _pageCategoryFromProfession(professionName);
 
     // await AnalyticsService.instance.logPurchaseEvent(
     //   item: AnalyticsService.instance.buildItem(
@@ -131,6 +149,24 @@ class PaymentMethodController extends BaseController {
         isConfirming.value) {
       return;
     }
+
+    AnalyticsService.instance.logBeginCheckoutEvent(
+      item: AnalyticsEventItem(
+        itemId: selectedPlanId.isNotEmpty ? selectedPlanId : '',
+        itemName:
+            selectedPlanName.isNotEmpty ? selectedPlanName : 'subscription',
+        itemCategory: pageCategory,
+        itemVariant: selectedPlanName.toLowerCase(),
+        itemBrand: 'verithrive',
+        price: AnalyticsService.validatePrice(selectedPlanPrice),
+        quantity: 1,
+      ),
+      value: AnalyticsService.validatePrice(selectedPlanPrice),
+      currency: 'GBP',
+      screenName: 'PaymentMethodView',
+      screenClass: 'PaymentMethodView',
+      pageCategory: pageCategory,
+    );
 
     isConfirming.value = true;
     await callDataService<ApiResponse<LoginResponseModel>>(
@@ -178,6 +214,9 @@ class PaymentMethodController extends BaseController {
                                   .toString(),
                   value: selectedPlanPrice,
                   currency: 'GBP',
+                  screenName: 'PaymentMethodView',
+                  screenClass: 'PaymentMethodView',
+                  pageCategory: pageCategory,
                 );
 
                 await _checkPaymentStatusAndNavigate(response.data?.user);

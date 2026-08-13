@@ -87,7 +87,7 @@ class AppointmentBookingScreen extends StatelessWidget {
                                 onTap: () {
                                   // Analytics: Log non-hurry tap event
                                   AnalyticsService.instance.logEvent(
-                                    name: 'hurry_tap',
+                                    name: 'non_hurry_tap',
                                     parameters: {
                                       'screen_name': 'AppointmentBookingScreen',
                                       'screen_class': 'AppointmentBookingScreen',
@@ -228,7 +228,7 @@ class AppointmentBookingScreen extends StatelessWidget {
                       } else {
                         // Analytics: Log skip tap event
                         AnalyticsService.instance.logEvent(
-                          name: 'hurry_tap',
+                          name: 'skip_tap',
                           parameters: {
                             'screen_name': 'AppointmentBookingScreen',
                             'screen_class': 'AppointmentBookingScreen',

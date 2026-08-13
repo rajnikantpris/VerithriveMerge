@@ -73,6 +73,10 @@ class TherapistDetailScreen extends StatelessWidget {
           quantity: 1,
         ),
         value: therapistPrice,
+        currency: 'GBP',
+        screenName: 'TherapistDetailScreen',
+        screenClass: 'TherapistDetailScreen',
+        pageCategory: category,
       );
     });
 
@@ -441,6 +445,10 @@ class TherapistDetailScreen extends StatelessWidget {
                               ),
                               itemListId: category,
                               itemListName: category,
+                              currency: 'GBP',
+                              screenName: 'TherapistDetailScreen',
+                              screenClass: 'TherapistDetailScreen',
+                              pageCategory: category,
                             );
                           });
 

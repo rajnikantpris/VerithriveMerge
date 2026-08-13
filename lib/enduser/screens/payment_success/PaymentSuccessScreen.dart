@@ -55,6 +55,10 @@ class PaymentSuccessScreen extends StatelessWidget {
         ),
         transactionId: transactionId,
         value: itemPrice,
+        currency: 'GBP',
+        screenName: 'PaymentSuccessScreen',
+        screenClass: 'PaymentSuccessScreen',
+        pageCategory: resolvedCategory,
       );
     });
 

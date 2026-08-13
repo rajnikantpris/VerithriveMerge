@@ -354,6 +354,15 @@ class ProfileController extends BaseController {
   }
 
   Future<void> onLogout() async {
+    await AnalyticsService.instance.logButtonTap(
+      eventName: 'logout_tap',
+      screenName: 'ProfessionalProfileScreen',
+      screenClass: 'ProfileTab',
+      elementText: 'Log out',
+      elementLocation: 'button_tap_cta',
+      pageCategory: 'profile',
+    );
+
     await callDataService<ApiResponse<dynamic>>(
       _userApiService.logout(),
       showLoader: true,

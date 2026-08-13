@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:geocoding/geocoding.dart';
 import 'package:get/get.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:verithrive_dev/enduser/screens/filter/professional/ProfessionalController.dart';
@@ -10,6 +11,7 @@ import '../../api/user_api_service.dart';
 import '../../common/base_controller.dart';
 import '../../routes/app_routes.dart';
 import '../../services/storage_service.dart';
+import '../../services/analytics_service.dart';
 import '../../services/firebase_token_service.dart';
 import '../../services/foreground_notification_service.dart';
 import '../../services/notification_permission_service.dart';
@@ -884,6 +886,7 @@ class HomeController extends BaseController {
               profileDetails.value = profile;
               logInfo('Profile details loaded successfully');
               logInfo('User: ${profile.fullName}, Email: ${profile.email}');
+              _setAnalyticsUserProfileOnce(profile);
               if (showStripeDialog) {
                 WidgetsBinding.instance.addPostFrameCallback((_) {
                   _maybeShowApprovalDialog(profile);
@@ -905,6 +908,49 @@ class HomeController extends BaseController {
             error: error, stackTrace: stack);
       },
     );
+  }
+
+  Future<void> _setAnalyticsUserProfileOnce(ProfileDetailsModel profile) async {
+    final regType = profile.registrationType?.toString() ?? '';
+    final analyticsRegType = (regType == 'google' || regType == 'facebook')
+        ? 'google'
+        : (regType == 'apple' ? 'apple' : 'regular');
+
+    String? city;
+    if (profile.address != null && profile.address!.isNotEmpty) {
+      city = await _cityFromAddress(profile.address!);
+    }
+
+    await AnalyticsService.instance.setUserProfile(
+      loginState: 'logged_in',
+      userId: profile.id,
+      city: city,
+      persona: AnalyticsService.resolvePersona(
+        professionName: profile.profession_name,
+      ),
+      plan: profile.planNameSnapshot,
+      registrationType: analyticsRegType,
+      oncePerLogin: true,
+    );
+  }
+
+  Future<String?> _cityFromAddress(String address) async {
+    try {
+      final locations = await locationFromAddress(address);
+      if (locations.isEmpty) return null;
+      final placemarks = await placemarkFromCoordinates(
+        locations.first.latitude,
+        locations.first.longitude,
+      );
+      if (placemarks.isEmpty) return null;
+      return (placemarks.first.locality ??
+              placemarks.first.subAdministrativeArea ??
+              '')
+          .toLowerCase();
+    } catch (e) {
+      logError('Error resolving city from address: $e');
+      return null;
+    }
   }
 
   Future<void> _maybeShowApprovalDialog(ProfileDetailsModel profile) async {

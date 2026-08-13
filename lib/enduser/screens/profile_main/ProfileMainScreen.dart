@@ -15,6 +15,7 @@ import '../update_profile/UpdateProfileBinding.dart';
 import '../transaction_summary/TransactionSummaryScreen.dart';
 import '../transaction_summary/TransactionSummaryBinding.dart';
 import 'ProfileMainController.dart';
+import 'package:verithrive_dev/services/analytics_service.dart';
 
 class ProfileMainScreen extends StatelessWidget {
   @override
@@ -81,6 +82,14 @@ class ProfileMainScreen extends StatelessWidget {
                     title: 'Log out',
                     onTap: () {
                       showLogoutDialog(() {
+                        AnalyticsService.instance.logButtonTap(
+                          eventName: 'logout_tap',
+                          screenName: 'ProfileMainScreen',
+                          screenClass: 'ProfileMainScreen',
+                          elementText: 'Log out',
+                          elementLocation: 'button_tap_cta',
+                          pageCategory: 'profile',
+                        );
                         controller.logoutApiCall();
                       },);
                     },

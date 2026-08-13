@@ -6,6 +6,7 @@ import 'package:verithrive_dev/enduser/screens/payment/PaymentMethodBinding.dart
 import 'package:verithrive_dev/enduser/screens/payment/PaymentMethodScreen.dart';
 import 'package:verithrive_dev/enduser/screens/summary/SummaryBinding.dart';
 import 'package:verithrive_dev/enduser/screens/summary/SummaryScreen.dart';
+import 'package:verithrive_dev/services/analytics_service.dart';
 import 'package:verithrive_dev/utils/timezone_helper.dart';
 import '../../core/base/base_controller.dart';
 import '../../data/repository/project_repository.dart';
@@ -468,6 +469,51 @@ class CartController extends BaseController {
     if (isEditMode.value && bookingId.value.isNotEmpty) {
       callUpdateBookingAPI();
     } else {
+      final from = fromTime.value ?? TimeOfDay(hour: 14, minute: 0);
+      final until = untilTime.value ?? TimeOfDay(hour: 15, minute: 0);
+      String formatTime24Hour(TimeOfDay time) {
+        return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
+      }
+
+      final startTime = formatTime24Hour(from);
+      final endTime = formatTime24Hour(until);
+      final durationMinutes =
+          ((until.hour * 60 + until.minute) - (from.hour * 60 + from.minute))
+              .clamp(1, 24 * 60)
+              .toInt();
+      final pageCategory =
+          AnalyticsService.pageCategoryFromProfession(category.value);
+      final itemPrice = AnalyticsService.validatePrice(price.value);
+
+      AnalyticsService.instance.logAddToCartEvent(
+        item: AnalyticsService.instance.buildItem(
+          itemId: professionalId.value.isNotEmpty ? professionalId.value : '',
+          itemName: itemVariant.value.isNotEmpty
+              ? itemVariant.value
+              : (serviceName.value.isNotEmpty ? serviceName.value : ''),
+          itemCategory: pageCategory,
+          itemCategory2: consultationType.value.isNotEmpty
+              ? consultationType.value
+              : serviceName.value,
+          itemVariant: '$startTime-$endTime',
+          itemBrand: itemBrand.value.isNotEmpty
+              ? itemBrand.value
+              : (consultationType.value.isNotEmpty
+                  ? consultationType.value
+                  : pageCategory),
+          price: itemPrice,
+          quantity: 1,
+        ),
+        value: itemPrice,
+        currency: 'GBP',
+        screenName: 'CartScreen',
+        screenClass: 'CartScreen',
+        pageCategory: pageCategory,
+        bookingStartTime: startTime,
+        bookingEndTime: endTime,
+        bookingDurationMinutes: durationMinutes,
+      );
+
       // Normal flow: navigate to summary screen with all booking data
       Get.to(
         () => SummaryScreen(),

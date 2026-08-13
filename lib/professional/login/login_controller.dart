@@ -783,17 +783,6 @@ class ProfessionalLoginController extends BaseController {
     //   return;
     // }
 
-    await AnalyticsService.instance.setUserProfile(
-      loginState: 'logged_in',
-      userId: user?.id,
-      city: await getCityFromAddress(user!.address.toString()),
-      persona: AnalyticsService.resolvePersona(
-        professionName: user.profession_name,
-      ),
-      registrationType:
-          socialType, // Use the actual social type ('google' or 'apple')
-    );
-
     // All steps completed - navigate to home
     Get.offAllNamed(Routes.home);
   }

@@ -17,7 +17,7 @@ class FitnessGoalScreen extends GetView<FitnessGoalController> {
       AnalyticsService.instance.logScreenView(
         screenName: 'FitnessGoalScreen',
         screenClass: 'FitnessGoalScreen',
-        pageCategory: 'fitness',
+        pageCategory: controller.analyticsPageCategory,
         elementLocation: 'view',
       );
     });
@@ -120,7 +120,7 @@ class FitnessGoalScreen extends GetView<FitnessGoalController> {
                                               'screen_class': 'FitnessGoalScreen',
                                               'element_text': pref,
                                               'element_location': 'option_tap',
-                                              'page_category': 'fitness',
+                                              'page_category': controller.analyticsPageCategory,
                                             },
                                           );
                                           controller.selectPreference(pref);
@@ -281,22 +281,23 @@ class FitnessGoalScreen extends GetView<FitnessGoalController> {
         children: [
           // Parent Service Item
           GestureDetector(
-            onTap: hasSubServices 
-                ? () => controller.toggleServiceExpansion(service.id) 
-                : () {
-                    // Analytics: Log select_service_tap event
-                    AnalyticsService.instance.logEvent(
-                      name: 'select_service_tap',
-                      parameters: {
-                        'screen_name': 'FitnessGoalScreen',
-                        'screen_class': 'FitnessGoalScreen',
-                        'element_text': service.serviceName ?? '',
-                        'element_location': 'option_tap',
-                        'page_category': 'fitness',
-                      },
-                    );
-                    controller.toggleServiceSelection(service.id);
-                  },
+            onTap: () {
+              AnalyticsService.instance.logEvent(
+                name: 'select_service_tap',
+                parameters: {
+                  'screen_name': 'FitnessGoalScreen',
+                  'screen_class': 'FitnessGoalScreen',
+                  'element_text': service.serviceName ?? '',
+                  'element_location': 'option_tap',
+                  'page_category': controller.analyticsPageCategory,
+                },
+              );
+              if (hasSubServices) {
+                controller.toggleServiceExpansion(service.id);
+              } else {
+                controller.toggleServiceSelection(service.id);
+              }
+            },
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
               margin: const EdgeInsets.only(top: 8, bottom: 8),

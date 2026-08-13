@@ -7,6 +7,8 @@ import '../../common/base_controller.dart';
 import '../../routes/app_routes.dart';
 import '../../services/analytics_service.dart';
 import '../../theme/image_paths.dart';
+import '../home/home_controller.dart';
+import '../signup_profile_wizard/signup_profile_wizard_controller.dart';
 
 class PlanOption {
   PlanOption({
@@ -257,6 +259,20 @@ class SubscriptionController extends BaseController {
       ),
     );
 
+    String? professionName;
+    if (Get.isRegistered<HomeController>()) {
+      professionName =
+          Get.find<HomeController>().profileDetails.value?.profession_name;
+    }
+    if ((professionName == null || professionName.isEmpty) &&
+        Get.isRegistered<SignupProfileWizardController>()) {
+      professionName = Get.find<SignupProfileWizardController>()
+          .selectedProfessionType
+          .value;
+    }
+    final pageCategory =
+        AnalyticsService.pageCategoryFromProfession(professionName);
+
     // Analytics: Log professional subscription plan selected / begin_checkout
     AnalyticsService.instance.logBeginCheckoutEvent(
       item: AnalyticsService.instance.buildItem(
@@ -272,6 +288,9 @@ class SubscriptionController extends BaseController {
       ),
       value: 0.0,
       currency: 'GBP',
+      screenName: 'SubscriptionView',
+      screenClass: 'SubscriptionView',
+      pageCategory: pageCategory,
     );
 
     Get.toNamed(

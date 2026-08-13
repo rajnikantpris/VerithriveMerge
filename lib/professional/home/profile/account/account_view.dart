@@ -339,16 +339,13 @@ class AccountView extends BaseView<AccountController> {
                     width: double.infinity,
                     child: TextButton(
                       onPressed: () {
-                        // Analytics: Log deactivate account confirm event
-                        AnalyticsService.instance.logEvent(
-                          name: 'deactive_account_tap',
-                          parameters: {
-                            'screen_name': 'ProfessionalAccountScreen',
-                            'screen_class': 'AccountView',
-                            'element_text': 'deactive account',
-                            'element_location': 'button_tap_cta',
-                            'page_category': 'profile',
-                          },
+                        AnalyticsService.instance.logButtonTap(
+                          eventName: 'delete_account_tap',
+                          screenName: 'ProfessionalAccountScreen',
+                          screenClass: 'AccountView',
+                          elementText: 'Yes, delete',
+                          elementLocation: 'button_tap_cta',
+                          pageCategory: 'profile',
                         );
                         Navigator.of(context).pop();
                         onConfirm();

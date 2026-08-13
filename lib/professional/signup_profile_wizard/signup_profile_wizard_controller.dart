@@ -1161,8 +1161,9 @@ class SignupProfileWizardController extends BaseController {
                 userId: profile.id,
                 city: resolvedCity,
                 persona: resolvedPersona,
-                plan: '',
+                plan: profile.planNameSnapshot,
                 registrationType: analyticsRegType,
+                oncePerLogin: true,
               );
 
               Get.offAllNamed(Routes.home);

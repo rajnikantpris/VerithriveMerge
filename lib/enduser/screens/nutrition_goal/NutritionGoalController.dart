@@ -27,6 +27,9 @@ class NutritionGoalController extends BaseController {
   String? label;
   List<Map<String, dynamic>>? subTypesArray;
   String? type;
+
+  String get analyticsPageCategory =>
+      AnalyticsService.pageCategoryFromProfession(category ?? 'food_nutrition');
   
   // API Data
   var services = <ServiceModel>[].obs;
@@ -170,6 +173,30 @@ class NutritionGoalController extends BaseController {
       selectedSubServiceIds.add(subServiceId);
       // Add parent service ID if not already added
       selectedServiceIds.add(serviceId);
+
+      String subServiceName = '';
+      for (var service in services) {
+        for (var subService in service.subServices) {
+          if (subService.id == subServiceId) {
+            subServiceName = subService.subServiceName;
+            break;
+          }
+        }
+        if (subServiceName.isNotEmpty) break;
+      }
+
+      if (subServiceName.isNotEmpty) {
+        AnalyticsService.instance.logEvent(
+          name: 'select_goal_tap',
+          parameters: {
+            'screen_name': 'NutritionGoalScreen',
+            'screen_class': 'NutritionGoalScreen',
+            'element_text': subServiceName,
+            'element_location': 'option_tap',
+            'page_category': analyticsPageCategory,
+          },
+        );
+      }
     }
   }
   

@@ -1,3 +1,4 @@
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:carousel_slider/carousel_slider.dart';
@@ -13,6 +14,7 @@ import '../../../../theme/colors.dart';
 import '../../../../theme/fonts.dart';
 import '../../../../theme/font_sizes.dart';
 import '../../../../theme/hight_width_sizes.dart';
+import '../../home_controller.dart';
 
 class ProfileSubscriptionController extends BaseController {
   ProfileSubscriptionController(this._userApiService);
@@ -60,7 +62,8 @@ class ProfileSubscriptionController extends BaseController {
 
   String upcomingPlanMessage(String? planId) {
     if (!isPlanUpcoming(planId)) return '';
-    final startDate = planId == null ? null : _upcomingPlanStartDateByPlanId[planId];
+    final startDate =
+        planId == null ? null : _upcomingPlanStartDateByPlanId[planId];
     if (startDate != null && startDate.isNotEmpty) {
       return 'Next plan starts on $startDate';
     }
@@ -142,14 +145,14 @@ class ProfileSubscriptionController extends BaseController {
             final status =
                 (subscription['status'] as String? ?? '').toLowerCase().trim();
             if (status == 'upcoming' || status == 'pending') {
-              final upcomingPlanId =
-                  subscription['subscription_id'] as String?;
+              final upcomingPlanId = subscription['subscription_id'] as String?;
               if (upcomingPlanId != null && upcomingPlanId.isNotEmpty) {
                 _upcomingSubscriptionPlanIds.add(upcomingPlanId);
-                final rawUpcomingStartDate = subscription['start_date'] as String? ??
-                    subscription['starts_at'] as String? ??
-                    subscription['next_billing_date'] as String? ??
-                    subscription['activation_date'] as String?;
+                final rawUpcomingStartDate =
+                    subscription['start_date'] as String? ??
+                        subscription['starts_at'] as String? ??
+                        subscription['next_billing_date'] as String? ??
+                        subscription['activation_date'] as String?;
                 if (rawUpcomingStartDate != null &&
                     rawUpcomingStartDate.isNotEmpty) {
                   try {
@@ -176,7 +179,8 @@ class ProfileSubscriptionController extends BaseController {
           // Get subscription_id for plan highlighting in UI
           planId = selectedSubscription['subscription_id'] as String?;
           // Get plan_key for proper plan matching
-          _currentSubscriptionPlanKey = selectedSubscription['plan_key_snapshot'] as String?;
+          _currentSubscriptionPlanKey =
+              selectedSubscription['plan_key_snapshot'] as String?;
           selectedStatus = selectedSubscription['status'] as String?;
 
           expiryDate = selectedSubscription['expiry_date'] as String? ??
@@ -190,7 +194,7 @@ class ProfileSubscriptionController extends BaseController {
         if (planId == null && data['plan'] is Map<String, dynamic>) {
           final planObj = data['plan'] as Map<String, dynamic>;
           planId = planObj['_id'] as String? ?? planObj['id'] as String?;
-          
+
           if (_activeSubscriptionId == null) {
             _activeSubscriptionId = planId;
           }
@@ -202,7 +206,7 @@ class ProfileSubscriptionController extends BaseController {
               data['planId'] as String? ??
               data['subscription_plan_id'] as String? ??
               data['subscriptionPlanId'] as String?;
-          
+
           if (_activeSubscriptionId == null) {
             _activeSubscriptionId = planId;
           }
@@ -248,8 +252,7 @@ class ProfileSubscriptionController extends BaseController {
       debugPrint('Current plan ID: $_currentSubscriptionPlanId');
       debugPrint('Selected subscription status: $selectedStatus');
       debugPrint('Upcoming plan IDs: $_upcomingSubscriptionPlanIds');
-      debugPrint(
-          'Upcoming plan dates: $_upcomingPlanStartDateByPlanId');
+      debugPrint('Upcoming plan dates: $_upcomingPlanStartDateByPlanId');
       debugPrint('Active until date: ${activeUntilDate.value}');
     } catch (e) {
       debugPrint('Error parsing subscription details: $e');
@@ -343,29 +346,36 @@ class ProfileSubscriptionController extends BaseController {
         if (shouldMarkAsCurrentPlan && _currentSubscriptionPlanKey != null) {
           for (var plan in parsedPlans) {
             bool isMatch = false;
-            
+
             // Primary match: exact plan_key comparison
             if (plan.planKey == _currentSubscriptionPlanKey) {
               isMatch = true;
             }
             // Fallback match: partial key matching (e.g., 'yearly' matches 'yearly_plan')
-            else if (plan.planKey != null && _currentSubscriptionPlanKey != null) {
+            else if (plan.planKey != null &&
+                _currentSubscriptionPlanKey != null) {
               final planKeyLower = plan.planKey!.toLowerCase();
-              final currentKeyLower = _currentSubscriptionPlanKey!.toLowerCase();
-              
+              final currentKeyLower =
+                  _currentSubscriptionPlanKey!.toLowerCase();
+
               // Check if current key is contained in plan key or vice versa
-              if (planKeyLower.contains(currentKeyLower) || currentKeyLower.contains(planKeyLower)) {
+              if (planKeyLower.contains(currentKeyLower) ||
+                  currentKeyLower.contains(planKeyLower)) {
                 isMatch = true;
               }
               // Check for common patterns
-              else if ((planKeyLower.contains('year') && currentKeyLower.contains('year')) ||
-                       (planKeyLower.contains('quarter') && currentKeyLower.contains('quarter')) ||
-                       (planKeyLower.contains('month') && currentKeyLower.contains('month')) ||
-                       (planKeyLower.contains('day') && currentKeyLower.contains('day'))) {
+              else if ((planKeyLower.contains('year') &&
+                      currentKeyLower.contains('year')) ||
+                  (planKeyLower.contains('quarter') &&
+                      currentKeyLower.contains('quarter')) ||
+                  (planKeyLower.contains('month') &&
+                      currentKeyLower.contains('month')) ||
+                  (planKeyLower.contains('day') &&
+                      currentKeyLower.contains('day'))) {
                 isMatch = true;
               }
             }
-            
+
             if (isMatch) {
               // Create a new plan with isCurrentPlan = true
               final index = parsedPlans.indexOf(plan);
@@ -393,6 +403,7 @@ class ProfileSubscriptionController extends BaseController {
             parsedPlans.indexWhere((plan) => plan.isCurrentPlan);
         final initialPageIndex = currentPlanIndex >= 0 ? currentPlanIndex : 0;
         currentPageIndex.value = initialPageIndex;
+        _logViewItemForPlans(parsedPlans);
 
         // Navigate to initial page after a short delay to ensure carousel is built
         Future.delayed(const Duration(milliseconds: 100), () {
@@ -418,6 +429,42 @@ class ProfileSubscriptionController extends BaseController {
     currentPageIndex.value = index;
   }
 
+  void _logViewItemForPlans(List<SubscriptionPlan> parsedPlans) {
+    if (parsedPlans.isEmpty) return;
+
+    String? professionName;
+    if (Get.isRegistered<HomeController>()) {
+      professionName =
+          Get.find<HomeController>().profileDetails.value?.profession_name;
+    }
+    final pageCategory =
+        AnalyticsService.pageCategoryFromProfession(professionName);
+
+    final analyticsItems = parsedPlans
+        .map(
+          (plan) => AnalyticsEventItem(
+            itemId: (plan.id != null && plan.id!.isNotEmpty) ? plan.id! : '',
+            itemName: plan.name.isNotEmpty ? plan.name : 'subscription',
+            itemCategory: pageCategory,
+            itemCategory2: plan.billingCycle,
+            itemVariant: plan.billingCycle.isNotEmpty
+                ? plan.billingCycle
+                : plan.name.toLowerCase(),
+            itemBrand: 'verithrive',
+            price: AnalyticsService.validatePrice(plan.price),
+            quantity: 1,
+          ),
+        )
+        .toList();
+
+    AnalyticsService.instance.logViewItemEvent(
+      items: analyticsItems,
+      screenName: 'ProfileSubscriptionView',
+      screenClass: 'ProfileSubscriptionView',
+      pageCategory: pageCategory,
+    );
+  }
+
   /// Navigate to payment method screen to buy subscription
   void onBuyNow(SubscriptionPlan plan) {
     if (plan.id == null || plan.id!.isEmpty) {
@@ -439,7 +486,8 @@ class ProfileSubscriptionController extends BaseController {
 
       // If user is trying to buy a plan with a lower weight (Monthly < Quarterly < Yearly)
       if (currentWeight > newWeight) {
-        showDowngradeRestrictionDialog(currentPlanName: current.name, newPlanName: plan.name);
+        showDowngradeRestrictionDialog(
+            currentPlanName: current.name, newPlanName: plan.name);
         return;
       }
 
@@ -451,19 +499,30 @@ class ProfileSubscriptionController extends BaseController {
       }
     }
 
-    // Analytics: Log professional subscription plan selected / begin_checkout
-    AnalyticsService.instance.logBeginCheckoutEvent(
-      item: AnalyticsService.instance.buildItem(
-        itemId: plan.id!.isNotEmpty ? plan.id! : 'unknown',
+    String? professionName;
+    if (Get.isRegistered<HomeController>()) {
+      professionName =
+          Get.find<HomeController>().profileDetails.value?.profession_name;
+    }
+    final pageCategory =
+        AnalyticsService.pageCategoryFromProfession(professionName);
+
+    AnalyticsService.instance.logSelectItemEvent(
+      item: AnalyticsEventItem(
+        itemId: plan.id!.isNotEmpty ? plan.id! : '',
         itemName: plan.name.isNotEmpty ? plan.name : 'subscription',
-        itemCategory: 'professional',
-        itemVariant: plan.name.toLowerCase(),
+        itemCategory: pageCategory,
+        itemVariant: plan.billingCycle.isNotEmpty
+            ? plan.billingCycle
+            : plan.name.toLowerCase(),
         itemBrand: 'verithrive',
-        price: plan.price,
+        price: AnalyticsService.validatePrice(plan.price),
         quantity: 1,
       ),
-      value: plan.price,
       currency: 'GBP',
+      screenName: 'ProfileSubscriptionView',
+      screenClass: 'ProfileSubscriptionView',
+      pageCategory: pageCategory,
     );
 
     // Navigate to payment method screen with plan ID, name, price, and stripe price ID
@@ -480,7 +539,8 @@ class ProfileSubscriptionController extends BaseController {
   }
 
   /// Show a dialog informing the user they cannot downgrade to a lower plan until their current plan expires
-  void showDowngradeRestrictionDialog({required String currentPlanName, required String newPlanName}) {
+  void showDowngradeRestrictionDialog(
+      {required String currentPlanName, required String newPlanName}) {
     showDialog(
       context: Get.context!,
       barrierDismissible: false,
@@ -708,8 +768,7 @@ class ProfileSubscriptionController extends BaseController {
 
   /// Cancel subscription API call
   Future<void> cancelSubscription() async {
-    if (_activeSubscriptionId == null ||
-        _activeSubscriptionId!.isEmpty) {
+    if (_activeSubscriptionId == null || _activeSubscriptionId!.isEmpty) {
       showStatusDialog(
         title: 'Error',
         message: 'No active subscription found to cancel.',
@@ -794,7 +853,9 @@ class ProfileSubscriptionController extends BaseController {
                       fontFamily: AppFonts.rubikMedium,
                       fontWeight: FontWeight.w500,
                       fontSize: FontSizes.setFontValue_20,
-                      color: isError ? AppColor.color_E64646 : AppColor.color_2FC4B2,
+                      color: isError
+                          ? AppColor.color_E64646
+                          : AppColor.color_2FC4B2,
                     ),
                   ),
                   SizedBox(height: HightWidthSizes.setValue_16),

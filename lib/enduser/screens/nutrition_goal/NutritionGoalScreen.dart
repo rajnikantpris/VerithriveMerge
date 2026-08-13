@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:verithrive_dev/enduser/utils/app_assets.dart';
 import 'package:verithrive_dev/enduser/utils/app_colors.dart';
 import 'package:verithrive_dev/enduser/utils/app_text_styles.dart';
+import 'package:verithrive_dev/services/analytics_service.dart';
 import 'NutritionGoalController.dart';
 
 class NutritionGoalScreen extends GetView<NutritionGoalController> {
@@ -127,9 +128,23 @@ class NutritionGoalScreen extends GetView<NutritionGoalController> {
         children: [
           // Parent Service Item
           GestureDetector(
-            onTap: hasSubServices 
-                ? () => controller.toggleServiceExpansion(service.id) 
-                : () => controller.toggleServiceSelection(service.id),
+            onTap: () {
+              AnalyticsService.instance.logEvent(
+                name: 'select_service_tap',
+                parameters: {
+                  'screen_name': 'NutritionGoalScreen',
+                  'screen_class': 'NutritionGoalScreen',
+                  'element_text': service.serviceName ?? '',
+                  'element_location': 'option_tap',
+                  'page_category': controller.analyticsPageCategory,
+                },
+              );
+              if (hasSubServices) {
+                controller.toggleServiceExpansion(service.id);
+              } else {
+                controller.toggleServiceSelection(service.id);
+              }
+            },
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
               margin: const EdgeInsets.only(top: 8, bottom: 8),

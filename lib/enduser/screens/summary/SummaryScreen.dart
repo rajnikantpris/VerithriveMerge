@@ -61,6 +61,10 @@ class SummaryScreen extends StatelessWidget {
           quantity: 1,
         ),
         value: cartController.price.value,
+        currency: 'GBP',
+        screenName: 'SummaryScreen',
+        screenClass: 'SummaryScreen',
+        pageCategory: category,
       );
     });
 

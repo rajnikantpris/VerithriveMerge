@@ -1,5 +1,8 @@
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/foundation.dart';
+import 'package:get/get.dart';
+
+import 'storage_service.dart';
 
 /// Service to handle Firebase Analytics logging across the app.
 class AnalyticsService {
@@ -10,9 +13,26 @@ class AnalyticsService {
 
   final FirebaseAnalytics _analytics = FirebaseAnalytics.instance;
 
+  static const String _userProfileSetKey = 'analytics_user_profile_set_user_id';
+
   /// Observer to automatically track screen transitions in [GetMaterialApp] or [MaterialApp].
   FirebaseAnalyticsObserver get observer =>
       FirebaseAnalyticsObserver(analytics: _analytics);
+
+  void _printEvent(String eventName, [Map<String, Object?>? parameters]) {
+    print('Analytics: [$eventName] parameters: ${parameters ?? {}}');
+  }
+
+  Map<String, Object?> _itemLogParams(AnalyticsEventItem item) => {
+        'item_id': item.itemId,
+        'item_name': item.itemName,
+        'item_category': item.itemCategory,
+        'item_category2': item.itemCategory2,
+        'item_variant': item.itemVariant,
+        'item_brand': item.itemBrand,
+        'price': item.price,
+        'quantity': item.quantity,
+      };
 
   /// Log a button tap / CTA interaction event.
   ///
@@ -56,10 +76,7 @@ class AnalyticsService {
         parameters: parameters,
       );
 
-      if (kDebugMode) {
-        print(
-            'Analytics: Logged event [$validName] with parameters $parameters');
-      }
+      _printEvent(validName, parameters);
     } catch (e) {
       if (kDebugMode) {
         print('Analytics Error: Could not log event [$name]. Error: $e');
@@ -75,29 +92,19 @@ class AnalyticsService {
     String? elementLocation,
   }) async {
     try {
-      final parameters = <String, Object>{};
-      if (pageCategory != null) parameters['page_category'] = pageCategory;
-      if (elementLocation != null)
-        parameters['element_location'] = elementLocation;
+      final eventParams = <String, Object>{
+        'screen_name': screenName,
+        if (screenClass != null) 'screen_class': screenClass,
+        if (pageCategory != null) 'page_category': pageCategory,
+        if (elementLocation != null) 'element_location': elementLocation,
+      };
 
       await _analytics.logEvent(
         name: 'screen_view',
-        parameters: {
-          'screen_name': screenName,
-          if (screenClass != null) 'screen_class': screenClass,
-          ...parameters,
-        },
+        parameters: eventParams,
       );
 
-      if (kDebugMode) {
-        final allParameters = {
-          'screen_name': screenName,
-          if (screenClass != null) 'screen_class': screenClass,
-          ...parameters,
-        };
-        print(
-            'Analytics: Logged screen view [$screenName] with parameters ${allParameters.isEmpty ? '' : allParameters}');
-      }
+      _printEvent('screen_view', eventParams);
     } catch (e) {
       if (kDebugMode) {
         print(
@@ -111,6 +118,7 @@ class AnalyticsService {
   Future<void> setUserId(String? userId) async {
     try {
       await _analytics.setUserId(id: userId);
+      _printEvent('set_user_id', {'user_id': userId});
     } catch (e) {
       if (kDebugMode) {
         print('Analytics Error: Could not set user ID. Error: $e');
@@ -125,6 +133,7 @@ class AnalyticsService {
   }) async {
     try {
       await _analytics.setUserProperty(name: name, value: value);
+      _printEvent('set_user_property', {'name': name, 'value': value});
     } catch (e) {
       if (kDebugMode) {
         print(
@@ -134,6 +143,8 @@ class AnalyticsService {
   }
 
   /// Set commonly used user profile properties in one call.
+  ///
+  /// When [oncePerLogin] is true, this runs once per user until logout.
   Future<void> setUserProfile({
     String? loginState,
     String? userId,
@@ -141,8 +152,13 @@ class AnalyticsService {
     String? city,
     String? persona,
     String? plan,
+    bool oncePerLogin = false,
   }) async {
     try {
+      if (oncePerLogin && !_shouldSetUserProfile(userId)) {
+        return;
+      }
+
       await _analytics.setUserProperty(
         name: 'user_login_state',
         value: loginState,
@@ -180,18 +196,53 @@ class AnalyticsService {
         );
       }
 
-      if (kDebugMode) {
-        final planPart =
-            (plan != null && plan.isNotEmpty) ? ', user_plan: $plan' : '';
-        print(
-          'Analytics: Set user profile { user_login_state: $loginState, user_id: $userId, user_registration_type: $registrationType, user_city: $city, user_persona: $persona$planPart }',
-        );
+      if (oncePerLogin) {
+        await _markUserProfileSet(userId);
       }
+
+      _printEvent('set_user_profile', {
+        'user_login_state': loginState,
+        'user_id': userId,
+        'user_registration_type': registrationType,
+        'user_city': city,
+        'user_persona': persona,
+        'user_plan': plan,
+      });
     } catch (e) {
       if (kDebugMode) {
         print('Analytics Error: Could not set user profile. Error: $e');
       }
     }
+  }
+
+  bool _shouldSetUserProfile(String? userId) {
+    if (userId == null || userId.isEmpty) return true;
+    if (!Get.isRegistered<StorageService>()) return true;
+    final lastSetFor = Get.find<StorageService>().readString(_userProfileSetKey);
+    return lastSetFor != userId;
+  }
+
+  Future<void> _markUserProfileSet(String? userId) async {
+    if (userId == null || userId.isEmpty) return;
+    if (!Get.isRegistered<StorageService>()) return;
+    await Get.find<StorageService>().writeString(_userProfileSetKey, userId);
+  }
+
+  /// Maps profession/journey name to sheet page_category:
+  /// wellness | fitness | food & nutrition.
+  static String pageCategoryFromProfession(String? professionName) {
+    final raw = professionName?.trim().toLowerCase() ?? '';
+    if (raw.contains('fitness') ||
+        raw.contains('trainer') ||
+        raw.contains('coach')) {
+      return 'fitness';
+    }
+    if (raw.contains('food') ||
+        raw.contains('nutrition') ||
+        raw.contains('diet')) {
+      return 'food & nutrition';
+    }
+    return 'wellness';
   }
 
   /// Maps a raw profession_name/type value to a canonical persona string.
@@ -328,60 +379,76 @@ class AnalyticsService {
     required List<AnalyticsEventItem> items,
     String? itemListId,
     String? itemListName,
+    String currency = 'GBP',
+    String? screenName,
+    String? screenClass,
+    String? pageCategory,
     Map<String, Object>? extraParams,
   }) async {
     try {
+      final validatedCurrency = validateCurrency(currency);
+      final parameters = <String, Object>{
+        'currency': validatedCurrency,
+        if (screenName != null) 'screen_name': screenName,
+        if (screenClass != null) 'screen_class': screenClass,
+        if (pageCategory != null) 'page_category': pageCategory,
+        if (extraParams != null) ...extraParams,
+      };
+
       await _analytics.logViewItemList(
         items: items,
         itemListId: itemListId,
         itemListName: itemListName,
+        parameters: parameters,
       );
-      if (kDebugMode) {
-        final itemDetails = items
-            .map((i) => {
-                  'item_id': i.itemId,
-                  'item_name': i.itemName,
-                  'item_category': i.itemCategory,
-                  'item_category2': i.itemCategory2,
-                  'item_variant': i.itemVariant,
-                  'item_brand': i.itemBrand,
-                  'price': i.price,
-                  'quantity': i.quantity,
-                })
-            .toList();
-        print(
-          'Analytics: view_item_list logged '
-          '{ item_list_id: $itemListId, item_list_name: $itemListName, '
-          'items (${items.length}): $itemDetails }',
-        );
-      }
+      _printEvent('view_item_list', {
+        'item_list_id': itemListId,
+        'item_list_name': itemListName,
+        ...parameters,
+        'items': items.map(_itemLogParams).toList(),
+      });
     } catch (e) {
       if (kDebugMode) print('Analytics Error: view_item_list. $e');
     }
   }
 
   Future<void> logViewItemEvent({
-    required AnalyticsEventItem item,
-    double value = 0.0,
-    String currency = 'GBP',
+    AnalyticsEventItem? item,
+    List<AnalyticsEventItem>? items,
+    double? value,
+    String? currency,
+    String? screenName,
+    String? screenClass,
+    String? pageCategory,
     Map<String, Object>? extraParams,
   }) async {
     try {
+      final eventItems = (items != null && items.isNotEmpty)
+          ? items
+          : (item != null ? [item] : <AnalyticsEventItem>[]);
+      if (eventItems.isEmpty) return;
+
+      final validatedCurrency =
+          currency != null ? validateCurrency(currency) : null;
+      final parameters = <String, Object>{
+        if (screenName != null) 'screen_name': screenName,
+        if (screenClass != null) 'screen_class': screenClass,
+        if (pageCategory != null) 'page_category': pageCategory,
+        if (extraParams != null) ...extraParams,
+      };
+
       await _analytics.logViewItem(
-        currency: currency,
+        currency: validatedCurrency,
         value: value,
-        items: [item],
+        items: eventItems,
+        parameters: parameters.isEmpty ? null : parameters,
       );
-      if (kDebugMode) {
-        print(
-          'Analytics: view_item logged { '
-          'currency: $currency, value: $value, '
-          'item_id: ${item.itemId}, item_name: ${item.itemName}, '
-          'item_category: ${item.itemCategory}, item_category2: ${item.itemCategory2}, '
-          'item_variant: ${item.itemVariant}, '
-          'item_brand: ${item.itemBrand}, price: ${item.price}, quantity: ${item.quantity} }',
-        );
-      }
+      _printEvent('view_item', {
+        if (validatedCurrency != null) 'currency': validatedCurrency,
+        if (value != null) 'value': value,
+        ...parameters,
+        'items': eventItems.map(_itemLogParams).toList(),
+      });
     } catch (e) {
       if (kDebugMode) print('Analytics Error: view_item. $e');
     }
@@ -391,25 +458,79 @@ class AnalyticsService {
     required AnalyticsEventItem item,
     String? itemListId,
     String? itemListName,
+    String currency = 'GBP',
+    String? screenName,
+    String? screenClass,
+    String? pageCategory,
+    Map<String, Object>? extraParams,
   }) async {
     try {
+      final validatedCurrency = validateCurrency(currency);
+      final parameters = <String, Object>{
+        'currency': validatedCurrency,
+        if (screenName != null) 'screen_name': screenName,
+        if (screenClass != null) 'screen_class': screenClass,
+        if (pageCategory != null) 'page_category': pageCategory,
+        if (extraParams != null) ...extraParams,
+      };
+
       await _analytics.logSelectItem(
         items: [item],
         itemListId: itemListId,
         itemListName: itemListName,
+        parameters: parameters,
       );
-      if (kDebugMode) {
-        print(
-          'Analytics: select_item logged { '
-          'item_list_id: $itemListId, item_list_name: $itemListName, '
-          'item_id: ${item.itemId}, item_name: ${item.itemName}, '
-          'item_category: ${item.itemCategory}, item_category2: ${item.itemCategory2}, '
-          'item_variant: ${item.itemVariant}, '
-          'item_brand: ${item.itemBrand}, price: ${item.price}, quantity: ${item.quantity} }',
-        );
-      }
+      _printEvent('select_item', {
+        if (itemListId != null) 'item_list_id': itemListId,
+        if (itemListName != null) 'item_list_name': itemListName,
+        ...parameters,
+        ..._itemLogParams(item),
+      });
     } catch (e) {
       if (kDebugMode) print('Analytics Error: select_item. $e');
+    }
+  }
+
+  Future<void> logAddToCartEvent({
+    required AnalyticsEventItem item,
+    dynamic value = 0.0,
+    String currency = 'GBP',
+    String? screenName,
+    String? screenClass,
+    String? pageCategory,
+    String? bookingStartTime,
+    String? bookingEndTime,
+    int? bookingDurationMinutes,
+    Map<String, Object>? extraParams,
+  }) async {
+    try {
+      final validatedValue = validatePrice(value);
+      final validatedCurrency = validateCurrency(currency);
+      final parameters = <String, Object>{
+        if (screenName != null) 'screen_name': screenName,
+        if (screenClass != null) 'screen_class': screenClass,
+        if (pageCategory != null) 'page_category': pageCategory,
+        if (bookingStartTime != null) 'booking_start_time': bookingStartTime,
+        if (bookingEndTime != null) 'booking_end_time': bookingEndTime,
+        if (bookingDurationMinutes != null)
+          'booking_duration_minutes': bookingDurationMinutes,
+        if (extraParams != null) ...extraParams,
+      };
+
+      await _analytics.logAddToCart(
+        currency: validatedCurrency,
+        value: validatedValue,
+        items: [item],
+        parameters: parameters.isEmpty ? null : parameters,
+      );
+      _printEvent('add_to_cart', {
+        'currency': validatedCurrency,
+        'value': validatedValue,
+        ...parameters,
+        ..._itemLogParams(item),
+      });
+    } catch (e) {
+      if (kDebugMode) print('Analytics Error: add_to_cart. $e');
     }
   }
 
@@ -417,25 +538,33 @@ class AnalyticsService {
     required AnalyticsEventItem item,
     dynamic value = 0.0,
     String currency = 'GBP',
+    String? screenName,
+    String? screenClass,
+    String? pageCategory,
+    Map<String, Object>? extraParams,
   }) async {
     try {
       final validatedValue = validatePrice(value);
       final validatedCurrency = validateCurrency(currency);
+      final parameters = <String, Object>{
+        if (screenName != null) 'screen_name': screenName,
+        if (screenClass != null) 'screen_class': screenClass,
+        if (pageCategory != null) 'page_category': pageCategory,
+        if (extraParams != null) ...extraParams,
+      };
+
       await _analytics.logViewCart(
         currency: validatedCurrency,
         value: validatedValue,
         items: [item],
+        parameters: parameters.isEmpty ? null : parameters,
       );
-      if (kDebugMode) {
-        print(
-          'Analytics: view_cart logged { '
-          'currency: $validatedCurrency, value: $validatedValue, '
-          'item_id: ${item.itemId}, item_name: ${item.itemName}, '
-          'item_category: ${item.itemCategory}, item_category2: ${item.itemCategory2}, '
-          'item_variant: ${item.itemVariant}, '
-          'item_brand: ${item.itemBrand}, price: ${item.price}, quantity: ${item.quantity} }',
-        );
-      }
+      _printEvent('view_cart', {
+        'currency': validatedCurrency,
+        'value': validatedValue,
+        ...parameters,
+        ..._itemLogParams(item),
+      });
     } catch (e) {
       if (kDebugMode) print('Analytics Error: view_cart. $e');
     }
@@ -445,19 +574,33 @@ class AnalyticsService {
     required AnalyticsEventItem item,
     dynamic value = 0.0,
     String currency = 'GBP',
+    String? screenName,
+    String? screenClass,
+    String? pageCategory,
+    Map<String, Object>? extraParams,
   }) async {
     try {
       final validatedValue = validatePrice(value);
       final validatedCurrency = validateCurrency(currency);
+      final parameters = <String, Object>{
+        if (screenName != null) 'screen_name': screenName,
+        if (screenClass != null) 'screen_class': screenClass,
+        if (pageCategory != null) 'page_category': pageCategory,
+        if (extraParams != null) ...extraParams,
+      };
+
       await _analytics.logRemoveFromCart(
         currency: validatedCurrency,
         value: validatedValue,
         items: [item],
+        parameters: parameters.isEmpty ? null : parameters,
       );
-      if (kDebugMode) {
-        print(
-            'Analytics: remove_from_cart logged (${item.itemName}, value: $validatedValue $validatedCurrency)');
-      }
+      _printEvent('remove_from_cart', {
+        'currency': validatedCurrency,
+        'value': validatedValue,
+        ...parameters,
+        ..._itemLogParams(item),
+      });
     } catch (e) {
       if (kDebugMode) print('Analytics Error: remove_from_cart. $e');
     }
@@ -467,25 +610,33 @@ class AnalyticsService {
     required AnalyticsEventItem item,
     dynamic value = 0.0,
     String currency = 'GBP',
+    String? screenName,
+    String? screenClass,
+    String? pageCategory,
+    Map<String, Object>? extraParams,
   }) async {
     try {
       final validatedValue = validatePrice(value);
       final validatedCurrency = validateCurrency(currency);
+      final parameters = <String, Object>{
+        if (screenName != null) 'screen_name': screenName,
+        if (screenClass != null) 'screen_class': screenClass,
+        if (pageCategory != null) 'page_category': pageCategory,
+        if (extraParams != null) ...extraParams,
+      };
+
       await _analytics.logBeginCheckout(
         currency: validatedCurrency,
         value: validatedValue,
         items: [item],
+        parameters: parameters.isEmpty ? null : parameters,
       );
-      if (kDebugMode) {
-        print(
-          'Analytics: begin_checkout logged { '
-          'currency: $validatedCurrency, value: $validatedValue, '
-          'item_id: ${item.itemId}, item_name: ${item.itemName}, '
-          'item_category: ${item.itemCategory}, item_category2: ${item.itemCategory2}, '
-          'item_variant: ${item.itemVariant}, '
-          'item_brand: ${item.itemBrand}, price: ${item.price}, quantity: ${item.quantity} }',
-        );
-      }
+      _printEvent('begin_checkout', {
+        'currency': validatedCurrency,
+        'value': validatedValue,
+        ...parameters,
+        ..._itemLogParams(item),
+      });
     } catch (e) {
       if (kDebugMode) print('Analytics Error: begin_checkout. $e');
     }
@@ -496,6 +647,10 @@ class AnalyticsService {
     required String transactionId,
     dynamic value = 0.0,
     String currency = 'GBP',
+    String? screenName,
+    String? screenClass,
+    String? pageCategory,
+    Map<String, Object>? extraParams,
   }) async {
     try {
       final validatedValue = validatePrice(value);
@@ -506,23 +661,27 @@ class AnalyticsService {
               'Analytics Warning: purchase event value is £0.00 — check price passed to logPurchaseEvent (transactionId: $transactionId)');
         }
       }
+      final parameters = <String, Object>{
+        if (screenName != null) 'screen_name': screenName,
+        if (screenClass != null) 'screen_class': screenClass,
+        if (pageCategory != null) 'page_category': pageCategory,
+        if (extraParams != null) ...extraParams,
+      };
+
       await _analytics.logPurchase(
         currency: validatedCurrency,
         value: validatedValue,
         transactionId: transactionId,
         items: [item],
+        parameters: parameters.isEmpty ? null : parameters,
       );
-      if (kDebugMode) {
-        print(
-          'Analytics: purchase logged { '
-          'currency: $validatedCurrency, value: $validatedValue, '
-          'transaction_id: $transactionId, '
-          'item_id: ${item.itemId}, item_name: ${item.itemName}, '
-          'item_category: ${item.itemCategory}, item_category2: ${item.itemCategory2}, '
-          'item_variant: ${item.itemVariant}, '
-          'item_brand: ${item.itemBrand}, price: ${item.price}, quantity: ${item.quantity} }',
-        );
-      }
+      _printEvent('purchase', {
+        'currency': validatedCurrency,
+        'value': validatedValue,
+        'transaction_id': transactionId,
+        ...parameters,
+        ..._itemLogParams(item),
+      });
     } catch (e) {
       if (kDebugMode) print('Analytics Error: purchase. $e');
     }
@@ -537,9 +696,11 @@ class AnalyticsService {
         value: 'logged_out',
       );
 
-      if (kDebugMode) {
-        print('Analytics: Cleared user (logged out)');
+      if (Get.isRegistered<StorageService>()) {
+        await Get.find<StorageService>().remove(_userProfileSetKey);
       }
+
+      _printEvent('clear_user', {'user_id': null, 'user_login_state': 'logged_out'});
     } catch (e) {
       if (kDebugMode) {
         print('Analytics Error: Could not clear user. Error: $e');

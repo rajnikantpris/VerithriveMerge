@@ -249,6 +249,9 @@ class SummaryController extends BaseController {
         ),
         value: itemPrice,
         currency: 'GBP',
+        screenName: 'SummaryScreen',
+        screenClass: 'SummaryScreen',
+        pageCategory: category,
       );
     });
 

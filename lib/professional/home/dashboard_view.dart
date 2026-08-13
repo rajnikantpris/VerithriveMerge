@@ -960,17 +960,6 @@ class _SessionCard extends StatelessWidget {
                 children: [
                   _ActionButton(
                     onTap: () {
-                      // Analytics: Log cancel session tap event
-                      AnalyticsService.instance.logEvent(
-                        name: 'cancel_session_tap',
-                        parameters: {
-                          'screen_name': 'ProfessionalHomeScreen',
-                          'screen_class': 'DashboardView',
-                          'element_text': 'Cancel Session',
-                          'element_location': 'button_tap_cta',
-                          'page_category': 'home',
-                        },
-                      );
                       showCancelSessionDialog(context, session.id, controller);
                     },
                     icon: AppImages.delete_list_svg(
@@ -1198,6 +1187,16 @@ void showCancelSessionDialog(
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: () {
+                      AnalyticsService.instance.logEvent(
+                        name: 'cancel_session_tap',
+                        parameters: {
+                          'screen_name': 'ProfessionalHomeScreen',
+                          'screen_class': 'DashboardView',
+                          'element_text': 'Cancel Session',
+                          'element_location': 'button_tap_cta',
+                          'page_category': 'home',
+                        },
+                      );
                       Navigator.of(context).pop();
                       controller.cancelSession(sessionId);
                       showSessionCancelledDialog(context);

@@ -227,6 +227,10 @@ class PaymentMethodController extends BaseController {
           quantity: 1,
         ),
         value: price.value,
+        currency: 'GBP',
+        screenName: 'PaymentMethodScreen',
+        screenClass: 'PaymentMethodController',
+        pageCategory: category,
       );
     });
 
