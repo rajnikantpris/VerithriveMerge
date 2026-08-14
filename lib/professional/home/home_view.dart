@@ -193,14 +193,14 @@ class HomeView extends BaseView<HomeController> {
   @override
   Widget buildView(BuildContext context) {
     // Log screen view analytics
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      AnalyticsService.instance.logScreenView(
-        screenName: 'ProfessionalHomeScreen',
-        screenClass: 'HomeView',
-        pageCategory: 'home',
-        elementLocation: 'view',
-      );
-    });
+    // WidgetsBinding.instance.addPostFrameCallback((_) {
+    //   AnalyticsService.instance.logScreenView(
+    //     screenName: 'ProfessionalHomeScreen',
+    //     screenClass: 'HomeView',
+    //     pageCategory: 'home',
+    //     elementLocation: 'view',
+    //   );
+    // });
 
     final calendarController = Get.find<CalendarController>();
     final messagesController = Get.find<MessagesController>();

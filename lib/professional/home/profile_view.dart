@@ -17,14 +17,14 @@ class ProfileTab extends BaseView<ProfileController> {
   @override
   Widget buildView(BuildContext context) {
     // Log screen view analytics
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      AnalyticsService.instance.logScreenView(
-        screenName: 'ProfessionalProfileScreen',
-        screenClass: 'ProfileTab',
-        pageCategory: 'profile',
-        elementLocation: 'view',
-      );
-    });
+    // WidgetsBinding.instance.addPostFrameCallback((_) {
+    //   AnalyticsService.instance.logScreenView(
+    //     screenName: 'ProfessionalProfileScreen',
+    //     screenClass: 'ProfileTab',
+    //     pageCategory: 'profile',
+    //     elementLocation: 'view',
+    //   );
+    // });
 
     return Container(
       color: AppColor.white,

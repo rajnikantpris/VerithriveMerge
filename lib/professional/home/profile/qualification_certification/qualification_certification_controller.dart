@@ -13,6 +13,7 @@ import '../../../../api/api_response.dart';
 import '../../../../api/user_api_service.dart';
 import '../../../../common/base_controller.dart';
 import '../../../../models/college_university_model.dart';
+import '../../../../services/analytics_service.dart';
 import '../../../../services/camera_storage_permission_service.dart';
 import '../../../../services/storage_service.dart';
 import '../../../../widgets/response_dialog.dart';
@@ -55,6 +56,12 @@ class QualificationCertificationController extends BaseController {
   @override
   void onInit() {
     super.onInit();
+    AnalyticsService.instance.logScreenView(
+      screenName: 'ProfessionalQualificationCertificationScreen',
+      screenClass: 'QualificationCertificationView',
+      pageCategory: 'profile',
+      elementLocation: 'view',
+    );
     formKey = GlobalKey<FormState>();
     // Add listener to years experience controller
     yearsExperienceController.addListener(_checkHasValidData);

@@ -6,6 +6,7 @@ import '../../../../api/user_api_service.dart';
 import '../../../../common/base_controller.dart';
 import '../../../../models/service_model.dart';
 import '../../../../routes/app_routes.dart';
+import '../../../../services/analytics_service.dart';
 
 class ServiceFormatController extends BaseController {
   ServiceFormatController(this._userApiService);
@@ -40,6 +41,12 @@ class ServiceFormatController extends BaseController {
   @override
   void onInit() {
     super.onInit();
+    AnalyticsService.instance.logScreenView(
+      screenName: 'ProfessionalServiceFormatScreen',
+      screenClass: 'ServiceFormatView',
+      pageCategory: 'calendar',
+      elementLocation: 'view',
+    );
     // Get selected date from arguments
     final dateArg = Get.arguments;
     if (dateArg is DateTime) {

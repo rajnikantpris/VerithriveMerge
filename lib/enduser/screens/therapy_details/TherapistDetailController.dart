@@ -146,10 +146,11 @@ class TherapistDetailController extends BaseController
       String pageCategory = 'wellness';
       try {
         final args = Get.arguments as Map<String, dynamic>?;
-        pageCategory = args?['category'] as String? ?? 'wellness';
+        pageCategory = AnalyticsService.resolvePageCategory(
+          args?['category']?.toString() ?? category,
+        );
       } catch (e) {
-        // Fallback to wellness if arguments are not available
-        pageCategory = 'wellness';
+        pageCategory = AnalyticsService.resolvePageCategory(category);
       }
 
       AnalyticsService.instance.logEvent(

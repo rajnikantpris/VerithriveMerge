@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import '../../../../api/api_response.dart';
 import '../../../../api/user_api_service.dart';
 import '../../../../common/base_controller.dart';
+import '../../../../services/analytics_service.dart';
 import '../../../../services/storage_service.dart';
 import '../../../../widgets/response_dialog.dart';
 
@@ -23,6 +24,12 @@ class AboutYouController extends BaseController {
   @override
   void onInit() {
     super.onInit();
+    AnalyticsService.instance.logScreenView(
+      screenName: 'ProfessionalAboutYouScreen',
+      screenClass: 'AboutYouView',
+      pageCategory: 'profile',
+      elementLocation: 'view',
+    );
     // Initialize formKey to ensure a new key is created each time
     formKey = GlobalKey<FormState>();
     // Load existing data from API

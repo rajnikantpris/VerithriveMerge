@@ -147,14 +147,14 @@ class CalendarTab extends BaseView<CalendarController> {
   @override
   Widget buildView(BuildContext context) {
     // Log screen view analytics
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      AnalyticsService.instance.logScreenView(
-        screenName: 'ProfessionalCalendarScreen',
-        screenClass: 'CalendarTab',
-        pageCategory: 'calendar',
-        elementLocation: 'view',
-      );
-    });
+    // WidgetsBinding.instance.addPostFrameCallback((_) {
+    //   AnalyticsService.instance.logScreenView(
+    //     screenName: 'ProfessionalCalendarScreen',
+    //     screenClass: 'CalendarTab',
+    //     pageCategory: 'calendar',
+    //     elementLocation: 'view',
+    //   );
+    // });
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

@@ -28,6 +28,7 @@ import '../../models/profile_details_model.dart';
 import '../../widgets/response_dialog.dart';
 import '../signup_terms_conditions/professional_webview_screen.dart';
 import '../strip_account_create/strip_account_create_webview.dart';
+import 'calendar_controller.dart';
 import 'home_model.dart';
 import 'messages_controller.dart';
 
@@ -75,6 +76,7 @@ class HomeController extends BaseController {
   bool _subscriptionDialogShown = false;
   bool _didAuthenticatedStartup = false;
   bool _scheduledAuthStartupRetry = false;
+  int? _lastLoggedTabIndex;
 
   // Get notification count from shared service
   int get notificationCount =>
@@ -104,6 +106,7 @@ class HomeController extends BaseController {
     // Also scroll on initial load
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _scrollToSelectedDate();
+      _logBottomTabScreenView(currentIndex.value);
     });
   }
 
@@ -243,6 +246,46 @@ class HomeController extends BaseController {
     });
   }
 
+  void _logBottomTabScreenView(int index) {
+    if (_lastLoggedTabIndex == index) return;
+    _lastLoggedTabIndex = index;
+
+    switch (index) {
+      case 0:
+        AnalyticsService.instance.logScreenView(
+          screenName: 'ProfessionalHomeScreen',
+          screenClass: 'HomeView',
+          pageCategory: 'home',
+          elementLocation: 'view',
+        );
+        break;
+      case 1:
+        AnalyticsService.instance.logScreenView(
+          screenName: 'ProfessionalCalenderScreen',
+          screenClass: 'Calender',
+          pageCategory: 'calender',
+          elementLocation: 'view',
+        );
+        break;
+      case 2:
+        AnalyticsService.instance.logScreenView(
+          screenName: 'ProfessionalMessageScreen',
+          screenClass: 'MessageTab',
+          pageCategory: 'message',
+          elementLocation: 'view',
+        );
+        break;
+      case 3:
+        AnalyticsService.instance.logScreenView(
+          screenName: 'ProfessionalProfileScreen',
+          screenClass: 'ProfileTab',
+          pageCategory: 'profile',
+          elementLocation: 'view',
+        );
+        break;
+    }
+  }
+
   void onTabSelected(int index) {
     // If the tab is already selected, don't do anything to avoid redundant API calls and loaders
     if (currentIndex.value == index) {
@@ -272,6 +315,11 @@ class HomeController extends BaseController {
     }
 
     currentIndex(index);
+    _logBottomTabScreenView(index);
+
+    if (index == 1 && Get.isRegistered<CalendarController>()) {
+      Get.find<CalendarController>().logServiceFormatViewItemList();
+    }
 
     // Only load profile details if not a guest
     if (!isGuest) {

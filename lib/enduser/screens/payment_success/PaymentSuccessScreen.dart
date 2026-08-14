@@ -27,16 +27,22 @@ class PaymentSuccessScreen extends StatelessWidget {
       final professionalId = args?['professional_id']?.toString() ?? '';
       final serviceName = args?['service_name']?.toString() ?? '';
       final itemPrice = AnalyticsService.validatePrice(args?['price']);
-      // booking_id is the canonical transaction ID — consistent with the booking confirmation email
-      final transactionId = args?['booking_id']?.toString() ??
-          DateTime.now().millisecondsSinceEpoch.toString();
+      final stripeTransactionId = args?['transaction_id']?.toString() ?? '';
+      final bookingId = args?['booking_id']?.toString() ?? '';
+      final transactionId = stripeTransactionId.isNotEmpty
+          ? stripeTransactionId
+          : (bookingId.isNotEmpty
+              ? bookingId
+              : DateTime.now().millisecondsSinceEpoch.toString());
       final consultationType = args?['consultation_type']?.toString() ?? '';
       final itemVariant = args?['item_variant']?.toString() ?? '';
       final itemBrand = args?['item_brand']?.toString() ?? '';
 
       AnalyticsService.instance.logPurchaseEvent(
         item: AnalyticsService.instance.buildItem(
-          itemId: professionalId.isNotEmpty ? professionalId : 'unknown',
+          itemId: bookingId.isNotEmpty
+              ? bookingId
+              : (professionalId.isNotEmpty ? professionalId : 'unknown'),
           itemName: itemVariant.isNotEmpty
               ? itemVariant
               : (serviceName.isNotEmpty ? serviceName : 'unknown'),

@@ -83,6 +83,12 @@ class PersonalDetailsController extends BaseController {
   @override
   void onInit() {
     super.onInit();
+    AnalyticsService.instance.logScreenView(
+      screenName: 'ProfessionalPersonalDetailsScreen',
+      screenClass: 'PersonalDetailsView',
+      pageCategory: 'profile',
+      elementLocation: 'view',
+    );
     formKey = GlobalKey<FormState>();
     _loadProfessionTypes();
   }

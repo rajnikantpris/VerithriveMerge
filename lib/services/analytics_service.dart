@@ -95,7 +95,8 @@ class AnalyticsService {
       final eventParams = <String, Object>{
         'screen_name': screenName,
         if (screenClass != null) 'screen_class': screenClass,
-        if (pageCategory != null) 'page_category': pageCategory,
+        if (pageCategory != null && pageCategory.isNotEmpty)
+          'page_category': pageCategory,
         if (elementLocation != null) 'element_location': elementLocation,
       };
 
@@ -226,6 +227,35 @@ class AnalyticsService {
     if (userId == null || userId.isEmpty) return;
     if (!Get.isRegistered<StorageService>()) return;
     await Get.find<StorageService>().writeString(_userProfileSetKey, userId);
+  }
+
+  /// Resolves analytics [page_category], never returning an empty value.
+  ///
+  /// Uses [raw] when it is a known journey (wellness / fitness /
+  /// food & nutrition). Otherwise maps from [raw], [itemBrand], or
+  /// [itemVariant], falling back to [fallback].
+  static String resolvePageCategory(
+    String? raw, {
+    String? itemBrand,
+    String? itemVariant,
+    String fallback = 'wellness',
+  }) {
+    final value = raw?.trim() ?? '';
+    if (value.isNotEmpty) {
+      final lower = value.toLowerCase();
+      if (lower == 'wellness' || lower == 'fitness') return lower;
+      if (lower == 'food & nutrition' || lower == 'food_nutrition') {
+        return 'food & nutrition';
+      }
+      return pageCategoryFromProfession(value);
+    }
+    if (itemBrand != null && itemBrand.trim().isNotEmpty) {
+      return pageCategoryFromProfession(itemBrand);
+    }
+    if (itemVariant != null && itemVariant.trim().isNotEmpty) {
+      return pageCategoryFromProfession(itemVariant);
+    }
+    return fallback;
   }
 
   /// Maps profession/journey name to sheet page_category:
@@ -470,19 +500,26 @@ class AnalyticsService {
         'currency': validatedCurrency,
         if (screenName != null) 'screen_name': screenName,
         if (screenClass != null) 'screen_class': screenClass,
-        if (pageCategory != null) 'page_category': pageCategory,
+        if (pageCategory != null && pageCategory.isNotEmpty)
+          'page_category': pageCategory,
         if (extraParams != null) ...extraParams,
       };
 
       await _analytics.logSelectItem(
         items: [item],
-        itemListId: itemListId,
-        itemListName: itemListName,
+        itemListId: (itemListId != null && itemListId.isNotEmpty)
+            ? itemListId
+            : null,
+        itemListName: (itemListName != null && itemListName.isNotEmpty)
+            ? itemListName
+            : null,
         parameters: parameters,
       );
       _printEvent('select_item', {
-        if (itemListId != null) 'item_list_id': itemListId,
-        if (itemListName != null) 'item_list_name': itemListName,
+        if (itemListId != null && itemListId.isNotEmpty)
+          'item_list_id': itemListId,
+        if (itemListName != null && itemListName.isNotEmpty)
+          'item_list_name': itemListName,
         ...parameters,
         ..._itemLogParams(item),
       });
@@ -549,7 +586,8 @@ class AnalyticsService {
       final parameters = <String, Object>{
         if (screenName != null) 'screen_name': screenName,
         if (screenClass != null) 'screen_class': screenClass,
-        if (pageCategory != null) 'page_category': pageCategory,
+        if (pageCategory != null && pageCategory.isNotEmpty)
+          'page_category': pageCategory,
         if (extraParams != null) ...extraParams,
       };
 

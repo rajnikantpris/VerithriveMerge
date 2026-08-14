@@ -73,6 +73,12 @@ class ProfileSubscriptionController extends BaseController {
   @override
   void onInit() {
     super.onInit();
+    AnalyticsService.instance.logScreenView(
+      screenName: 'ProfessionalProfileSubscriptionScreen',
+      screenClass: 'ProfileSubscriptionView',
+      pageCategory: 'profile',
+      elementLocation: 'view',
+    );
     fetchSubscriptionPlans();
   }
 
@@ -388,9 +394,15 @@ class ProfileSubscriptionController extends BaseController {
                 highlightLabel: plan.highlightLabel,
                 features: plan.features,
                 billingCycle: plan.billingCycle,
+                billingCycleCount: plan.billingCycleCount,
                 isCurrentPlan: true,
                 isFeatured: plan.isFeatured,
                 description: plan.description,
+                cutPriceLabel: plan.cutPriceLabel,
+                perMonthLabel: plan.perMonthLabel,
+                promoLabel: plan.promoLabel,
+                stripePriceId: plan.stripePriceId,
+                stripeProductId: plan.stripeProductId,
               );
               break;
             }
@@ -443,7 +455,10 @@ class ProfileSubscriptionController extends BaseController {
     final analyticsItems = parsedPlans
         .map(
           (plan) => AnalyticsEventItem(
-            itemId: (plan.id != null && plan.id!.isNotEmpty) ? plan.id! : '',
+            itemId: (plan.stripeProductId != null &&
+                    plan.stripeProductId!.isNotEmpty)
+                ? plan.stripeProductId!
+                : '',
             itemName: plan.name.isNotEmpty ? plan.name : 'subscription',
             itemCategory: pageCategory,
             itemCategory2: plan.billingCycle,
@@ -509,7 +524,10 @@ class ProfileSubscriptionController extends BaseController {
 
     AnalyticsService.instance.logSelectItemEvent(
       item: AnalyticsEventItem(
-        itemId: plan.id!.isNotEmpty ? plan.id! : '',
+        itemId: (plan.stripeProductId != null &&
+                plan.stripeProductId!.isNotEmpty)
+            ? plan.stripeProductId!
+            : '',
         itemName: plan.name.isNotEmpty ? plan.name : 'subscription',
         itemCategory: pageCategory,
         itemVariant: plan.billingCycle.isNotEmpty
@@ -533,6 +551,7 @@ class ProfileSubscriptionController extends BaseController {
         'planName': plan.name,
         'planPrice': plan.price,
         'stripePriceId': plan.stripePriceId,
+        'stripeProductId': plan.stripeProductId,
         'isFromSignup': false,
       },
     );

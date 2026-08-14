@@ -5,6 +5,7 @@ import 'package:share_plus/share_plus.dart';
 import '../../../../common/base_controller.dart';
 import '../../../../routes/app_routes.dart';
 import '../../../../models/profile_details_model.dart';
+import '../../../../services/analytics_service.dart';
 import '../../../../services/deep_link_service.dart';
 import '../../home_controller.dart';
 
@@ -19,6 +20,17 @@ class YourProfileController extends BaseController {
     YourProfileItem(title: 'About you'),
     YourProfileItem(title: 'Share profile'),
   ];
+
+  @override
+  void onInit() {
+    super.onInit();
+    AnalyticsService.instance.logScreenView(
+      screenName: 'ProfessionalYourProfileScreen',
+      screenClass: 'YourProfileView',
+      pageCategory: 'profile',
+      elementLocation: 'view',
+    );
+  }
 
   void onItemTap(YourProfileItem item, {BuildContext? context}) {
     if (item.title == 'Personal details') {

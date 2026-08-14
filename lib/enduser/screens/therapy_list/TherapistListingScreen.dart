@@ -30,7 +30,7 @@ class TherapistListingScreen extends StatelessWidget {
       AnalyticsService.instance.logScreenView(
         screenName: 'TherapistListingScreen',
         screenClass: 'TherapistListingScreen',
-        pageCategory: controller.category,
+        pageCategory: controller.analyticsPageCategory,
         elementLocation: 'view',
       );
     });
@@ -113,9 +113,9 @@ class TherapistListingScreen extends StatelessWidget {
 
           InkWell(
             onTap: () async {
-              final category = _getCategoryFromTitle();
+              final category = controller.analyticsPageCategory;
               await Get.to(
-                () => FilterScreen(pageCategory: category ?? 'wellness'),
+                () => FilterScreen(pageCategory: category),
                 binding: FilterBinding(),
               );
             },
@@ -219,7 +219,7 @@ class TherapistListingScreen extends StatelessWidget {
   Widget _buildTherapistCard(Therapist therapist) {
     return GestureDetector(
       onTap: () {
-        final category = _getCategoryFromTitle();
+        final category = controller.analyticsPageCategory;
         Get.to(
           () => const TherapistDetailScreen(),
           binding: TherapyDetailBinding(),
@@ -426,15 +426,4 @@ class TherapistListingScreen extends StatelessWidget {
     );
   }
 
-  String? _getCategoryFromTitle() {
-    final title = controller.screenTitle.value;
-    if (title == 'Sport therapists') {
-      return 'wellness';
-    } else if (title == 'Personal trainer') {
-      return 'fitness';
-    } else if (title == 'Nutritionists') {
-      return 'food_nutrition';
-    }
-    return null;
-  }
 }

@@ -67,6 +67,7 @@ class PaymentMethodController extends BaseController {
   String selectedPlanName = '';
   double selectedPlanPrice = 0.0;
   String selectedStripePriceId = '';
+  String selectedStripeProductId = '';
   bool isFromSignup = false;
 
   @override
@@ -85,6 +86,9 @@ class PaymentMethodController extends BaseController {
       }
       if (args['stripePriceId'] is String) {
         selectedStripePriceId = args['stripePriceId'] as String;
+      }
+      if (args['stripeProductId'] is String) {
+        selectedStripeProductId = args['stripeProductId'] as String;
       }
       if (args['isFromSignup'] is bool) {
         isFromSignup = args['isFromSignup'] as bool;
@@ -112,13 +116,25 @@ class PaymentMethodController extends BaseController {
     return 'wellness';
   }
 
+  String? _paymentResultStatus(dynamic result) {
+    if (result is Map) return result['status']?.toString();
+    if (result is String) return result;
+    return null;
+  }
+
+  String? _paymentResultTransactionId(dynamic result) {
+    if (result is! Map) return null;
+    final id = result['transactionId']?.toString();
+    if (id == null || id.isEmpty) return null;
+    return id;
+  }
+
   Future<void> confirmPayment() async {
     // Get professional details from HomeController
     final homeController =
         Get.isRegistered<HomeController>() ? Get.find<HomeController>() : null;
     final profile = homeController?.profileDetails.value;
     final professionName = profile?.profession_name ?? '';
-    final stripeAccountId = profile?.stripeConnectAccountId ?? '';
     final pageCategory = _pageCategoryFromProfession(professionName);
 
     // await AnalyticsService.instance.logPurchaseEvent(
@@ -152,7 +168,8 @@ class PaymentMethodController extends BaseController {
 
     AnalyticsService.instance.logBeginCheckoutEvent(
       item: AnalyticsEventItem(
-        itemId: selectedPlanId.isNotEmpty ? selectedPlanId : '',
+        itemId:
+            selectedStripeProductId.isNotEmpty ? selectedStripeProductId : '',
         itemName:
             selectedPlanName.isNotEmpty ? selectedPlanName : 'subscription',
         itemCategory: pageCategory,
@@ -184,14 +201,23 @@ class PaymentMethodController extends BaseController {
 
             if (checkoutUrl != null && checkoutUrl.isNotEmpty) {
               // Open Stripe Checkout in WebView
+              print('Payment checkout_url: $checkoutUrl');
               final result =
                   await Get.to(() => PaymentWebViewScreen(url: checkoutUrl));
 
+              print('Payment WebView result: $result');
+              final paymentStatus = _paymentResultStatus(result);
+              final callbackTransactionId = _paymentResultTransactionId(result);
+              print(
+                  'Payment callback status: $paymentStatus, transaction_id: $callbackTransactionId');
+
               // When returning from WebView, check result and navigate if successful
-              if (result == 'success') {
+              if (paymentStatus == 'success') {
                 await AnalyticsService.instance.logPurchaseEvent(
                   item: AnalyticsService.instance.buildItem(
-                    itemId: selectedPlanId.isNotEmpty ? selectedPlanId : '',
+                    itemId: selectedStripeProductId.isNotEmpty
+                        ? selectedStripeProductId
+                        : '',
                     itemName: selectedPlanName.isNotEmpty
                         ? selectedPlanName
                         : 'subscription',
@@ -203,15 +229,7 @@ class PaymentMethodController extends BaseController {
                     price: selectedPlanPrice,
                     quantity: 1,
                   ),
-                  transactionId: selectedStripePriceId.isNotEmpty
-                      ? selectedStripePriceId
-                      : stripeAccountId.isNotEmpty
-                          ? stripeAccountId
-                          : selectedPlanId.isNotEmpty
-                              ? '${selectedPlanId}_${DateTime.now().millisecondsSinceEpoch}'
-                              : DateTime.now()
-                                  .millisecondsSinceEpoch
-                                  .toString(),
+                  transactionId: callbackTransactionId ?? '',
                   value: selectedPlanPrice,
                   currency: 'GBP',
                   screenName: 'PaymentMethodView',
@@ -220,7 +238,7 @@ class PaymentMethodController extends BaseController {
                 );
 
                 await _checkPaymentStatusAndNavigate(response.data?.user);
-              } else if (result == 'failed') {
+              } else if (paymentStatus == 'failed') {
                 showResponseDialog(
                   message: 'Payment failed. Please try again.',
                   title: 'Payment Failed',

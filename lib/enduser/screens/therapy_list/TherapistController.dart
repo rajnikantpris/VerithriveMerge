@@ -30,6 +30,9 @@ class TherapistController extends BaseController {
   String? trainerPreference;
   dynamic arguments; // Store arguments for API call
 
+  String get analyticsPageCategory =>
+      AnalyticsService.resolvePageCategory(category);
+
   // Filter and sort parameters - make filter parameters observable for Obx
   final RxString selectedProfessionalSubType = ''.obs;
   final RxString selectedGender = ''.obs;
@@ -231,14 +234,14 @@ class TherapistController extends BaseController {
 
     // Fallback to category-based titles if sub_type not found
     if (category != null) {
-      switch (category) {
+      switch (AnalyticsService.resolvePageCategory(category)) {
         case 'wellness':
           screenTitle.value = 'Sport therapists';
           break;
         case 'fitness':
           screenTitle.value = 'Personal Trainer';
           break;
-        case 'food_nutrition':
+        case 'food & nutrition':
           screenTitle.value = 'Nutritionists';
           break;
         default:
@@ -529,7 +532,7 @@ class TherapistController extends BaseController {
             currency: 'GBP',
             screenName: 'TherapistListingScreen',
             screenClass: 'TherapistController',
-            pageCategory: category,
+            pageCategory: analyticsPageCategory,
           );
         }
 

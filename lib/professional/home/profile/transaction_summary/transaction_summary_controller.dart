@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import '../../../../api/user_api_service.dart';
 import '../../../../common/base_controller.dart';
+import '../../../../services/analytics_service.dart';
 
 class TransactionHistoryItem {
   final String id;
@@ -123,6 +124,12 @@ class TransactionSummaryController extends BaseController {
   @override
   void onInit() {
     super.onInit();
+    AnalyticsService.instance.logScreenView(
+      screenName: 'ProfessionalTransactionSummaryScreen',
+      screenClass: 'TransactionSummaryScreen',
+      pageCategory: 'profile',
+      elementLocation: 'view',
+    );
     scrollController = ScrollController();
     scrollController.addListener(_scrollListener);
     fetchTransactions();

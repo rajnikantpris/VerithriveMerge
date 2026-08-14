@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import '../../../../api/api_response.dart';
 import '../../../../api/user_api_service.dart';
 import '../../../../common/base_controller.dart';
+import '../../../../services/analytics_service.dart';
 import '../../../../services/storage_service.dart';
 import '../../../../widgets/response_dialog.dart';
 import '../../profile_controller.dart';
@@ -20,6 +21,12 @@ class NotificationSettingsController extends BaseController {
   @override
   void onInit() {
     super.onInit();
+    AnalyticsService.instance.logScreenView(
+      screenName: 'ProfessionalNotificationSettingsScreen',
+      screenClass: 'NotificationSettingsView',
+      pageCategory: 'profile',
+      elementLocation: 'view',
+    );
     _loadNotificationStatus();
   }
 

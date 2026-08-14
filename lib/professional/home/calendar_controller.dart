@@ -504,6 +504,46 @@ class CalendarController extends BaseController {
     await _fetchServiceFormatAvailability();
   }
 
+  /// Log view_item_list for the current service formats on Calendar tab.
+  void logServiceFormatViewItemList() {
+    final formats = serviceFormats.toList();
+    if (formats.isEmpty) return;
+
+    final profile = _homeController?.profileDetails.value;
+    final professionalId = profile?.professionTypeId ?? '';
+    final professionalName = profile?.profession_name ?? '';
+
+    final analyticsItems = formats
+        .map(
+          (format) => AnalyticsService.instance.buildItem(
+            itemId: format.id.isNotEmpty ? format.id : '',
+            itemName: professionalName.isNotEmpty
+                ? professionalName
+                : (format.name.isNotEmpty ? format.name : ''),
+            itemCategory: professionalName.isNotEmpty
+                ? professionalName
+                : 'service_format',
+            itemCategory2: format.name,
+            itemVariant: format.isBundle ? 'bundle' : 'standard',
+            price: double.tryParse(
+                    format.price.replaceAll(RegExp(r'[^0-9.]'), '')) ??
+                0.0,
+            quantity: 1,
+          ),
+        )
+        .toList();
+
+    AnalyticsService.instance.logViewItemListEvent(
+      items: analyticsItems,
+      itemListId: professionalId.isNotEmpty ? professionalId : 'unknown',
+      itemListName: professionalName.isNotEmpty ? professionalName : 'unknown',
+      currency: 'GBP',
+      screenName: 'ProfessionalCalendarScreen',
+      screenClass: 'CalendarTab',
+      pageCategory: 'calendar',
+    );
+  }
+
   /// Fetch service format and availability for the selected date
   Future<void> _fetchServiceFormatAvailability() async {
     final dateString = _formatDate(selectedDate.value);
@@ -676,44 +716,10 @@ class CalendarController extends BaseController {
 
             if (formats.isNotEmpty) {
               serviceFormats.value = formats;
-
-              // Get professional details from HomeController
-              final profile = _homeController?.profileDetails.value;
-              final professionalId = profile?.professionTypeId ?? '';
-              final professionalName = profile?.profession_name ?? '';
-
-              // Analytics: Log service format list view
-              final analyticsItems = formats
-                  .map(
-                    (format) => AnalyticsService.instance.buildItem(
-                      itemId: format.id.isNotEmpty ? format.id : '',
-                      itemName: professionalName.isNotEmpty
-                          ? professionalName
-                          : (format.name.isNotEmpty ? format.name : ''),
-                      itemCategory: professionalName.isNotEmpty
-                          ? professionalName
-                          : 'service_format',
-                      itemCategory2: format.name,
-                      itemVariant: format.isBundle ? 'bundle' : 'standard',
-                      price: double.tryParse(format.price
-                              .replaceAll(RegExp(r'[^0-9.]'), '')) ??
-                          0.0,
-                      quantity: 1,
-                    ),
-                  )
-                  .toList();
-
-              AnalyticsService.instance.logViewItemListEvent(
-                items: analyticsItems,
-                itemListId:
-                    professionalId.isNotEmpty ? professionalId : 'unknown',
-                itemListName:
-                    professionalName.isNotEmpty ? professionalName : 'unknown',
-                currency: 'GBP',
-                screenName: 'ProfessionalCalendarScreen',
-                screenClass: 'CalendarTab',
-                pageCategory: 'calendar',
-              );
+              // Log view_item_list only while Calendar tab is visible
+              if (_homeController?.currentIndex.value == 1) {
+                logServiceFormatViewItemList();
+              }
             }
           }
         }

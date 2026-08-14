@@ -5,6 +5,7 @@ import '../../../../api/api_response.dart';
 import '../../../../api/user_api_service.dart';
 import '../../../../common/base_controller.dart';
 import '../../../../routes/app_routes.dart';
+import '../../../../services/analytics_service.dart';
 import '../../../../widgets/response_dialog.dart';
 import '../calendar_controller.dart';
 import '../home_controller.dart';
@@ -37,6 +38,12 @@ class EditServiceFormatController extends BaseController {
   @override
   void onInit() {
     super.onInit();
+    AnalyticsService.instance.logScreenView(
+      screenName: 'ProfessionalEditServiceFormatScreen',
+      screenClass: 'EditServiceFormatView',
+      pageCategory: 'calendar',
+      elementLocation: 'view',
+    );
     formKey = GlobalKey<FormState>();
 
     // Get arguments - ServiceFormatItem and selectedDate

@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import '../../../../api/api_response.dart';
 import '../../../../api/user_api_service.dart';
 import '../../../../common/base_controller.dart';
+import '../../../../services/analytics_service.dart';
 import '../../../../widgets/response_dialog.dart';
 import '../../../signup_terms_conditions/professional_webview_screen.dart';
 
@@ -34,6 +35,12 @@ class BankAccountController extends BaseController {
   @override
   void onInit() {
     super.onInit();
+    AnalyticsService.instance.logScreenView(
+      screenName: 'ProfessionalBankAccountScreen',
+      screenClass: 'BankAccountView',
+      pageCategory: 'profile',
+      elementLocation: 'view',
+    );
     // Initialize formKey to ensure a new key is created each time
     formKey = GlobalKey<FormState>();
     // Load bank details if available

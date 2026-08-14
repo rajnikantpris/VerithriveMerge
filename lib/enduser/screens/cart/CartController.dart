@@ -481,8 +481,11 @@ class CartController extends BaseController {
           ((until.hour * 60 + until.minute) - (from.hour * 60 + from.minute))
               .clamp(1, 24 * 60)
               .toInt();
-      final pageCategory =
-          AnalyticsService.pageCategoryFromProfession(category.value);
+      final pageCategory = AnalyticsService.resolvePageCategory(
+        category.value,
+        itemBrand: itemBrand.value,
+        itemVariant: itemVariant.value,
+      );
       final itemPrice = AnalyticsService.validatePrice(price.value);
 
       AnalyticsService.instance.logAddToCartEvent(
@@ -530,7 +533,11 @@ class CartController extends BaseController {
           'professional_service_format_id': professionalServiceFormatId.value,
           'booking_id': bookingId.value,
           'is_edit_mode': isEditMode.value,
-          'category': category.value,
+          'category': AnalyticsService.resolvePageCategory(
+            category.value,
+            itemBrand: itemBrand.value,
+            itemVariant: itemVariant.value,
+          ),
           'item_variant': itemVariant.value,
           'item_brand': itemBrand.value,
         },

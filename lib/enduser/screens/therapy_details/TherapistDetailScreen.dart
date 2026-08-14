@@ -33,7 +33,9 @@ class TherapistDetailScreen extends StatelessWidget {
       final args = rawArgs is Map
           ? Map<String, dynamic>.from(rawArgs)
           : null;
-      final category = args?['category'] as String? ?? 'wellness';
+      final category = AnalyticsService.resolvePageCategory(
+        args?['category']?.toString() ?? controller.category,
+      );
       
       AnalyticsService.instance.logScreenView(
         screenName: 'TherapistDetailScreen',
@@ -49,7 +51,9 @@ class TherapistDetailScreen extends StatelessWidget {
       final args = rawArgs is Map
           ? Map<String, dynamic>.from(rawArgs)
           : null;
-      final category = args?['category'] as String? ?? 'wellness';
+      final category = AnalyticsService.resolvePageCategory(
+        args?['category']?.toString() ?? controller.category,
+      );
       final therapistArg = args?['therapist'];
       final therapistId = therapistArg?.id?.toString() ?? controller.therapist.value.id;
       final therapistName = controller.therapist.value.name.isNotEmpty
@@ -424,7 +428,15 @@ class TherapistDetailScreen extends StatelessWidget {
                           final _bookingArgs = rawBookingArgs is Map
                               ? Map<String, dynamic>.from(rawBookingArgs)
                               : null;
-                          final _bookingCategory = _bookingArgs?['category'] as String? ?? '';
+                          final _bookingCategory =
+                              AnalyticsService.resolvePageCategory(
+                            controller.category ??
+                                _bookingArgs?['category'] as String?,
+                            itemBrand: controller.therapist.value.services.isNotEmpty
+                                ? controller.therapist.value.services.first
+                                : null,
+                            itemVariant: controller.therapist.value.specialty,
+                          );
 
                           // Analytics: Log select_item event for booking option
                           WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -443,8 +455,6 @@ class TherapistDetailScreen extends StatelessWidget {
                                 price: AnalyticsService.validatePrice(package.price),
                                 quantity: 1,
                               ),
-                              itemListId: category,
-                              itemListName: category,
                               currency: 'GBP',
                               screenName: 'TherapistDetailScreen',
                               screenClass: 'TherapistDetailScreen',
@@ -658,11 +668,14 @@ class TherapistDetailScreen extends StatelessWidget {
       child: ElevatedButton(
         onPressed: () {
           // Analytics: Log chat tap event
+          final controller = Get.find<TherapistDetailController>();
           final rawArgs = Get.arguments;
           final args = rawArgs is Map
               ? Map<String, dynamic>.from(rawArgs)
               : null;
-          final category = args?['category'] as String? ?? 'wellness';
+          final category = AnalyticsService.resolvePageCategory(
+            args?['category']?.toString() ?? controller.category,
+          );
 
           AnalyticsService.instance.logEvent(
             name: 'chat_tap',
@@ -674,8 +687,6 @@ class TherapistDetailScreen extends StatelessWidget {
               'page_category': category,
             },
           );
-
-          final controller = Get.find<TherapistDetailController>();
 
           if(!controller.isGuest.value) {
             final therapist = controller.therapist.value;

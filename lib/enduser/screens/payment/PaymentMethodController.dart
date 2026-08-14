@@ -169,6 +169,19 @@ class PaymentMethodController extends BaseController {
     return selectedPaymentMethod.value != null;
   }
 
+  String? _paymentResultStatus(dynamic result) {
+    if (result is Map) return result['status']?.toString();
+    if (result is String) return result;
+    return null;
+  }
+
+  String? _paymentResultTransactionId(dynamic result) {
+    if (result is! Map) return null;
+    final id = result['transactionId']?.toString();
+    if (id == null || id.isEmpty) return null;
+    return id;
+  }
+
   // Format card number with spaces
   String formatCardNumber(String value) {
     value = value.replaceAll(' ', '');
@@ -201,38 +214,6 @@ class PaymentMethodController extends BaseController {
       );
       return;
     }
-
-    // Analytics: Log continue button tap event
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final args = Get.arguments as Map<String, dynamic>?;
-      final category = args?['category'] as String? ?? 'wellness';
-      final itemVariant = args?['item_variant']?.toString() ?? '';
-      final itemBrand = args?['item_brand']?.toString() ?? '';
-
-      AnalyticsService.instance.logBeginCheckoutEvent(
-        item: AnalyticsService.instance.buildItem(
-          itemId: professionalId.value.isNotEmpty
-              ? professionalId.value
-              : 'unknown',
-          itemName: itemVariant.isNotEmpty
-              ? itemVariant
-              : (serviceName.value.isNotEmpty ? serviceName.value : 'unknown'),
-          itemCategory: category,
-          itemCategory2: serviceName.value,
-          itemVariant: itemVariant.isNotEmpty ? itemVariant : serviceName.value,
-          itemBrand: itemBrand.isNotEmpty
-              ? itemBrand
-              : (serviceName.value.isNotEmpty ? serviceName.value : category),
-          price: price.value,
-          quantity: 1,
-        ),
-        value: price.value,
-        currency: 'GBP',
-        screenName: 'PaymentMethodScreen',
-        screenClass: 'PaymentMethodController',
-        pageCategory: category,
-      );
-    });
 
     // Call create-booking API (edit mode is handled in SummaryController)
     callCreateBookingAPI();
@@ -342,20 +323,54 @@ class PaymentMethodController extends BaseController {
           checkoutUrl = responseData['data']['payment_link']['checkout_url'];
         }
 
+        final bookingItemId = responseData['data']?['_id']?.toString() ??
+            responseData['data']?['booking_id']?.toString() ??
+            bookingId.value;
+        final args = Get.arguments as Map<String, dynamic>?;
+        final category = AnalyticsService.resolvePageCategory(
+          args?['category']?.toString(),
+          itemBrand: args?['item_brand']?.toString(),
+          itemVariant: args?['item_variant']?.toString(),
+        );
+        final itemVariant = args?['item_variant']?.toString() ?? '';
+        final itemBrand = args?['item_brand']?.toString() ?? '';
+
+        AnalyticsService.instance.logBeginCheckoutEvent(
+          item: AnalyticsService.instance.buildItem(
+            itemId: bookingItemId.isNotEmpty ? bookingItemId : 'unknown',
+            itemName: itemVariant.isNotEmpty
+                ? itemVariant
+                : (serviceName.value.isNotEmpty ? serviceName.value : 'unknown'),
+            itemCategory: category,
+            itemCategory2: serviceName.value,
+            itemVariant:
+                itemVariant.isNotEmpty ? itemVariant : serviceName.value,
+            itemBrand: itemBrand.isNotEmpty
+                ? itemBrand
+                : (serviceName.value.isNotEmpty ? serviceName.value : category),
+            price: price.value,
+            quantity: 1,
+          ),
+          value: price.value,
+          currency: 'GBP',
+          screenName: 'PaymentMethodScreen',
+          screenClass: 'PaymentMethodController',
+          pageCategory: category,
+        );
+
         if (checkoutUrl != null && checkoutUrl.isNotEmpty) {
           // Navigate to WebView
+          print('Payment checkout_url: $checkoutUrl');
           final result =
               await Get.to(() => PaymentEndWebViewScreen(url: checkoutUrl!));
 
-          if (result == 'success') {
-            final args = Get.arguments as Map<String, dynamic>?;
-            final category = args?['category'] as String? ?? 'wellness';
-            final itemVariant = args?['item_variant']?.toString() ?? '';
-            final itemBrand = args?['item_brand']?.toString() ?? '';
-            final successBookingId =
-                responseData['data']?['booking_id']?.toString() ??
-                    responseData['data']?['_id']?.toString() ??
-                    bookingId.value;
+          print('Payment WebView result: $result');
+          final paymentStatus = _paymentResultStatus(result);
+          final callbackTransactionId = _paymentResultTransactionId(result);
+          print(
+              'Payment callback status: $paymentStatus, transaction_id: $callbackTransactionId');
+
+          if (paymentStatus == 'success') {
             Get.offAll(
               () => PaymentSuccessScreen(),
               binding: PaymentSuccessBinding(),
@@ -363,16 +378,17 @@ class PaymentMethodController extends BaseController {
                 'professional_id': professionalId.value,
                 'service_name': serviceName.value,
                 'price': price.value,
-                'booking_id': successBookingId.isNotEmpty
-                    ? successBookingId
+                'booking_id': bookingItemId.isNotEmpty
+                    ? bookingItemId
                     : DateTime.now().millisecondsSinceEpoch.toString(),
+                'transaction_id': callbackTransactionId ?? '',
                 'category': category,
                 'consultation_type': serviceName.value,
                 'item_variant': itemVariant,
                 'item_brand': itemBrand,
               },
             );
-          } else if (result == 'failed') {
+          } else if (paymentStatus == 'failed') {
             showResponseDialog(
               message: 'Payment failed or was cancelled.',
               title: 'Payment Error',

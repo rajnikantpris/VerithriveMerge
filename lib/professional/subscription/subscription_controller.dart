@@ -20,6 +20,7 @@ class PlanOption {
     this.promoLabel,
     this.assetPath,
     required this.accentColor,
+    this.stripeProductId,
   });
 
   final String id;
@@ -30,6 +31,7 @@ class PlanOption {
   final String? promoLabel;
   final String? assetPath;
   final Color accentColor;
+  final String? stripeProductId;
 }
 
 class SubscriptionController extends BaseController {
@@ -203,6 +205,7 @@ class SubscriptionController extends BaseController {
         promoLabel: promoLabel,
         assetPath: assetPath,
         accentColor: accentColor,
+        stripeProductId: item['stripe_product_id']?.toString(),
       );
     } catch (e) {
       return null;
@@ -276,8 +279,10 @@ class SubscriptionController extends BaseController {
     // Analytics: Log professional subscription plan selected / begin_checkout
     AnalyticsService.instance.logBeginCheckoutEvent(
       item: AnalyticsService.instance.buildItem(
-        itemId:
-            selectedPlanId.value.isNotEmpty ? selectedPlanId.value : 'unknown',
+        itemId: (selectedPlan.stripeProductId != null &&
+                selectedPlan.stripeProductId!.isNotEmpty)
+            ? selectedPlan.stripeProductId!
+            : '',
         itemName:
             selectedPlan.title.isNotEmpty ? selectedPlan.title : 'subscription',
         itemCategory: 'professional',
@@ -298,6 +303,7 @@ class SubscriptionController extends BaseController {
       arguments: {
         'planId': selectedPlanId.value,
         'planName': selectedPlan.title,
+        'stripeProductId': selectedPlan.stripeProductId,
         'isFromSignup': true,
       },
     );

@@ -13,12 +13,49 @@ class PaymentWebViewScreen extends StatefulWidget {
   const PaymentWebViewScreen({super.key, required this.url});
 
   @override
-  State<PaymentWebViewScreen> createState() =>
-      _PaymentWebViewScreenState();
+  State<PaymentWebViewScreen> createState() => _PaymentWebViewScreenState();
 }
 
 class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
   late final WebViewController _controller;
+  bool _hasClosed = false;
+
+  String? _transactionIdFromUrl(String url) {
+    try {
+      final uri = Uri.parse(url);
+      for (final key in const ['transaction_id', 'transactionId', 'session_id']) {
+        final value = uri.queryParameters[key];
+        if (value != null && value.isNotEmpty) return value;
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  void _handleUrl(String source, String url) {
+    print('Payment [$source] url: $url');
+    print('Payment [$source] query: ${Uri.tryParse(url)?.queryParameters}');
+
+    if (_hasClosed) return;
+
+    if (url.contains('payment/success')) {
+      final transactionId = _transactionIdFromUrl(url);
+      print('Payment [$source] transaction_id: $transactionId');
+      if (transactionId == null || transactionId.isEmpty) {
+        return;
+      }
+      _hasClosed = true;
+      Get.back(result: {
+        'status': 'success',
+        'transactionId': transactionId,
+      });
+      return;
+    }
+
+    if (url.contains('payment/failed') || url.contains('payment/cancel')) {
+      _hasClosed = true;
+      Get.back(result: {'status': 'failed'});
+    }
+  }
 
   @override
   void initState() {
@@ -28,24 +65,20 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
       ..setNavigationDelegate(
         NavigationDelegate(
           onPageStarted: (String url) {
-            debugPrint('Page started loading: $url');
+            _handleUrl('page_started', url);
           },
           onPageFinished: (String url) {
-            debugPrint('Page finished loading: $url');
-            // Detect success or failed URLs and close WebView
-            if (url.contains('payment/success')) {
-              Get.back(result: 'success');
-            } else if (url.contains('payment/failed')) {
-              Get.back(result: 'failed');
+            _handleUrl('page_finished', url);
+          },
+          onUrlChange: (UrlChange change) {
+            if (change.url != null) {
+              _handleUrl('url_change', change.url!);
             }
           },
           onNavigationRequest: (NavigationRequest request) {
-            if (request.url.contains('payment/success')) {
-              Get.back(result: 'success');
-              return NavigationDecision.prevent;
-            }
-            if (request.url.contains('payment/cancel')) {
-              Get.back(result: 'failed');
+            _handleUrl('navigation', request.url);
+            if (request.url.contains('payment/cancel') ||
+                request.url.contains('payment/failed')) {
               return NavigationDecision.prevent;
             }
             return NavigationDecision.navigate;

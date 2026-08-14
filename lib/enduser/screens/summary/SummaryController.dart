@@ -222,8 +222,13 @@ class SummaryController extends BaseController {
   void removeBooking() {
     // Analytics: Log remove from cart event
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final args = Get.arguments as Map<String, dynamic>?;
-      final category = args?['category'] as String? ?? 'wellness';
+      final rawArgs = Get.arguments;
+      final args = rawArgs is Map ? Map<String, dynamic>.from(rawArgs) : null;
+      final category = AnalyticsService.resolvePageCategory(
+        args?['category']?.toString(),
+        itemBrand: args?['item_brand']?.toString(),
+        itemVariant: args?['item_variant']?.toString(),
+      );
       final itemPrice =
           AnalyticsService.validatePrice(cartController.price.value);
       final consultationType = cartController.consultationType.value;
@@ -572,8 +577,15 @@ class SummaryController extends BaseController {
           responseData['message'] ?? 'Booking created successfully';
 
       if (success == true) {
-        final summaryArgs = Get.arguments as Map<String, dynamic>?;
-        final category = summaryArgs?['category'] as String? ?? 'wellness';
+        final rawSummaryArgs = Get.arguments;
+        final summaryArgs = rawSummaryArgs is Map
+            ? Map<String, dynamic>.from(rawSummaryArgs)
+            : null;
+        final category = AnalyticsService.resolvePageCategory(
+          summaryArgs?['category']?.toString(),
+          itemBrand: summaryArgs?['item_brand']?.toString(),
+          itemVariant: summaryArgs?['item_variant']?.toString(),
+        );
         final itemVariant = summaryArgs?['item_variant']?.toString() ?? '';
         final itemBrand = summaryArgs?['item_brand']?.toString() ?? '';
         final successBookingId =

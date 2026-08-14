@@ -19,23 +19,33 @@ class SummaryScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     // Log screen view analytics
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final args = Get.arguments as Map<String, dynamic>?;
-      final category = args?['category'] as String? ?? 'wellness';
+      final rawArgs = Get.arguments;
+      final args = rawArgs is Map ? Map<String, dynamic>.from(rawArgs) : null;
+      final pageCategory = AnalyticsService.resolvePageCategory(
+        args?['category']?.toString(),
+        itemBrand: args?['item_brand']?.toString(),
+        itemVariant: args?['item_variant']?.toString(),
+      );
 
       AnalyticsService.instance.logScreenView(
         screenName: 'SummaryScreen',
         screenClass: 'SummaryScreen',
-        pageCategory: category,
+        pageCategory: pageCategory,
         elementLocation: 'view',
       );
     });
 
     // Log view_cart analytics when cart is viewed
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final args = Get.arguments as Map<String, dynamic>?;
-      final category = args?['category'] as String? ?? 'wellness';
+      final rawArgs = Get.arguments;
+      final args = rawArgs is Map ? Map<String, dynamic>.from(rawArgs) : null;
       final itemVariant = args?['item_variant']?.toString() ?? '';
       final itemBrand = args?['item_brand']?.toString() ?? '';
+      final pageCategory = AnalyticsService.resolvePageCategory(
+        args?['category']?.toString(),
+        itemBrand: itemBrand,
+        itemVariant: itemVariant,
+      );
 
       AnalyticsService.instance.logViewCartEvent(
         item: AnalyticsService.instance.buildItem(
@@ -47,7 +57,7 @@ class SummaryScreen extends StatelessWidget {
               : (cartController.serviceName.value.isNotEmpty
                   ? cartController.serviceName.value
                   : 'unknown'),
-          itemCategory: category,
+          itemCategory: pageCategory,
           itemCategory2: cartController.serviceName.value,
           itemVariant: itemVariant.isNotEmpty
               ? itemVariant
@@ -56,7 +66,7 @@ class SummaryScreen extends StatelessWidget {
               ? itemBrand
               : (cartController.consultationType.value.isNotEmpty
                   ? cartController.consultationType.value
-                  : category),
+                  : pageCategory),
           price: cartController.price.value,
           quantity: 1,
         ),
@@ -64,7 +74,7 @@ class SummaryScreen extends StatelessWidget {
         currency: 'GBP',
         screenName: 'SummaryScreen',
         screenClass: 'SummaryScreen',
-        pageCategory: category,
+        pageCategory: pageCategory,
       );
     });
 

@@ -40,6 +40,12 @@ class AddressController extends BaseController {
   @override
   void onInit() {
     super.onInit();
+    AnalyticsService.instance.logScreenView(
+      screenName: 'ProfessionalAddressScreen',
+      screenClass: 'AddressView',
+      pageCategory: 'profile',
+      elementLocation: 'view',
+    );
     // Initialize formKey to ensure a new key is created each time
     formKey = GlobalKey<FormState>();
     // Load address details from API

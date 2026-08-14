@@ -185,8 +185,12 @@ class ConsultationBookingController extends BaseController {
           if (arguments['category'] != null) {
             category = arguments['category'].toString();
           }
+          if (category.trim().isEmpty) {
+            category = 'wellness';
+          }
         } catch (e) {
           print('Error parsing category: $e');
+          category = 'wellness';
         }
 
         try {
