@@ -30,6 +30,8 @@
 	<string>0eb55f49ffa0a9e8bb472e49c938440a</string>
 	<key>FacebookDisplayName</key>
 	<string>Verithrive</string>
+	<key>AttributionCopyEndpoint</key>
+	<string>https://www.verithrive.co.uk</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
