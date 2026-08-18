@@ -45,6 +45,13 @@ class ChatDetailController extends BaseController {
     if (_conversationArg != null) {
       conversation.value = _conversationArg!;
     }
+
+    AnalyticsService.instance.logScreenView(
+      screenName: 'ChatScreen',
+      screenClass: 'ChatDetailScreen',
+      pageCategory: 'chat',
+      elementLocation: 'view',
+    );
     
     // Debug logging for notification data
     print("=== ChatDetailController Init ===");

@@ -14,16 +14,6 @@ class AppointmentBookingScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Log screen view analytics
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      AnalyticsService.instance.logScreenView(
-        screenName: 'AppointmentBookingScreen',
-        screenClass: 'AppointmentBookingScreen',
-        pageCategory: 'wellness',
-        elementLocation: 'view',
-      );
-    });
-
     return Scaffold(
       backgroundColor: AppColors.white,
       appBar: AppBar(

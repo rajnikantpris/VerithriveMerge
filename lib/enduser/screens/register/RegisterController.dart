@@ -42,6 +42,17 @@ class RegisterController extends BaseController {
   String? _pendingSocialDisplayName;
   String? _pendingSocialProfilePicture;
 
+  @override
+  void onInit() {
+    super.onInit();
+    AnalyticsService.instance.logScreenView(
+      screenName: 'RegisterScreen',
+      screenClass: 'RegisterView',
+      pageCategory: 'register',
+      elementLocation: 'view',
+    );
+  }
+
   void togglePasswordVisibility() {
     isPasswordVisible.value = !isPasswordVisible.value;
   }

@@ -32,6 +32,12 @@ class CreateAvailabilityController extends BaseController {
   @override
   void onInit() {
     super.onInit();
+    AnalyticsService.instance.logScreenView(
+      screenName: 'ProfessionalCreateAvailabilityScreen',
+      screenClass: 'CreateAvailabilityView',
+      pageCategory: 'calendar',
+      elementLocation: 'view',
+    );
     // Initialize formKeys to ensure new keys are created each time
     formKey = GlobalKey<FormState>();
     unavailableTimeFormKey = GlobalKey<FormState>();

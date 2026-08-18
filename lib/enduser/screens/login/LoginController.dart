@@ -48,6 +48,12 @@ class LoginController extends BaseController {
   @override
   void onInit() {
     super.onInit();
+    AnalyticsService.instance.logScreenView(
+      screenName: 'LoginScreen',
+      screenClass: 'LoginView',
+      pageCategory: 'login',
+      elementLocation: 'view',
+    );
     if (Get.arguments != null) {
       guestUser = Get.arguments;
     }

@@ -56,6 +56,18 @@ class PaymentMethodController extends BaseController {
   void onInit() {
     super.onInit();
     _receiveArguments();
+    final args = Get.arguments;
+    final argMap = args is Map ? Map<String, dynamic>.from(args) : null;
+    AnalyticsService.instance.logScreenView(
+      screenName: 'PaymentMethodScreen',
+      screenClass: 'PaymentMethodScreen',
+      pageCategory: AnalyticsService.resolvePageCategory(
+        argMap?['category']?.toString(),
+        itemBrand: argMap?['item_brand']?.toString(),
+        itemVariant: argMap?['item_variant']?.toString(),
+      ),
+      elementLocation: 'view',
+    );
 
     // Add listeners to update observables when text changes to trigger reactivity in Obx
     cardNumberController.addListener(() {

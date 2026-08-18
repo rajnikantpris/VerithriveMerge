@@ -56,16 +56,6 @@ class RescheduleSessionView extends BaseView<RescheduleSessionController> {
 
   @override
   Widget buildView(BuildContext context) {
-    // Log screen view analytics
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      AnalyticsService.instance.logScreenView(
-        screenName: 'ProfessionalRescheduleScreen',
-        screenClass: 'RescheduleSessionView',
-        pageCategory: 'home',
-        elementLocation: 'view',
-      );
-    });
-
     return Container(
       color: AppColor.white,
       child: SingleChildScrollView(

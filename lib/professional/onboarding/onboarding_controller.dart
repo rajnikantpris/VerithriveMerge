@@ -21,6 +21,12 @@ class OnboardingController extends BaseController {
   @override
   void onInit() {
     super.onInit();
+    AnalyticsService.instance.logScreenView(
+      screenName: 'ProfessionalOnboardingScreen',
+      screenClass: 'OnboardingView',
+      pageCategory: 'onboarding',
+      elementLocation: 'view',
+    );
     pageController = PageController(initialPage: 0);
    // _startAutoScroll();
   }

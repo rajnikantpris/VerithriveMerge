@@ -29,16 +29,6 @@ class LoginView extends BaseView<ProfessionalLoginController> {
 
   @override
   Widget buildView(BuildContext context) {
-    // Log screen view analytics
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      AnalyticsService.instance.logScreenView(
-        screenName: 'ProfessionalLoginScreen',
-        screenClass: 'LoginView',
-        pageCategory: 'login',
-        elementLocation: 'view',
-      );
-    });
-
     return SafeArea(
       child: Container(
         color: AppColor.white,

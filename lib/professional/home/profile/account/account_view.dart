@@ -56,16 +56,6 @@ class AccountView extends BaseView<AccountController> {
 
   @override
   Widget buildView(BuildContext context) {
-    // Log screen view analytics
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      AnalyticsService.instance.logScreenView(
-        screenName: 'ProfessionalAccountScreen',
-        screenClass: 'AccountView',
-        pageCategory: 'profile',
-        elementLocation: 'view',
-      );
-    });
-
     return Container(
       color: AppColor.color_F5F5F5,
       child: SingleChildScrollView(

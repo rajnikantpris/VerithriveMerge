@@ -19,16 +19,6 @@ class OnboardingScreen extends GetView<OnboardingController> {
   @override
   Widget build(BuildContext context) {
    
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      AnalyticsService.instance.logScreenView(
-        screenName: 'EndUserOnboardingScreen',
-        screenClass: 'OnboardingScreen',
-        pageCategory: 'onboarding',
-        elementLocation: 'view',
-      );
-    });
-
-   
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.dark.copyWith(
         statusBarColor: AppColors.white,

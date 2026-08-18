@@ -57,16 +57,6 @@ class CreateAvailabilityView extends BaseView<CreateAvailabilityController> {
 
   @override
   Widget buildView(BuildContext context) {
-    // Log screen view analytics
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      AnalyticsService.instance.logScreenView(
-        screenName: 'ProfessionalCreateAvailabilityScreen',
-        screenClass: 'CreateAvailabilityView',
-        pageCategory: 'calendar',
-        elementLocation: 'view',
-      );
-    });
-
     return Container(
       color: AppColor.white,
       child: SingleChildScrollView(

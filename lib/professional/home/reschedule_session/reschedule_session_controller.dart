@@ -8,6 +8,7 @@ import '../../../common/base_controller.dart';
 import '../../../utils/timezone_helper.dart';
 import '../../../widgets/response_dialog.dart';
 import '../home_controller.dart';
+import '../../../services/analytics_service.dart';
 
 class RescheduleSessionController extends BaseController {
   RescheduleSessionController();
@@ -37,6 +38,12 @@ class RescheduleSessionController extends BaseController {
   @override
   void onInit() {
     super.onInit();
+    AnalyticsService.instance.logScreenView(
+      screenName: 'ProfessionalRescheduleScreen',
+      screenClass: 'RescheduleSessionView',
+      pageCategory: 'home',
+      elementLocation: 'view',
+    );
     // Initialize formKey to ensure a new key is created each time
     formKey = GlobalKey<FormState>();
     _initializeFields();

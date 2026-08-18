@@ -12,6 +12,7 @@ import '../../../theme/hight_width_sizes.dart';
 import '../../../utils/timezone_helper.dart';
 import '../../../widgets/response_dialog.dart';
 import '../calendar_controller.dart';
+import '../../../services/analytics_service.dart';
 
 class UnavailableTime {
   final TimeOfDay from;
@@ -38,6 +39,12 @@ class EditAvailabilityController extends BaseController {
   @override
   void onInit() {
     super.onInit();
+    AnalyticsService.instance.logScreenView(
+      screenName: 'ProfessionalEditAvailabilityScreen',
+      screenClass: 'EditAvailabilityView',
+      pageCategory: 'calendar',
+      elementLocation: 'view',
+    );
     formKey = GlobalKey<FormState>();
     unavailableTimeFormKey = GlobalKey<FormState>();
 

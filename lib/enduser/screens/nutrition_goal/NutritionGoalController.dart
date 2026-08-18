@@ -61,6 +61,12 @@ class NutritionGoalController extends BaseController {
         fetchServices();
       }
     }
+    AnalyticsService.instance.logScreenView(
+      screenName: 'NutritionGoalScreen',
+      screenClass: 'NutritionGoalScreen',
+      pageCategory: analyticsPageCategory,
+      elementLocation: 'view',
+    );
   }
   
   // Fetch services from API

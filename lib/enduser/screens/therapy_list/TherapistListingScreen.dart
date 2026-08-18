@@ -16,7 +16,6 @@ import '../../core/widget/animated_loader.dart';
 import '../../utils/AppText.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/app_text_styles.dart';
-import '../../../services/analytics_service.dart';
 import 'Therapist.dart';
 import 'TherapistController.dart';
 
@@ -25,16 +24,6 @@ class TherapistListingScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    
-     WidgetsBinding.instance.addPostFrameCallback((_) {
-      AnalyticsService.instance.logScreenView(
-        screenName: 'TherapistListingScreen',
-        screenClass: 'TherapistListingScreen',
-        pageCategory: controller.analyticsPageCategory,
-        elementLocation: 'view',
-      );
-    });
-
     return Scaffold(
       backgroundColor: AppColors.white,
       appBar: AppBar(

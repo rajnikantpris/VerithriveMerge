@@ -118,6 +118,13 @@ class TherapistDetailController extends BaseController
       print('Professional ID from Therapist: $professionalId');
     }
 
+    AnalyticsService.instance.logScreenView(
+      screenName: 'TherapistDetailScreen',
+      screenClass: 'TherapistDetailScreen',
+      pageCategory: AnalyticsService.resolvePageCategory(category),
+      elementLocation: 'view',
+    );
+
     // Initialize TabController (3 tabs: Services, About, Qualifications)
     tabController = TabController(length: 3, vsync: this);
 

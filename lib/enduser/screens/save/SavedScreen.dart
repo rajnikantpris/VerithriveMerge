@@ -4,7 +4,6 @@ import 'package:get/get.dart';
 import 'package:verithrive_dev/enduser/utils/app_assets.dart';
 import 'package:verithrive_dev/enduser/utils/app_colors.dart';
 import 'package:verithrive_dev/enduser/utils/app_text_styles.dart';
-import 'package:verithrive_dev/services/analytics_service.dart';
 import '../../core/widget/animated_loader.dart';
 import '../../utils/AppText.dart';
 import '../therapy_list/Therapist.dart';
@@ -14,16 +13,6 @@ class SavedScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = Get.find<SavedController>(tag: 'saved');
-
-    // Log screen view analytics
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      AnalyticsService.instance.logScreenView(
-        screenName: 'SavedScreen',
-        screenClass: 'SavedScreen',
-        pageCategory: 'saved',
-        elementLocation: 'view',
-      );
-    });
 
     return Scaffold(
       backgroundColor: Colors.white,

@@ -7,6 +7,7 @@ import '../../../../common/base_controller.dart';
 import '../../../../routes/app_routes.dart';
 import '../../../../services/storage_service.dart';
 import '../../../../widgets/response_dialog.dart';
+import '../../../../services/analytics_service.dart';
 
 class AccountController extends BaseController {
   final UserApiService _userApiService;
@@ -23,6 +24,12 @@ class AccountController extends BaseController {
   @override
   void onInit() {
     super.onInit();
+    AnalyticsService.instance.logScreenView(
+      screenName: 'ProfessionalAccountScreen',
+      screenClass: 'AccountView',
+      pageCategory: 'profile',
+      elementLocation: 'view',
+    );
     // Initialize formKey to ensure a new key is created each time
     formKey = GlobalKey<FormState>();
     // Load user email from storage

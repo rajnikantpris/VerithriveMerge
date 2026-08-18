@@ -38,6 +38,17 @@ class OnboardingController extends GetxController {
   }
 
   @override
+  void onInit() {
+    super.onInit();
+    AnalyticsService.instance.logScreenView(
+      screenName: 'EndUserOnboardingScreen',
+      screenClass: 'OnboardingScreen',
+      pageCategory: 'onboarding',
+      elementLocation: 'view',
+    );
+  }
+
+  @override
   void onClose() {
     pageController.dispose();
     super.onClose();

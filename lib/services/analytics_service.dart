@@ -15,6 +15,9 @@ class AnalyticsService {
 
   static const String _userProfileSetKey = 'analytics_user_profile_set_user_id';
 
+  String? _lastScreenViewName;
+  String? _lastScreenViewClass;
+
   /// Observer to automatically track screen transitions in [GetMaterialApp] or [MaterialApp].
   FirebaseAnalyticsObserver get observer =>
       FirebaseAnalyticsObserver(analytics: _analytics);
@@ -85,12 +88,19 @@ class AnalyticsService {
   }
 
   /// Log screen view manually if automatic tracking is not enough.
+  /// Consecutive calls for the same screen are ignored so rebuilds
+  /// (e.g. social-login loaders) do not send duplicate events.
   Future<void> logScreenView({
     required String screenName,
     String? screenClass,
     String? pageCategory,
     String? elementLocation,
   }) async {
+    if (_lastScreenViewName == screenName &&
+        _lastScreenViewClass == screenClass) {
+      return;
+    }
+
     try {
       final eventParams = <String, Object>{
         'screen_name': screenName,
@@ -105,6 +115,8 @@ class AnalyticsService {
         parameters: eventParams,
       );
 
+      _lastScreenViewName = screenName;
+      _lastScreenViewClass = screenClass;
       _printEvent('screen_view', eventParams);
     } catch (e) {
       if (kDebugMode) {
@@ -623,7 +635,8 @@ class AnalyticsService {
       final parameters = <String, Object>{
         if (screenName != null) 'screen_name': screenName,
         if (screenClass != null) 'screen_class': screenClass,
-        if (pageCategory != null) 'page_category': pageCategory,
+        if (pageCategory != null && pageCategory.isNotEmpty)
+          'page_category': pageCategory,
         if (extraParams != null) ...extraParams,
       };
 

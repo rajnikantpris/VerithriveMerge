@@ -16,16 +16,6 @@ class LoginView extends GetView<LoginController> {
 
   @override
   Widget build(BuildContext context) {
-    // Log screen view analytics
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      AnalyticsService.instance.logScreenView(
-        screenName: 'LoginScreen',
-        screenClass: 'LoginView',
-        pageCategory: 'login',
-        elementLocation: 'view',
-      );
-    });
-
     return Scaffold(
       backgroundColor: AppColor.white,
       body: SafeArea(

@@ -25,15 +25,7 @@ class FilterView extends GetView<FilterController> {
 
   @override
   Widget build(BuildContext context) {
-    // Log screen view analytics
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      AnalyticsService.instance.logScreenView(
-        screenName: 'FilterView',
-        screenClass: 'FilterView',
-        pageCategory: pageCategory,
-        elementLocation: 'view',
-      );
-    });
+    controller.logScreenViewOnce(pageCategory);
 
     return Scaffold(
       backgroundColor: AppColors.white,

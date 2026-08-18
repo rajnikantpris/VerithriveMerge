@@ -9,7 +9,6 @@ import 'package:verithrive_dev/enduser/screens/notification/NotificationScreen.d
 import 'package:verithrive_dev/enduser/utils/app_assets.dart';
 import 'package:verithrive_dev/enduser/utils/app_colors.dart';
 import 'package:verithrive_dev/enduser/utils/app_text_styles.dart';
-import 'package:verithrive_dev/services/analytics_service.dart';
 import 'package:verithrive_dev/utils/screen.dart';
 import '../../core/widget/animated_loader.dart';
 import '../../core/widget/common_widgets.dart';
@@ -31,16 +30,6 @@ class _HomeMainScreenState extends State<HomeMainScreen> {
   void initState() {
     super.initState();
     controller = Get.find<HomeMainController>(tag: 'home');
-
-    // Log screen view analytics
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      AnalyticsService.instance.logScreenView(
-        screenName: 'HomeMainScreen',
-        screenClass: 'HomeMainScreen',
-        pageCategory: 'home',
-        elementLocation: 'view',
-      );
-    });
   }
 
   // ── Map category type name → text color ───────────────────────────────────

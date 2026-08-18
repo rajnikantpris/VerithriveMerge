@@ -66,6 +66,12 @@ class FitnessGoalController extends BaseController {
         fetchServices();
       }
     }
+    AnalyticsService.instance.logScreenView(
+      screenName: 'FitnessGoalScreen',
+      screenClass: 'FitnessGoalScreen',
+      pageCategory: analyticsPageCategory,
+      elementLocation: 'view',
+    );
   }
   
   // Fetch services from API

@@ -27,6 +27,12 @@ class ChatController extends BaseController {
   @override
   void onInit() {
     super.onInit();
+    AnalyticsService.instance.logScreenView(
+      screenName: 'ProfessionalChatScreen',
+      screenClass: 'ChatView',
+      pageCategory: 'messaging',
+      elementLocation: 'view',
+    );
     peer = _resolvePeer().obs;
     _initializeChat();
 

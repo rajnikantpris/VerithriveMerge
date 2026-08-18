@@ -7,7 +7,6 @@ import '../../../theme/fonts.dart';
 import '../../../theme/font_sizes.dart';
 import '../../../theme/hight_width_sizes.dart';
 import '../../../theme/image_paths.dart';
-import '../../../../services/analytics_service.dart';
 import 'chat_controller.dart';
 
 class ChatView extends BaseView<ChatController> {
@@ -70,16 +69,6 @@ class ChatView extends BaseView<ChatController> {
 
   @override
   Widget buildView(BuildContext context) {
-    // Log screen view analytics
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      AnalyticsService.instance.logScreenView(
-        screenName: 'ProfessionalChatScreen',
-        screenClass: 'ChatView',
-        pageCategory: 'messaging',
-        elementLocation: 'view',
-      );
-    });
-
     return Container(
       color: AppColor.white,
       child: SafeArea(

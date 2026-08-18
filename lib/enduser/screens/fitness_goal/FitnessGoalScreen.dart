@@ -12,16 +12,6 @@ class FitnessGoalScreen extends GetView<FitnessGoalController> {
 
   @override
   Widget build(BuildContext context) {
-    // Log screen view analytics
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      AnalyticsService.instance.logScreenView(
-        screenName: 'FitnessGoalScreen',
-        screenClass: 'FitnessGoalScreen',
-        pageCategory: controller.analyticsPageCategory,
-        elementLocation: 'view',
-      );
-    });
-
     return Scaffold(
       backgroundColor: AppColors.white,
       appBar: AppBar(

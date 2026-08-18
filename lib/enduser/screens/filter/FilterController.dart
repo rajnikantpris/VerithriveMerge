@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../therapy_list/TherapistController.dart';
+import '../../../services/analytics_service.dart';
 
 class FilterController extends GetxController {
   // Professional filter - store selected sub_type_id
@@ -13,10 +14,23 @@ class FilterController extends GetxController {
   final double maxDistanceLimit = 25.0;
 
   RxBool hasFilter = false.obs;
+  bool _didLogScreenView = false;
+
   @override
   void onInit() {
     super.onInit();
     _loadAllFilterValues();
+  }
+
+  void logScreenViewOnce(String pageCategory) {
+    if (_didLogScreenView) return;
+    _didLogScreenView = true;
+    AnalyticsService.instance.logScreenView(
+      screenName: 'FilterView',
+      screenClass: 'FilterView',
+      pageCategory: pageCategory,
+      elementLocation: 'view',
+    );
   }
 
   void _loadAllFilterValues() {

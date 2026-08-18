@@ -43,6 +43,12 @@ class ProfessionalLoginController extends BaseController {
     super.onInit();
     // Initialize formKey to ensure a new key is created each time
     formKey = GlobalKey<FormState>();
+    AnalyticsService.instance.logScreenView(
+      screenName: 'ProfessionalLoginScreen',
+      screenClass: 'LoginView',
+      pageCategory: 'login',
+      elementLocation: 'view',
+    );
     // Load saved credentials if remember me was enabled
     _loadSavedCredentials();
     // Ask for notification permission when login screen opens

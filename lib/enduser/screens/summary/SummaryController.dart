@@ -55,6 +55,16 @@ class SummaryController extends BaseController {
   void onInit() {
     super.onInit();
     _receiveArguments();
+    AnalyticsService.instance.logScreenView(
+      screenName: 'SummaryScreen',
+      screenClass: 'SummaryScreen',
+      pageCategory: AnalyticsService.resolvePageCategory(
+        cartController.category.value,
+        itemBrand: cartController.itemBrand.value,
+        itemVariant: cartController.itemVariant.value,
+      ),
+      elementLocation: 'view',
+    );
     // Listen to cart controller time changes and sync
     ever(cartController.fromTime, (TimeOfDay? time) {
       if (time != null) {
@@ -220,51 +230,50 @@ class SummaryController extends BaseController {
 
   // Remove booking
   void removeBooking() {
-    // Analytics: Log remove from cart event
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final rawArgs = Get.arguments;
-      final args = rawArgs is Map ? Map<String, dynamic>.from(rawArgs) : null;
-      final category = AnalyticsService.resolvePageCategory(
-        args?['category']?.toString(),
-        itemBrand: args?['item_brand']?.toString(),
-        itemVariant: args?['item_variant']?.toString(),
-      );
-      final itemPrice =
-          AnalyticsService.validatePrice(cartController.price.value);
-      final consultationType = cartController.consultationType.value;
+    final pageCategory = AnalyticsService.resolvePageCategory(
+      cartController.category.value,
+      itemBrand: cartController.itemBrand.value,
+      itemVariant: cartController.itemVariant.value,
+    );
+    final itemPrice =
+        AnalyticsService.validatePrice(cartController.price.value);
+    final itemVariant = cartController.itemVariant.value;
+    final itemBrand = cartController.itemBrand.value;
+    final consultationType = cartController.consultationType.value;
 
-      AnalyticsService.instance.logRemoveFromCartEvent(
-        item: AnalyticsService.instance.buildItem(
-          itemId: cartController.professionalId.value.isNotEmpty
-              ? cartController.professionalId.value
-              : '',
-          itemName: cartController.itemVariant.value.isNotEmpty
-              ? cartController.itemVariant.value
-              : (cartController.serviceName.value.isNotEmpty
-                  ? cartController.serviceName.value
-                  : ''),
-          itemCategory: category,
-          itemCategory2: cartController.serviceName.value,
-          itemVariant: consultationType.isNotEmpty
-              ? consultationType
-              : serviceName.value,
-          itemBrand: consultationType.isNotEmpty ? consultationType : category,
-          price: itemPrice,
-          quantity: 1,
-        ),
-        value: itemPrice,
-        currency: 'GBP',
-        screenName: 'SummaryScreen',
-        screenClass: 'SummaryScreen',
-        pageCategory: category,
-      );
-    });
+    AnalyticsService.instance.logRemoveFromCartEvent(
+      item: AnalyticsService.instance.buildItem(
+        itemId: cartController.professionalId.value.isNotEmpty
+            ? cartController.professionalId.value
+            : '',
+        itemName: itemVariant.isNotEmpty
+            ? itemVariant
+            : (cartController.serviceName.value.isNotEmpty
+                ? cartController.serviceName.value
+                : ''),
+        itemCategory: pageCategory,
+        itemCategory2: cartController.serviceName.value,
+        itemVariant: itemVariant.isNotEmpty
+            ? itemVariant
+            : (consultationType.isNotEmpty
+                ? consultationType
+                : serviceName.value),
+        itemBrand: itemBrand.isNotEmpty
+            ? itemBrand
+            : (consultationType.isNotEmpty ? consultationType : pageCategory),
+        price: itemPrice,
+        quantity: 1,
+      ),
+      value: itemPrice,
+      currency: 'GBP',
+      screenName: 'SummaryScreen',
+      screenClass: 'SummaryScreen',
+      pageCategory: pageCategory,
+    );
 
-    // Cancel timer when removing booking
     _cancelTimer();
-    // Implementation for removing booking
     Get.back();
-    Get.back(); // Go back to cart, then back to previous screen
+    Get.back();
   }
 
   // Proceed to payment - call validate booking window API first

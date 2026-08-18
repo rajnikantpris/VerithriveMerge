@@ -17,24 +17,6 @@ class SummaryScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Log screen view analytics
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final rawArgs = Get.arguments;
-      final args = rawArgs is Map ? Map<String, dynamic>.from(rawArgs) : null;
-      final pageCategory = AnalyticsService.resolvePageCategory(
-        args?['category']?.toString(),
-        itemBrand: args?['item_brand']?.toString(),
-        itemVariant: args?['item_variant']?.toString(),
-      );
-
-      AnalyticsService.instance.logScreenView(
-        screenName: 'SummaryScreen',
-        screenClass: 'SummaryScreen',
-        pageCategory: pageCategory,
-        elementLocation: 'view',
-      );
-    });
-
     // Log view_cart analytics when cart is viewed
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final rawArgs = Get.arguments;

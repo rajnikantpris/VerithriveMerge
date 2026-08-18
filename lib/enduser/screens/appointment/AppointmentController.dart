@@ -41,6 +41,13 @@ class AppointmentController extends GetxController {
       }
     }
 
+    AnalyticsService.instance.logScreenView(
+      screenName: 'AppointmentBookingScreen',
+      screenClass: 'AppointmentBookingScreen',
+      pageCategory: AnalyticsService.resolvePageCategory(category),
+      elementLocation: 'view',
+    );
+
     // No is selected by default — log non_hurry_tap on screen open
     AnalyticsService.instance.logEvent(
       name: 'non_hurry_tap',

@@ -27,24 +27,6 @@ class TherapistDetailScreen extends StatelessWidget {
     final TherapistDetailController controller =
         Get.find<TherapistDetailController>();
 
-    // Log screen view analytics
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final rawArgs = Get.arguments;
-      final args = rawArgs is Map
-          ? Map<String, dynamic>.from(rawArgs)
-          : null;
-      final category = AnalyticsService.resolvePageCategory(
-        args?['category']?.toString() ?? controller.category,
-      );
-      
-      AnalyticsService.instance.logScreenView(
-        screenName: 'TherapistDetailScreen',
-        screenClass: 'TherapistDetailScreen',
-        pageCategory: category,
-        elementLocation: 'view',
-      );
-    });
-
     // Log view_item analytics when therapist details are displayed
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final rawArgs = Get.arguments;

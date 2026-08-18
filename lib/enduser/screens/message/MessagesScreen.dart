@@ -6,7 +6,6 @@ import 'package:verithrive_dev/enduser/screens/message/ChatDetailScreen.dart';
 import 'package:verithrive_dev/enduser/utils/app_assets.dart';
 import 'package:verithrive_dev/enduser/utils/app_colors.dart';
 import 'package:verithrive_dev/enduser/utils/app_text_styles.dart';
-import 'package:verithrive_dev/services/analytics_service.dart';
 import '../../models/Conversation.dart';
 import '../../core/widget/animated_loader.dart';
 import '../../routes/app_routes.dart';
@@ -16,16 +15,6 @@ class MessagesScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = Get.find<MessagesController>(tag: 'messages');
-
-    // Log screen view analytics
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      AnalyticsService.instance.logScreenView(
-        screenName: 'MessagesScreen',
-        screenClass: 'MessagesScreen',
-        pageCategory: 'messaging',
-        elementLocation: 'view',
-      );
-    });
 
     return Scaffold(
       backgroundColor: Colors.white,

@@ -5,7 +5,6 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:verithrive_dev/enduser/utils/app_text_styles.dart';
 
-import '../../../services/analytics_service.dart';
 import '../../utils/AppText.dart';
 import '../../utils/CustomTextField.dart';
 import '../../utils/app_assets.dart';
@@ -18,15 +17,6 @@ class RegisterView extends GetView<RegisterController> {
 
   @override
   Widget build(BuildContext context) {
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      AnalyticsService.instance.logScreenView(
-        screenName: 'RegisterScreen',
-        screenClass: 'RegisterView',
-        pageCategory: 'register',
-        elementLocation: 'view',
-      );
-    });
 
     return Scaffold(
       backgroundColor: AppColors.white,

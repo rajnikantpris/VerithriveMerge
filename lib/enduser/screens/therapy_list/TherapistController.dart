@@ -80,6 +80,12 @@ class TherapistController extends BaseController {
   void onInit() {
     super.onInit();
     _receiveAndLogArguments();
+    AnalyticsService.instance.logScreenView(
+      screenName: 'TherapistListingScreen',
+      screenClass: 'TherapistListingScreen',
+      pageCategory: analyticsPageCategory,
+      elementLocation: 'view',
+    );
     initializeTitle();
     loadTherapists();
   }
