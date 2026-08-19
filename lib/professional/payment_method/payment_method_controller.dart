@@ -94,6 +94,12 @@ class PaymentMethodController extends BaseController {
         isFromSignup = args['isFromSignup'] as bool;
       }
     }
+    AnalyticsService.instance.logScreenView(
+      screenName: 'PaymentMethodView',
+      screenClass: 'PaymentMethodView',
+      pageCategory: 'payment',
+      elementLocation: 'view',
+    );
   }
 
   void selectMethod(String methodId) {

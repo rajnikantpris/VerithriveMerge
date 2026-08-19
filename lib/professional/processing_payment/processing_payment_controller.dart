@@ -22,6 +22,12 @@ class ProcessingPaymentController extends BaseController {
   @override
   void onInit() {
     super.onInit();
+    AnalyticsService.instance.logScreenView(
+      screenName: 'ProfessionalProcessingPaymentScreen',
+      screenClass: 'ProcessingPaymentView',
+      pageCategory: 'payment',
+      elementLocation: 'view',
+    );
     final args = Get.arguments;
     if (args is Map) {
       if (args['planId'] is String) {

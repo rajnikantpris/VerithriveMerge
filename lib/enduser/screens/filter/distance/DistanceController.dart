@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 import '../../therapy_list/TherapistController.dart';
 import '../FilterController.dart';
+import 'package:verithrive_dev/services/analytics_service.dart';
 
 class DistanceController extends GetxController {
   // Distance filter
@@ -11,6 +12,12 @@ class DistanceController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    AnalyticsService.instance.logScreenView(
+      screenName: 'DistanceFilterScreen',
+      screenClass: 'DistanceFilterScreen',
+      pageCategory: 'filter',
+      elementLocation: 'view',
+    );
     _loadInitialDistance();
   }
 

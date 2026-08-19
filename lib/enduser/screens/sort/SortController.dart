@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../therapy_list/TherapistController.dart';
+import 'package:verithrive_dev/services/analytics_service.dart';
 
 class SortController extends GetxController {
   final RxString selectedSortOption = ''.obs;
@@ -26,6 +27,12 @@ class SortController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    AnalyticsService.instance.logScreenView(
+      screenName: 'SortScreen',
+      screenClass: 'SortScreen',
+      pageCategory: 'filter',
+      elementLocation: 'view',
+    );
     _loadCurrentSort();
   }
 

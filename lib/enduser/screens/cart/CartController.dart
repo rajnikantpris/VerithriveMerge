@@ -16,31 +16,35 @@ import '../../utils/app_colors.dart';
 import '../booking/BookingsController.dart';
 
 class CartController extends BaseController {
-  final ProjectRepository _repository = Get.find(tag: (ProjectRepository).toString());
+  final ProjectRepository _repository =
+      Get.find(tag: (ProjectRepository).toString());
   // Observable variables
   var fromTime = Rxn<TimeOfDay>();
   var untilTime = Rxn<TimeOfDay>();
   var expiryTime = '15:00'.obs;
   var selectedDate = DateTime.now().obs;
-  
+
   // Original time range from consultation booking (used for time picker limits)
   var originalFromTime = Rxn<TimeOfDay>();
   var originalUntilTime = Rxn<TimeOfDay>();
-  
+
   // Available time slots from consultation booking (only AVAILABLE slots)
   var availableTimeSlots = <TimeOfDay>[].obs;
-  
+
   // Slot duration in minutes
   var slotDurationMinutes = 15.obs;
-  
+
   // Get slot duration in minutes (calculated from original times or from argument)
   int get slotDuration {
     // If slot duration was provided, use it
-    if (slotDurationMinutes.value != 15 || (originalFromTime.value != null && originalUntilTime.value != null)) {
+    if (slotDurationMinutes.value != 15 ||
+        (originalFromTime.value != null && originalUntilTime.value != null)) {
       // Calculate from original times if not provided
       if (originalFromTime.value != null && originalUntilTime.value != null) {
-        int fromMinutes = originalFromTime.value!.hour * 60 + originalFromTime.value!.minute;
-        int untilMinutes = originalUntilTime.value!.hour * 60 + originalUntilTime.value!.minute;
+        int fromMinutes =
+            originalFromTime.value!.hour * 60 + originalFromTime.value!.minute;
+        int untilMinutes = originalUntilTime.value!.hour * 60 +
+            originalUntilTime.value!.minute;
         int duration = untilMinutes - fromMinutes;
         if (duration > 0) {
           return duration;
@@ -49,7 +53,7 @@ class CartController extends BaseController {
     }
     return slotDurationMinutes.value;
   }
-  
+
   // Booking details
   var consultationType = 'Consultation - in person'.obs;
   var price = 30.0.obs;
@@ -76,6 +80,12 @@ class CartController extends BaseController {
     if (untilTime.value == null) {
       untilTime.value = TimeOfDay(hour: 15, minute: 0); // Default 3:00 PM
     }
+    AnalyticsService.instance.logScreenView(
+      screenName: 'CartScreen',
+      screenClass: 'CartScreen',
+      pageCategory: 'cart',
+      elementLocation: 'view',
+    );
   }
 
   void _receiveArguments() {
@@ -85,17 +95,19 @@ class CartController extends BaseController {
       if (arguments['selected_date'] != null) {
         selectedDate.value = arguments['selected_date'] as DateTime;
       }
-      
+
       // Set from and until time from consultation booking
       if (arguments['from_time'] != null) {
         fromTime.value = arguments['from_time'] as TimeOfDay;
-        originalFromTime.value = arguments['from_time'] as TimeOfDay; // Store original
+        originalFromTime.value =
+            arguments['from_time'] as TimeOfDay; // Store original
       }
       if (arguments['until_time'] != null) {
         untilTime.value = arguments['until_time'] as TimeOfDay;
-        originalUntilTime.value = arguments['until_time'] as TimeOfDay; // Store original
+        originalUntilTime.value =
+            arguments['until_time'] as TimeOfDay; // Store original
       }
-      
+
       // Set service details
       if (arguments['service_name'] != null) {
         serviceName.value = arguments['service_name'] as String;
@@ -114,7 +126,8 @@ class CartController extends BaseController {
         serviceFormatId.value = arguments['service_format_id'] as String;
       }
       if (arguments['professional_service_format_id'] != null) {
-        professionalServiceFormatId.value = arguments['professional_service_format_id'] as String;
+        professionalServiceFormatId.value =
+            arguments['professional_service_format_id'] as String;
       }
       if (arguments['booking_id'] != null) {
         bookingId.value = arguments['booking_id'] as String;
@@ -133,7 +146,8 @@ class CartController extends BaseController {
       }
       if (arguments['available_time_slots'] != null) {
         try {
-          List<dynamic> slots = arguments['available_time_slots'] as List<dynamic>;
+          List<dynamic> slots =
+              arguments['available_time_slots'] as List<dynamic>;
           availableTimeSlots.value = slots
               .where((slot) => slot is TimeOfDay)
               .cast<TimeOfDay>()
@@ -146,9 +160,11 @@ class CartController extends BaseController {
       if (arguments['slot_duration_minutes'] != null) {
         try {
           if (arguments['slot_duration_minutes'] is int) {
-            slotDurationMinutes.value = arguments['slot_duration_minutes'] as int;
+            slotDurationMinutes.value =
+                arguments['slot_duration_minutes'] as int;
           } else if (arguments['slot_duration_minutes'] is num) {
-            slotDurationMinutes.value = (arguments['slot_duration_minutes'] as num).toInt();
+            slotDurationMinutes.value =
+                (arguments['slot_duration_minutes'] as num).toInt();
           }
         } catch (e) {
           print('Error parsing slot_duration_minutes: $e');
@@ -156,7 +172,7 @@ class CartController extends BaseController {
       }
     }
   }
-  
+
   // Helper method to get current timezone
   Future<String> _getCurrentTimezone() async {
     try {
@@ -183,13 +199,14 @@ class CartController extends BaseController {
       );
       return;
     }
-    
+
     // Check if selected date is today
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    final selectedDay = DateTime(selectedDate.value.year, selectedDate.value.month, selectedDate.value.day);
+    final selectedDay = DateTime(selectedDate.value.year,
+        selectedDate.value.month, selectedDate.value.day);
     final bool isToday = selectedDay.isAtSameMomentAs(today);
-    
+
     // Get available time slots - if available, use them; otherwise fallback to default picker
     if (availableTimeSlots.isNotEmpty) {
       // Show custom time picker with only available slots
@@ -198,29 +215,32 @@ class CartController extends BaseController {
         availableTimes: availableTimeSlots,
         initialTime: fromTime.value ?? availableTimeSlots.first,
       );
-      
+
       if (picked != null) {
         // Slot duration is calculated from original times - automatically calculate until time
         TimeOfDay calculatedUntilTime = _addMinutes(picked, slotDuration);
-        
+
         // Set from time and automatically calculate until time
         fromTime.value = picked;
         untilTime.value = calculatedUntilTime;
       }
       return;
     }
-    
+
     // Fallback: Use default Flutter time picker if no available slots provided
     TimeOfDay? minTime;
     if (isToday) {
       final currentTime = TimeOfDay(hour: now.hour, minute: now.minute);
       int currentMinutes = currentTime.hour * 60 + currentTime.minute;
-      int originalMinutes = originalFromTime.value!.hour * 60 + originalFromTime.value!.minute;
-      minTime = currentMinutes > originalMinutes ? currentTime : originalFromTime.value;
+      int originalMinutes =
+          originalFromTime.value!.hour * 60 + originalFromTime.value!.minute;
+      minTime = currentMinutes > originalMinutes
+          ? currentTime
+          : originalFromTime.value;
     } else {
       minTime = originalFromTime.value;
     }
-    
+
     final TimeOfDay? picked = await showTimePicker(
       context: context,
       initialTime: fromTime.value ?? minTime!,
@@ -237,23 +257,26 @@ class CartController extends BaseController {
         );
       },
     );
-    
+
     if (picked != null) {
       // Get slot duration
       int slotDurationValue = slotDuration;
-      
+
       // Validate: picked time must be within valid range
       int pickedMinutes = picked.hour * 60 + picked.minute;
-      int maxMinutes = originalUntilTime.value!.hour * 60 + originalUntilTime.value!.minute;
-      
+      int maxMinutes =
+          originalUntilTime.value!.hour * 60 + originalUntilTime.value!.minute;
+
       // Calculate the end time if this time is selected
       int calculatedEndMinutes = pickedMinutes + slotDurationValue;
-      
+
       // Validate: calculated end time (picked + duration) must not exceed originalUntilTime
       if (calculatedEndMinutes > maxMinutes) {
-        TimeOfDay maxAllowedStart = _subtractMinutes(originalUntilTime.value!, slotDurationValue);
+        TimeOfDay maxAllowedStart =
+            _subtractMinutes(originalUntilTime.value!, slotDurationValue);
         showResponseDialog(
-          message: 'Selected time would exceed available time range. Please select a time before ${formatTime(maxAllowedStart)}.',
+          message:
+              'Selected time would exceed available time range. Please select a time before ${formatTime(maxAllowedStart)}.',
           title: 'Invalid Time Selection',
           isError: true,
           showButton: true,
@@ -261,16 +284,16 @@ class CartController extends BaseController {
         );
         return;
       }
-      
+
       // Slot duration is calculated from original times - automatically calculate until time
       TimeOfDay calculatedUntilTime = _addMinutes(picked, slotDurationValue);
-      
+
       // Set from time and automatically calculate until time
       fromTime.value = picked;
       untilTime.value = calculatedUntilTime;
     }
   }
-  
+
   // Helper method to add minutes to TimeOfDay
   TimeOfDay _addMinutes(TimeOfDay time, int minutes) {
     int totalMinutes = time.hour * 60 + time.minute + minutes;
@@ -278,7 +301,7 @@ class CartController extends BaseController {
     int newMinute = totalMinutes % 60;
     return TimeOfDay(hour: newHour, minute: newMinute);
   }
-  
+
   // Helper method to subtract minutes from TimeOfDay
   TimeOfDay _subtractMinutes(TimeOfDay time, int minutes) {
     int totalMinutes = time.hour * 60 + time.minute - minutes;
@@ -289,7 +312,7 @@ class CartController extends BaseController {
     int newMinute = totalMinutes % 60;
     return TimeOfDay(hour: newHour, minute: newMinute);
   }
-  
+
   // Show custom time picker with only available time slots
   Future<TimeOfDay?> _showAvailableTimePicker({
     required BuildContext context,
@@ -297,9 +320,10 @@ class CartController extends BaseController {
     required TimeOfDay initialTime,
   }) async {
     TimeOfDay? selectedTime = initialTime;
-    
+
     // Find closest available time to initial time
-    if (!availableTimes.any((t) => t.hour == initialTime.hour && t.minute == initialTime.minute)) {
+    if (!availableTimes.any(
+        (t) => t.hour == initialTime.hour && t.minute == initialTime.minute)) {
       int initialMinutes = initialTime.hour * 60 + initialTime.minute;
       int minDiff = 9999;
       for (var time in availableTimes) {
@@ -310,7 +334,7 @@ class CartController extends BaseController {
         }
       }
     }
-    
+
     return showDialog<TimeOfDay>(
       context: context,
       barrierColor: Colors.black.withOpacity(0.3),
@@ -335,7 +359,7 @@ class CartController extends BaseController {
                   ),
                 ),
                 SizedBox(height: 16),
-                
+
                 // Time Selection List
                 Flexible(
                   child: _AvailableTimePickerList(
@@ -346,9 +370,9 @@ class CartController extends BaseController {
                     },
                   ),
                 ),
-                
+
                 SizedBox(height: 16),
-                
+
                 // Buttons
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
@@ -368,7 +392,8 @@ class CartController extends BaseController {
                       onPressed: () => Navigator.of(context).pop(selectedTime),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primaryColor,
-                        padding: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(6),
                         ),
@@ -417,7 +442,8 @@ class CartController extends BaseController {
     // Use default times if not set
     final from = fromTime.value ?? TimeOfDay(hour: 14, minute: 0);
     final until = untilTime.value ?? TimeOfDay(hour: 15, minute: 0);
-    final date = '${selectedDate.value.day.toString().padLeft(2, '0')}/${selectedDate.value.month.toString().padLeft(2, '0')}/${selectedDate.value.year}';
+    final date =
+        '${selectedDate.value.day.toString().padLeft(2, '0')}/${selectedDate.value.month.toString().padLeft(2, '0')}/${selectedDate.value.year}';
     return '$date  ${formatTime(from)}-${formatTime(until)}';
   }
 
@@ -464,7 +490,7 @@ class CartController extends BaseController {
     if (untilTime.value == null) {
       untilTime.value = TimeOfDay(hour: 15, minute: 0); // Default 3:00 PM
     }
-    
+
     // Check if in edit mode - if so, call update booking API directly
     if (isEditMode.value && bookingId.value.isNotEmpty) {
       callUpdateBookingAPI();
@@ -544,7 +570,7 @@ class CartController extends BaseController {
       );
     }
   }
-  
+
   void callUpdateBookingAPI() async {
     // Validate required fields
     if (professionalId.value.isEmpty) {
@@ -557,7 +583,7 @@ class CartController extends BaseController {
       );
       return;
     }
-    
+
     if (professionalServiceFormatId.value.isEmpty) {
       showResponseDialog(
         message: 'Professional service format ID is missing',
@@ -568,7 +594,7 @@ class CartController extends BaseController {
       );
       return;
     }
-    
+
     if (bookingId.value.isEmpty) {
       showResponseDialog(
         message: 'Booking ID is missing',
@@ -579,7 +605,7 @@ class CartController extends BaseController {
       );
       return;
     }
-    
+
     if (fromTime.value == null || untilTime.value == null) {
       showResponseDialog(
         message: 'Please select from and until times',
@@ -590,38 +616,40 @@ class CartController extends BaseController {
       );
       return;
     }
-    
+
     isLoading.value = true;
-    
+
     // Get timezone
     String timezone = await _getCurrentTimezone();
-    
+
     Map<String, dynamic> toJson() {
       // Format date as DD/MM/YYYY
-      String formattedDate = DateFormat('dd/MM/yyyy').format(selectedDate.value);
-      
+      String formattedDate =
+          DateFormat('dd/MM/yyyy').format(selectedDate.value);
+
       // Format time as HH:mm (24-hour format)
       String formatTime24Hour(TimeOfDay time) {
         return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
       }
-      
+
       final Map<String, dynamic> data = <String, dynamic>{};
       data['booking_id'] = bookingId.value;
       data['professional_id'] = professionalId.value;
-      data['professional_service_format_id'] = professionalServiceFormatId.value; // _id
+      data['professional_service_format_id'] =
+          professionalServiceFormatId.value; // _id
       data['date'] = formattedDate;
       data['from_time'] = formatTime24Hour(fromTime.value!);
       data['to_time'] = formatTime24Hour(untilTime.value!);
       data['timezone'] = timezone;
-      
+
       print('========================================');
       print('Update Booking API Request:');
       print(data);
       print('========================================');
-      
+
       return data;
     }
-    
+
     // Use PUT method for update-booking API
     var service = _repository.sendPutApiRequest(toJson, update_booking, true);
     callDataService(
@@ -631,11 +659,11 @@ class CartController extends BaseController {
       isShowLoading: true,
     );
   }
-  
+
   Future<void> _handleUpdateBookingSuccess(dynamic baseResponse) async {
     try {
       isLoading.value = false;
-      
+
       Map<String, dynamic> responseData;
       if (baseResponse != null && baseResponse.data != null) {
         responseData = baseResponse.data is Map<String, dynamic>
@@ -648,8 +676,9 @@ class CartController extends BaseController {
       }
 
       bool success = responseData['success'] ?? false;
-      String message = responseData['message'] ?? 'Booking updated successfully';
-      
+      String message =
+          responseData['message'] ?? 'Booking updated successfully';
+
       if (success == true) {
         // Show success message and navigate back to bookings
         showResponseDialog(
@@ -658,13 +687,13 @@ class CartController extends BaseController {
           isError: false,
           showButton: true,
           onOkPressed: () {
-        // Navigate back to bookings screen (CartScreen -> ConsultationBookingScreen -> BookingsScreen)
-        Get.back(); // Close CartScreen
-        Get.back(); // Close ConsultationBookingScreen
-        // Refresh bookings list
-        if (Get.isRegistered<BookingsController>(tag: 'bookings')) {
-          Get.find<BookingsController>(tag: 'bookings').loadBookings();
-        }
+            // Navigate back to bookings screen (CartScreen -> ConsultationBookingScreen -> BookingsScreen)
+            Get.back(); // Close CartScreen
+            Get.back(); // Close ConsultationBookingScreen
+            // Refresh bookings list
+            if (Get.isRegistered<BookingsController>(tag: 'bookings')) {
+              Get.find<BookingsController>(tag: 'bookings').loadBookings();
+            }
           },
         );
       } else {
@@ -687,15 +716,16 @@ class CartController extends BaseController {
       );
     }
   }
-  
+
   void _handleUpdateBookingError(Exception exception) {
     isLoading.value = false;
-    String errorMessage = 'An error occurred while updating booking. Please try again.';
-    
+    String errorMessage =
+        'An error occurred while updating booking. Please try again.';
+
     if (exception != null && exception.toString().isNotEmpty) {
       errorMessage = exception.toString();
     }
-    
+
     showResponseDialog(
       message: errorMessage,
       title: 'Error',
@@ -719,7 +749,8 @@ class _AvailableTimePickerList extends StatefulWidget {
   });
 
   @override
-  State<_AvailableTimePickerList> createState() => _AvailableTimePickerListState();
+  State<_AvailableTimePickerList> createState() =>
+      _AvailableTimePickerListState();
 }
 
 class _AvailableTimePickerListState extends State<_AvailableTimePickerList> {
@@ -743,13 +774,14 @@ class _AvailableTimePickerListState extends State<_AvailableTimePickerList> {
 
   void _scrollToSelectedTime() {
     final index = widget.availableTimes.indexWhere(
-      (time) => time.hour == selectedTime.hour && time.minute == selectedTime.minute,
+      (time) =>
+          time.hour == selectedTime.hour && time.minute == selectedTime.minute,
     );
     if (index != -1 && _scrollController.hasClients) {
       final scrollPosition = index * 60.0;
       final viewportHeight = _scrollController.position.viewportDimension;
       final targetPosition = scrollPosition - (viewportHeight / 2) + 30;
-      
+
       _scrollController.animateTo(
         targetPosition.clamp(0.0, _scrollController.position.maxScrollExtent),
         duration: Duration(milliseconds: 300),
@@ -784,7 +816,8 @@ class _AvailableTimePickerListState extends State<_AvailableTimePickerList> {
 
     // Find initial selected index
     int initialIndex = widget.availableTimes.indexWhere(
-      (time) => time.hour == selectedTime.hour && time.minute == selectedTime.minute,
+      (time) =>
+          time.hour == selectedTime.hour && time.minute == selectedTime.minute,
     );
     if (initialIndex == -1 && widget.availableTimes.isNotEmpty) {
       initialIndex = 0;
@@ -797,8 +830,9 @@ class _AvailableTimePickerListState extends State<_AvailableTimePickerList> {
       itemCount: widget.availableTimes.length,
       itemBuilder: (context, index) {
         final time = widget.availableTimes[index];
-        final isSelected = time.hour == selectedTime.hour && time.minute == selectedTime.minute;
-        
+        final isSelected = time.hour == selectedTime.hour &&
+            time.minute == selectedTime.minute;
+
         return Padding(
           padding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
           child: Material(
@@ -814,13 +848,13 @@ class _AvailableTimePickerListState extends State<_AvailableTimePickerList> {
               child: Container(
                 padding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 decoration: BoxDecoration(
-                  color: isSelected 
+                  color: isSelected
                       ? AppColors.primaryColor.withOpacity(0.1)
                       : Colors.transparent,
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                    color: isSelected 
-                        ? AppColors.primaryColor 
+                    color: isSelected
+                        ? AppColors.primaryColor
                         : Colors.transparent,
                     width: 1,
                   ),
@@ -832,9 +866,10 @@ class _AvailableTimePickerListState extends State<_AvailableTimePickerList> {
                       _formatTime(time),
                       style: TextStyle(
                         fontSize: 15,
-                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                        color: isSelected 
-                            ? AppColors.primaryColor 
+                        fontWeight:
+                            isSelected ? FontWeight.w600 : FontWeight.normal,
+                        color: isSelected
+                            ? AppColors.primaryColor
                             : AppColors.black,
                       ),
                     ),

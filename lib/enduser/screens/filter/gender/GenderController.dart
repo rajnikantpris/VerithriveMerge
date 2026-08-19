@@ -1,5 +1,6 @@
 import 'package:get/get.dart';
 import '../FilterController.dart';
+import 'package:verithrive_dev/services/analytics_service.dart';
 
 class GenderController extends GetxController {
 
@@ -15,6 +16,12 @@ class GenderController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    AnalyticsService.instance.logScreenView(
+      screenName: 'GenderFilterScreen',
+      screenClass: 'GenderFilterScreen',
+      pageCategory: 'filter',
+      elementLocation: 'view',
+    );
     _loadInitialGender();
   }
 

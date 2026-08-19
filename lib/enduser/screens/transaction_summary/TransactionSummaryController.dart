@@ -5,6 +5,7 @@ import '../../core/base/base_controller.dart';
 import '../../data/repository/project_repository.dart';
 import '../../utils/api_services.dart';
 import '../../utils/auth_service.dart';
+import 'package:verithrive_dev/services/analytics_service.dart';
 
 class TransactionHistoryItem {
   final String id;
@@ -128,6 +129,12 @@ class TransactionSummaryController extends BaseController {
   @override
   void onInit() {
     super.onInit();
+    AnalyticsService.instance.logScreenView(
+      screenName: 'TransactionSummaryScreen',
+      screenClass: 'TransactionSummaryScreen',
+      pageCategory: 'profile',
+      elementLocation: 'view',
+    );
     scrollController = ScrollController();
     scrollController.addListener(_scrollListener);
     fetchTransactions();

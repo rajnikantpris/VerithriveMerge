@@ -29,6 +29,7 @@ import '../../theme/fonts.dart';
 import '../../theme/hight_width_sizes.dart';
 import '../../services/notification_permission_service.dart';
 import '../../services/storage_service.dart';
+import '../../services/analytics_service.dart';
 
 class SignupPersonDetailsController extends BaseController {
   final NotificationPermissionService _notificationPermissionService =
@@ -74,6 +75,12 @@ class SignupPersonDetailsController extends BaseController {
   @override
   void onInit() {
     super.onInit();
+    AnalyticsService.instance.logScreenView(
+      screenName: 'ProfessionalSignupPersonDetailsScreen',
+      screenClass: 'SignupPersonDetailsView',
+      pageCategory: 'register',
+      elementLocation: 'view',
+    );
     // Initialize formKey to ensure a new key is created each time
     formKey = GlobalKey<FormState>();
     _storageService =

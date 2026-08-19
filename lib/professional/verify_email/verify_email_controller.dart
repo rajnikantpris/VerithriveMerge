@@ -10,6 +10,7 @@ import '../../routes/app_routes.dart';
 import '../../services/storage_service.dart';
 import '../../models/login_response_model.dart';
 import '../../widgets/response_dialog.dart';
+import '../../services/analytics_service.dart';
 
 class VerifyEmailController extends BaseController {
   VerifyEmailController(
@@ -45,6 +46,12 @@ class VerifyEmailController extends BaseController {
   @override
   void onInit() {
     super.onInit();
+    AnalyticsService.instance.logScreenView(
+      screenName: 'ProfessionalVerifyEmailScreen',
+      screenClass: 'VerifyEmailView',
+      pageCategory: 'register',
+      elementLocation: 'view',
+    );
     final args = (Get.arguments as Map<String, dynamic>?) ?? {};
     navigationArgs = Map<String, dynamic>.from(args);
     email = (args['email'] as String?) ?? '';

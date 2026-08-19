@@ -26,6 +26,12 @@ class TermsController extends BaseController {
   @override
   void onInit() {
     super.onInit();
+    AnalyticsService.instance.logScreenView(
+      screenName: 'TermsView',
+      screenClass: 'TermsView',
+      pageCategory: 'legal',
+      elementLocation: 'view',
+    );
     // fetchTermsAndConditions(); // We'll use WebView instead
     _initializeWebViewController();
   }

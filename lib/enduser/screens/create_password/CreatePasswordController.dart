@@ -9,6 +9,7 @@ import 'package:verithrive_dev/enduser/utils/common_dialog.dart';
 import '../../data/repository/project_repository.dart';
 import '../../network/exceptions/base_exception.dart';
 import '../../utils/api_services.dart';
+import 'package:verithrive_dev/services/analytics_service.dart';
 
 class CreatePasswordController extends BaseController {
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
@@ -34,6 +35,12 @@ class CreatePasswordController extends BaseController {
   @override
   void onInit() {
     super.onInit();
+    AnalyticsService.instance.logScreenView(
+      screenName: 'CreatePasswordView',
+      screenClass: 'CreatePasswordView',
+      pageCategory: 'register',
+      elementLocation: 'view',
+    );
     // Get email and type from arguments
     if (Get.arguments is Map) {
       userEmail = Get.arguments['email'];

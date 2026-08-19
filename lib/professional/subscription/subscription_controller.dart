@@ -45,6 +45,12 @@ class SubscriptionController extends BaseController {
   @override
   void onInit() {
     super.onInit();
+    AnalyticsService.instance.logScreenView(
+      screenName: 'SubscriptionView',
+      screenClass: 'SubscriptionView',
+      pageCategory: 'subscription',
+      elementLocation: 'view',
+    );
     loadSubscriptions();
   }
 

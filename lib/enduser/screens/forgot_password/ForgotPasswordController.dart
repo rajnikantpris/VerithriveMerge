@@ -25,6 +25,12 @@ class ForgotPasswordController extends BaseController {
   @override
   void onInit() {
     super.onInit();
+    AnalyticsService.instance.logScreenView(
+      screenName: 'ForgotPassword',
+      screenClass: 'ForgotPasswordView',
+      pageCategory: 'login',
+      elementLocation: 'view',
+    );
     if (email != null && email!.isNotEmpty) {
       emailController.text = email!;
     }

@@ -21,6 +21,7 @@ import 'package:verithrive_dev/services/social_auth_service.dart';
 import 'package:verithrive_dev/services/socket_service.dart' as prof_socket;
 import 'package:verithrive_dev/services/notification_permission_service.dart';
 import 'package:verithrive_dev/services/storage_service.dart';
+import 'package:verithrive_dev/services/analytics_service.dart';
 
 class ProfileController extends GetxController {
   final NotificationPermissionService _notificationPermissionService =
@@ -74,6 +75,12 @@ class ProfileController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    AnalyticsService.instance.logScreenView(
+      screenName: 'ProfileView',
+      screenClass: 'ProfileView',
+      pageCategory: 'profile',
+      elementLocation: 'view',
+    );
 
     // Add text change listener to automatically capitalize first letter
     fullNameController.addListener(_capitalizeFullName);

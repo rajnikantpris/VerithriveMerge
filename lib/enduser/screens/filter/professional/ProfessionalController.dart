@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 import '../../therapy_list/TherapistController.dart';
 import '../FilterController.dart';
+import 'package:verithrive_dev/services/analytics_service.dart';
 
 class ProfessionalController extends GetxController {
 
@@ -15,6 +16,12 @@ class ProfessionalController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    AnalyticsService.instance.logScreenView(
+      screenName: 'ProfessionalFilterScreen',
+      screenClass: 'ProfessionalFilterScreen',
+      pageCategory: 'filter',
+      elementLocation: 'view',
+    );
     _loadSubTypesFromTherapistController();
     _loadSelectedSubTypeFromFilterController();
   }

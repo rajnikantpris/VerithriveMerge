@@ -20,6 +20,17 @@ class ChangePasswordController extends BaseController {
   final isPasswordVisible = false.obs;
   final isConfirmPasswordVisible = false.obs;
 
+  @override
+  void onInit() {
+    super.onInit();
+    AnalyticsService.instance.logScreenView(
+      screenName: 'ChangePasswordScreen',
+      screenClass: 'ChangePasswordScreen',
+      pageCategory: 'profile',
+      elementLocation: 'view',
+    );
+  }
+
   void togglePasswordVisibility() {
     isPasswordVisible.value = !isPasswordVisible.value;
   }

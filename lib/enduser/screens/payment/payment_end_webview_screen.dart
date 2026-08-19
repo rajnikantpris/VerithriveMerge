@@ -6,6 +6,7 @@ import '../../../theme/colors.dart';
 import '../../../theme/font_sizes.dart';
 import '../../../theme/fonts.dart';
 import '../../../widgets/custom_app_bar.dart';
+import 'package:verithrive_dev/services/analytics_service.dart';
 
 class PaymentEndWebViewScreen extends StatefulWidget {
   final String url;
@@ -61,6 +62,12 @@ class _PaymentEndWebViewScreenState extends State<PaymentEndWebViewScreen> {
   @override
   void initState() {
     super.initState();
+    AnalyticsService.instance.logScreenView(
+      screenName: 'PaymentWebViewScreen',
+      screenClass: 'PaymentEndWebViewScreen',
+      pageCategory: 'payment',
+      elementLocation: 'view',
+    );
     _controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setNavigationDelegate(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../FilterController.dart';
+import 'package:verithrive_dev/services/analytics_service.dart';
 
 class PriceController extends GetxController {
   // Price filter
@@ -13,6 +14,12 @@ class PriceController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    AnalyticsService.instance.logScreenView(
+      screenName: 'PriceFilterScreen',
+      screenClass: 'PriceFilterScreen',
+      pageCategory: 'filter',
+      elementLocation: 'view',
+    );
     _loadInitialPriceRange();
   }
 

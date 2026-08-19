@@ -26,6 +26,12 @@ class ProfileMainController extends BaseController {
     super.onInit();
     // Don't check authentication on init - let user navigate first
     // Authentication will be checked when data is actually accessed
+    AnalyticsService.instance.logScreenView(
+      screenName: 'ProfileMainScreen',
+      screenClass: 'ProfileMainScreen',
+      pageCategory: 'profile',
+      elementLocation: 'view',
+    );
   }
 
   // Refresh data method called by MainScreen
@@ -87,7 +93,6 @@ class ProfileMainController extends BaseController {
       String message = responseData['message'] ?? 'Logout successful';
 
       if (success == true) {
-        
         await AnalyticsService.instance.clearUser();
 
         await performLogout();

@@ -6,6 +6,7 @@ import '../../theme/colors.dart';
 import '../../theme/font_sizes.dart';
 import '../../theme/fonts.dart';
 import '../../widgets/custom_app_bar.dart';
+import '../../services/analytics_service.dart';
 
 class ProfessionalWebViewScreen extends StatefulWidget {
   final String url;
@@ -23,6 +24,12 @@ class _ProfessionalWebViewScreenState extends State<ProfessionalWebViewScreen> {
   @override
   void initState() {
     super.initState();
+    AnalyticsService.instance.logScreenView(
+      screenName: 'ProfessionalWebViewScreen',
+      screenClass: 'ProfessionalWebViewScreen',
+      pageCategory: 'legal',
+      elementLocation: 'view',
+    );
     _controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..loadRequest(Uri.parse(widget.url));

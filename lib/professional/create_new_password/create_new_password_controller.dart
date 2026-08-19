@@ -5,6 +5,7 @@ import '../../api/api_response.dart';
 import '../../api/user_api_service.dart';
 import '../../common/base_controller.dart';
 import '../../routes/app_routes.dart';
+import '../../services/analytics_service.dart';
 import '../../widgets/response_dialog.dart';
 
 class CreateNewPasswordController extends BaseController {
@@ -27,6 +28,12 @@ class CreateNewPasswordController extends BaseController {
   @override
   void onInit() {
     super.onInit();
+    AnalyticsService.instance.logScreenView(
+      screenName: 'ProfessionalCreateNewPasswordScreen',
+      screenClass: 'CreateNewPasswordView',
+      pageCategory: 'login',
+      elementLocation: 'view',
+    );
     // Initialize formKey to ensure a new key is created each time
     formKey = GlobalKey<FormState>();
     final args = Get.arguments as Map<String, dynamic>?;

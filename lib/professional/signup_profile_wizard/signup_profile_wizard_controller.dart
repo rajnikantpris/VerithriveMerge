@@ -171,6 +171,12 @@ class SignupProfileWizardController extends BaseController {
   @override
   void onInit() {
     super.onInit();
+    AnalyticsService.instance.logScreenView(
+      screenName: 'ProfessionalSignupProfileWizardScreen',
+      screenClass: 'SignupProfileWizardView',
+      pageCategory: 'register',
+      elementLocation: 'view',
+    );
     // Initialize formKey to ensure a new key is created each time
     formKey = GlobalKey<FormState>();
 

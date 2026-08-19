@@ -8,6 +8,7 @@ import '../../core/base/base_controller.dart';
 import '../../data/repository/project_repository.dart';
 import '../../network/exceptions/not_found_exception.dart';
 import '../../utils/api_services.dart';
+import 'package:verithrive_dev/services/analytics_service.dart';
 
 class ConsultationBookingController extends BaseController {
   final ProjectRepository _repository =
@@ -75,6 +76,12 @@ class ConsultationBookingController extends BaseController {
     try {
       super.onInit();
       _receiveArguments();
+      AnalyticsService.instance.logScreenView(
+        screenName: 'ConsultationBookingScreen',
+        screenClass: 'ConsultationBookingScreen',
+        pageCategory: AnalyticsService.resolvePageCategory(category),
+        elementLocation: 'view',
+      );
 
       // Set selectedDate to today if not provided in arguments
       if (selectedDate.value == null) {

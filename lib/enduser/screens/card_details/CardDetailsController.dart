@@ -33,6 +33,12 @@ class CardDetailsController extends BaseController {
   @override
   void onInit() {
     super.onInit();
+    AnalyticsService.instance.logScreenView(
+      screenName: 'CardDetailsScreen',
+      screenClass: 'CardDetailsScreen',
+      pageCategory: 'payment',
+      elementLocation: 'view',
+    );
     loadCards();
   }
 

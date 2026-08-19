@@ -6,6 +6,7 @@ import '../../api/api_response.dart';
 import '../../api/user_api_service.dart';
 import '../../common/base_controller.dart';
 import '../../services/notification_service.dart';
+import '../../services/analytics_service.dart';
 
 class NotificationItem {
   const NotificationItem({
@@ -62,6 +63,12 @@ class NotificationController extends BaseController {
   @override
   void onInit() {
     super.onInit();
+    AnalyticsService.instance.logScreenView(
+      screenName: 'ProfessionalNotificationView',
+      screenClass: 'NotificationView',
+      pageCategory: 'notification',
+      elementLocation: 'view',
+    );
     _notificationService?.fetchNotificationCount();
     
     // Add scroll listener for pagination

@@ -1,5 +1,6 @@
 import 'package:get/get.dart';
 import '../FilterController.dart';
+import 'package:verithrive_dev/services/analytics_service.dart';
 
 class AvailabilityController extends GetxController {
   // Availability filter
@@ -14,6 +15,12 @@ class AvailabilityController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    AnalyticsService.instance.logScreenView(
+      screenName: 'AvailabilityFilterScreen',
+      screenClass: 'AvailabilityFilterScreen',
+      pageCategory: 'filter',
+      elementLocation: 'view',
+    );
     _loadInitialAvailability();
   }
 

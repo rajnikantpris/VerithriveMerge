@@ -23,6 +23,12 @@ class NotificationController extends BaseController {
   @override
   void onInit() {
     super.onInit();
+    AnalyticsService.instance.logScreenView(
+      screenName: 'NotificationScreen',
+      screenClass: 'NotificationScreen',
+      pageCategory: 'notification',
+      elementLocation: 'view',
+    );
     loadNotifications();
   }
 

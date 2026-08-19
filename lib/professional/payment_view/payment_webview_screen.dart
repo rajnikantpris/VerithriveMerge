@@ -6,6 +6,7 @@ import '../../theme/colors.dart';
 import '../../theme/font_sizes.dart';
 import '../../theme/fonts.dart';
 import '../../widgets/custom_app_bar.dart';
+import '../../services/analytics_service.dart';
 
 class PaymentWebViewScreen extends StatefulWidget {
   final String url;
@@ -60,6 +61,12 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
   @override
   void initState() {
     super.initState();
+    AnalyticsService.instance.logScreenView(
+      screenName: 'ProfessionalPaymentWebViewScreen',
+      screenClass: 'PaymentWebViewScreen',
+      pageCategory: 'payment',
+      elementLocation: 'view',
+    );
     _controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setNavigationDelegate(

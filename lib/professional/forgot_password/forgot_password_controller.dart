@@ -20,6 +20,12 @@ class ForgotPasswordController extends BaseController {
   @override
   void onInit() {
     super.onInit();
+    AnalyticsService.instance.logScreenView(
+      screenName: 'ProfessionalForgotPasswordScreen',
+      screenClass: 'ForgotPasswordView',
+      pageCategory: 'login',
+      elementLocation: 'view',
+    );
     // Initialize formKey to ensure a new key is created each time
     formKey = GlobalKey<FormState>();
   }

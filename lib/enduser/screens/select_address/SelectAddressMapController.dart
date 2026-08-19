@@ -8,6 +8,7 @@ import 'package:google_places_flutter/model/prediction.dart';
 
 import '../../core/base/base_controller.dart';
 import '../../utils/location_permission_service.dart';
+import 'package:verithrive_dev/services/analytics_service.dart';
 
 class SelectAddressMapController extends BaseController {
   final LocationPermissionService _locationPermissionService =
@@ -59,6 +60,12 @@ class SelectAddressMapController extends BaseController {
   @override
   void onInit() {
     super.onInit();
+    AnalyticsService.instance.logScreenView(
+      screenName: 'SelectAddressMapView',
+      screenClass: 'SelectAddressMapView',
+      pageCategory: 'profile',
+      elementLocation: 'view',
+    );
 
     // Get initial coordinates from arguments if passed
     final arguments = Get.arguments as Map<String, dynamic>?;

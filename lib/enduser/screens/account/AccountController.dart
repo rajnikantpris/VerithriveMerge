@@ -17,7 +17,8 @@ import 'package:verithrive_dev/services/storage_service.dart';
 import 'package:verithrive_dev/services/analytics_service.dart';
 
 class AccountController extends BaseController {
-  final ProjectRepository _repository = Get.find(tag: (ProjectRepository).toString());
+  final ProjectRepository _repository =
+      Get.find(tag: (ProjectRepository).toString());
   final StorageService _storageService = Get.find<StorageService>();
   final emailController = TextEditingController();
   final passwordController = TextEditingController(text: '**************');
@@ -27,6 +28,12 @@ class AccountController extends BaseController {
   void onInit() {
     super.onInit();
     _loadUserEmail();
+    AnalyticsService.instance.logScreenView(
+      screenName: 'AccountScreen',
+      screenClass: 'AccountScreen',
+      pageCategory: 'profile',
+      elementLocation: 'view',
+    );
   }
 
   Future<void> _loadUserEmail() async {
@@ -125,9 +132,7 @@ class AccountController extends BaseController {
                   child: Text(
                     'No, go back',
                     style: AppTextStyles.regularTextStyle(
-                      fontSize: 16,
-                      color: AppColors.white
-                    ),
+                        fontSize: 16, color: AppColors.white),
                   ),
                 ),
               ),
@@ -154,8 +159,8 @@ class AccountController extends BaseController {
       // Parse the response - baseResponse is a Dio Response object
       Map<String, dynamic> responseData;
       if (baseResponse != null && baseResponse.data != null) {
-        responseData = baseResponse.data is Map<String, dynamic> 
-            ? baseResponse.data 
+        responseData = baseResponse.data is Map<String, dynamic>
+            ? baseResponse.data
             : baseResponse.data as Map<String, dynamic>;
       } else if (baseResponse is Map<String, dynamic>) {
         responseData = baseResponse;
@@ -164,7 +169,8 @@ class AccountController extends BaseController {
       }
 
       bool success = responseData['success'] ?? false;
-      String message = responseData['message'] ?? 'Account deleted successfully';
+      String message =
+          responseData['message'] ?? 'Account deleted successfully';
 
       if (success == true) {
         // Show success dialog with API message
@@ -176,10 +182,10 @@ class AccountController extends BaseController {
           onOkPressed: () async {
             // Clear all preferences
             await _storageService.clear();
-            
+
             // Navigate to login screen
             Get.offAll(
-                  () => SelectUserView(),
+              () => SelectUserView(),
               binding: SelectUserBinding(),
             );
           },

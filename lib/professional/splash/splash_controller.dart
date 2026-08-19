@@ -15,9 +15,21 @@ import 'package:verithrive_dev/services/deep_link_service.dart';
 
 import '../../common/base_controller.dart';
 import '../../routes/app_routes.dart';
+import 'package:verithrive_dev/services/analytics_service.dart';
 
 class SplashController extends BaseController {
   Timer? _navigationTimer;
+
+  @override
+  void onInit() {
+    super.onInit();
+    AnalyticsService.instance.logScreenView(
+      screenName: 'SplashScreen',
+      screenClass: 'SplashScreen',
+      pageCategory: 'splash',
+      elementLocation: 'view',
+    );
+  }
 
   @override
   void onReady() {

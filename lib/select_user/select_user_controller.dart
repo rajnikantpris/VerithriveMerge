@@ -8,16 +8,29 @@ import 'package:verithrive_dev/enduser/screens/onboarding/onboarding_binding.dar
     as enduser_onboarding;
 import 'package:verithrive_dev/enduser/screens/onboarding/onboarding_screen.dart';
 import 'package:verithrive_dev/services/notification_permission_service.dart';
+import 'package:verithrive_dev/services/analytics_service.dart';
 
 class SelectUserController extends BaseController {
   final NotificationPermissionService _notificationPermissionService =
       NotificationPermissionService();
 
   @override
+  void onInit() {
+    super.onInit();
+    AnalyticsService.instance.logScreenView(
+      screenName: 'SelectUserScreen',
+      screenClass: 'SelectUserScreen',
+      pageCategory: 'select_user',
+      elementLocation: 'view',
+    );
+  }
+
+  @override
   void onReady() {
     super.onReady();
     _notificationPermissionService.ensurePermissionAfterFirstScreen();
   }
+
   void openProfessional() {
     Get.to(
       () => const OnboardingView(),

@@ -72,6 +72,12 @@ class UpdateProfileController extends BaseController {
   @override
   void onInit() {
     super.onInit();
+    AnalyticsService.instance.logScreenView(
+      screenName: 'UpdateProfileScreen',
+      screenClass: 'UpdateProfileScreen',
+      pageCategory: 'profile',
+      elementLocation: 'view',
+    );
 
     // Add text change listener to automatically capitalize first letter
     fullNameController.addListener(_capitalizeFullName);

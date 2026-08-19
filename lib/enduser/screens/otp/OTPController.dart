@@ -52,6 +52,12 @@ class OTPController extends BaseController {
   @override
   void onInit() {
     super.onInit();
+    AnalyticsService.instance.logScreenView(
+      screenName: 'OTPView',
+      screenClass: 'OTPView',
+      pageCategory: 'register',
+      elementLocation: 'view',
+    );
     if (Get.arguments is Map) {
       type = Get.arguments['type'] ?? "";
       userEmail = Get.arguments['email'];

@@ -7,6 +7,7 @@ import '../../../../common/base_controller.dart';
 import '../../../../models/profile_details_model.dart';
 import '../../../../models/service_model.dart';
 import '../../../../widgets/response_dialog.dart';
+import '../../../../services/analytics_service.dart';
 
 class YourServicesController extends BaseController {
   final UserApiService _userApiService;
@@ -38,6 +39,12 @@ class YourServicesController extends BaseController {
   @override
   void onInit() {
     super.onInit();
+    AnalyticsService.instance.logScreenView(
+      screenName: 'ProfessionalYourServicesScreen',
+      screenClass: 'YourServicesView',
+      pageCategory: 'profile',
+      elementLocation: 'view',
+    );
     // Reset flags to allow loading old services if user hasn't made manual selections
     hasLoadedOldServices.value = false;
     hasUserMadeManualSelection.value = false;

@@ -7,10 +7,16 @@ class PaymentSuccessController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    
+
+    AnalyticsService.instance.logScreenView(
+      screenName: 'PaymentSuccessScreen',
+      screenClass: 'PaymentSuccessScreen',
+      pageCategory: 'payment',
+      elementLocation: 'view',
+    );
+
     // Analytics: Log payment success event
-    
-    
+
     // Auto redirect to home after success screen (optional)
     // Future.delayed(Duration(seconds: 7), () {
     //   Get.offAllNamed(AppRoutes.main);

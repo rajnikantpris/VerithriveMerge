@@ -32,7 +32,7 @@ import 'screens/main/MainTabController.dart';
 import 'routes/app_pages.dart';
 import 'routes/app_routes.dart' as routes;
 import 'bindings/initial_binding.dart';
-import '../services/analytics_service.dart';
+// import '../services/analytics_service.dart';
 
 // end user main.dart file
 
@@ -66,8 +66,7 @@ Future<void> _openReviewDialog(Map<String, dynamic> data) async {
     // Extract required data from notification
     final professionalId = data['professional_id']?.toString() ?? '';
     final bookingId = data['booking_id']?.toString() ?? '';
-    final professionalName =
-        data['professional_name']?.toString() ??
+    final professionalName = data['professional_name']?.toString() ??
         data['full_name']?.toString() ??
         'Professional';
 
@@ -254,9 +253,8 @@ void _showFallbackReviewDialog(
               width: double.infinity,
               height: 56,
               decoration: BoxDecoration(
-                color: isSubmitting.value
-                    ? Colors.grey
-                    : AppColors.primaryColor,
+                color:
+                    isSubmitting.value ? Colors.grey : AppColors.primaryColor,
                 borderRadius: BorderRadius.only(
                   bottomLeft: Radius.circular(20),
                   bottomRight: Radius.circular(20),
@@ -295,8 +293,8 @@ void _showFallbackReviewDialog(
                               'Review Submitted',
                               'Thank you for your feedback!',
                               snackPosition: SnackPosition.BOTTOM,
-                              backgroundColor: AppColors.primaryColor
-                                  .withOpacity(0.2),
+                              backgroundColor:
+                                  AppColors.primaryColor.withOpacity(0.2),
                               duration: Duration(seconds: 2),
                             );
                           } catch (e) {
@@ -535,10 +533,10 @@ Future<void> main() async {
 
   const DarwinInitializationSettings iosInitializationSettings =
       DarwinInitializationSettings(
-        requestAlertPermission: true,
-        requestBadgePermission: true,
-        requestSoundPermission: true,
-      );
+    requestAlertPermission: true,
+    requestBadgePermission: true,
+    requestSoundPermission: true,
+  );
 
   const InitializationSettings initializationSettings = InitializationSettings(
     android: androidInitializationSettings,
@@ -554,8 +552,7 @@ Future<void> main() async {
 
   await flutterLocalNotificationsPlugin
       .resolvePlatformSpecificImplementation<
-        AndroidFlutterLocalNotificationsPlugin
-      >()
+          AndroidFlutterLocalNotificationsPlugin>()
       ?.createNotificationChannel(channel!);
 }
 
@@ -592,8 +589,7 @@ bool _isChatDetailActiveWithUser(String? senderId, String? roomId) {
     final currentConversation = chatController.conversation;
 
     // Check if current chat is with the same user
-    final isSameUser =
-        currentConversation.value!.userId == senderId ||
+    final isSameUser = currentConversation.value!.userId == senderId ||
         currentConversation.value!.id == roomId;
 
     print("Current chat user ID: ${currentConversation.value!.userId}");
@@ -660,12 +656,10 @@ void _handleNotificationNavigationFromMessage(RemoteMessage message) {
           notificationModel.roomId ?? data['room_id']?.toString();
       final receiverId =
           notificationModel.senderId ?? data['sender_id']?.toString();
-      final senderName =
-          notificationModel.fullName ??
+      final senderName = notificationModel.fullName ??
           data['full_name']?.toString() ??
           'Unknown';
-      final profilePicture =
-          notificationModel.profilePicture ??
+      final profilePicture = notificationModel.profilePicture ??
           data['profile_picture']?.toString() ??
           '';
       final lastMessage =
@@ -784,20 +778,16 @@ void onDidReceiveNotificationResponse(
           notificationModel.roomId ?? valueMap['room_id']?.toString();
       final receiverId =
           notificationModel.senderId ?? valueMap['sender_id']?.toString();
-      final senderName =
-          notificationModel.fullName ??
+      final senderName = notificationModel.fullName ??
           valueMap['full_name']?.toString() ??
           'Unknown';
-      final profilePicture =
-          notificationModel.profilePicture ??
+      final profilePicture = notificationModel.profilePicture ??
           valueMap['profile_picture']?.toString() ??
           '';
-      final lastMessage =
-          notificationModel.body ??
+      final lastMessage = notificationModel.body ??
           valueMap['body']?.toString() ??
           'New message';
-      final title =
-          notificationModel.title ??
+      final title = notificationModel.title ??
           valueMap['title']?.toString() ??
           'New Message';
 
@@ -919,8 +909,7 @@ Future<void> setupFlutterNotifications() async {
 
   await flutterLocalNotificationsPlugin
       .resolvePlatformSpecificImplementation<
-        AndroidFlutterLocalNotificationsPlugin
-      >()
+          AndroidFlutterLocalNotificationsPlugin>()
       ?.createNotificationChannel(channel!);
 
   await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
@@ -964,8 +953,7 @@ Future<void> showNotificationWorking(RemoteMessage message) async {
     );
     await flutterLocalNotificationsPlugin
         .resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin
-        >()
+            AndroidFlutterLocalNotificationsPlugin>()
         ?.createNotificationChannel(channel!);
   }
 
@@ -1162,8 +1150,7 @@ Future<void> showNotification(RemoteMessage message) async {
     );
     await flutterLocalNotificationsPlugin
         .resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin
-        >()
+            AndroidFlutterLocalNotificationsPlugin>()
         ?.createNotificationChannel(channel!);
   }
 
@@ -1268,9 +1255,9 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
         ),
       ),
       debugShowCheckedModeBanner: false,
-      navigatorObservers: [
-        AnalyticsService.instance.observer,
-      ],
+      // navigatorObservers: [
+      //   AnalyticsService.instance.observer,
+      // ],
     );
   }
 

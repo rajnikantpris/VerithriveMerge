@@ -2,6 +2,7 @@ import 'package:get/get.dart';
 import '../../routes/app_routes.dart';
 import '../../core/values/sharePrefrenceConst.dart';
 import 'package:verithrive_dev/services/storage_service.dart';
+import 'package:verithrive_dev/services/analytics_service.dart';
 
 class SplashController extends GetxController {
   final StorageService _storageService = Get.find<StorageService>();
@@ -9,6 +10,12 @@ class SplashController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    AnalyticsService.instance.logScreenView(
+      screenName: 'SplashScreen',
+      screenClass: 'SplashScreen',
+      pageCategory: 'splash',
+      elementLocation: 'view',
+    );
     _navigateToHome();
   }
 

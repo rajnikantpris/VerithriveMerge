@@ -231,7 +231,8 @@ class AnalyticsService {
   bool _shouldSetUserProfile(String? userId) {
     if (userId == null || userId.isEmpty) return true;
     if (!Get.isRegistered<StorageService>()) return true;
-    final lastSetFor = Get.find<StorageService>().readString(_userProfileSetKey);
+    final lastSetFor =
+        Get.find<StorageService>().readString(_userProfileSetKey);
     return lastSetFor != userId;
   }
 
@@ -519,9 +520,8 @@ class AnalyticsService {
 
       await _analytics.logSelectItem(
         items: [item],
-        itemListId: (itemListId != null && itemListId.isNotEmpty)
-            ? itemListId
-            : null,
+        itemListId:
+            (itemListId != null && itemListId.isNotEmpty) ? itemListId : null,
         itemListName: (itemListName != null && itemListName.isNotEmpty)
             ? itemListName
             : null,
@@ -751,7 +751,8 @@ class AnalyticsService {
         await Get.find<StorageService>().remove(_userProfileSetKey);
       }
 
-      _printEvent('clear_user', {'user_id': null, 'user_login_state': 'logged_out'});
+      _printEvent(
+          'clear_user', {'user_id': null, 'user_login_state': 'logged_out'});
     } catch (e) {
       if (kDebugMode) {
         print('Analytics Error: Could not clear user. Error: $e');

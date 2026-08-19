@@ -6,6 +6,7 @@ import '../../api/user_api_service.dart';
 import '../../common/base_controller.dart';
 import '../../routes/app_routes.dart';
 import '../../services/storage_service.dart';
+import '../../services/analytics_service.dart';
 
 class SignupTermsConditionsController extends BaseController {
   /// Personal details passed from previous screen
@@ -34,6 +35,12 @@ class SignupTermsConditionsController extends BaseController {
   @override
   void onInit() {
     super.onInit();
+    AnalyticsService.instance.logScreenView(
+      screenName: 'ProfessionalSignupTermsConditionsScreen',
+      screenClass: 'SignupTermsConditionsView',
+      pageCategory: 'register',
+      elementLocation: 'view',
+    );
     final args = Get.arguments as Map<String, dynamic>? ?? {};
     fullName = (args['fullName'] ?? '') as String;
     dob = (args['dob'] ?? '') as String;

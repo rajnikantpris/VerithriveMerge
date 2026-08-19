@@ -8,6 +8,7 @@ import '../../../../models/service_model.dart';
 import '../../../../routes/app_routes.dart';
 import '../../../../widgets/response_dialog.dart';
 import '../home_controller.dart';
+import '../../../../services/analytics_service.dart';
 
 class ServiceFormatData {
   final String serviceFormatId;
@@ -89,6 +90,12 @@ class AddServiceFormatController extends BaseController {
   @override
   void onInit() {
     super.onInit();
+    AnalyticsService.instance.logScreenView(
+      screenName: 'ProfessionalAddServiceFormatScreen',
+      screenClass: 'AddServiceFormatView',
+      pageCategory: 'calendar',
+      elementLocation: 'view',
+    );
     // Initialize formKey to ensure a new key is created each time
     formKey = GlobalKey<FormState>();
 
