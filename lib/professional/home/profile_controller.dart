@@ -427,6 +427,15 @@ class ProfileController extends BaseController {
   }
 
   Future<void> _clearLocalDataAndNavigate() async {
+    // Close any open dialogs first (e.g. Application Under Review after Skip).
+    // Otherwise Get.offAllNamed can fail to open Login again.
+    try {
+      if (Get.isDialogOpen == true) {
+        Get.back(closeOverlays: true);
+        await Future.delayed(const Duration(milliseconds: 50));
+      }
+    } catch (_) {}
+
     // 1. Reset socket services first (IMPORTANT: Disconnect before deleting)
     if (Get.isRegistered<EndUserSocketService>()) {
       final endUserSocket = Get.find<EndUserSocketService>();
@@ -477,14 +486,17 @@ class ProfileController extends BaseController {
         'rememberMe', // End-user key
         'savedEmail', // End-user key
         'savedPassword', // End-user key
+        // Keep skip so incomplete profile resumes to Home after re-login
+        // (login also re-applies this from incomplete wizard flags).
+        'profile_setup_skipped',
       ];
 
       await storage.clearAllExcept(keysToKeep);
     }
 
-    // 5. Final cleanup: reset current route and navigate
-    // Use offAllNamed to ensure a fresh start on the login screen
-    Get.offAllNamed(Routes.selectUser);
+    // 5. Open professional Login so the user can sign in again after Logout
+    // (including after Skip → Home flow).
+    Get.offAllNamed(Routes.login);
   }
 }
 

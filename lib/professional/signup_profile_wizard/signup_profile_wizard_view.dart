@@ -28,6 +28,21 @@ class SignupProfileWizardView extends BaseView<SignupProfileWizardController> {
         icon: const Icon(Icons.arrow_back, color: AppColor.color000000),
         onPressed: controller.previousStep,
       ),
+      actions: controller.showSkipButton.value
+          ? [
+              TextButton(
+                onPressed: controller.skipProfileSetup,
+                child: Text(
+                  'Skip',
+                  style: TextStyle(
+                    fontFamily: AppFonts.rubikMedium,
+                    fontSize: FontSizes.setFontValue_16,
+                    color: AppColor.color_2FC4B2,
+                  ),
+                ),
+              ),
+            ]
+          : null,
     );
   }
 

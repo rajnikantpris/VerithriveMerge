@@ -159,66 +159,24 @@ class SplashController extends BaseController {
       return;
     }
 
-    if (isProfileCreated != true) {
-      if (Get.currentRoute != Routes.signupProfileWizard) {
-        Get.offAllNamed(
-          Routes.signupProfileWizard,
-          arguments: {'initialStep': 0},
-        );
+    final wizardComplete = isProfileCreated &&
+        isWorkFull &&
+        isProfessionalServices &&
+        isQualification &&
+        isPersonalIdentification &&
+        isAboutYou;
+
+    // Incomplete wizard (Skip / partial setup) → Home + setup banner.
+    // Never force signup_profile_wizard on cold start after login.
+    if (!wizardComplete) {
+      prefs.setBool('profile_setup_skipped', true);
+      if (Get.currentRoute != Routes.home) {
+        Get.offAllNamed(Routes.home);
       }
       return;
     }
 
-    if (isWorkFull != true) {
-      if (Get.currentRoute != Routes.signupProfileWizard) {
-        Get.offAllNamed(
-          Routes.signupProfileWizard,
-          arguments: {'initialStep': 1},
-        );
-      }
-      return;
-    }
-
-    if (isProfessionalServices != true) {
-      if (Get.currentRoute != Routes.signupProfileWizard) {
-        Get.offAllNamed(
-          Routes.signupProfileWizard,
-          arguments: {'initialStep': 2},
-        );
-      }
-      return;
-    }
-
-    if (isQualification != true) {
-      if (Get.currentRoute != Routes.signupProfileWizard) {
-        Get.offAllNamed(
-          Routes.signupProfileWizard,
-          arguments: {'initialStep': 3},
-        );
-      }
-      return;
-    }
-
-    if (isPersonalIdentification != true) {
-      if (Get.currentRoute != Routes.signupProfileWizard) {
-        Get.offAllNamed(
-          Routes.signupProfileWizard,
-          arguments: {'initialStep': 4},
-        );
-      }
-      return;
-    }
-
-    if (isAboutYou != true) {
-      if (Get.currentRoute != Routes.signupProfileWizard) {
-        Get.offAllNamed(
-          Routes.signupProfileWizard,
-          arguments: {'initialStep': 5},
-        );
-      }
-      return;
-    }
-
+    prefs.setBool('profile_setup_skipped', false);
     if (Get.currentRoute != Routes.home) {
       Get.offAllNamed(Routes.home);
     }

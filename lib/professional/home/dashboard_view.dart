@@ -22,6 +22,73 @@ class DashboardTab extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        Obx(() {
+          if (!controller.isProfileSetupIncomplete.value) {
+            return const SizedBox.shrink();
+          }
+          return Container(
+            width: double.infinity,
+            margin: EdgeInsets.fromLTRB(
+              HightWidthSizes.setValue_10,
+              HightWidthSizes.setValue_10,
+              HightWidthSizes.setValue_10,
+              0,
+            ),
+            padding: EdgeInsets.symmetric(
+              horizontal: HightWidthSizes.setValue_12,
+              vertical: HightWidthSizes.setValue_10,
+            ),
+            decoration: BoxDecoration(
+              color: AppColor.color_2FC4B2.withOpacity(0.12),
+              borderRadius: BorderRadius.circular(
+                HightWidthSizes.setValue_10,
+              ),
+              border: Border.all(
+                color: AppColor.color_2FC4B2.withOpacity(0.35),
+              ),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'Complete the Profile Setup',
+                    style: TextStyle(
+                      fontFamily: AppFonts.rubikMedium,
+                      fontSize: FontSizes.setFontValue_14,
+                      color: AppColor.color_32435F,
+                    ),
+                  ),
+                ),
+                SizedBox(width: HightWidthSizes.setValue_8),
+                ElevatedButton(
+                  onPressed: controller.openProfileSetup,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColor.color_2FC4B2,
+                    foregroundColor: AppColor.white,
+                    elevation: 0,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: HightWidthSizes.setValue_16,
+                      vertical: HightWidthSizes.setValue_8,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(
+                        HightWidthSizes.setValue_8,
+                      ),
+                    ),
+                  ),
+                  child: Text(
+                    'SetUp',
+                    style: TextStyle(
+                      fontFamily: AppFonts.rubikMedium,
+                      fontSize: FontSizes.setFontValue_14,
+                      color: AppColor.white,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }),
         Expanded(
           child: SingleChildScrollView(
             child: Column(

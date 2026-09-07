@@ -705,67 +705,26 @@ class SignupController extends BaseController {
       return;
     }
 
-    // Step 1: Check if profile creation is needed (step 0)
-    if (userFlags['is_profile_created'] != true) {
-      Get.offAllNamed(
-        Routes.signupProfileWizard,
-        arguments: {'initialStep': 0},
-      );
+    if (userFlags['is_term_condition'] != true) {
+      Get.offAllNamed(Routes.signupTermsConditions);
       return;
     }
 
-    // Step 2: Check if work address is needed (step 1)
-    if (userFlags['is_work_full'] != true) {
-      Get.offAllNamed(
-        Routes.signupProfileWizard,
-        arguments: {'initialStep': 1},
-      );
+    final wizardComplete = userFlags['is_profile_created'] == true &&
+        userFlags['is_work_full'] == true &&
+        userFlags['is_professional_services'] == true &&
+        userFlags['is_qualification'] == true &&
+        userFlags['is_personal_identification'] == true &&
+        userFlags['is_about_you'] == true;
+
+    // Incomplete wizard → Home + setup banner (same as Skip / re-login flow).
+    if (!wizardComplete) {
+      await _storageService?.writeBool('profile_setup_skipped', true);
+      Get.offAllNamed(Routes.home);
       return;
     }
 
-    // Step 3: Check if professional services are needed (step 2)
-    if (userFlags['is_professional_services'] != true) {
-      Get.offAllNamed(
-        Routes.signupProfileWizard,
-        arguments: {'initialStep': 2},
-      );
-      return;
-    }
-
-    // Step 4: Check if qualifications are needed (step 3)
-    if (userFlags['is_qualification'] != true) {
-      Get.offAllNamed(
-        Routes.signupProfileWizard,
-        arguments: {'initialStep': 3},
-      );
-      return;
-    }
-
-    // Step 5: Check if personal identification is needed (step 4)
-    if (userFlags['is_personal_identification'] != true) {
-      Get.offAllNamed(
-        Routes.signupProfileWizard,
-        arguments: {'initialStep': 4},
-      );
-      return;
-    }
-
-    // Step 6: Check if about you is needed (step 5)
-    if (userFlags['is_about_you'] != true) {
-      Get.offAllNamed(
-        Routes.signupProfileWizard,
-        arguments: {'initialStep': 5},
-      );
-      return;
-    }
-
-    // Step 7: Check if payment/subscription is needed
-    // if (userFlags['is_payment'] != true) {
-    //   Get.offAllNamed(Routes.subscription);
-    //   return;
-    // }
-
-    // All steps completed - navigate to home
+    await _storageService?.writeBool('profile_setup_skipped', false);
     Get.offAllNamed(Routes.home);
   }
 

@@ -1042,6 +1042,13 @@ class _ServiceFormatSection extends StatelessWidget {
                       return;
                     }
 
+                    // 1b. Incomplete profile setup — send user to wizard
+                    if (homeController?.isProfileSetupIncomplete.value ==
+                        true) {
+                      homeController?.openProfileSetup();
+                      return;
+                    }
+
                     // 2. Check if user is approved
                     if (!isApproved) {
                       // Customize message based on profile status
@@ -1432,6 +1439,13 @@ class _AvailabilitySection extends StatelessWidget {
 
                 return ElevatedButton.icon(
                   onPressed: () {
+                    // 0. Incomplete profile setup — send user to wizard
+                    if (homeController?.isProfileSetupIncomplete.value ==
+                        true) {
+                      homeController?.openProfileSetup();
+                      return;
+                    }
+
                     // 1. Check if user is approved
                     if (!isApproved) {
                       // Show dialog if not approved

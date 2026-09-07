@@ -78,6 +78,9 @@ class HomeController extends BaseController {
   bool _scheduledAuthStartupRetry = false;
   int? _lastLoggedTabIndex;
 
+  /// True when any of the 6 profile-wizard steps is still incomplete.
+  final isProfileSetupIncomplete = false.obs;
+
   // Get notification count from shared service
   int get notificationCount =>
       _notificationService?.notificationCount.value ?? 0;
@@ -141,6 +144,7 @@ class HomeController extends BaseController {
 
     _didAuthenticatedStartup = true;
 
+    _refreshProfileSetupIncomplete();
     loadProfileDetails(showStripeDialog: true);
     updateDeviceToken();
     loadBookingsList();
@@ -347,6 +351,94 @@ class HomeController extends BaseController {
 
   // Backwards compatibility for internal calls
   bool _isGuestUser() => isGuestUser();
+
+  /// First incomplete profile-wizard step (0–5), or null if complete.
+  int? firstIncompleteProfileStep() {
+    final profile = profileDetails.value;
+    if (profile != null) {
+      if (profile.isProfileCreated != true) return 0;
+      if (profile.isWorkFull != true) return 1;
+      if (profile.isProfessionalServices != true) return 2;
+      if (profile.isQualification != true) return 3;
+      if (profile.isPersonalIdentification != true) return 4;
+      if (profile.isAboutYou != true) return 5;
+      return null;
+    }
+
+    if (!Get.isRegistered<StorageService>()) return 0;
+    final storage = Get.find<StorageService>();
+    if (storage.readBool('is_profile_created') != true) return 0;
+    if (storage.readBool('is_work_full') != true) return 1;
+    if (storage.readBool('is_professional_services') != true) return 2;
+    if (storage.readBool('is_qualification') != true) return 3;
+    if (storage.readBool('is_personal_identification') != true) return 4;
+    if (storage.readBool('is_about_you') != true) return 5;
+    return null;
+  }
+
+  void _refreshProfileSetupIncomplete({ProfileDetailsModel? profile}) {
+    final p = profile ?? profileDetails.value;
+    if (p != null) {
+      isProfileSetupIncomplete.value = !(p.isProfileCreated == true &&
+          p.isWorkFull == true &&
+          p.isProfessionalServices == true &&
+          p.isQualification == true &&
+          p.isPersonalIdentification == true &&
+          p.isAboutYou == true);
+      return;
+    }
+
+    if (!Get.isRegistered<StorageService>()) {
+      isProfileSetupIncomplete.value = true;
+      return;
+    }
+    final storage = Get.find<StorageService>();
+    isProfileSetupIncomplete.value =
+        storage.readBool('is_profile_created') != true ||
+            storage.readBool('is_work_full') != true ||
+            storage.readBool('is_professional_services') != true ||
+            storage.readBool('is_qualification') != true ||
+            storage.readBool('is_personal_identification') != true ||
+            storage.readBool('is_about_you') != true;
+  }
+
+  Future<void> _syncProfileWizardFlags(ProfileDetailsModel profile) async {
+    if (!Get.isRegistered<StorageService>()) return;
+    final storage = Get.find<StorageService>();
+    await storage.writeBool(
+        'is_profile_created', profile.isProfileCreated == true);
+    await storage.writeBool('is_work_full', profile.isWorkFull == true);
+    await storage.writeBool(
+        'is_professional_services', profile.isProfessionalServices == true);
+    await storage.writeBool(
+        'is_qualification', profile.isQualification == true);
+    await storage.writeBool('is_personal_identification',
+        profile.isPersonalIdentification == true);
+    await storage.writeBool('is_about_you', profile.isAboutYou == true);
+
+    final complete = profile.isProfileCreated == true &&
+        profile.isWorkFull == true &&
+        profile.isProfessionalServices == true &&
+        profile.isQualification == true &&
+        profile.isPersonalIdentification == true &&
+        profile.isAboutYou == true;
+    if (complete) {
+      await storage.writeBool('profile_setup_skipped', false);
+    }
+  }
+
+  /// Open the profile wizard at the first incomplete step.
+  Future<void> openProfileSetup() async {
+    final step = firstIncompleteProfileStep() ?? 0;
+    await Get.toNamed(
+      Routes.signupProfileWizard,
+      arguments: {
+        'initialStep': step,
+        'hideSkip': true,
+      },
+    );
+    await loadProfileDetails();
+  }
 
   void toggleCalendarView() {
     showMonthView.toggle();
@@ -932,6 +1024,8 @@ class HomeController extends BaseController {
               // Parse response using model
               final profile = ProfileDetailsModel.fromJson(data);
               profileDetails.value = profile;
+              _refreshProfileSetupIncomplete(profile: profile);
+              _syncProfileWizardFlags(profile);
               logInfo('Profile details loaded successfully');
               logInfo('User: ${profile.fullName}, Email: ${profile.email}');
               _setAnalyticsUserProfileOnce(profile);
@@ -1002,12 +1096,15 @@ class HomeController extends BaseController {
   }
 
   Future<void> _maybeShowApprovalDialog(ProfileDetailsModel profile) async {
-    if (_approvalDialogShown) return;
     if (_isGuestUser()) return;
     if (Get.context == null) return;
     if (Get.isDialogOpen == true) return;
 
-    if (!(profile.isApproved ?? false)) {
+    final isApproved = profile.isApproved ?? false;
+
+    // Not approved yet (including incomplete profile setup) → Application Under Review
+    if (!isApproved) {
+      if (_approvalDialogShown) return;
       _approvalDialogShown = true;
       showResponseDialog(
         title: 'Application Under Review',
@@ -1019,12 +1116,11 @@ class HomeController extends BaseController {
       return;
     }
 
-    // If approved, check subscription
+    // Approved → subscription dialog (if needed). Do not block on _approvalDialogShown.
     await _maybeShowSubscriptionDialog(profile);
   }
 
   Future<void> _maybeShowSubscriptionDialog(ProfileDetailsModel profile) async {
-    if (_subscriptionDialogShown) return;
     if (_isGuestUser()) return;
     if (Get.context == null) return;
     if (Get.isDialogOpen == true) return;
@@ -1035,26 +1131,29 @@ class HomeController extends BaseController {
       return;
     }
 
-    if (!(profile.isSubscription ?? false)) {
-      _subscriptionDialogShown = true;
-      showConfirmationDialog(
-        title: 'Subscription Required',
-        message:
-            'Your profile has been approved. Please proceed with subscription payment to activate your account.',
-        onYesPressed: () {
-          Get.toNamed(Routes.profileSubscription);
-        },
-        onNoPressed: () {
-          // Dismiss dialog without checking other logic
-        },
-        yesText: 'Subscribe',
-        noText: 'Later',
-      );
+    final hasSubscription = profile.isSubscription ?? false;
+
+    // Both approval + subscription done → do not show this dialog
+    if (hasSubscription) {
+      await _maybeShowStripeOnboardingDialog(profile);
       return;
     }
 
-    // If has subscription, show stripe onboarding dialog
-    await _maybeShowStripeOnboardingDialog(profile);
+    if (_subscriptionDialogShown) return;
+    _subscriptionDialogShown = true;
+    showConfirmationDialog(
+      title: 'Subscription Required',
+      message:
+          'Your profile has been approved. Please proceed with subscription payment to activate your account.',
+      onYesPressed: () {
+        Get.toNamed(Routes.profileSubscription);
+      },
+      onNoPressed: () {
+        // Dismiss dialog without checking other logic
+      },
+      yesText: 'Subscribe',
+      noText: 'Later',
+    );
   }
 
   Future<void> _maybeShowStripeOnboardingDialog(

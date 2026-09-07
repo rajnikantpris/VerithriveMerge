@@ -42,6 +42,9 @@ class SignupProfileWizardController extends BaseController {
   final currentStep = 0.obs;
   int initialStep = 0; // Track the initial step when wizard was opened
 
+  /// Skip is hidden when opened from Home "SetUp" (resume flow).
+  final showSkipButton = true.obs;
+
   // Profile ID for update scenario
   final profileId = Rxn<String>();
 
@@ -252,6 +255,10 @@ class SignupProfileWizardController extends BaseController {
         }
       });
     }
+
+    // Home SetUp / resume — hide Skip so user completes remaining steps.
+    final hideSkip = args['hideSkip'] == true;
+    showSkipButton.value = !hideSkip;
 
     // Load profession types on init
     _loadProfessionTypes();
@@ -1172,6 +1179,19 @@ class SignupProfileWizardController extends BaseController {
                 oncePerLogin: true,
               );
 
+              final storage = _storageService;
+              if (storage != null) {
+                final complete = profile.isProfileCreated == true &&
+                    profile.isWorkFull == true &&
+                    profile.isProfessionalServices == true &&
+                    profile.isQualification == true &&
+                    profile.isPersonalIdentification == true &&
+                    profile.isAboutYou == true;
+                if (complete) {
+                  await storage.writeBool('profile_setup_skipped', false);
+                }
+              }
+
               Get.offAllNamed(Routes.home);
 
               // Log subscription purchase event
@@ -1769,6 +1789,16 @@ class SignupProfileWizardController extends BaseController {
         );
       },
     );
+  }
+
+  /// Skip remaining profile wizard steps and go to Home.
+  /// Home shows a "Complete the Profile Setup" strip until finished.
+  Future<void> skipProfileSetup() async {
+    final storage = _storageService;
+    if (storage != null) {
+      await storage.writeBool('profile_setup_skipped', true);
+    }
+    Get.offAllNamed(Routes.home);
   }
 
   void previousStep() {
