@@ -4,8 +4,9 @@ import '../therapy_list/TherapistController.dart';
 import '../../../services/analytics_service.dart';
 
 class FilterController extends GetxController {
-  // Professional filter - store selected sub_type_id
-  final RxString selectedProfessionalSubType = ''.obs;
+  // Professional filter - selected sub_type ids (multiple)
+  final RxList<String> selectedProfessionalSubTypes = <String>[].obs;
+  final RxList<String> selectedProfessionalNames = <String>[].obs;
   final RxBool hasManuallySelectedProfessional = false.obs; // Track manual selection
 
   // Distance filter
@@ -40,7 +41,7 @@ class FilterController extends GetxController {
        final  therapistController = Get.find<TherapistController>();
 
           // Check if any filter is actually applied (not default values)
-          hasFilter.value = therapistController.selectedProfessionalSubType.value.isNotEmpty ||
+          hasFilter.value = therapistController.selectedProfessionalSubTypes.isNotEmpty ||
              (therapistController.selectedDistance.value > 0.0 && therapistController.selectedDistance.value != 13.0) ||
              (therapistController.distance != null && therapistController.distance != 13.0) ||
              therapistController.minPrice.value > 0.0 ||
@@ -51,11 +52,12 @@ class FilterController extends GetxController {
               therapistController.selectedGender.value != 'Male');
 
 
-         // Load Professional Sub Type (only if not empty - actually applied)
-        if (therapistController.selectedProfessionalSubType != null &&
-            therapistController.selectedProfessionalSubType!.isNotEmpty) {
-          selectedProfessionalSubType.value = therapistController.selectedProfessionalSubType.value!;
-          print('FilterController: Loaded professional sub type: ${selectedProfessionalSubType.value}');
+         // Load Professional Sub Types (only if not empty - actually applied)
+        if (therapistController.selectedProfessionalSubTypes.isNotEmpty) {
+          selectedProfessionalSubTypes
+              .assignAll(therapistController.selectedProfessionalSubTypes);
+          print(
+              'FilterController: Loaded professional sub types: $selectedProfessionalSubTypes');
         }
 
         // Load Distance - Only load if actually applied (selectedDistance > 0 and != 13.0, or distance from arguments != 13.0)
@@ -161,7 +163,7 @@ class FilterController extends GetxController {
   bool get hasAnyFilterApplied {
     // Check if any filter value differs from default values
     // Professional filter applied (only if manually selected)
-    if (selectedProfessionalSubType.value.isNotEmpty && hasManuallySelectedProfessional.value) {
+    if (selectedProfessionalSubTypes.isNotEmpty && hasManuallySelectedProfessional.value) {
       return true;
     }
 
@@ -190,8 +192,17 @@ class FilterController extends GetxController {
   }
 
   // Professional filter methods
-  void setProfessionalSubType(String subTypeId, {bool manuallySelected = false}) {
-    selectedProfessionalSubType.value = subTypeId;
+  void setProfessionalSubTypes(
+    List<String> subTypeIds, {
+    List<String> names = const [],
+    bool manuallySelected = false,
+  }) {
+    selectedProfessionalSubTypes.assignAll(
+      subTypeIds.where((id) => id.trim().isNotEmpty),
+    );
+    selectedProfessionalNames.assignAll(
+      names.map((name) => name.trim()).where((name) => name.isNotEmpty),
+    );
     hasManuallySelectedProfessional.value = manuallySelected;
   }
 
@@ -221,7 +232,8 @@ class FilterController extends GetxController {
   void reset() {
     try {
       // Reset all filter values to defaults
-      selectedProfessionalSubType.value = '';
+      selectedProfessionalSubTypes.clear();
+      selectedProfessionalNames.clear();
       hasManuallySelectedProfessional.value = false;
       maxDistance.value = 13.0;
       minPrice.value = 0.0;
@@ -236,7 +248,7 @@ class FilterController extends GetxController {
         final therapistController = Get.find<TherapistController>();
 
         // Clear all filters in TherapistController
-        therapistController.selectedProfessionalSubType.value = '';
+        therapistController.selectedProfessionalSubTypes.clear();
         therapistController.selectedGender.value = '';
         therapistController.minPrice.value = 0.0;
         therapistController.maxPrice.value = 1000.0;
@@ -267,8 +279,11 @@ class FilterController extends GetxController {
 
       Map<String, dynamic> filterData = {};
 
-      if (selectedProfessionalSubType.value.isNotEmpty) {
-        filterData['profession_sub_type'] = selectedProfessionalSubType.value;
+      if (selectedProfessionalSubTypes.isNotEmpty) {
+        filterData['profession_sub_type'] =
+            selectedProfessionalSubTypes.toList();
+        filterData['profession_sub_type_names'] =
+            selectedProfessionalNames.toList();
       }
 
       if (selectedGender.value.isNotEmpty && (selectedGender.value != 'Male' || hasManuallySelectedGender.value)) {
@@ -302,7 +317,7 @@ class FilterController extends GetxController {
 
       // Update hasFilter observable after applying filters
       // Check if any actual filter (not default) is being applied or manually selected
-      hasFilter.value = (selectedProfessionalSubType.value.isNotEmpty && hasManuallySelectedProfessional.value) ||
+      hasFilter.value = (selectedProfessionalSubTypes.isNotEmpty && hasManuallySelectedProfessional.value) ||
           (maxDistance.value != 13.0) ||
           minPrice.value > 0.0 ||
           maxPrice.value < 1000.0 ||

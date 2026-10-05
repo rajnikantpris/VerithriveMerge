@@ -24,7 +24,23 @@ import FBSDKCoreKit
       didFinishLaunchingWithOptions: launchOptions
     )
     GeneratedPluginRegistrant.register(with: self)
-    return super.application(application, didFinishLaunchingWithOptions: launchOptions)
+    let didFinish = super.application(application, didFinishLaunchingWithOptions: launchOptions)
+    registerAdAttributionChannel()
+    AdAttributionReporter.startConversionWindow()
+    return didFinish
+  }
+
+  private func registerAdAttributionChannel() {
+    guard let controller = window?.rootViewController as? FlutterViewController else {
+      return
+    }
+    let channel = FlutterMethodChannel(
+      name: AdAttributionReporter.channelName,
+      binaryMessenger: controller.binaryMessenger
+    )
+    channel.setMethodCallHandler { call, result in
+      AdAttributionReporter.handle(call, result: result)
+    }
   }
 
   override func application(

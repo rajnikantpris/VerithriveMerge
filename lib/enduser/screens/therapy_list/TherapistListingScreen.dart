@@ -38,13 +38,18 @@ class TherapistListingScreen extends StatelessWidget {
           icon: SvgPicture.asset(AppAssets.back),
           onPressed: () => Get.back(),
         ),
-        title: Obx(() => Text(
-          controller.screenTitle.value,
-          style: AppTextStyles.mediumTextStyle(
-            fontSize: 20,
-            color: AppColors.black,
-          ),
-        )),
+        title: Obx(() {
+          final title = controller.screenTitle.value;
+          return Text(
+            title,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: AppTextStyles.mediumTextStyle(
+              fontSize: title.length > 24 ? 16 : 20,
+              color: AppColors.black,
+            ),
+          );
+        }),
       ),
       body: Column(
         children: [

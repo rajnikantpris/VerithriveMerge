@@ -71,11 +71,23 @@ class FilterView extends GetView<FilterController> {
                       binding: ProfessionalBinding(),
                     );
                     if (result != null && result is Map<String, dynamic>) {
-                      if (result['professional'] != null) {
-                        bool manuallySelected = result['hasManuallySelected'] ?? false;
-                        // Only update FilterController if user manually selected something
+                      if (result['professional'] is List) {
+                        final manuallySelected =
+                            result['hasManuallySelected'] == true;
                         if (manuallySelected) {
-                          controller.setProfessionalSubType(result['professional'] as String, manuallySelected: manuallySelected);
+                          final ids = (result['professional'] as List)
+                              .map((id) => id.toString())
+                              .toList();
+                          final names = result['professionalNames'] is List
+                              ? (result['professionalNames'] as List)
+                                  .map((name) => name.toString())
+                                  .toList()
+                              : <String>[];
+                          controller.setProfessionalSubTypes(
+                            ids,
+                            names: names,
+                            manuallySelected: manuallySelected,
+                          );
                         }
                       }
                     }

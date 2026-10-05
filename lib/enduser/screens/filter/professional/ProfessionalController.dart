@@ -4,14 +4,10 @@ import '../FilterController.dart';
 import 'package:verithrive_dev/services/analytics_service.dart';
 
 class ProfessionalController extends GetxController {
+  final RxList<String> selectedSubTypeIds = <String>[].obs;
+  final RxBool hasManuallySelected = false.obs;
 
-  // Single selection instead of multiple
-  final RxString selectedSubTypeId = ''.obs;
-  final RxBool hasManuallySelected = false.obs; // Track if user manually selected a value
-  
-  // Dynamic list of sub_types from API
   List<Map<String, dynamic>> subTypes = [];
-  String? selectedSubTypeIdFromArgs;
 
   @override
   void onInit() {
@@ -23,22 +19,22 @@ class ProfessionalController extends GetxController {
       elementLocation: 'view',
     );
     _loadSubTypesFromTherapistController();
-    _loadSelectedSubTypeFromFilterController();
+    _loadSelectedSubTypes();
   }
 
   void _loadSubTypesFromTherapistController() {
     try {
-      // Check if TherapistController is registered
       if (Get.isRegistered<TherapistController>()) {
-        // Get TherapistController to access sub_types array
         final therapistController = Get.find<TherapistController>();
-        
-        if (therapistController.subTypesArray != null && 
+
+        if (therapistController.subTypesArray != null &&
             therapistController.subTypesArray!.isNotEmpty) {
-          subTypes = List<Map<String, dynamic>>.from(therapistController.subTypesArray!);
+          subTypes = List<Map<String, dynamic>>.from(
+              therapistController.subTypesArray!);
           print('ProfessionalController: Loaded ${subTypes.length} sub_types');
         } else {
-          print('ProfessionalController: No sub_types found in TherapistController, using empty list');
+          print(
+              'ProfessionalController: No sub_types found in TherapistController, using empty list');
           subTypes = [];
         }
       } else {
@@ -51,64 +47,65 @@ class ProfessionalController extends GetxController {
     }
   }
 
-  void _loadSelectedSubTypeFromFilterController() {
+  void _loadSelectedSubTypes() {
     try {
-      // Load selected sub type from FilterController (persisted filter value)
       if (Get.isRegistered<FilterController>()) {
         final filterController = Get.find<FilterController>();
-        if (filterController.selectedProfessionalSubType.value.isNotEmpty) {
-          selectedSubTypeId.value = filterController.selectedProfessionalSubType.value;
-          print('ProfessionalController: Loaded selected sub_type from FilterController: ${selectedSubTypeId.value}');
+        if (filterController.selectedProfessionalSubTypes.isNotEmpty) {
+          selectedSubTypeIds
+              .assignAll(filterController.selectedProfessionalSubTypes);
+          print(
+              'ProfessionalController: Loaded selected sub_types from FilterController: $selectedSubTypeIds');
           return;
         }
       }
-      
-      // Fallback: Load from TherapistController if FilterController doesn't have it
+
       if (Get.isRegistered<TherapistController>()) {
         final therapistController = Get.find<TherapistController>();
-        if (therapistController.selectedProfessionalSubType != null && 
-            therapistController.selectedProfessionalSubType!.isNotEmpty) {
-          selectedSubTypeId.value = therapistController.selectedProfessionalSubType.value!;
-          print('ProfessionalController: Loaded selected sub_type from TherapistController: ${selectedSubTypeId.value}');
-        } else if (therapistController.subTypeId != null && 
-                   therapistController.subTypeId!.isNotEmpty) {
-          selectedSubTypeId.value = therapistController.subTypeId!;
-          selectedSubTypeIdFromArgs = therapistController.subTypeId;
-          print('ProfessionalController: Pre-selected sub_type_id from arguments: ${selectedSubTypeId.value}');
+        if (therapistController.selectedProfessionalSubTypes.isNotEmpty) {
+          selectedSubTypeIds
+              .assignAll(therapistController.selectedProfessionalSubTypes);
+          print(
+              'ProfessionalController: Loaded selected sub_types from TherapistController: $selectedSubTypeIds');
+        } else if (therapistController.subTypeId != null &&
+            therapistController.subTypeId!.isNotEmpty) {
+          selectedSubTypeIds.assign(therapistController.subTypeId!);
+          print(
+              'ProfessionalController: Pre-selected sub_type_id from arguments: ${therapistController.subTypeId}');
         }
       }
     } catch (e) {
-      print('ProfessionalController: Error loading selected sub type: $e');
+      print('ProfessionalController: Error loading selected sub types: $e');
     }
   }
 
-  void selectSubType(String subTypeId) {
-    // Single selection - replace previous selection
-    selectedSubTypeId.value = subTypeId;
-    hasManuallySelected.value = true; // Mark as manually selected
-    print('ProfessionalController: Selected sub_type_id: $subTypeId');
+  void toggleSubType(String subTypeId) {
+    if (subTypeId.isEmpty) return;
+    if (selectedSubTypeIds.contains(subTypeId)) {
+      selectedSubTypeIds.remove(subTypeId);
+    } else {
+      selectedSubTypeIds.add(subTypeId);
+    }
+    hasManuallySelected.value = true;
+    print('ProfessionalController: Selected sub_type_ids: $selectedSubTypeIds');
   }
 
   bool isSubTypeSelected(String subTypeId) {
-    return selectedSubTypeId.value == subTypeId;
+    return selectedSubTypeIds.contains(subTypeId);
   }
 
-  String? getSubTypeName(String subTypeId) {
-    try {
-      final subType = subTypes.firstWhere(
-        (item) => item['id'] == subTypeId,
-        orElse: () => {},
-      );
-      return subType['sub_type'] as String?;
-    } catch (e) {
-      return null;
+  List<String> selectedSubTypeNames() {
+    final names = <String>[];
+    for (final id in selectedSubTypeIds) {
+      for (final item in subTypes) {
+        final itemId = item['id']?.toString() ?? '';
+        if (itemId == id) {
+          final name = item['sub_type']?.toString().trim() ?? '';
+          if (name.isNotEmpty) names.add(name);
+          break;
+        }
+      }
     }
-  }
-
-  @override
-  void onClose() {
-    super.onClose();
+    return names;
   }
 }
-
-

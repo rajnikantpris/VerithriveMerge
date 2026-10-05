@@ -26,6 +26,7 @@ import '../enduser/utils/app_assets.dart';
 import '../enduser/utils/app_colors.dart';
 import '../enduser/utils/app_text_styles.dart';
 import '../enduser/utils/api_services.dart';
+import '../enduser/core/values/sharePrefrenceConst.dart';
 import '../api/user_api_service.dart';
 import '../enduser/screens/message/socket_service.dart';
 import '../professional/home/messages_controller.dart';
@@ -123,6 +124,35 @@ class ForegroundNotificationService {
     return userType == 'normal';
   }
 
+  /// Review dialog is only for a signed-in end user, including when a share
+  /// link opens TherapistDetailScreen. Guests must not see it.
+  static bool _isEndUserLoggedIn() {
+    try {
+      if (!Get.isRegistered<StorageService>()) return false;
+      final storage = Get.find<StorageService>();
+      final isGuest = storage.readBool(SharePreferenceConst.isGuest) ?? false;
+      if (isGuest) return false;
+      final isLogin = storage.readBool(SharePreferenceConst.isLogin) ?? false;
+      final token =
+          storage.readString(SharePreferenceConst.access_token) ?? '';
+      return isLogin && token.isNotEmpty;
+    } catch (e) {
+      logError('Error checking end user login for review dialog', error: e);
+      return false;
+    }
+  }
+
+  /// Home is registered with the `home` tag from MainScreen.
+  static HomeMainController? _findHomeMainController() {
+    if (Get.isRegistered<HomeMainController>(tag: 'home')) {
+      return Get.find<HomeMainController>(tag: 'home');
+    }
+    if (Get.isRegistered<HomeMainController>()) {
+      return Get.find<HomeMainController>();
+    }
+    return null;
+  }
+
   /// Check if notification type is booking-related for end users
   static bool _isEndUserBookingNotificationType(String? type) {
     if (type == null) return false;
@@ -182,6 +212,11 @@ class ForegroundNotificationService {
     if (_pendingReviewDialogData != null) {
       final data = _pendingReviewDialogData!;
       _pendingReviewDialogData = null;
+      if (!_isEndUserLoggedIn()) {
+        logInfo(
+            'Skipping pending review dialog: user is not logged in (route=${Get.currentRoute})');
+        return;
+      }
       logInfo(
           'Handling pending review dialog after Main loaded: ${data['professionalName']}');
       _showEndUserReviewDialogWithRetry(
@@ -1729,6 +1764,12 @@ class ForegroundNotificationService {
         return;
       }
 
+      if (!_isEndUserLoggedIn()) {
+        logInfo(
+            'Skipping review dialog: user is not logged in (route=${Get.currentRoute})');
+        return;
+      }
+
       logInfo(
           'Opening end user review dialog for professional: $professionalName, ID: $professionalId, Booking: $bookingId');
 //New Code
@@ -1767,17 +1808,29 @@ class ForegroundNotificationService {
     String professionalId,
     String bookingId,
   ) {
+    if (!_isEndUserLoggedIn()) {
+      logInfo(
+          'Skipping review dialog retry: user is not logged in (route=${Get.currentRoute})');
+      return;
+    }
+
     int retryCount = 0;
     const maxRetries = 10;
 
     void tryShowDialog() {
+      if (!_isEndUserLoggedIn()) {
+        logInfo(
+            'Skipping review dialog: user is not logged in (route=${Get.currentRoute})');
+        return;
+      }
       retryCount++;
       logInfo(
           'Attempting to show end user review dialog (attempt $retryCount/$maxRetries)');
 
-      if (Get.isRegistered<HomeMainController>()) {
-        logInfo('End user HomeMainController found, showing dialog');
-        final homeController = Get.find<HomeMainController>();
+      final homeController = _findHomeMainController();
+      if (homeController != null) {
+        logInfo(
+            'End user HomeMainController found, showing review dialog on ${Get.currentRoute}');
         homeController.showReviewDialog(
           professionalName,
           professionalId,
@@ -1806,6 +1859,11 @@ class ForegroundNotificationService {
     String professionalId,
     String bookingId,
   ) {
+    if (!_isEndUserLoggedIn()) {
+      logInfo(
+          'Skipping fallback review dialog: user is not logged in (route=${Get.currentRoute})');
+      return;
+    }
     logInfo('Showing end user fallback review dialog for: $professionalName');
 
     final TextEditingController reviewController = TextEditingController();
@@ -2038,6 +2096,7 @@ class ForegroundNotificationService {
       'booking_id': bookingId,
       'rating': rating,
       'review': review.isEmpty ? '' : review,
+      'type': 'book',
     };
 
     var service = repository.sendPostApiRequest(

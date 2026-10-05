@@ -13,10 +13,7 @@ class ProfessionalFilterScreen extends GetView<ProfessionalController> {
   Widget build(BuildContext context) {
     return WillPopScope(
       onWillPop: () async {
-        Get.back(result: {
-          'professional': controller.selectedSubTypeId.value,
-          'hasManuallySelected': controller.hasManuallySelected.value,
-        });
+        Get.back(result: _result());
         return false;
       },
       child: Scaffold(
@@ -28,10 +25,7 @@ class ProfessionalFilterScreen extends GetView<ProfessionalController> {
             icon: SvgPicture.asset(
               AppAssets.back,
             ),
-            onPressed: () => Get.back(result: {
-              'professional': controller.selectedSubTypeId.value,
-              'hasManuallySelected': controller.hasManuallySelected.value,
-            }),
+            onPressed: () => Get.back(result: _result()),
           ),
         title: Text(
           'Professional',
@@ -74,11 +68,12 @@ class ProfessionalFilterScreen extends GetView<ProfessionalController> {
                             color: AppColors.black,
                           ),
                         ),
+                        onTap: () => controller.toggleSubType(subTypeId),
                         trailing: IconButton(
                           padding: EdgeInsets.zero,
                           constraints: const BoxConstraints.tightFor(width: 24, height: 24),
                           visualDensity: const VisualDensity(horizontal: -4, vertical: -2),
-                          onPressed: () => controller.selectSubType(subTypeId),
+                          onPressed: () => controller.toggleSubType(subTypeId),
                           icon: controller.isSubTypeSelected(subTypeId)
                               ? SvgPicture.asset(AppAssets.check)
                               : SvgPicture.asset(AppAssets.uncheck),
@@ -100,6 +95,14 @@ class ProfessionalFilterScreen extends GetView<ProfessionalController> {
       ),
       ),
     );
+  }
+
+  Map<String, dynamic> _result() {
+    return {
+      'professional': controller.selectedSubTypeIds.toList(),
+      'professionalNames': controller.selectedSubTypeNames(),
+      'hasManuallySelected': controller.hasManuallySelected.value,
+    };
   }
 }
 

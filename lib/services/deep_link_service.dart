@@ -310,6 +310,7 @@ class DeepLinkService {
     final args = <String, dynamic>{
       'professionalId': professionalId,
       'category': 'wellness',
+      'fromShareLink': true,
     };
 
     debugPrint(

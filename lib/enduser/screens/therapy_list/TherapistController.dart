@@ -34,7 +34,7 @@ class TherapistController extends BaseController {
       AnalyticsService.resolvePageCategory(category);
 
   // Filter and sort parameters - make filter parameters observable for Obx
-  final RxString selectedProfessionalSubType = ''.obs;
+  final RxList<String> selectedProfessionalSubTypes = <String>[].obs;
   final RxString selectedGender = ''.obs;
   final RxDouble minPrice = 0.0.obs;
   final RxDouble maxPrice = 1000.0.obs;
@@ -48,7 +48,7 @@ class TherapistController extends BaseController {
   // Check if any filter is applied
   bool get hasFilter {
     // Professional filter applied (not empty)
-    if (selectedProfessionalSubType.value.isNotEmpty) {
+    if (selectedProfessionalSubTypes.isNotEmpty) {
       return true;
     }
 
@@ -269,11 +269,15 @@ class TherapistController extends BaseController {
     Map<String, dynamic> toJson() {
       final Map<String, dynamic> data = <String, dynamic>{};
 
-      // Required: profession_sub_type (use subTypeId from arguments)
-      if (selectedProfessionalSubType.value.isNotEmpty) {
-        data['profession_sub_type'] = selectedProfessionalSubType.value;
+      // Required: profession_sub_type as an array of ids
+      final professionSubTypeIds = <String>[];
+      if (selectedProfessionalSubTypes.isNotEmpty) {
+        professionSubTypeIds.addAll(selectedProfessionalSubTypes);
       } else if (subTypeId != null && subTypeId!.isNotEmpty) {
-        data['profession_sub_type'] = subTypeId;
+        professionSubTypeIds.add(subTypeId!);
+      }
+      if (professionSubTypeIds.isNotEmpty) {
+        data['profession_sub_type'] = professionSubTypeIds;
       }
 
       // Service IDs (from fitness goal screen)
@@ -569,31 +573,42 @@ class TherapistController extends BaseController {
 
   // Method to update title based on selected professional
   void _updateTitleFromProfessional() {
-    if (selectedProfessionalSubType.value.isNotEmpty &&
+    if (selectedProfessionalSubTypes.isNotEmpty &&
         subTypesArray != null &&
         subTypesArray!.isNotEmpty) {
-      // Find the matching sub_type in the array
-      for (var subType in subTypesArray!) {
-        if (subType['id']?.toString() == selectedProfessionalSubType.value) {
-          String? subTypeName = subType['sub_type']?.toString();
-          if (subTypeName != null && subTypeName.isNotEmpty) {
-            screenTitle.value = subTypeName;
-            print('Title updated from selected professional: $subTypeName');
-            return;
+      final names = <String>[];
+      for (final id in selectedProfessionalSubTypes) {
+        for (final subType in subTypesArray!) {
+          if (subType['id']?.toString() == id) {
+            final subTypeName = subType['sub_type']?.toString() ?? '';
+            if (subTypeName.isNotEmpty) names.add(subTypeName);
           }
         }
       }
+      if (names.isNotEmpty) {
+        screenTitle.value = names.join(', ');
+        print('Title updated from selected professionals: ${screenTitle.value}');
+        return;
+      }
     }
 
-    // If no professional selected or not found, use default title logic
     initializeTitle();
   }
 
   // Method to apply filters from FilterController
   void applyFilters(Map<String, dynamic> filterData) {
     // Save all filter values so they persist when filter screen is reopened
-    selectedProfessionalSubType.value =
-        filterData['profession_sub_type'] as String? ?? '';
+    selectedProfessionalSubTypes.clear();
+    final professionSubType = filterData['profession_sub_type'];
+    if (professionSubType is List) {
+      selectedProfessionalSubTypes.addAll(
+        professionSubType
+            .map((id) => id.toString())
+            .where((id) => id.isNotEmpty),
+      );
+    } else if (professionSubType is String && professionSubType.isNotEmpty) {
+      selectedProfessionalSubTypes.add(professionSubType);
+    }
     selectedGender.value = filterData['gender'] as String? ?? '';
     minPrice.value = filterData['minPrice'] as double? ?? 0.0;
     maxPrice.value = filterData['maxPrice'] as double? ?? 1000.0;
@@ -603,7 +618,7 @@ class TherapistController extends BaseController {
 
     print('========================================');
     print('TherapistController: Applied filters:');
-    print('Professional Sub Type: ${selectedProfessionalSubType.value}');
+    print('Professional Sub Type: $selectedProfessionalSubTypes');
     print('Gender: ${selectedGender.value}');
     print('Min Price: ${minPrice.value}');
     print('Max Price: ${maxPrice.value}');
@@ -611,8 +626,15 @@ class TherapistController extends BaseController {
     print('Distance: ${selectedDistance.value}');
     print('========================================');
 
-    // Update title based on selected professional
-    _updateTitleFromProfessional();
+    final professionNames = filterData['profession_sub_type_names'];
+    if (professionNames is List && professionNames.isNotEmpty) {
+      screenTitle.value = professionNames
+          .map((name) => name.toString().trim())
+          .where((name) => name.isNotEmpty)
+          .join(', ');
+    } else {
+      _updateTitleFromProfessional();
+    }
 
     // Reload therapists with new filters
     callProfessionalsListAPI();

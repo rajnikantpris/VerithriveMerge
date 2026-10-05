@@ -1,0 +1,13 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.app.verithrive",
+      "sha256_cert_fingerprints": [
+        "C6:55:80:F0:F6:97:51:0E:EF:F7:E7:26:6F:79:6B:FA:CB:0F:6E:E0:77:3C:6C:59:00:52:0D:6A:14:90:1F:95",
+        "15:08:40:1E:DB:17:2D:D7:BD:2D:00:98:A2:A4:77:32:F8:88:86:3E:67:4C:EB:5B:A6:09:C9:04:A4:12:D4:A2"
+      ]
+    }
+  }
+]

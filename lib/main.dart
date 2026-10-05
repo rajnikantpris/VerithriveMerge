@@ -19,6 +19,7 @@ import 'theme/colors.dart';
 import 'common/firebase_config.dart';
 import 'services/foreground_notification_service.dart';
 import 'services/deep_link_service.dart';
+import 'services/ad_attribution_service.dart';
 // import 'services/analytics_service.dart';
 
 final facebookAppEvents = FacebookAppEvents();
@@ -84,6 +85,9 @@ Future<void> main() async {
 
   // App Links / Universal Links (professional profile share)
   await DeepLinkService.instance.init();
+
+  // iOS AdAttributionKit: open the conversion window on launch.
+  await AdAttributionService.instance.start();
 
   // Facebook App Events
   await facebookAppEvents.activateApp();

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import '../../../services/storage_service.dart';
 import '../../core/base/base_controller.dart';
@@ -6,6 +7,9 @@ import '../../core/values/sharePrefrenceConst.dart';
 import '../../data/local/preference/preference_manager.dart';
 import '../../data/repository/project_repository.dart';
 import '../../utils/api_services.dart';
+import '../../utils/app_assets.dart';
+import '../../utils/app_colors.dart';
+import '../../utils/app_text_styles.dart';
 import '../therapy_list/Therapist.dart';
 import 'package:verithrive_dev/services/analytics_service.dart';
 
@@ -70,6 +74,8 @@ class TherapistDetailController extends BaseController
   var isLoading = true.obs;
 
   RxBool isGuest = false.obs;
+  bool _reviewDialogScheduled = false;
+  bool openedFromShareLink = false;
 
   @override
   void onInit() {
@@ -89,6 +95,7 @@ class TherapistDetailController extends BaseController
       final map = Map<String, dynamic>.from(arguments as Map);
       initialTherapist = map['therapist'] as Therapist?;
       category = map['category'] as String?;
+      openedFromShareLink = map['fromShareLink'] == true;
       // Deep link / share: professionalId may be passed without a Therapist object
       professionalId = map['professionalId'] as String? ??
           initialTherapist?.id;
@@ -182,6 +189,8 @@ class TherapistDetailController extends BaseController
       print('Professional ID: $professionalId');
       isLoading.value = false;
     }
+
+    _scheduleReviewDialog();
   }
 
   void fetchProfessionalDetails() {
@@ -306,6 +315,7 @@ class TherapistDetailController extends BaseController
                 (ratingData['average'] as num?)?.toDouble() ?? 0.0;
             ratingCount.value = (ratingData['count'] as num?)?.toInt() ?? 0;
           }
+
         }
 
         // Parse address (full_address is at the same level as professional in dataMap)
@@ -491,6 +501,277 @@ class TherapistDetailController extends BaseController
   // Helper to change tab programmatically (if needed)
   void changeTab(int index) {
     tabController.animateTo(index);
+  }
+
+  bool _isLoggedInUser() {
+    final storage = _storageService;
+    if (storage == null) return false;
+    final guest = storage.readBool(SharePreferenceConst.isGuest) ?? false;
+    if (guest) return false;
+    final isLogin = storage.readBool(SharePreferenceConst.isLogin) ?? false;
+    final token = storage.readString(SharePreferenceConst.access_token) ?? '';
+    return isLogin && token.isNotEmpty;
+  }
+
+  /// Review dialog only when this profile was opened from a share link,
+  /// and only for a logged-in user.
+  void _scheduleReviewDialog() {
+    if (_reviewDialogScheduled) return;
+    if (!openedFromShareLink) {
+      print('TherapistDetailScreen: skip review dialog, not opened from share link');
+      return;
+    }
+    if (!_isLoggedInUser()) {
+      print('TherapistDetailScreen: skip review dialog, user not logged in');
+      return;
+    }
+    _reviewDialogScheduled = true;
+
+    void tryShow({int attempt = 0}) {
+      if (isClosed) return;
+      final waitingForProfile = isLoading.value && attempt < 10;
+      final waitingForOtherDialog = Get.isDialogOpen == true && attempt < 10;
+      if (waitingForProfile || waitingForOtherDialog) {
+        Future<void>.delayed(const Duration(milliseconds: 400), () {
+          tryShow(attempt: attempt + 1);
+        });
+        return;
+      }
+
+      final rawName = therapist.value.name.trim();
+      final name = (rawName.isEmpty || rawName == 'Loading...')
+          ? 'Professional'
+          : rawName;
+      final id = (professionalId ?? therapist.value.id).trim();
+
+      print('TherapistDetailScreen: show review and rating dialog for $name');
+      _showReviewDialog(name, id);
+    }
+
+    Future<void>.delayed(const Duration(milliseconds: 600), tryShow);
+  }
+
+  void _showReviewDialog(
+    String professionalName,
+    String professionalId,
+  ) {
+    final reviewController = TextEditingController();
+    final rating = 0.obs;
+    final isSubmitting = false.obs;
+
+    Get.dialog(
+      Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        insetPadding: const EdgeInsets.symmetric(horizontal: 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: const BoxDecoration(
+                color: AppColors.white,
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(20),
+                  topRight: Radius.circular(20),
+                ),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(width: 24),
+                      Expanded(
+                        child: Text(
+                          'How would you rate\n"$professionalName"?',
+                          textAlign: TextAlign.center,
+                          style: AppTextStyles.popinMediumTextStyle(),
+                        ),
+                      ),
+                      GestureDetector(
+                        onTap: () => Get.back(),
+                        child: Icon(Icons.close,
+                            color: Colors.grey.shade600, size: 24),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  Obx(() => Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: List.generate(5, (index) {
+                          return GestureDetector(
+                            onTap: () => rating.value = index + 1,
+                            child: Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 4),
+                              child: SvgPicture.asset(
+                                AppAssets.rating_selected,
+                                color: index < rating.value
+                                    ? AppColors.ratingSelectedColor
+                                    : AppColors.unselectedTabColor,
+                              ),
+                            ),
+                          );
+                        }),
+                      )),
+                  const SizedBox(height: 24),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: AppColors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.grey.shade300, width: 1),
+                    ),
+                    child: TextField(
+                      controller: reviewController,
+                      maxLines: 5,
+                      decoration: InputDecoration(
+                        hintText: 'Write a review',
+                        hintStyle: AppTextStyles.popinRegularTextStyle(
+                          fontSize: 14,
+                          color: AppColors.color919191,
+                        ),
+                        border: InputBorder.none,
+                        contentPadding: const EdgeInsets.all(16),
+                      ),
+                      style: AppTextStyles.regularTextStyle(
+                          fontSize: 14, color: AppColors.black),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Obx(() => Container(
+                  width: double.infinity,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    color: isSubmitting.value
+                        ? Colors.grey
+                        : AppColors.primaryColor,
+                    borderRadius: const BorderRadius.only(
+                      bottomLeft: Radius.circular(20),
+                      bottomRight: Radius.circular(20),
+                    ),
+                  ),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: isSubmitting.value
+                          ? null
+                          : () async {
+                              if (rating.value == 0) {
+                                Get.snackbar(
+                                  'Rating Required',
+                                  'Please select a rating before submitting',
+                                  snackPosition: SnackPosition.BOTTOM,
+                                  backgroundColor: Colors.orange.shade100,
+                                  duration: const Duration(seconds: 2),
+                                );
+                                return;
+                              }
+                              isSubmitting.value = true;
+                              try {
+                                await _submitReview(
+                                  professionalId: professionalId,
+                                  rating: rating.value,
+                                  review: reviewController.text.trim(),
+                                );
+                                Get.back();
+                                Get.snackbar(
+                                  'Review Submitted',
+                                  'Thank you for your feedback!',
+                                  snackPosition: SnackPosition.BOTTOM,
+                                  backgroundColor:
+                                      AppColors.primaryColor.withOpacity(0.2),
+                                  duration: const Duration(seconds: 2),
+                                );
+                              } catch (e) {
+                                Get.snackbar(
+                                  'Error',
+                                  'Failed to submit review. Please try again.',
+                                  snackPosition: SnackPosition.BOTTOM,
+                                  backgroundColor: Colors.red.shade100,
+                                  duration: const Duration(seconds: 3),
+                                );
+                              } finally {
+                                isSubmitting.value = false;
+                              }
+                            },
+                      borderRadius: const BorderRadius.only(
+                        bottomLeft: Radius.circular(20),
+                        bottomRight: Radius.circular(20),
+                      ),
+                      child: Center(
+                        child: isSubmitting.value
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                      Colors.white),
+                                ),
+                              )
+                            : Text('Add review',
+                                style: AppTextStyles.buttonTextStyle()),
+                      ),
+                    ),
+                  ),
+                )),
+          ],
+        ),
+      ),
+      barrierDismissible: false,
+    );
+  }
+
+  Future<void> _submitReview({
+    required String professionalId,
+    required int rating,
+    required String review,
+  }) async {
+    final requestData = {
+      'professional_id': professionalId,
+      'rating': rating,
+      'review': review.isEmpty ? '' : review,
+      'type': 'share',
+    };
+
+    final response = await _repository.sendPostApiRequest(
+      () => requestData,
+      professionals_rate_review,
+      true,
+    );
+
+    Map<String, dynamic> responseData;
+    if (response != null && response.data != null) {
+      responseData = response.data is Map<String, dynamic>
+          ? response.data as Map<String, dynamic>
+          : Map<String, dynamic>.from(response.data as Map);
+    } else if (response is Map<String, dynamic>) {
+      responseData = response;
+    } else {
+      throw Exception('Invalid response format');
+    }
+
+    final success = responseData['success'] == true;
+    if (success) {
+      AnalyticsService.instance.logEvent(
+        name: 'review_submit',
+        parameters: {
+          'screen_name': 'TherapistDetailScreen',
+          'screen_class': 'TherapistDetailScreen',
+          'element_text': review,
+          'element_location': 'review_dialog',
+          'page_category': category ?? 'wellness',
+          'element_class': rating.toString(),
+        },
+      );
+    }
+    if (!success) {
+      throw Exception(responseData['message'] ?? 'Failed to submit review');
+    }
   }
 
   Future<void> getPreferenceDetails() async {

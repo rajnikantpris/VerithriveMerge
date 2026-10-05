@@ -424,9 +424,24 @@ class HomeMainController extends BaseController with WidgetsBindingObserver {
     }
   }
 
+  bool _isLoggedInForReview() {
+    final isGuest =
+        storageService.readBool(SharePreferenceConst.isGuest) ?? false;
+    if (isGuest) return false;
+    final isLogin =
+        storageService.readBool(SharePreferenceConst.isLogin) ?? false;
+    final token =
+        storageService.readString(SharePreferenceConst.access_token) ?? '';
+    return isLogin && token.isNotEmpty;
+  }
+
   // ── Review Dialog ──────────────────────────────────────────────────────────
   void showReviewDialog(
       String professionalName, String professionalId, String bookingId) {
+    if (!_isLoggedInForReview()) {
+      return;
+    }
+
     final TextEditingController reviewController = TextEditingController();
     final RxInt rating = 0.obs;
     final RxBool isSubmitting = false.obs;
@@ -602,6 +617,7 @@ class HomeMainController extends BaseController with WidgetsBindingObserver {
       "booking_id": bookingId,
       "rating": rating,
       "review": review.isEmpty ? "" : review,
+      "type": "book",
     };
 
     var response = await repository.sendPostApiRequest(
