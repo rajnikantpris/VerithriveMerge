@@ -190,7 +190,7 @@ class TherapistDetailController extends BaseController
       isLoading.value = false;
     }
 
-    _scheduleReviewDialog();
+    // _scheduleReviewDialog();
   }
 
   void fetchProfessionalDetails() {
