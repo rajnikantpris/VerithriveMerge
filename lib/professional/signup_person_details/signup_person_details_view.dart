@@ -108,11 +108,11 @@ class SignupPersonDetailsView extends BaseView<SignupPersonDetailsController> {
                     validator: (value) =>
                         controller.validateNotEmpty(value, 'address'),
                   ),
-                  SizedBox(height: HightWidthSizes.setValue_16),
-                  // Promo Code Section (Social Login Only)
-                  Obx(() => controller.isSocialLogin.value
-                      ? _buildPromoCodeSection()
-                      : const SizedBox.shrink()),
+                  // SizedBox(height: HightWidthSizes.setValue_16),
+                  // // Promo Code Section (Social Login Only)
+                  // Obx(() => controller.isSocialLogin.value
+                  //     ? _buildPromoCodeSection()
+                  //     : const SizedBox.shrink()),
                   SizedBox(height: HightWidthSizes.setValue_30),
                   SizedBox(
                     width: double.infinity,
