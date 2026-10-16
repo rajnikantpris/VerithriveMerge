@@ -1,8 +1,8 @@
-var bareUrl = 'https://adminportal.verithrive.co.uk/api/api/v3/user/';
-var socketUrl = 'https://adminportal.verithrive.co.uk';
+// var bareUrl = 'https://adminportal.verithrive.co.uk/api/api/v3/user/';
+// var socketUrl = 'https://adminportal.verithrive.co.uk';
 
-// var bareUrl = 'https://dev.verithrive.co.uk/api/api/v3/user/';
-// var socketUrl = 'https://dev.verithrive.co.uk/';
+var bareUrl = 'https://dev.verithrive.co.uk/api/api/v3/user/';
+var socketUrl = 'https://dev.verithrive.co.uk/';
 
 // var bareUrl = 'http://192.168.0.14:4142/api/api/v3/user/';
 // var socketUrl = 'http://192.168.0.14:4142';
