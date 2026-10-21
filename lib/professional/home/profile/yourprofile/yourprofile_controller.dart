@@ -117,7 +117,7 @@ class YourProfileController extends BaseController {
     }
 
     if (profile.profession_sub_name?.isNotEmpty == true) {
-      buffer.writeln('Specialization: ${profile.profession_sub_name}');
+      buffer.writeln('Specialisation: ${profile.profession_sub_name}');
     }
 
     if (profile.totalExperience != null && profile.totalExperience! > 0) {
@@ -146,7 +146,7 @@ class YourProfileController extends BaseController {
     buffer.writeln('View profile:');
     buffer.writeln(profileUrl);
     buffer.writeln('');
-    buffer.writeln('Shared via Verithrive App');
+    buffer.writeln('Shared via VERITHRIVE App');
 
     return buffer.toString();
   }

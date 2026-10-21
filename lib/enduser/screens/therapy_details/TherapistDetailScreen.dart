@@ -111,8 +111,6 @@ class TherapistDetailScreen extends StatelessWidget {
                 final id =
                     controller.professionalId ?? controller.therapist.value.id;
                 if (id.isEmpty) return;
-                final name = controller.therapist.value.name;
-                final url = DeepLinkService.buildProfileShareUrl(id);
                 final renderObject = context.findRenderObject();
                 final origin =
                     (renderObject is RenderBox && renderObject.hasSize)
@@ -120,9 +118,7 @@ class TherapistDetailScreen extends StatelessWidget {
                             renderObject.size
                         : const Rect.fromLTWH(0, 0, 1, 1);
                 await Share.share(
-                  name.isNotEmpty
-                      ? 'Check out $name on Verithrive:\n$url'
-                      : 'Check out this professional on Verithrive:\n$url',
+                  _generateProfileText(controller, id),
                   subject: 'Professional Profile',
                   sharePositionOrigin: origin,
                 );
@@ -153,6 +149,56 @@ class TherapistDetailScreen extends StatelessWidget {
         bottomNavigationBar: _buildBottomChatButton(),
       ),
     );
+  }
+
+  String _generateProfileText(
+      TherapistDetailController controller, String profileId) {
+    final StringBuffer buffer = StringBuffer();
+    final String profileUrl = DeepLinkService.buildProfileShareUrl(profileId);
+    final therapist = controller.therapist.value;
+
+    buffer.writeln('Professional Profile');
+    buffer.writeln('');
+
+    if (therapist.name.isNotEmpty) {
+      buffer.writeln('Name: ${therapist.name}');
+    }
+
+    if (controller.professionType.value.isNotEmpty) {
+      buffer.writeln('Profession: ${controller.professionType.value}');
+    }
+
+    if (controller.professionSubType.value.isNotEmpty) {
+      buffer.writeln('Specialisation: ${controller.professionSubType.value}');
+    }
+
+    final experienceYears = controller.totalExperience.value > 0
+        ? controller.totalExperience.value
+        : therapist.yearsExperience;
+    if (experienceYears > 0) {
+      buffer.writeln('Experience: $experienceYears years');
+    }
+
+    if (controller.address.value.isNotEmpty) {
+      final location = controller.postcode.value.isNotEmpty
+          ? '${controller.address.value}, ${controller.postcode.value}'
+          : controller.address.value;
+      buffer.writeln('Location: $location');
+    }
+
+    if (controller.description.value.isNotEmpty) {
+      buffer.writeln('');
+      buffer.writeln('About:');
+      buffer.writeln(controller.description.value);
+    }
+
+    buffer.writeln('');
+    buffer.writeln('View profile:');
+    buffer.writeln(profileUrl);
+    buffer.writeln('');
+    buffer.writeln('Shared via VERITHRIVE App');
+
+    return buffer.toString();
   }
 
   Widget _buildHeaderCard(TherapistDetailController controller) {
